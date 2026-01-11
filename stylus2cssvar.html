@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Stylus to CSS Var Converter</title>
+    <style>
+        :root { --primary: #6366f1; --bg: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 40px; color: #1e293b; }
+        .container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 80vh; }
+        .panel { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #e2e8f0; }
+        .header { padding: 12px 20px; background: #f1f5f9; border-bottom: 1px solid #e2e8f0; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        textarea { flex: 1; border: none; padding: 20px; font-size: 13px; line-height: 1.6; outline: none; resize: none; font-family: 'Fira Code', monospace; }
+        #output { background: #1e293b; color: #9cdcfe; }
+        .btn { background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .hint { grid-column: 1 / -1; margin-bottom: 10px; font-size: 14px; color: #64748b; }
+        .nav-back { margin-bottom: 20px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="nav-back">← 返回首頁</a>
+<div class="hint">輸入 Stylus 變數格式 <code>key = value</code>，自動轉換為原生的 <code>--key: value</code> 格式。</div>
+
+<div class="container">
+    <div class="panel">
+        <div class="header">Stylus Variables Input</div>
+        <textarea id="input" placeholder="primary-100 = #FFFFFF
+primary-200 = #F6F3F3"></textarea>
+    </div>
+
+    <div class="panel">
+        <div class="header">
+            CSS Variables Output
+            <button class="btn" onclick="copyResult()">複製結果</button>
+        </div>
+        <textarea id="output" readonly></textarea>
+    </div>
+</div>
+
+<script>
+    const input = document.getElementById('input');
+    const output = document.getElementById('output');
+
+    function convert() {
+        const lines = input.value.split('\n');
+        const result = lines.map(line => {
+            if (!line.trim()) return "";
+            
+            // 處理註解保留
+            let comment = "";
+            let content = line;
+            const commentIndex = line.indexOf('//');
+            if (commentIndex !== -1) {
+                content = line.substring(0, commentIndex);
+                comment = line.substring(commentIndex);
+            }
+
+            // 匹配 key = value 或 key=value
+            const parts = content.split('=');
+            if (parts.length < 2) return line; // 若沒等號則原樣輸出
+
+            const key = parts[0].trim();
+            const value = parts[1].trim();
+
+            // 輸出 CSS 變數格式：--key: value
+            return `--${key}: ${value}${comment ? " " + comment : ""}`;
+        });
+
+        output.value = result.join('\n');
+    }
+
+    function copyResult() {
+        output.select();
+        document.execCommand('copy');
+        const btn = document.querySelector('.btn');
+        btn.innerText = '已複製！';
+        setTimeout(() => btn.innerText = '複製結果', 1500);
+    }
+
+    input.addEventListener('input', convert);
+</script>
+</body>
+</html>
