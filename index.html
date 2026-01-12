@@ -40,6 +40,17 @@
             color: var(--text-sub);
             font-size: 1.1rem;
         }
+        h2 {
+            margin-top: 2em;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
+        h3 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -95,7 +106,7 @@
         <h1>DevToolbox</h1>
         <p>提升開發效率的迷你工具集合</p>
     </header>
-
+    <h2 id="debug-tools">Debug Tools</h2>
     <div class="grid">
         <a href="style2attr.html" class="tool-card">
             <div class="icon">🎨</div>
@@ -103,14 +114,18 @@
             <p>將 Inline Style 內容轉換為 HTML 標籤屬性格式。</p>
             <div class="tag">CSS Refactor</div>
         </a>
-
-        <a href="html2pug.html" class="tool-card">
-            <div class="icon">🐶</div>
-            <h3>HTML ➔ Pug</h3>
-            <p>將標準 HTML 代碼轉換為簡潔的 Pug (Jade) 模板語法。</p>
-            <div class="tag">Template</div>
+        <a href="reduce-solve.html" class="tool-card">
+            <div class="icon">⚙️</div>
+            <h3>Reduce Solver</h3>
+            <p>將複雜的 Reduce 函式智能重構為 Filter 與 Map 組合。</p>
+            <div class="tag">JS Optimization</div>
         </a>
-
+        <a href="css-unfold.html" class="tool-card">
+            <div class="icon">🧶</div>
+            <h3>CSS Unfolder</h3>
+            <p>將 Sass/Stylus 的巢狀 & 符號展開為完整的 Class 全名，提升代碼搜尋與易讀性。</p>
+            <div class="tag">Refactor Tool</div>
+        </a>
         <a href="naming.html" class="tool-card">
             <div class="icon">📝</div>
             <h3>Case Converter</h3>
@@ -118,33 +133,10 @@
             <div class="tag">Naming</div>
         </a>
 
-        <a href="reduce-solve.html" class="tool-card">
-            <div class="icon">⚙️</div>
-            <h3>Reduce Solver</h3>
-            <p>將複雜的 Reduce 函式智能重構為 Filter 與 Map 組合。</p>
-            <div class="tag">JS Optimization</div>
-        </a>
+    </div>
 
-        <a href="triangle.html" class="tool-card">
-            <div class="icon">📐</div>
-            <h3>CSS Triangle</h3>
-            <p>透過圖像化介面產生偽元素三角形 CSS 語法。</p>
-            <div class="tag">Visual Generator</div>
-        </a>
-
-        <a href="gradient.html" class="tool-card">
-            <div class="icon">🌈</div>
-            <h3>Gradient Gen</h3>
-            <p>視覺化調整多節點漸層、透明度與角度，自動產出 CSS 代碼。</p>
-            <div class="tag">Visual Generator</div>
-        </a>
-
-        <a href="selector.html" class="tool-card">
-            <div class="icon">🔍</div>
-            <h3>Selector Gen</h3>
-            <p>快速產生複雜的 CSS 屬性選擇器，支援包含、開頭、結尾等匹配模式。</p>
-            <div class="tag">CSS Helper</div>
-        </a>
+    <h2 id="helpers">Helpers</h2>
+    <div class="grid">
 
         <a href="json.html" class="tool-card">
             <div class="icon">🌳</div>
@@ -152,20 +144,6 @@
             <p>自動修復多餘逗號，並將 JSON/Object 轉換為可編輯的樹狀目錄。</p>
             <div class="tag">Data Tool</div>
         </a>
-        <a href="swiper.html" class="tool-card">
-            <div class="icon">🎡</div>
-            <h3>Swiper Pro & A11y</h3>
-            <p>全功能 Swiper.js 配置產生器，包含視覺特效、響應式斷點及符合 WCAG 標準的無障礙控制邏輯。</p>
-            <div class="tag">UI Components</div>
-        </a>
-
-        <a href="css-unfold.html" class="tool-card">
-            <div class="icon">🧶</div>
-            <h3>CSS Unfolder</h3>
-            <p>將 Sass/Stylus 的巢狀 & 符號展開為完整的 Class 全名，提升代碼搜尋與易讀性。</p>
-            <div class="tag">Refactor Tool</div>
-        </a>
-
         <a href="size.html" class="tool-card">
             <div class="icon">📏</div>
             <h3>Viewport Checker</h3>
@@ -179,6 +157,62 @@
             <p>將解析度自動約分為最簡比例（如 16:9），並提供 CSS aspect-ratio 與百分比換算。</p>
             <div class="tag">Design Helper</div>
         </a>
+    
+        <a href="selector.html" class="tool-card">
+            <div class="icon">🔍</div>
+            <h3>Selector Gen</h3>
+            <p>快速產生複雜的 CSS 屬性選擇器，支援包含、開頭、結尾等匹配模式。</p>
+            <div class="tag">CSS Helper</div>
+        </a>
+    </div>
+
+    <h2 id="generators">Generators</h2>
+    <div class="grid">
+        <a href="html2pug.html" class="tool-card">
+            <div class="icon">🐶</div>
+            <h3>HTML ➔ Pug</h3>
+            <p>將標準 HTML 代碼轉換為簡潔的 Pug (Jade) 模板語法。</p>
+            <div class="tag">Template</div>
+        </a>
+    
+        <a href="csv2json.html" class="tool-card" data-cat="Data">
+            <div class="icon">📊</div>
+            <h3>CSV Pro to JSON</h3>
+            <p>支援 Excel 儲存格內換行的進階轉換器，自動處理引號與跳脫字元，確保資料結構不壞掉。</p>
+            <div class="tag">Data Tool</div>
+        </a>
+
+        <a href="triangle.html" class="tool-card">
+            <div class="icon">📐</div>
+            <h3>CSS Triangle</h3>
+            <p>透過圖像化介面產生偽元素三角形 CSS 語法。</p>
+            <div class="tag">Visual Generator</div>
+        </a>
+    
+        <a href="gradient.html" class="tool-card">
+            <div class="icon">🌈</div>
+            <h3>Gradient Gen</h3>
+            <p>視覺化調整多節點漸層、透明度與角度，自動產出 CSS 代碼。</p>
+            <div class="tag">Visual Generator</div>
+        </a>
+
+        <a href="swiper.html" class="tool-card">
+            <div class="icon">🎡</div>
+            <h3>Swiper Pro & A11y</h3>
+            <p>全功能 Swiper.js 配置產生器，包含視覺特效、響應式斷點及符合 WCAG 標準的無障礙控制邏輯。</p>
+            <div class="tag">UI Components</div>
+        </a>
+
+        <a href="html2emmet.html" class="tool-card" data-cat="Refactor">
+            <div class="icon">🚀</div>
+            <h3>HTML to Emmet</h3>
+            <p>將現有的 HTML 結構逆向轉換為 Emmet 縮寫字串，方便紀錄與快速重建結構。</p>
+            <div class="tag">Refactor Tool</div>
+        </a>
+    </div>
+
+    <h2 id="workflows">Workflows</h2>
+    <div class="grid">
 
         <a href="figma2tailwind-color.html" class="tool-card">
             <div class="icon">🎨</div>
@@ -201,24 +235,10 @@
             <div class="tag">Refactor Tool</div>
         </a>
 
-        <a href="csv2json.html" class="tool-card" data-cat="Data">
-            <div class="icon">📊</div>
-            <h3>CSV Pro to JSON</h3>
-            <p>支援 Excel 儲存格內換行的進階轉換器，自動處理引號與跳脫字元，確保資料結構不壞掉。</p>
-            <div class="tag">Data Tool</div>
-        </a>
-
         <a href="svg2symbol.html" class="tool-card" data-cat="Visual">
             <div class="icon">💠</div>
             <h3>SVG to Symbol</h3>
             <p>將 SVG 原始碼轉換為 Symbol 格式，自動將 fill/stroke 顏色統一為 currentColor。</p>
-            <div class="tag">SVG Tool</div>
-        </a>
-
-        <a href="symbol-extractor.html" class="tool-card" data-cat="Visual">
-            <div class="icon">📋</div>
-            <h3>Symbol Extractor</h3>
-            <p>從 SVG Symbols 代碼中自動批量提取 id 名稱、寬度與高度，產出 JS 物件清單。</p>
             <div class="tag">SVG Tool</div>
         </a>
 
@@ -236,7 +256,22 @@
             <div class="tag">Design Ops</div>
         </a>
 
+        <a href="stylus2cssvar.html" class="tool-card" data-cat="Refactor">
+            <div class="icon">🧬</div>
+            <h3>Stylus to CSS Var</h3>
+            <p>將 Stylus 變數定義 (key = value) 批量轉換為原生 CSS 變數格式 (--key: value)。</p>
+            <div class="tag">Refactor Tool</div>
+        </a>
+
+        <a href="symbol-extractor.html" class="tool-card" data-cat="Visual">
+            <div class="icon">📋</div>
+            <h3>Symbol Extractor</h3>
+            <p>從 SVG Symbols 代碼中自動批量提取 id 名稱、寬度與高度，產出 JS 物件清單。</p>
+            <div class="tag">SVG Tool</div>
+        </a>
+
     </div>
+
 </div>
 
 </body>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>HTML to Emmet Converter</title>
+    <style>
+        :root { --primary: #10b981; --bg: #f0fdf4; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 40px; color: #064e3b; }
+        .container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 80vh; }
+        .panel { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #a7f3d0; }
+        .header { padding: 12px 20px; background: #d1fae5; border-bottom: 1px solid #a7f3d0; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        textarea { flex: 1; border: none; padding: 20px; font-size: 13px; line-height: 1.6; outline: none; resize: none; font-family: 'Fira Code', monospace; }
+        #output { background: #064e3b; color: #a7f3d0; }
+        .btn { background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .hint { grid-column: 1 / -1; margin-bottom: 10px; font-size: 14px; color: #065f46; }
+        .nav-back { margin-bottom: 20px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="nav-back">← 返回首頁</a>
+<div class="hint">貼入 HTML 原始碼，我會嘗試將其轉換為 Emmet 縮寫字串。</div>
+
+<div class="container">
+    <div class="panel">
+        <div class="header">HTML Source</div>
+        <textarea id="input" placeholder="<section id='hero'>
+  <div class='container'>
+    <h1>Hello M4</h1>
+  </div>
+</section>"></textarea>
+    </div>
+
+    <div class="panel">
+        <div class="header">
+            Emmet Abbreviation
+            <button class="btn" onclick="copyResult()">複製結果</button>
+        </div>
+        <textarea id="output" readonly></textarea>
+    </div>
+</div>
+
+<script>
+    const input = document.getElementById('input');
+    const output = document.getElementById('output');
+
+    function htmlToEmmet(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            const text = node.textContent.trim();
+            return text ? `{${text}}` : "";
+        }
+        if (node.nodeType !== Node.ELEMENT_NODE) return "";
+
+        let emmet = node.tagName.toLowerCase();
+        
+        // ID
+        if (node.id) emmet += `#${node.id}`;
+        
+        // Classes
+        if (node.classList.length > 0) {
+            emmet += `.${Array.from(node.classList).join('.')}`;
+        }
+
+        // 處理子節點
+        const children = Array.from(node.childNodes)
+            .map(htmlToEmmet)
+            .filter(str => str !== "");
+
+        if (children.length > 0) {
+            // 如果只有一個子節點且是純文字
+            if (children.length === 1 && children[0].startsWith('{')) {
+                emmet += children[0];
+            } else {
+                emmet += `>${children.join('+')}`;
+            }
+        }
+
+        return emmet;
+    }
+
+    function convert() {
+        const raw = input.value.trim();
+        if (!raw) {
+            output.value = "";
+            return;
+        }
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(`<div>${raw}</div>`, 'text/html');
+        const wrapper = doc.body.firstChild;
+        
+        const result = Array.from(wrapper.childNodes)
+            .map(htmlToEmmet)
+            .filter(str => str !== "")
+            .join('+');
+
+        output.value = result;
+    }
+
+    function copyResult() {
+        output.select();
+        document.execCommand('copy');
+        const btn = document.querySelector('.btn');
+        btn.innerText = '已複製！';
+        setTimeout(() => btn.innerText = '複製結果', 1500);
+    }
+
+    input.addEventListener('input', convert);
+</script>
+</body>
+</html>
