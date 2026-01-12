@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Style to Attribute Converter</title>
+    <style>
+        :root { --accent: #10b981; --bg: #f9fafb; }
+        :root { --primary: #3b82f6; --bg: #f8fafc; --text: #1e293b; --key-color: #8b5cf6; --val-color: #059669; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); padding: 40px 20px; display: flex; justify-content: center; }
+        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); width: 100%; max-width: 800px; }
+        h2 { margin-top: 0; color: #111827; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        textarea { width: 100%; height: 300px; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px; font-family: 'Fira Code', monospace; font-size: 14px; box-sizing: border-box; resize: none; background: #fff; }
+        textarea:focus { outline: none; border-color: var(--accent); ring: 2px var(--accent); }
+        .label { font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px; display: block; }
+        .arrow { display: flex; align-items: center; justify-content: center; font-size: 24px; color: #9ca3af; }
+        .status { margin-top: 15px; font-size: 13px; color: var(--accent); font-weight: 500; }
+        .nav-back { margin-bottom: 15px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    
+    <div class="card">
+    <a href="index.html" class="nav-back">← 返回首頁</a>
+    <h2>Style ➔ Attr 屬性轉換器</h2>
+    <p style="color: #666; font-size: 14px;">輸入 <code>style="..."</code> 內容，自動提取為標籤屬性格式。</p>
+
+    <div class="grid">
+        <div>
+            <span class="label">Inline Style 內容</span>
+            <textarea id="styleInput" placeholder='例如：width:80px; height:80px; opacity:0.5;'></textarea>
+        </div>
+        <div>
+            <span class="label">Attribute 格式輸出</span>
+            <textarea id="attrOutput" readonly placeholder='width="80px" height="80px" opacity="0.5"'></textarea>
+        </div>
+    </div>
+    <div id="status" class="status"></div>
+</div>
+
+<script>
+    const styleInput = document.getElementById('styleInput');
+    const attrOutput = document.getElementById('attrOutput');
+    const status = document.getElementById('status');
+
+    styleInput.addEventListener('input', () => {
+        const rawValue = styleInput.value.trim();
+        
+        if (!rawValue) {
+            attrOutput.value = '';
+            status.innerText = '';
+            return;
+        }
+
+        // 1. 清理字串，如果使用者連 style="" 整個貼進來也能處理
+        let cleanValue = rawValue;
+        if (rawValue.startsWith('style=')) {
+            cleanValue = rawValue.replace(/^style=["']|["']$/g, '');
+        }
+
+        // 2. 解析 CSS 屬性
+        // 使用分號切分，並過濾掉空值
+        const declarations = cleanValue.split(';').map(d => d.trim()).filter(d => d !== "");
+        
+        const attributes = declarations.map(decl => {
+            const separatorIndex = decl.indexOf(':');
+            if (separatorIndex === -1) return null;
+
+            const key = decl.slice(0, separatorIndex).trim();
+            const value = decl.slice(separatorIndex + 1).trim();
+
+            return `${key}="${value}"`;
+        }).filter(item => item !== null);
+
+        // 3. 組合結果
+        const finalResult = attributes.join(' ');
+        attrOutput.value = finalResult;
+
+        if (attributes.length > 0) {
+            status.innerText = `成功轉換 ${attributes.length} 個屬性`;
+        }
+    });
+
+    // 點擊自動全選輸出內容
+    attrOutput.addEventListener('click', () => {
+        if (attrOutput.value) {
+            attrOutput.select();
+            document.execCommand('copy');
+            const originalText = status.innerText;
+            status.innerText = "✅ 已複製到剪貼簿！";
+            setTimeout(() => { status.innerText = originalText; }, 2000);
+        }
+    });
+</script>
+
+</body>
+</html>

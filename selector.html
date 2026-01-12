@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Unified Selector Generator</title>
+    <style>
+        :root { --primary: #8b5cf6; --bg: #fdfcff; }
+        body { font-family: system-ui, sans-serif; background: var(--bg); padding: 40px; display: flex; justify-content: center; }
+        .card { background: white; padding: 2.5rem; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 600px; }
+        h3 { margin-top: 0; color: #1f2937; border-bottom: 2px solid #f3f4f6; padding-bottom: 15px; }
+        
+        .control-group { margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px; }
+        label { font-size: 13px; font-weight: 700; color: #4b5563; text-transform: uppercase; }
+        select, input { padding: 12px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 15px; transition: all 0.2s; }
+        input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1); }
+        
+        .result-container { margin-top: 30px; background: #111827; padding: 25px; border-radius: 15px; text-align: center; }
+        #output { font-family: 'Fira Code', monospace; font-size: 22px; color: #34d399; word-break: break-all; }
+        .copy-hint { color: #9ca3af; font-size: 12px; margin-top: 15px; display: block; }
+        
+        .type-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 10px; border: 1px solid #e5e7eb; background: #fff; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; }
+        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .nav-back { margin-bottom: 20px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: bold; }
+
+
+        /* 說明區塊設計 */
+        .info-box { margin-top: 30px; border-top: 1px dashed #e5e7eb; padding-top: 20px; }
+        .info-title { font-size: 16px; font-weight: 800; color: #8b5cf6; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .comp-item { background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #f1f5f9; }
+        .comp-header { font-weight: 800; font-size: 14px; margin-bottom: 8px; display: block; }
+        .tag-bad { color: #ef4444; font-weight: bold; }
+        .tag-good { color: #10b981; font-weight: bold; }
+        code { background: #fee2e2; padding: 2px 4px; border-radius: 4px; font-family: monospace; font-size: 13px; color: #b91c1c; }
+        .code-block { background: #f1f5f9; padding: 8px; border-radius: 6px; font-size: 12px; display: block; margin-top: 5px; line-height: 1.4; color: #334155; }
+
+</style>
+</head>
+<body>
+
+<div style="width: 100%; max-width: 600px;">
+    <a href="index.html" class="nav-back">← 返回首頁</a>
+    <div class="card">
+        <h3>CSS Selector 產生器</h3>
+        
+        <div class="control-group">
+            <label>快速切換屬性</label>
+            <div class="type-tabs">
+                <button class="tab-btn active" onclick="setAttr('class', this)">Class</button>
+                <button class="tab-btn" onclick="setAttr('id', this)">ID</button>
+                <button class="tab-btn" onclick="setAttr('href', this)">href</button>
+                <button class="tab-btn" onclick="setAttr('data-custom', this)">Custom</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>屬性名稱 (Attribute)</label>
+            <input type="text" id="attrName" value="class" placeholder="例如: class, id, alt...">
+        </div>
+
+        <div class="control-group">
+            <label>匹配邏輯 (Operator)</label>
+            <select id="matchMode">
+                <option value="exact">完全符合 [=]</option>
+                <option value="contains">包含字串 [*=]</option>
+                <option value="starts">以此開頭 [^=]</option>
+                <option value="ends">以此結尾 [$=]</option>
+                <option value="list">包含單字 [~=]</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label>目標數值 (Value)</label>
+            <input type="text" id="valInput" placeholder="輸入搜尋的值...">
+        </div>
+
+        <div class="result-container" onclick="copyResult()" style="cursor: pointer;">
+            <div id="output">...</div>
+            <span class="copy-hint">點擊黑色區塊複製 Selector</span>
+        </div>
+
+
+        <div class="info-box">
+            <div class="info-title">💡 快速筆記：*= 跟 ~= 這兩個差在哪？</div>
+            <div class="comparison">
+                <div class="comp-item">
+                    <span class="comp-header">`*=` 包含字串 (關鍵字)</span>
+                    <p style="font-size: 13px; line-height: 1.5;">像是搜尋「子字串」，只要<b>字母順序對了</b>就會被抓到。</p>
+                    <div class="code-block">
+                        輸入: "nav"<br>
+                        <span class="tag-good">✔</span> 匹配: class="<b>nav</b>"<br>
+                        <span class="tag-good">✔</span> 匹配: class="top-<b>nav</b>-bar"<br>
+                        <span class="tag-good">✔</span> 匹配: class="<b>nav</b>igation" <span style="color:#888;">(連這裡也會中)</span>
+                    </div>
+                </div>
+                <div class="comp-item">
+                    <span class="comp-header">`~=` 包含單字 (獨立單字)</span>
+                    <p style="font-size: 13px; line-height: 1.5;">必須是<b>獨立的一個詞</b>（兩旁有空格）。專門用來抓多重 Class。</p>
+                    <div class="code-block">
+                        輸入: "nav"<br>
+                        <span class="tag-good">✔</span> 匹配: class="<b>nav</b>"<br>
+                        <span class="tag-good">✔</span> 匹配: class="btn <b>nav</b> active"<br>
+                        <span class="tag-bad">✘</span> 不匹配: class="navigation" <span style="color:#888;">(不是獨立單字)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const attrName = document.getElementById('attrName');
+    const matchMode = document.getElementById('matchMode');
+    const valInput = document.getElementById('valInput');
+    const output = document.getElementById('output');
+
+    function setAttr(name, btn) {
+        attrName.value = name;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        update();
+    }
+
+    function update() {
+        const attr = attrName.value.trim() || 'attr';
+        const val = valInput.value.trim();
+        const mode = matchMode.value;
+
+        if (!val) {
+            output.innerText = '請輸入數值';
+            return;
+        }
+
+        let operator = '=';
+        switch (mode) {
+            case 'contains': operator = '*='; break;
+            case 'starts': operator = '^='; break;
+            case 'ends': operator = '$='; break;
+            case 'list': operator = '~='; break;
+            default: operator = '=';
+        }
+
+        // 核心邏輯：統一使用屬性選擇器格式
+        // 如果是 class 且選擇完全符合，雖然可以使用 .val，但為了統一邏輯，產出 [class="val"]
+        output.innerText = `[${attr}${operator}"${val}"]`;
+    }
+
+    function copyResult() {
+        const text = output.innerText;
+        if (text === '請輸入數值') return;
+        navigator.clipboard.writeText(text);
+        alert('已複製：' + text);
+    }
+
+    [attrName, matchMode, valInput].forEach(el => {
+        el.addEventListener('input', update);
+    });
+
+    update();
+</script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart JS Refactor Tool</title>
+    <style>
+        :root { --js-yellow: #f7df1e; --bg: #1e1e1e; }
+        :root { --primary: #3b82f6;}
+        .nav-back { margin-bottom: 15px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: 600; }
+        body { font-family: 'Fira Code', 'Monaco', monospace; background: var(--bg); color: #e0e0e0; padding: 40px; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 25px; }
+        .badge { background: #3b82f6; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+        .editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        textarea { box-sizing: border-box; width: 100%; height: 450px; background: #252526; border: 1px solid #444; color: #9cdcfe; padding: 20px; border-radius: 8px; font-size: 14px; line-height: 1.6; resize: none; }
+        textarea:focus { outline: none; border-color: var(--js-yellow); }
+        .label { font-size: 14px; font-weight: bold; margin-bottom: 10px; display: block; color: #888; }
+        .highlight { color: var(--js-yellow); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="index.html" class="nav-back">← 返回首頁</a>
+    <div class="header">
+        <h2>Refactor: <span class="highlight">Reduce</span> ➔ <span class="highlight">Filter & Map</span></h2>
+        <span class="badge">智能重構模式</span>
+    </div>
+
+    <div class="editor-grid">
+        <div>
+            <span class="label">Legacy Reduce Code</span>
+            <textarea id="input" placeholder="arr.reduce((acc, item) => {
+  if (item.active) {
+    acc.push(item.value * 2);
+  }
+  return acc;
+}, []);"></textarea>
+        </div>
+        <div>
+            <span class="label">Clean Refactored Code</span>
+            <textarea id="output" readonly></textarea>
+        </div>
+    </div>
+</div>
+
+<script>
+    const input = document.getElementById('input');
+    const output = document.getElementById('output');
+
+    input.addEventListener('input', () => {
+        const code = input.value.trim();
+        if (!code) { output.value = ''; return; }
+
+        try {
+            // 1. 基礎解析
+            const arrayMatch = code.match(/^([\w\d_]+)\.reduce/);
+            const arrayName = arrayMatch ? arrayMatch[1] : 'array';
+            const paramsMatch = code.match(/\(([^)]+)\)\s*=>/);
+            const params = paramsMatch ? paramsMatch[1].split(',').map(p => p.trim()) : ['acc', 'item'];
+            const item = params[1] || 'item';
+
+            // 2. 偵測 IF 結構 (Filter 邏輯)
+            // 匹配 if (condition) { acc.push(result) }
+            const ifRegex = /if\s*\((.*)\)\s*\{([\s\S]*)\}/;
+            const ifMatch = code.match(ifRegex);
+
+            if (ifMatch) {
+                const condition = ifMatch[1].trim();
+                const ifBody = ifMatch[2].trim();
+                
+                // 3. 從 IF Body 提取轉換邏輯 (Map 邏輯)
+                const pushMatch = ifBody.match(/acc\.push\((.*)\)/);
+                const mapLogic = pushMatch ? pushMatch[1].trim() : item;
+
+                output.value = `${arrayName}\n  .filter(${item} => ${condition})\n  .map(${item} => ${mapLogic});`;
+            } else {
+                // 4. 一般 Map 邏輯 (無 Filter)
+                const curlyMatch = code.match(/\{([\s\S]*)\}/);
+                let mapLogic = item;
+                
+                if (curlyMatch) {
+                    const body = curlyMatch[1];
+                    const pushMatch = body.match(/acc\.push\((.*)\)/);
+                    mapLogic = pushMatch ? pushMatch[1].trim() : item;
+                }
+
+                output.value = `${arrayName}.map(${item} => ${mapLogic});`;
+            }
+
+        } catch (e) {
+            output.value = "// 解析失敗：請確保代碼包含標準的 reduce 結構\n// 提示：目前僅支援箭頭函式格式";
+        }
+    });
+</script>
+</body>
+</html>

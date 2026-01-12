@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>SVG Symbol Info Extractor</title>
+    <style>
+        :root { --primary: #6366f1; --bg: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 40px; color: #1e293b; }
+        .container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 80vh; }
+        .panel { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #e2e8f0; }
+        .header { padding: 12px 20px; background: #f1f5f9; border-bottom: 1px solid #e2e8f0; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        textarea { flex: 1; border: none; padding: 20px; font-size: 13px; line-height: 1.6; outline: none; resize: none; font-family: 'Fira Code', monospace; }
+        #output { background: #1e293b; color: #9cdcfe; }
+        .btn { background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .hint { grid-column: 1 / -1; margin-bottom: 10px; font-size: 14px; color: #64748b; }
+        .nav-back { margin-bottom: 20px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="nav-back">← 返回首頁</a>
+<div class="hint">貼上包含多個 <code>&lt;symbol&gt;</code> 的代碼，我會為你提取出名稱與尺寸清單。</div>
+
+<div class="container">
+    <div class="panel">
+        <div class="header">Symbol Source</div>
+        <textarea id="input" placeholder="<symbol id='icon-name' width='24' height='24'>...</symbol>"></textarea>
+    </div>
+
+    <div class="panel">
+        <div class="header">
+            Object List
+            <button class="btn" onclick="copyResult()">複製結果</button>
+        </div>
+        <textarea id="output" readonly></textarea>
+    </div>
+</div>
+
+<script>
+    const input = document.getElementById('input');
+    const output = document.getElementById('output');
+
+    function extractInfo() {
+        const text = input.value.trim();
+        if (!text) {
+            output.value = "";
+            return;
+        }
+
+        // 使用正則表達式尋找所有 <symbol ... > 標籤
+        // 捕捉 id, width, height
+        const symbolRegex = /<symbol([^>]+)>/gi;
+        const attrRegex = /(\w+)="([^"]+)"/g;
+        
+        const results = [];
+        let match;
+
+        while ((match = symbolRegex.exec(text)) !== null) {
+            const attrText = match[1];
+            let attrs = {};
+            let attrMatch;
+            
+            // 提取該標籤內的所有屬性
+            while ((attrMatch = attrRegex.exec(attrText)) !== null) {
+                attrs[attrMatch[1].toLowerCase()] = attrMatch[2];
+            }
+
+            // 組合所需的物件格式
+            results.push({
+                name: attrs.id || "unknown",
+                width: parseInt(attrs.width) || 0,
+                height: parseInt(attrs.height) || 0
+            });
+        }
+
+        // 轉換成你要求的格式串
+        const outputText = results.map(obj => {
+            return `{\n  name: "${obj.name}",\n  width: ${obj.width},\n  height: ${obj.height},\n},`;
+        }).join('\n');
+
+        output.value = outputText;
+    }
+
+    input.addEventListener('input', extractInfo);
+
+    function copyResult() {
+        output.select();
+        document.execCommand('copy');
+        alert('清單已複製！');
+    }
+</script>
+</body>
+</html>

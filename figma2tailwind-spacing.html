@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Figma Size & Spacing Converter</title>
+    <style>
+        :root { --primary: #10b981; --bg: #f0fdf4; }
+        body { font-family: 'Fira Code', monospace; background: var(--bg); padding: 40px; color: #064e3b; }
+        .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 80vh; }
+        .panel { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #d1fae5; }
+        .header { padding: 12px 20px; background: #d1fae5; border-bottom: 1px solid #a7f3d0; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        textarea { flex: 1; border: none; padding: 20px; font-size: 13px; line-height: 1.6; outline: none; resize: none; background: #fff; }
+        #output { background: #064e3b; color: #a7f3d0; }
+        .controls { display: flex; gap: 10px; align-items: center; }
+        .btn { background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        select { padding: 4px 8px; border-radius: 4px; border: 1px solid #a7f3d0; font-size: 12px; }
+        .hint { grid-column: 1 / -1; margin-bottom: 10px; font-size: 14px; color: #065f46; }
+        .nav-back { margin-bottom: 20px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="nav-back">← 返回首頁</a>
+<div class="hint">貼上 Figma Size/Spacing JSON，產出 Tailwind 擴充配置或 Stylus 尺寸變數。</div>
+
+<div class="container">
+    <div class="panel">
+        <div class="header">Figma JSON Input</div>
+        <textarea id="jsonInput" placeholder='貼上尺寸或間距的 JSON 資料...'></textarea>
+    </div>
+
+    <div class="panel">
+        <div class="header">
+            <div class="controls">
+                <span>輸出格式：</span>
+                <select id="formatSelect">
+                    <option value="tailwind">Tailwind Spacing</option>
+                    <option value="stylus">Stylus Variables</option>
+                </select>
+            </div>
+            <button class="btn" onclick="copyResult()">複製結果</button>
+        </div>
+        <textarea id="output" readonly></textarea>
+    </div>
+</div>
+
+<script>
+    const input = document.getElementById('jsonInput');
+    const output = document.getElementById('output');
+    const formatSelect = document.getElementById('formatSelect');
+
+    function cleanKey(str) {
+        return str
+            .replace(/[＆&]/g, '-') // 處理特殊符號 ＆
+            .replace(/\s+/g, '-')   // 處理空格
+            .replace(/-+/g, '-')    // 處理連續橫線
+            .toLowerCase()          // 統一小寫
+            .trim();
+    }
+
+    function convert() {
+        try {
+            const data = JSON.parse(input.value);
+            const format = formatSelect.value;
+            const result = {};
+
+            function parseTokens(obj, path = []) {
+                for (let key in obj) {
+                    if (key.startsWith('$')) continue;
+                    const current = obj[key];
+                    const newPath = [...path, key];
+
+                    // 判斷是否為數值終點
+                    if (current && typeof current.$value === 'number') {
+                        const configKey = newPath.map(cleanKey).filter(k => k).join('-');
+                        result[configKey] = current.$value;
+                    } else if (typeof current === 'object' && current !== null) {
+                        parseTokens(current, newPath);
+                    }
+                }
+            }
+
+            parseTokens(data);
+
+            let outputText = "";
+            if (format === 'tailwind') {
+                outputText = "spacing: {\n";
+                for (let k in result) {
+                    outputText += `  '${k}': '${result[k]}px',\n`;
+                }
+                outputText += "}";
+            } else {
+                for (let k in result) {
+                    outputText += `${k} = ${result[k]}px\n`;
+                }
+            }
+            
+            output.value = outputText;
+        } catch (e) {
+            output.value = "JSON 解析錯誤，請檢查格式。";
+        }
+    }
+
+    input.addEventListener('input', convert);
+    formatSelect.addEventListener('change', convert);
+
+    function copyResult() {
+        output.select();
+        document.execCommand('copy');
+        alert('已複製到剪貼簿');
+    }
+</script>
+</body>
+</html>

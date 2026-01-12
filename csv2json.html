@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Robust CSV to JSON (Supports Multi-line cells)</title>
+    <style>
+        :root { --primary: #059669; --bg: #f0fdf4; }
+        body { font-family: 'Inter', 'Fira Code', monospace; background: var(--bg); padding: 40px; }
+        .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 85vh; }
+        .panel { background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); display: flex; flex-direction: column; overflow: hidden; }
+        .header { padding: 15px 20px; background: #ecfdf5; border-bottom: 1px solid #d1fae5; font-weight: bold; display: flex; justify-content: space-between; align-items: center; color: #065f46; }
+        textarea { flex: 1; border: none; padding: 20px; font-size: 13px; line-height: 1.6; outline: none; resize: none; }
+        #output { background: #064e3b; color: #a7f3d0; }
+        .btn { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .nav-back { margin-bottom: 20px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="nav-back">← 返回工具箱</a>
+
+<div class="container">
+    <div class="panel">
+        <div class="header">貼上內容 (支援儲存格內換行)</div>
+        <textarea id="input" placeholder="直接從 Excel 複製貼上內容..."></textarea>
+    </div>
+
+    <div class="panel">
+        <div class="header">
+            JSON Output
+            <button class="btn" onclick="copyResult()">複製 JSON</button>
+        </div>
+        <textarea id="output" readonly></textarea>
+    </div>
+</div>
+
+<script>
+    const input = document.getElementById('input');
+    const output = document.getElementById('output');
+
+    // 強大的 CSV/Tab 解析函式，可處理雙引號內的換行與 Tab
+    function parseCSV(text) {
+        const rows = [];
+        let row = [];
+        let field = "";
+        let inQuotes = false;
+
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            const nextChar = text[i + 1];
+
+            if (inQuotes) {
+                if (char === '"' && nextChar === '"') { // 處理跳脫的雙引號 ""
+                    field += '"';
+                    i++;
+                } else if (char === '"') { // 離開引號模式
+                    inQuotes = false;
+                } else {
+                    field += char; // 即使是換行符也直接加入 field
+                }
+            } else {
+                if (char === '"') {
+                    inQuotes = true;
+                } else if (char === '\t') { // 分隔欄位
+                    row.push(field);
+                    field = "";
+                } else if (char === '\n' || char === '\r') { // 分隔列
+                    if (char === '\r' && nextChar === '\n') i++; // 處理 \r\n
+                    row.push(field);
+                    rows.push(row);
+                    row = [];
+                    field = "";
+                } else {
+                    field += char;
+                }
+            }
+        }
+        // 處理最後一列
+        if (field || row.length > 0) {
+            row.push(field);
+            rows.push(row);
+        }
+        return rows;
+    }
+
+    input.addEventListener('input', () => {
+        const raw = input.value;
+        if (!raw.trim()) {
+            output.value = "";
+            return;
+        }
+
+        const data = parseCSV(raw);
+        if (data.length < 2) {
+            output.value = "資料量不足 (至少需要標題行與一行資料)";
+            return;
+        }
+
+        const keys = data[0].map(k => k.trim());
+        const result = [];
+
+        for (let i = 1; i < data.length; i++) {
+            const values = data[i];
+            // 過濾掉全空的列 (例如 Excel 最後常帶有的空列)
+            if (values.length === 1 && values[0] === "") continue;
+
+            const obj = {};
+            keys.forEach((key, index) => {
+                obj[key] = values[index] !== undefined ? values[index].trim() : "";
+            });
+            result.push(obj);
+        }
+
+        output.value = JSON.stringify(result, null, 2);
+    });
+
+    function copyResult() {
+        output.select();
+        document.execCommand('copy');
+        alert('JSON 已複製！');
+    }
+</script>
+</body>
+</html>

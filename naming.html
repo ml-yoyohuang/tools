@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全格式命名轉換器 (All-in-one Case Converter)</title>
+    <style>
+        :root { --primary: #4a90e2; --bg: #f0f2f5; }
+        :root { --primary: #3b82f6; --bg: #f8fafc; --text: #1e293b; --key-color: #8b5cf6; --val-color: #059669; }
+        .nav-back { margin-bottom: 15px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: 600; }        
+        body { font-family: -apple-system, sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 40px 20px; }
+        .card { background: white; padding: 2.5rem; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width: 100%; max-width: 700px; }
+        h2 { margin-top: 0; color: #1a202c; text-align: center; margin-bottom: 20px; }
+        
+        .input-group { margin-bottom: 30px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #4a5568; }
+        textarea { width: 100%; padding: 15px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 18px; box-sizing: border-box; transition: all 0.2s; resize: vertical; }
+        textarea:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1); }
+
+        .result-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        .result-item { display: flex; align-items: center; background: #f8fafc; padding: 12px 18px; border-radius: 8px; border: 1px solid #edf2f7; transition: transform 0.1s; cursor: pointer; }
+        .result-item:hover { background: #edf2f7; transform: translateY(-1px); }
+        .result-item:active { transform: translateY(0); }
+        
+        .label-tag { width: 140px; font-size: 12px; font-weight: 800; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; }
+        .value-text { flex: 1; font-family: 'Fira Code', monospace; font-size: 16px; color: #2d3748; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .copy-hint { font-size: 11px; color: var(--primary); font-weight: 600; opacity: 0; transition: 0.2s; }
+        .result-item:hover .copy-hint { opacity: 1; }
+        
+        .toast { position: fixed; bottom: 20px; background: #2d3748; color: white; padding: 10px 20px; border-radius: 5px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <a href="index.html" class="nav-back">← 返回首頁</a>
+    <h2>命名格式轉換器</h2>
+    
+    <div class="input-group">
+        <label>輸入任何格式的文字</label>
+        <textarea id="input" rows="2" placeholder="例如：getUserData, my_variable, post-title..." autofocus></textarea>
+    </div>
+
+    <div class="result-grid" id="resultGrid">
+        <div class="result-item" onclick="copyValue(this)">
+            <span class="label-tag">camelCase</span>
+            <span class="value-text" id="out-camel">-</span>
+            <span class="copy-hint">點擊複製</span>
+        </div>
+        <div class="result-item" onclick="copyValue(this)">
+            <span class="label-tag">PascalCase</span>
+            <span class="value-text" id="out-pascal">-</span>
+            <span class="copy-hint">點擊複製</span>
+        </div>
+        <div class="result-item" onclick="copyValue(this)">
+            <span class="label-tag">kebab-case</span>
+            <span class="value-text" id="out-kebab">-</span>
+            <span class="copy-hint">點擊複製</span>
+        </div>
+        <div class="result-item" onclick="copyValue(this)">
+            <span class="label-tag">snake_case</span>
+            <span class="value-text" id="out-snake">-</span>
+            <span class="copy-hint">點擊複製</span>
+        </div>
+        <div class="result-item" onclick="copyValue(this)">
+            <span class="label-tag">CONSTANT_CASE</span>
+            <span class="value-text" id="out-constant">-</span>
+            <span class="copy-hint">點擊複製</span>
+        </div>
+        <div class="result-item" onclick="copyValue(this)">
+            <span class="label-tag">Sentence case</span>
+            <span class="value-text" id="out-sentence">-</span>
+            <span class="copy-hint">點擊複製</span>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast">已複製到剪貼簿</div>
+
+<script>
+    const input = document.getElementById('input');
+    const outputs = {
+        camel: document.getElementById('out-camel'),
+        pascal: document.getElementById('out-pascal'),
+        kebab: document.getElementById('out-kebab'),
+        snake: document.getElementById('out-snake'),
+        constant: document.getElementById('out-constant'),
+        sentence: document.getElementById('out-sentence')
+    };
+
+    // 核心解析邏輯：能處理 Camel, Pascal, Snake, Kebab
+    function getWords(str) {
+        if (!str) return [];
+        return str
+            .replace(/([a-z])([A-Z])/g, '$1 $2') // camelCase -> camel Case
+            .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2') // JSONParser -> JSON Parser
+            .replace(/[_\-\.]/g, ' ') // snake_case / kebab-case -> space
+            .trim()
+            .toLowerCase()
+            .split(/\s+/);
+    }
+
+    function updateAll() {
+        const words = getWords(input.value);
+        
+        if (words.length === 0 || (words.length === 1 && words[0] === "")) {
+            Object.values(outputs).forEach(el => el.innerText = "-");
+            return;
+        }
+
+        // 1. camelCase
+        outputs.camel.innerText = words.map((w, i) => i === 0 ? w : w.charAt(0).toUpperCase() + w.slice(1)).join('');
+        
+        // 2. PascalCase
+        outputs.pascal.innerText = words.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('');
+        
+        // 3. kebab-case
+        outputs.kebab.innerText = words.join('-');
+        
+        // 4. snake_case
+        outputs.snake.innerText = words.join('_');
+        
+        // 5. CONSTANT_CASE
+        outputs.constant.innerText = words.join('_').toUpperCase();
+        
+        // 6. Sentence case
+        const full = words.join(' ');
+        outputs.sentence.innerText = full.charAt(0).toUpperCase() + full.slice(1);
+    }
+
+    // 監聽輸入即時更新
+    input.addEventListener('input', updateAll);
+
+    // 複製功能
+    function copyValue(container) {
+        const text = container.querySelector('.value-text').innerText;
+        if (text === "-") return;
+        
+        navigator.clipboard.writeText(text).then(() => {
+            const toast = document.getElementById('toast');
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2000);
+        });
+    }
+</script>
+
+</body>
+</html>

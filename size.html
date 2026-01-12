@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro Viewport Checker</title>
+    <style>
+        :root { --primary: #6366f1; --accent: #10b981; --bg: #0f172a; }
+        body { margin: 0; background: var(--bg); font-family: 'Inter', system-ui, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; color: #fff; overflow: hidden; }
+        .card { text-align: center; background: rgba(30, 41, 59, 0.7); padding: 3rem; border-radius: 32px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(12px); width: 100%; max-width: 600px; }
+        .label { font-size: 14px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1.5rem; }
+        .dimension { font-size: 5rem; font-weight: 800; line-height: 1; display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 2rem; }
+        .x { color: var(--primary); font-size: 3rem; opacity: 0.8; }
+        
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 2rem; }
+        .stat-box { text-align: left; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 16px; }
+        .stat-label { font-size: 11px; color: #64748b; text-transform: uppercase; margin-bottom: 5px; }
+        .stat-value { font-size: 18px; font-weight: 700; color: #e2e8f0; }
+        
+        .device-type { margin-top: 2rem; padding: 10px 30px; background: linear-gradient(135deg, var(--primary), #818cf8); border-radius: 100px; display: inline-block; font-weight: 700; font-size: 1.1rem; box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3); }
+        .nav-back { position: fixed; top: 20px; left: 20px; color: #64748b; text-decoration: none; font-size: 14px; font-weight: 600; transition: color 0.2s; }
+        .nav-back:hover { color: #fff; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="nav-back">← 工具箱首頁</a>
+
+<div class="card">
+    <div class="label">CSS 邏輯像素 (網頁開發基準)</div>
+    <div class="dimension">
+        <span id="w">---</span>
+        <span class="x">×</span>
+        <span id="h">---</span>
+    </div>
+    
+    <div class="device-type" id="type">偵測中...</div>
+
+    <div class="stats-grid">
+        <div class="stat-box">
+            <div class="stat-label">縮放倍率 (DPR)</div>
+            <div class="stat-value" id="dpr">---</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">實體像素 (硬體規格)</div>
+            <div class="stat-value" id="physical">---</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const wEl = document.getElementById('w');
+    const hEl = document.getElementById('h');
+    const tEl = document.getElementById('type');
+    const dprEl = document.getElementById('dpr');
+    const phyEl = document.getElementById('physical');
+
+    function updateSize() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const dpr = window.devicePixelRatio;
+
+        // 1. 更新邏輯像素 (CSS 判斷用)
+        wEl.innerText = width;
+        hEl.innerText = height;
+
+        // 2. 更新 DPR (Retina 通常為 2)
+        dprEl.innerText = dpr.toFixed(2) + 'x';
+
+        // 3. 計算實體像素
+        const phyW = Math.round(width * dpr);
+        const phyH = Math.round(height * dpr);
+        phyEl.innerText = `${phyW} × ${phyH}`;
+
+        // 4. 斷點判定
+        let type = "Desktop";
+        if (width <= 768) type = "Mobile (手機)";
+        else if (width <= 1024) type = "Tablet (平板)";
+        else if (width <= 1728) type = "Laptop (筆電)";
+        else if (width <= 2560) type = "Desktop (桌機)";
+        else type = "Large Screen (大螢幕)";
+        
+        tEl.innerText = type;
+    }
+
+    window.addEventListener('resize', updateSize);
+    updateSize();
+</script>
+</body>
+</html>

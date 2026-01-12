@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Swiper Pro + A11y Generator</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <style>
+        :root { --primary: #007aff; --bg: #f3f4f6; --sidebar: #ffffff; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* 佈局 */
+        .sidebar { width: 420px; background: var(--sidebar); border-right: 1px solid #e5e7eb; overflow-y: auto; padding: 25px; box-sizing: border-box; }
+        .main-content { flex: 1; display: flex; flex-direction: column; padding: 30px; gap: 20px; overflow-y: auto; }
+        
+        /* 表單元素 */
+        .section-title { font-size: 13px; font-weight: 800; color: #9ca3af; text-transform: uppercase; margin: 25px 0 10px; border-bottom: 2px solid #f3f4f6; padding-bottom: 5px; }
+        .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .field { margin-bottom: 12px; }
+        label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: #374151; }
+        input[type="number"], input[type="text"], select { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; box-sizing: border-box; }
+        .checkbox-item { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 8px 0; cursor: pointer; color: #374151; }
+
+        /* 預覽與播放按鈕 */
+        .swiper-preview { background: #fff; padding: 50px 20px; border-radius: 16px; border: 1px solid #e5e7eb; position: relative; }
+        .swiper { width: 100%; height: 220px; }
+        .swiper-slide { background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; border-radius: 12px; }
+        .autoplay-toggle-wrapper { margin-top: 20px; text-align: center; }
+        .btn-toggle { padding: 8px 20px; border: 2px solid var(--primary); background: transparent; color: var(--primary); border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-toggle:hover { background: var(--primary); color: white; }
+        
+        /* 代碼區 */
+        .code-container { background: #1e1e1e; border-radius: 12px; padding: 20px; position: relative; }
+        pre { margin: 0; color: #9cdcfe; font-family: 'Fira Code', monospace; font-size: 13px; overflow-x: auto; line-height: 1.5; }
+        .copy-btn { position: absolute; top: 15px; right: 15px; background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .nav-back { color: var(--primary); text-decoration: none; font-size: 14px; font-weight: bold; display: block; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <a href="index.html" class="nav-back">← 工具箱首頁</a>
+    <h2 style="margin:0">Swiper A11y Pro</h2>
+    <p style="font-size:12px; color:#666">全功能配置 + 無障礙標準 (WCAG)</p>
+
+    <div class="section-title">Base (基礎配置)</div>
+    <div class="control-grid">
+        <div class="field"><label>張數 (slidesPerView)</label><input type="number" id="slidesPerView" value="1" step="0.1"></div>
+        <div class="field"><label>間距 (spaceBetween)</label><input type="number" id="spaceBetween" value="20"></div>
+        <div class="field"><label>速度 (speed)</label><input type="number" id="speed" value="600"></div>
+        <div class="field"><label>起始索引</label><input type="number" id="initialSlide" value="0"></div>
+    </div>
+    <div class="checkbox-item"><input type="checkbox" id="loop" checked> 無限循環 (Loop)</div>
+    <div class="checkbox-item"><input type="checkbox" id="centeredSlides"> 置中模式 (Centered)</div>
+    <div class="checkbox-item"><input type="checkbox" id="grabCursor" checked> 手型游標 (Grab)</div>
+
+    <div class="section-title">Modules (功能模組)</div>
+    <div class="checkbox-item"><input type="checkbox" id="mod_autoplay" checked> 自動播放 (Autoplay)</div>
+    <div id="autoplay_opt" style="padding-left: 20px;">
+        <div class="field"><label>延遲 (ms)</label><input type="number" id="autoplay_delay" value="3000"></div>
+        <div class="checkbox-item"><input type="checkbox" id="pauseOnMouseEnter" checked> 滑鼠懸停暫停</div>
+        <div class="checkbox-item"><input type="checkbox" id="addPlayPauseBtn" checked> <span style="color:var(--primary)">★ 產生播放控制鈕</span></div>
+    </div>
+    
+    <div class="checkbox-item"><input type="checkbox" id="mod_pagination" checked> 分頁導航 (Pagination)</div>
+    <select id="pag_type" style="margin-bottom: 10px;">
+        <option value="bullets">圓點 (Bullets)</option>
+        <option value="fraction">數字 (Fraction)</option>
+        <option value="progressbar">進度條 (Progress)</option>
+    </select>
+
+    <div class="checkbox-item"><input type="checkbox" id="mod_navigation" checked> 左右箭頭 (Navigation)</div>
+    <div class="checkbox-item"><input type="checkbox" id="mod_scrollbar"> 滾動條 (Scrollbar)</div>
+    <div class="checkbox-item"><input type="checkbox" id="mod_mousewheel"> 滑鼠滾輪切換</div>
+    <div class="checkbox-item"><input type="checkbox" id="mod_keyboard" checked> 鍵盤方向鍵控制</div>
+
+    <div class="section-title">Visual (視覺特效)</div>
+    <select id="effect">
+        <option value="slide">Slide (平滑)</option>
+        <option value="fade">Fade (漸層)</option>
+        <option value="cube">Cube (方塊)</option>
+        <option value="coverflow">Coverflow (封面流)</option>
+        <option value="cards">Cards (卡片)</option>
+    </select>
+</aside>
+
+<main class="main-content">
+    <div class="swiper-preview">
+        <div class="swiper mySwiper">
+            <div class="swiper-wrapper">
+                <div class="swiper-slide">Slide 1</div>
+                <div class="swiper-slide">Slide 2</div>
+                <div class="swiper-slide">Slide 3</div>
+                <div class="swiper-slide">Slide 4</div>
+            </div>
+            <div class="swiper-pagination"></div>
+            <div class="swiper-button-next"></div>
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-scrollbar"></div>
+        </div>
+        <div class="autoplay-toggle-wrapper" id="btnWrapper">
+            <button id="realtimeToggle" class="btn-toggle" aria-label="Pause Autoplay">Pause</button>
+        </div>
+    </div>
+
+    <div class="code-container">
+        <button class="copy-btn" onclick="copyCode()">Copy Config</button>
+        <pre><code id="codeOutput"></code></pre>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script>
+    let swiper = null;
+
+    function update() {
+        const isAutoplay = document.getElementById('mod_autoplay').checked;
+        const isA11yBtn = document.getElementById('addPlayPauseBtn').checked;
+
+        const config = {
+            loop: document.getElementById('loop').checked,
+            speed: parseInt(document.getElementById('speed').value),
+            slidesPerView: parseFloat(document.getElementById('slidesPerView').value),
+            spaceBetween: parseInt(document.getElementById('spaceBetween').value),
+            initialSlide: parseInt(document.getElementById('initialSlide').value),
+            centeredSlides: document.getElementById('centeredSlides').checked,
+            grabCursor: document.getElementById('grabCursor').checked,
+            effect: document.getElementById('effect').value,
+            // A11y 核心設定
+            a11y: {
+                prevSlideMessage: '上一張',
+                nextSlideMessage: '下一張',
+                firstSlideMessage: '這是第一張',
+                lastSlideMessage: '這是最後一張',
+                paginationBulletMessage: '前往第 {{index}} 張',
+            },
+            keyboard: document.getElementById('mod_keyboard').checked ? { enabled: true, onlyInViewport: true } : false,
+            mousewheel: document.getElementById('mod_mousewheel').checked,
+        };
+
+        if (isAutoplay) {
+            document.getElementById('autoplay_opt').style.display = 'block';
+            config.autoplay = {
+                delay: parseInt(document.getElementById('autoplay_delay').value),
+                pauseOnMouseEnter: document.getElementById('pauseOnMouseEnter').checked,
+                disableOnInteraction: false,
+            };
+        } else {
+            document.getElementById('autoplay_opt').style.display = 'none';
+        }
+
+        if (document.getElementById('mod_pagination').checked) {
+            config.pagination = { el: '.swiper-pagination', type: document.getElementById('pag_type').value, clickable: true };
+            document.querySelector('.swiper-pagination').style.display = 'block';
+        } else {
+            document.querySelector('.swiper-pagination').style.display = 'none';
+        }
+
+        if (document.getElementById('mod_navigation').checked) {
+            config.navigation = { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' };
+            document.querySelectorAll('.swiper-button-next, .swiper-button-prev').forEach(el => el.style.display = 'flex');
+        } else {
+            document.querySelectorAll('.swiper-button-next, .swiper-button-prev').forEach(el => el.style.display = 'none');
+        }
+
+        if (document.getElementById('mod_scrollbar').checked) {
+            config.scrollbar = { el: '.swiper-scrollbar' };
+            document.querySelector('.swiper-scrollbar').style.display = 'block';
+        } else {
+            document.querySelector('.swiper-scrollbar').style.display = 'none';
+        }
+
+        // 處理播放按鈕 UI
+        const showBtn = isAutoplay && isA11yBtn;
+        document.getElementById('btnWrapper').style.display = showBtn ? 'block' : 'none';
+
+        // 生成 Code
+        let codeStr = `const swiper = new Swiper('.swiper', ${JSON.stringify(config, null, 2)});`;
+        if (showBtn) {
+            codeStr += `\n\n// 播放/暫停控制邏輯\nconst btn = document.querySelector('#playPauseBtn');\nbtn.addEventListener('click', () => {\n  if (swiper.autoplay.running) {\n    swiper.autoplay.stop();\n    btn.textContent = 'Play';\n    btn.setAttribute('aria-label', 'Start Autoplay');\n  } else {\n    swiper.autoplay.start();\n    btn.textContent = 'Pause';\n    btn.setAttribute('aria-label', 'Pause Autoplay');\n  }\n});`;
+        }
+        document.getElementById('codeOutput').innerText = codeStr;
+
+        // 實體更新
+        if (swiper) swiper.destroy(true, true);
+        swiper = new Swiper('.mySwiper', config);
+    }
+
+    // 播放鈕即時邏輯
+    document.getElementById('realtimeToggle').addEventListener('click', function() {
+        if (swiper.autoplay.running) {
+            swiper.autoplay.stop();
+            this.textContent = 'Play';
+        } else {
+            swiper.autoplay.start();
+            this.textContent = 'Pause';
+        }
+    });
+
+    document.querySelectorAll('input, select').forEach(el => el.addEventListener('change', update));
+    update();
+
+    function copyCode() {
+        navigator.clipboard.writeText(document.getElementById('codeOutput').innerText);
+        alert('配置與無障礙邏輯已複製！');
+    }
+</script>
+
+</body>
+</html>

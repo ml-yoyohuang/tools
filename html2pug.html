@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>HTML to Pug Converter (Pure JS)</title>
+    <style>
+        :root { --primary: #3b82f6; --bg: #f8fafc; --text: #1e293b; --key-color: #8b5cf6; --val-color: #059669; }
+        .nav-back { margin-bottom: 15px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: 600; }
+        body { background: var(--bg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; color: #333; }
+        .container { display: flex; gap: 20px; height: 70vh; }
+        .box { flex: 1; display: flex; flex-direction: column; }
+        textarea { flex: 1; padding: 12px; font-family: "Fira Code", monospace; font-size: 14px; border: 1px solid #ddd; border-radius: 6px; line-height: 1.5; }
+        h3 { margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="nav-back">← 返回首頁</a>
+    <h2>HTML 轉 Pug 轉換器 (純 JS 版)</h2>
+    <p>規則：自動偵測標籤、類別、ID，並強制使用 <b>2 個空格</b> 縮排。</p>
+
+    <div class="container">
+        <div class="box">
+            <h3>HTML Input</h3>
+            <textarea id="htmlInput" placeholder="請貼上 HTML 代碼..."></textarea>
+        </div>
+        <div class="box">
+            <h3>Pug Output</h3>
+            <textarea id="pugOutput" readonly></textarea>
+        </div>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+          const htmlInput = document.getElementById('htmlInput');
+          const pugOutput = document.getElementById('pugOutput');
+
+          htmlInput.addEventListener('input', () => {
+              const htmlRaw = htmlInput.value.trim();
+              if (!htmlRaw) {
+                  pugOutput.value = '';
+                  return;
+              }
+
+              try {
+                  // 使用瀏覽器內建 Parser 解析 HTML 片段
+                  const parser = new DOMParser();
+                  const doc = parser.parseFromString(htmlRaw, 'text/html');
+                  
+                  // 開始遞迴轉換，從 body 的子節點開始
+                  let result = '';
+                  Array.from(doc.body.childNodes).forEach(node => {
+                      result += convertNode(node, 0);
+                  });
+
+                  pugOutput.value = result.trim();
+              } catch (err) {
+                  pugOutput.value = "轉換出錯: " + err.message;
+              }
+          });
+
+          function convertNode(node, depth) {
+              const indent = '  '.repeat(depth); // 固定 Space 2 縮排
+
+              // 1. 處理元素節點 (Element)
+              if (node.nodeType === 1) { 
+                  let line = indent + node.tagName.toLowerCase();
+
+                  // 處理 ID (#)
+                  if (node.id) {
+                      line += `#${node.id}`;
+                  }
+
+                  // 處理 Class (.)
+                  if (node.classList.length > 0) {
+                      line += `.${Array.from(node.classList).join('.')}`;
+                  }
+
+                  // 處理其他屬性 (Attributes)
+                  const attrs = Array.from(node.attributes)
+                      .filter(attr => attr.name !== 'id' && attr.name !== 'class')
+                      .map(attr => `${attr.name}="${attr.value}"`)
+                      .join(', ');
+                  
+                  if (attrs) {
+                      line += `(${attrs})`;
+                  }
+
+                  // 檢查是否有子節點或文字
+                  let childrenPug = '';
+                  const childNodes = Array.from(node.childNodes);
+                  
+                  // 如果只有一個純文字子節點，直接接在後方
+                  if (childNodes.length === 1 && childNodes[0].nodeType === 3) {
+                      const text = childNodes[0].textContent.trim();
+                      if (text) {
+                          line += ` ${text}\n`;
+                      } else {
+                          line += '\n';
+                      }
+                  } else {
+                      line += '\n';
+                      childNodes.forEach(child => {
+                          childrenPug += convertNode(child, depth + 1);
+                      });
+                  }
+
+                  return line + childrenPug;
+              } 
+              
+              // 2. 處理文字節點 (Text Node)
+              if (node.nodeType === 3) {
+                  const text = node.textContent.trim();
+                  if (text) {
+                      // 如果是在元素內層的文字，需要維持縮排
+                      return `${indent}| ${text}\n`;
+                  }
+              }
+
+              return '';
+          }
+      });
+    </script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>SVG to Symbol Converter</title>
+    <style>
+        :root { --primary: #0ea5e9; --bg: #f0f9ff; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 40px; color: #0c4a6e; }
+        .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 80vh; }
+        .panel { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #bae6fd; }
+        .header { padding: 12px 20px; background: #e0f2fe; border-bottom: 1px solid #bae6fd; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        textarea { flex: 1; border: none; padding: 20px; font-size: 13px; line-height: 1.6; outline: none; resize: none; font-family: 'Fira Code', monospace; }
+        #output { background: #0c4a6e; color: #bae6fd; }
+        .controls { display: flex; gap: 10px; align-items: center; }
+        input[type="text"] { padding: 4px 8px; border-radius: 4px; border: 1px solid #bae6fd; font-size: 12px; }
+        .btn { background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .hint { grid-column: 1 / -1; margin-bottom: 10px; font-size: 14px; color: #0369a1; }
+        .nav-back { margin-bottom: 20px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="nav-back">← 返回首頁</a>
+<div class="hint">貼上 SVG 原始碼，我會幫你轉成 Symbol 格式並自動將顏色設為 <code>currentColor</code>。</div>
+
+<div class="container">
+    <div class="panel">
+        <div class="header">
+            SVG Source
+            <div class="controls">
+                <span>ID:</span>
+                <input type="text" id="symbolId" value="icon-new-icon" placeholder="輸入 Symbol ID">
+            </div>
+        </div>
+        <textarea id="input" placeholder="<svg>...</svg>"></textarea>
+    </div>
+
+    <div class="panel">
+        <div class="header">
+            Symbol Result
+            <button class="btn" onclick="copyResult()">複製代碼</button>
+        </div>
+        <textarea id="output" readonly></textarea>
+    </div>
+</div>
+
+<script>
+    const input = document.getElementById('input');
+    const output = document.getElementById('output');
+    const symbolIdInput = document.getElementById('symbolId');
+
+    function convert() {
+        let svg = input.value.trim();
+        if (!svg) {
+            output.value = "";
+            return;
+        }
+
+        const id = symbolIdInput.value || 'icon-name';
+
+        // 1. 將 <svg 替換為 <symbol，並加入 id，同時移除 xmlns (symbol 通常不需要個別的 xmlns)
+        let result = svg
+            .replace(/<svg/gi, `<symbol id="${id}"`)
+            .replace(/<\/svg>/gi, '</symbol>');
+
+        // 2. 移除可能干擾的屬性（選用，視需求保留 width/height）
+        // 如果你希望在 symbol 中保留 viewBox 但移除 xmlns 以外的屬性，可以自訂此處
+
+        // 3. 顏色處理：將 fill="#XXXXXX" 或 fill="rgb(...)" 轉為 fill="currentColor"
+        // 排除 fill="none"
+        result = result.replace(/fill="(?!none)[^"]+"/gi, 'fill="currentColor"');
+        result = result.replace(/stroke="(?!none)[^"]+"/gi, 'stroke="currentColor"');
+
+        output.value = result;
+    }
+
+    input.addEventListener('input', convert);
+    symbolIdInput.addEventListener('input', convert);
+
+    function copyResult() {
+        output.select();
+        document.execCommand('copy');
+        alert('Symbol 已複製！');
+    }
+</script>
+</body>
+</html>

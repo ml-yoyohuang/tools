@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Figma Tokens Converter (Tailwind / Stylus)</title>
+    <style>
+        :root { --primary: #3b82f6; --bg: #f8fafc; }
+        body { font-family: 'Fira Code', monospace; background: var(--bg); padding: 40px; color: #1e293b; }
+        .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 80vh; }
+        .panel { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; }
+        .header { padding: 12px 20px; background: #f1f5f9; border-bottom: 1px solid #e2e8f0; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        textarea { flex: 1; border: none; padding: 20px; font-size: 13px; line-height: 1.6; outline: none; resize: none; background: #fff; }
+        #output { background: #1e293b; color: #9cdcfe; }
+        .controls { display: flex; gap: 10px; align-items: center; }
+        .btn { background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        select { padding: 4px 8px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 12px; }
+        .hint { grid-column: 1 / -1; margin-bottom: 10px; font-size: 14px; color: #64748b; }
+        .nav-back { margin-bottom: 20px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="nav-back">← 返回首頁</a>
+<div class="hint">貼上 Figma JSON，並選擇您需要的輸出格式 (Tailwind Config 或 Stylus Variables)。</div>
+
+<div class="container">
+    <div class="panel">
+        <div class="header">Figma JSON Input</div>
+        <textarea id="jsonInput" placeholder='貼上您的 JSON 資料...'></textarea>
+    </div>
+
+    <div class="panel">
+        <div class="header">
+            <div class="controls">
+                <span>輸出格式：</span>
+                <select id="formatSelect">
+                    <option value="tailwind">Tailwind (JSON)</option>
+                    <option value="stylus">Stylus (Variables)</option>
+                </select>
+            </div>
+            <button class="btn" onclick="copyResult()">複製結果</button>
+        </div>
+        <textarea id="output" readonly></textarea>
+    </div>
+</div>
+
+<script>
+    const input = document.getElementById('jsonInput');
+    const output = document.getElementById('output');
+    const formatSelect = document.getElementById('formatSelect');
+
+    function convert() {
+        try {
+            const data = JSON.parse(input.value);
+            const format = formatSelect.value;
+            const result = {};
+
+            function parseTokens(obj, path = []) {
+                for (let key in obj) {
+                    if (key.startsWith('$')) continue;
+                    const current = obj[key];
+                    const newPath = [...path, key];
+
+                    if (current && current.$value && current.$value.hex) {
+                        const configKey = newPath.join('-').toLowerCase();
+                        result[configKey] = current.$value.hex;
+                    } else if (typeof current === 'object' && current !== null) {
+                        parseTokens(current, newPath);
+                    }
+                }
+            }
+
+            parseTokens(data);
+
+            let outputText = "";
+            if (format === 'tailwind') {
+                outputText = "colors: {\n";
+                for (let k in result) {
+                    outputText += `  '${k}': '${result[k]}',\n`;
+                }
+                outputText += "}";
+            } else {
+                // Stylus 格式轉換：key = value
+                for (let k in result) {
+                    outputText += `${k} = ${result[k]}\n`;
+                }
+            }
+            
+            output.value = outputText;
+        } catch (e) {
+            output.value = "JSON 格式錯誤，請檢查輸入內容。";
+        }
+    }
+
+    input.addEventListener('input', convert);
+    formatSelect.addEventListener('change', convert);
+
+    function copyResult() {
+        output.select();
+        document.execCommand('copy');
+        alert('已複製到剪貼簿');
+    }
+</script>
+</body>
+</html>

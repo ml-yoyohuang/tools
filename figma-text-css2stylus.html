@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Figma Text to Stylus Converter (Cleaned)</title>
+    <style>
+        :root { --primary: #ec4899; --bg: #fff1f2; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 40px; color: #881337; }
+        .container { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 80vh; }
+        .panel { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #fecdd3; }
+        .header { padding: 12px 20px; background: #ffe4e6; border-bottom: 1px solid #fecdd3; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        textarea { flex: 1; border: none; padding: 20px; font-size: 13px; line-height: 1.6; outline: none; resize: none; font-family: 'Fira Code', monospace; }
+        #output { background: #4c0519; color: #fda4af; }
+        .btn { background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; transition: opacity 0.2s; }
+        .btn:hover { opacity: 0.9; }
+        .nav-back { margin-bottom: 20px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: bold; }
+        .hint { grid-column: 1 / -1; margin-bottom: 10px; font-size: 14px; color: #be123c; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="nav-back">← 返回首頁</a>
+<div class="hint">貼上 Figma CSS，我會自動移除無效屬性（font-style, leading-trim），並處理單位換算。</div>
+
+<div class="container">
+    <div class="panel">
+        <div class="header">Figma CSS Input</div>
+        <textarea id="input" placeholder="font-family: Noto Sans TC;
+font-weight: 700;
+font-style: Bold;
+font-size: General text/h1;
+leading-trim: NONE;
+line-height: 150%;
+letter-spacing: 2%;"></textarea>
+    </div>
+
+    <div class="panel">
+        <div class="header">
+            Clean Stylus Output
+            <button class="btn" onclick="copyResult()">複製結果</button>
+        </div>
+        <textarea id="output" readonly></textarea>
+    </div>
+</div>
+
+<script>
+    const input = document.getElementById('input');
+    const output = document.getElementById('output');
+
+    function convertText() {
+        const lines = input.value.split('\n');
+        let result = [];
+        let letterSpacingVal = "0";
+
+        lines.forEach(line => {
+            if (!line.trim() || !line.includes(':')) return;
+
+            let [prop, val] = line.split(':').map(s => s.replace(';', '').trim());
+            let property = prop.toLowerCase();
+
+            // 直接過濾掉不需要的屬性
+            if (property === 'font-style' || property === 'leading-trim') {
+                return;
+            }
+
+            switch (property) {
+                case 'font-family':
+                    result.push(`font-family: {font-family-normal}`);
+                    break;
+
+                case 'font-size':
+                    let sizeName = val.split('/').pop().toLowerCase();
+                    result.push(`font-size: (--text-${sizeName}/16)rem`);
+                    break;
+
+                case 'line-height':
+                    if (val.includes('%')) {
+                        let ratio = parseFloat(val) / 100;
+                        result.push(`line-height: ${ratio}`);
+                    } else {
+                        result.push(`line-height: ${val}`);
+                    }
+                    break;
+
+                case 'letter-spacing':
+                    if (val.includes('%')) {
+                        let em = parseFloat(val) / 100;
+                        letterSpacingVal = `${em}em`;
+                        result.push(`letter-spacing: ${letterSpacingVal}`);
+                    } else {
+                        result.push(`letter-spacing: ${val}`);
+                    }
+                    break;
+
+                default:
+                    result.push(`${prop}: ${val}`);
+            }
+        });
+
+        if (letterSpacingVal !== "0") {
+            result.push(`&.text-center`);
+            result.push(`  text-indent: ${letterSpacingVal} // same as letter-spacing`);
+        }
+
+        output.value = result.join('\n');
+    }
+
+    function copyResult() {
+        if (!output.value) return;
+        output.select();
+        document.execCommand('copy');
+        
+        const btn = document.querySelector('.btn');
+        const originalText = btn.innerText;
+        btn.innerText = '已複製！';
+        btn.style.background = '#10b981';
+        
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.style.background = '';
+        }, 1500);
+    }
+
+    input.addEventListener('input', convertText);
+</script>
+</body>
+</html>

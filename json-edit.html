@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>JSON Tree Master - 編輯與修復</title>
+    <style>
+        :root { --primary: #3b82f6; --bg: #f8fafc; --text: #1e293b; --accent: #10b981; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
+        .container { display: grid; grid-template-columns: 400px 1fr; gap: 20px; height: 90vh; }
+        .panel { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
+        .panel-header { padding: 10px 15px; background: #f1f5f9; border-bottom: 1px solid #e2e8f0; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        
+        textarea { flex: 1; border: none; padding: 15px; font-family: 'Fira Code', monospace; font-size: 13px; resize: none; outline: none; background: #fafafa; }
+        #tree-container { flex: 1; overflow-y: auto; padding: 20px; font-family: monospace; }
+
+        .tree-node { margin-left: 18px; border-left: 1px solid #e2e8f0; padding-left: 10px; position: relative; }
+        .tree-item { margin: 4px 0; display: flex; align-items: center; gap: 6px; }
+        
+        /* 編輯器樣式 */
+        input { border: 1px solid transparent; background: transparent; padding: 2px 5px; border-radius: 4px; font-family: inherit; }
+        input:hover { background: #f1f5f9; }
+        input:focus { border-color: var(--primary); background: white; outline: none; }
+        .key-edit { color: #8b5cf6; font-weight: 600; width: 80px; }
+        .val-edit { color: #059669; flex-grow: 1; }
+        
+        /* 按鈕樣式 */
+        .btn-action { cursor: pointer; border: none; background: #f1f5f9; border-radius: 4px; padding: 2px 6px; font-size: 12px; color: #64748b; }
+        .btn-action:hover { background: var(--accent); color: white; }
+        .btn-add { color: var(--accent); font-weight: bold; margin-left: 10px; }
+        .btn-del { color: #ef4444; }
+        
+        .toggle { cursor: pointer; color: #94a3b8; width: 15px; display: inline-block; }
+        .bracket { color: #94a3b8; font-weight: bold; }
+        .error-msg { color: #ef4444; font-size: 12px; padding: 5px 15px; background: #fee2e2; }
+        .nav-back { margin-bottom: 15px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="nav-back">← 返回首頁</a>
+
+<div class="container">
+    <div class="panel">
+        <div class="panel-header">原始內容 (自動修復中)</div>
+        <textarea id="jsonInput" placeholder="在此貼入 JSON 或物件..."></textarea>
+        <div id="errorDisplay" class="error-msg" style="display: none;"></div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <span>樹狀編輯器</span>
+            <button class="btn-action" onclick="syncToTextarea()">產出 JSON</button>
+        </div>
+        <div id="tree-container"></div>
+    </div>
+</div>
+
+<script>
+    const inputArea = document.getElementById('jsonInput');
+    const treeContainer = document.getElementById('tree-container');
+    const errorDisplay = document.getElementById('errorDisplay');
+    let currentData = {};
+
+    inputArea.addEventListener('input', () => {
+        let raw = inputArea.value.trim();
+        if (!raw) { treeContainer.innerHTML = ''; return; }
+
+        try {
+            // 自動修復：逗號、等號、引號
+            raw = raw.replace(/,\s*([\]}])/g, '$1') // 尾端逗號
+                     .replace(/([{,]\s*[\w\d_]+)\s*=\s*/g, '$1:'); // 等號轉冒號
+            
+            currentData = new Function(`return (${raw})`)();
+            errorDisplay.style.display = 'none';
+            renderTree();
+        } catch (e) {
+            errorDisplay.innerText = "語法錯誤: " + e.message;
+            errorDisplay.style.display = 'block';
+        }
+    });
+
+    function renderTree() {
+        treeContainer.innerHTML = '';
+        treeContainer.appendChild(createNode(currentData, null, currentData));
+    }
+
+    function createNode(val, key, parentRef) {
+        const container = document.createElement('div');
+        container.className = 'tree-node';
+
+        const isObject = typeof val === 'object' && val !== null;
+        const isArray = Array.isArray(val);
+
+        const itemLine = document.createElement('div');
+        itemLine.className = 'tree-item';
+
+        // 1. Key 編輯區 (如果是陣列則顯示索引)
+        if (key !== null) {
+            const keyInput = document.createElement('input');
+            keyInput.className = 'key-edit';
+            keyInput.value = key;
+            keyInput.onchange = (e) => {
+                const newKey = e.target.value;
+                parentRef[newKey] = parentRef[key];
+                delete parentRef[key];
+                syncToTextarea();
+            };
+            itemLine.appendChild(keyInput);
+            itemLine.appendChild(document.createTextNode(': '));
+        }
+
+        if (isObject) {
+            // 2. 物件/陣列展開與新增
+            const toggle = document.createElement('span');
+            toggle.className = 'toggle';
+            toggle.innerText = '▼';
+            
+            const bracketOpen = document.createElement('span');
+            bracketOpen.className = 'bracket';
+            bracketOpen.innerText = isArray ? '[' : '{';
+
+            const btnAdd = document.createElement('button');
+            btnAdd.className = 'btn-action btn-add';
+            btnAdd.innerText = '+';
+            btnAdd.title = '新增屬性/元素';
+            btnAdd.onclick = () => {
+                const newKey = isArray ? val.length : prompt("請輸入新屬性名稱:");
+                if (newKey === null) return;
+                val[newKey] = "新值";
+                renderTree();
+                syncToTextarea();
+            };
+
+            const btnDel = document.createElement('button');
+            btnDel.className = 'btn-action btn-del';
+            btnDel.innerText = '×';
+            btnDel.onclick = () => {
+                if (key !== null) {
+                    delete parentRef[key];
+                    renderTree();
+                    syncToTextarea();
+                }
+            };
+
+            itemLine.prepend(toggle);
+            itemLine.appendChild(bracketOpen);
+            itemLine.appendChild(btnAdd);
+            if(key !== null) itemLine.appendChild(btnDel);
+
+            const childrenContainer = document.createElement('div');
+            Object.keys(val).forEach(k => {
+                childrenContainer.appendChild(createNode(val[k], k, val));
+            });
+
+            toggle.onclick = () => {
+                const isHidden = childrenContainer.style.display === 'none';
+                childrenContainer.style.display = isHidden ? 'block' : 'none';
+                toggle.innerText = isHidden ? '▼' : '▶';
+            };
+
+            const bracketClose = document.createElement('div');
+            bracketClose.className = 'bracket';
+            bracketClose.innerText = isArray ? ']' : '}';
+
+            container.appendChild(itemLine);
+            container.appendChild(childrenContainer);
+            container.appendChild(bracketClose);
+        } else {
+            // 3. 值編輯區
+            const valInput = document.createElement('input');
+            valInput.className = 'val-edit';
+            valInput.value = val;
+            valInput.onchange = (e) => {
+                let v = e.target.value;
+                // 自動轉型
+                if (v.toLowerCase() === 'true') v = true;
+                else if (v.toLowerCase() === 'false') v = false;
+                else if (!isNaN(v) && v !== '') v = Number(v);
+                
+                parentRef[key] = v;
+                syncToTextarea();
+            };
+
+            const btnDel = document.createElement('button');
+            btnDel.className = 'btn-action btn-del';
+            btnDel.innerText = '×';
+            btnDel.onclick = () => {
+                delete parentRef[key];
+                renderTree();
+                syncToTextarea();
+            };
+
+            itemLine.appendChild(valInput);
+            itemLine.appendChild(btnDel);
+            container.appendChild(itemLine);
+        }
+
+        return container;
+    }
+
+    function syncToTextarea() {
+        inputArea.value = JSON.stringify(currentData, null, 4);
+    }
+</script>
+</body>
+</html>

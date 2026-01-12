@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Advanced CSS Triangle Generator</title>
+    <style>
+        :root { --primary: #6366f1; --bg: #f8fafc; }
+        body { font-family: system-ui, sans-serif; background: var(--bg); padding: 40px; }
+        .card { background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 1000px; display: grid; grid-template-columns: 350px 1fr; gap: 30px; }
+        .controls { display: flex; flex-direction: column; gap: 12px; }
+        .control-group { display: flex; flex-direction: column; gap: 5px; }
+        label { font-size: 13px; font-weight: 600; color: #475569; }
+        select, input { padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; }
+        .preview-area { display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f1f5f9; border-radius: 12px; min-height: 400px; padding: 20px; }
+        .triangle-preview { width: 0; height: 0; border-style: solid; transition: border-width 0.2s, border-color 0.2s; }
+        .code-box { width: 100%; margin-top: 20px; background: #1e293b; color: #f8fafc; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px; position: relative; }
+        .copy-btn { position: absolute; right: 10px; top: 10px; background: var(--primary); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
+        .nav-back { margin-bottom: 20px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: bold; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div style="width: 100%; max-width: 1000px; margin: auto;">
+    <a href="index.html" class="nav-back">← 返回首頁</a>
+    <div class="card">
+        <div class="controls">
+            <h3>三角形參數進階設定</h3>
+            
+            <div class="control-group">
+                <label>三角形類型</label>
+                <select id="type">
+                    <option value="isosceles">等腰 / 正三角</option>
+                    <option value="right">直角三角形 (Right-angled)</option>
+                    <option value="scalene">不等邊三角形 (Scalene)</option>
+                </select>
+            </div>
+
+            <div id="direction-group" class="control-group">
+                <label>方向</label>
+                <select id="direction">
+                    <option value="up">向上</option>
+                    <option value="down">向下</option>
+                    <option value="left">向左</option>
+                    <option value="right">向右</option>
+                </select>
+            </div>
+
+            <div id="right-angle-group" class="control-group hidden">
+                <label>直角位置</label>
+                <select id="corner">
+                    <option value="bottom-left">左下角</option>
+                    <option value="bottom-right">右下角</option>
+                    <option value="top-left">左上角</option>
+                    <option value="top-right">右上角</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>寬度 (Width) px</label>
+                <input type="number" id="width" value="100">
+            </div>
+
+            <div class="control-group">
+                <label>高度 (Height) px</label>
+                <input type="number" id="height" value="100">
+            </div>
+
+            <div id="offset-group" class="control-group hidden">
+                <label>頂點位移量 (Offset) px</label>
+                <input type="range" id="offset" min="0" max="100" value="50">
+                <span id="offset-val" style="font-size: 11px; color: #888;">位移: 50px</span>
+            </div>
+
+            <div class="control-group">
+                <label>顏色</label>
+                <input type="color" id="color" value="#6366f1">
+            </div>
+        </div>
+
+        <div class="preview-area">
+            <div id="triangle" class="triangle-preview"></div>
+            <div class="code-box">
+                <button class="copy-btn" onclick="copyCode()">複製</button>
+                <code id="cssOutput"></code>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const el = document.getElementById('triangle');
+    const cssOutput = document.getElementById('cssOutput');
+    const typeSelect = document.getElementById('type');
+    
+    // 監聽類型切換，顯示/隱藏相關控制項
+    typeSelect.addEventListener('change', () => {
+        const type = typeSelect.value;
+        document.getElementById('direction-group').classList.toggle('hidden', type === 'right');
+        document.getElementById('right-angle-group').classList.toggle('hidden', type !== 'right');
+        document.getElementById('offset-group').classList.toggle('hidden', type !== 'scalene');
+        update();
+    });
+
+    function update() {
+        const type = typeSelect.value;
+        const w = parseInt(document.getElementById('width').value);
+        const h = parseInt(document.getElementById('height').value);
+        const color = document.getElementById('color').value;
+        const dir = document.getElementById('direction').value;
+        const corner = document.getElementById('corner').value;
+        const offset = parseInt(document.getElementById('offset').value);
+        
+        document.getElementById('offset').max = (dir === 'up' || dir === 'down') ? w : h;
+        document.getElementById('offset-val').innerText = `位移: ${offset}px`;
+
+        let borderStyle = "";
+
+        if (type === 'isosceles' || type === 'scalene') {
+            const currentOffset = type === 'isosceles' ? 
+                  ((dir === 'up' || dir === 'down') ? w/2 : h/2) : offset;
+
+            switch(dir) {
+                case 'up':
+                    borderStyle = `border-width: 0 ${w - currentOffset}px ${h}px ${currentOffset}px;\nborder-color: transparent transparent ${color} transparent;`;
+                    break;
+                case 'down':
+                    borderStyle = `border-width: ${h}px ${w - currentOffset}px 0 ${currentOffset}px;\nborder-color: ${color} transparent transparent transparent;`;
+                    break;
+                case 'left':
+                    borderStyle = `border-width: ${currentOffset}px ${w}px ${h - currentOffset}px 0;\nborder-color: transparent ${color} transparent transparent;`;
+                    break;
+                case 'right':
+                    borderStyle = `border-width: ${currentOffset}px 0 ${h - currentOffset}px ${w}px;\nborder-color: transparent transparent transparent ${color};`;
+                    break;
+            }
+        } else if (type === 'right') {
+            switch(corner) {
+                case 'bottom-left':
+                    borderStyle = `border-width: ${h}px 0 0 ${w}px;\nborder-color: transparent transparent transparent ${color};`;
+                    break;
+                case 'bottom-right':
+                    borderStyle = `border-width: 0 0 ${h}px ${w}px;\nborder-color: transparent transparent ${color} transparent;`;
+                    break;
+                case 'top-left':
+                    borderStyle = `border-width: ${h}px ${w}px 0 0;\nborder-color: ${color} transparent transparent transparent;`;
+                    break;
+                case 'top-right':
+                    borderStyle = `border-width: 0 ${w}px ${h}px 0;\nborder-color: transparent ${color} transparent transparent;`;
+                    break;
+            }
+        }
+
+        el.style = borderStyle;
+        cssOutput.innerText = `.target::before {\n  content: "";\n  width: 0;\n  height: 0;\n  border-style: solid;\n  ${borderStyle.replace(/\n/g, '\n  ')}\n}`;
+    }
+
+    document.querySelectorAll('input, select').forEach(i => i.addEventListener('input', update));
+    update();
+
+    function copyCode() {
+        navigator.clipboard.writeText(cssOutput.innerText);
+    }
+</script>
+</body>
+</html>

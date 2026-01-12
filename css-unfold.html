@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Sass/Stylus Class Unfolder</title>
+    <style>
+        :root { --primary: #4f46e5; --bg: #f1f5f9; }
+        body { font-family: 'Fira Code', monospace; background: var(--bg); padding: 40px; }
+        .container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .panel { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; }
+        .header { padding: 12px; background: #fce7f3; font-weight: bold; color: #be185d; border-bottom: 1px solid #fbcfe8; }
+        textarea { height: 500px; border: none; padding: 20px; font-size: 14px; line-height: 1.6; outline: none; resize: none; }
+        #output { background: #fafafa; color: #333; }
+        .hint { grid-column: 1 / -1; background: #fff; padding: 15px; border-radius: 8px; font-size: 13px; color: #666; border-left: 5px solid var(--primary); }
+        .nav-back { margin-bottom: 20px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="index.html" class="nav-back">← 返回首頁</a>
+    <div class="hint">
+        <strong>💡 重構目標：</strong> 將巢狀的 <code>&amp;</code> 語法展開為完整的 Class 名稱，提升專案全局搜尋的便利性。
+    </div>
+
+    <div class="panel">
+        <div class="header">Sass / Stylus (Input)</div>
+        <textarea id="input" placeholder=".nav
+  padding: 10px
+  &-btn
+    color: red
+    &-icon
+      width: 16px"></textarea>
+    </div>
+
+    <div class="panel">
+        <div class="header">Refactored (Output)</div>
+        <textarea id="output" readonly></textarea>
+    </div>
+</div>
+
+<script>
+    const input = document.getElementById('input');
+    const output = document.getElementById('output');
+
+    input.addEventListener('input', () => {
+        const lines = input.value.split('\n');
+        let result = [];
+        let stack = []; // 儲存每一層的完整選擇器名稱
+
+        lines.forEach(line => {
+            const trimmed = line.trim();
+            if (!trimmed) {
+                result.push("");
+                return;
+            }
+
+            // 1. 自動偵測縮排深度 (相對於前一行的空白數)
+            const indentMatch = line.match(/^\s*/);
+            const currentIndent = indentMatch ? indentMatch[0].length : 0;
+            
+            // 尋找當前深度在 stack 中的位置 (支援 2 空格或 4 空格等不同習慣)
+            // 我們根據當前空白長度來判斷層級
+            let depth = 0;
+            if (currentIndent > 0) {
+                // 找出比當前縮排小的層級數量
+                depth = stack.filter(s => s && s.indent < currentIndent).length;
+            }
+
+            // 如果縮排回縮，清掉 stack 裡面比當前縮排深的層級
+            stack = stack.filter(s => s && s.indent < currentIndent);
+
+            // 2. 判斷是「選擇器」還是「屬性」
+            // 擴大判斷：包含 &、以 . 或 # 開頭、或包含冒號且沒空格(標籤選擇器)
+            const isSelector = trimmed.includes('&') || 
+                            trimmed.startsWith('.') || 
+                            trimmed.startsWith('#') || 
+                            (trimmed.match(/^[a-zA-Z0-9_-]+$/)); // 簡單的標籤如 div, li
+
+            if (isSelector && !trimmed.includes(': ')) {
+                // 處理 Selector
+                let parentSelector = stack.length > 0 ? stack[stack.length - 1].full : "";
+                let currentFullSelector = "";
+
+                if (trimmed.includes('&')) {
+                    // 重點修正：使用正則表達式 /&/g 進行全域替換，處理多個 & 的情況
+                    currentFullSelector = trimmed.replace(/&/g, parentSelector).trim();
+                } else {
+                    // 如果沒有 &，但它是巢狀的，通常代表後代選擇器 (例如 .nav 內層寫 li)
+                    currentFullSelector = parentSelector ? `${parentSelector} ${trimmed}` : trimmed;
+                }
+
+                stack.push({ indent: currentIndent, full: currentFullSelector });
+                result.push(currentFullSelector);
+            } else {
+                // 處理屬性 (如 padding: 10px)
+                result.push("  " + trimmed);
+            }
+        });
+
+        output.value = result.join('\n');
+    });
+
+    // 初始觸發一次
+    input.dispatchEvent(new Event('input'));
+</script>
+</body>
+</html>

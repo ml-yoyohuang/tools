@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>結構化資料全業務實作指南 - 2026 戰略報告</title>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #334155;
+            --accent: #2563eb;
+            --success: #059669;
+            --warning: #d97706;
+            --code-bg: #1e293b;
+            --bg-gray: #f8fafc;
+        }
+        body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; line-height: 1.8; color: #334155; background: #f1f5f9; margin: 0; padding: 0; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        
+        /* Header */
+        header { background: var(--primary); color: white; padding: 60px 40px; border-radius: 20px; margin-bottom: 40px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        header h1 { margin: 0; font-size: 2.5rem; letter-spacing: -1px; }
+        header p { opacity: 0.9; font-size: 1.1rem; margin-top: 10px; }
+
+        /* Section Styling */
+        .section { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 30px; }
+        h2 { color: var(--primary); font-size: 1.8rem; border-left: 6px solid var(--accent); padding-left: 20px; margin-bottom: 30px; }
+        h3 { color: var(--accent); margin-top: 30px; }
+
+        /* Principles Grid */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .card { background: var(--bg-gray); padding: 25px; border-radius: 15px; border: 1px solid #e2e8f0; }
+        
+        /* Table Styling */
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.95rem; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f1f5f9; font-weight: 700; color: var(--primary); }
+
+        /* Code Block */
+        .code-container { margin: 20px 0; position: relative; }
+        .code-label { background: var(--secondary); color: white; padding: 6px 15px; font-size: 0.8rem; border-radius: 8px 8px 0 0; display: inline-block; }
+        pre { background: var(--code-bg); color: #f8fafc; padding: 25px; border-radius: 12px; overflow-x: auto; font-family: 'Consolas', monospace; font-size: 0.9rem; line-height: 1.5; }
+
+        /* List Styling */
+        .highlight-list { list-style: none; padding: 0; }
+        .highlight-list li { margin-bottom: 12px; padding-left: 30px; position: relative; }
+        .highlight-list li::before { content: "➜"; position: absolute; left: 0; color: var(--accent); font-weight: bold; }
+
+        .footer { text-align: center; padding: 40px; color: var(--secondary); font-size: 0.9rem; }
+        
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>結構化資料全業務實作規劃方案</h1>
+        <p>SEO 權威建立與 AI 檢索優化的完整技術部署清單</p>
+    </header>
+
+    <div class="section">
+        <h2>一、 核心概念：為什麼我們需要結構化標籤？</h2>
+        <p>結構化標籤（Structured Data）是網頁的「翻譯官」，將非結構化文字轉化為機器可讀的數據。這不只是為了 SEO，更是為了在 AI 搜尋時代搶佔先機。</p>
+        
+        <div class="grid">
+            <div class="card">
+                <h3>1. SEO 提升：點擊率與權威</h3>
+                <ul class="highlight-list">
+                    <li><strong>豐富摘要 (Rich Results)：</strong> 在搜尋結果顯示演出日期、地點、票價，視覺版位擴大，搜尋結果更具吸引力，提升點擊率。</li>
+                    <li><strong>語義化關聯：</strong> 從「關鍵字匹配」升級為「實體關聯」，建立品牌知識圖譜。</li>
+                    <li><strong>版位佔據：</strong> 讓 FAQ 或活動行程直接顯示在 Google 搜尋首頁。</li>
+                </ul>
+                
+            </div>
+            <div class="card">
+                <h3>2. AI 搜尋：精準回答與引述</h3>
+                <ul class="highlight-list">
+                    <li><strong>降低 AI 幻覺：</strong> 提供明確數據（如馬力、建案地址），防止 AI 錯誤解讀內容。</li>
+                    <li><strong>優先資料源：</strong> AI (如 Gemini) 會優先擷取具備 JSON-LD 格式的網頁作為答案來源。</li>
+                    <li><strong>RAG 優化：</strong> 讓 AI 毫秒內提取核心事實（如建案坪數、車款動力）降低 AI 模型檢索成本，提高被引述的機率。</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>二、 全站頁面與 Schema 標籤匹配表</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>頁面類別</th>
+                    <th>匹配標籤 (Schema Type)</th>
+                    <th>實作重點</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>官方網站首頁</td><td><code><a class="schema-link" href="https://schema.org/Organization" target="_blank">Organization</a></code></td><td>品牌 Logo、社群連結 (SameAs)</td>
+                </tr>
+                <tr>
+                    <td>新聞內容頁</td><td><code><a class="schema-link" href="https://schema.org/NewsArticle" target="_blank">NewsArticle</a></code></td><td>發布時間、作者、多比例主圖</td>
+                </tr>
+                <tr>
+                    <td>車款介紹頁</td><td><code><a class="schema-link" href="https://schema.org/Car" target="_blank">Car</a></code></td><td>燃料類型、引擎規格、售價、評分</td>
+                </tr>
+                <tr>
+                    <td>不動產建案頁</td><td><code><a class="schema-link" href="https://schema.org/ApartmentComplex" target="_blank">ApartmentComplex</a></code></td><td>地址、設施 (Amenity)、完工狀態</td>
+                </tr>
+                <tr>
+                    <td>舞台劇作品頁</td><td><code><a class="schema-link" href="https://schema.org/TheaterEvent" target="_blank">TheaterEvent</a></code></td><td>演出日期、地點、票價 (Offers)</td>
+                </tr>
+                <tr>
+                    <td>遊輪行程頁</td><td><code><a class="schema-link" href="https://schema.org/Trip" target="_blank">Trip</a></code></td><td>起訖點、天數、行程提供者</td>
+                </tr>
+                <tr>
+                    <td>各類列表頁</td><td><code><a class="schema-link" href="https://schema.org/ItemList" target="_blank">ItemList</a></code></td><td>位置順序 (Position)、導航網址</td>
+                </tr>
+                <tr>
+                    <td>全站通用</td><td><code><a class="schema-link" href="https://schema.org/BreadcrumbList" target="_blank">BreadcrumbList</a></code></td><td>提升搜尋結果的路徑清晰度</td>
+                </tr>
+            </tbody>
+        </table>
+
+
+    </div>
+
+    <div class="section">
+        <h2>三、 各類別技術範例 (JSON-LD 完整程式碼)</h2>
+
+        <div class="code-header">1. 遊輪旅程行程介紹頁 (Schema: Trip)</div>
+<pre>
+&lt;script type="application/ld+json"&gt;
+{
+  "@context": "https://schema.org",
+  "@type": "Trip",
+  "name": "2026 亞德里亞海之夢 - 11天10夜豪華遊輪之旅",
+  "description": "搭乘奢華遊輪探索地中海與亞德里亞海最美港口。",
+  "provider": {
+    "@type": "Organization",
+    "name": "您的公司名稱",
+    "url": "https://www.yourcompany.com"
+  },
+  "itinerary": [
+    { "@type": "City", "name": "威尼斯", "description": "啟航港口" },
+    { "@type": "City", "name": "杜布羅夫尼克", "description": "歷史古城探索" }
+  ],
+  "offers": {
+    "@type": "Offer",
+    "price": "88000",
+    "priceCurrency": "TWD",
+    "availability": "https://schema.org/InStock",
+    "url": "https://www.yourcompany.com/cruise-trip-001"
+  }
+}
+&lt;/script&gt;</pre>
+
+        <div class="code-header">2. 不動產建案介紹頁 (Schema: ApartmentComplex)</div>
+<pre>
+&lt;script type="application/ld+json"&gt;
+{
+  "@context": "https://schema.org",
+  "@type": "ApartmentComplex",
+  "name": "天際花園旗艦建案",
+  "description": "位於市中心核心地段，頂級豪宅規格，包含空中花園與健身俱樂部。",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "信義路五段",
+    "addressLocality": "台北市",
+    "addressRegion": "TW",
+    "postalCode": "110"
+  },
+  "amenityFeature": [
+    { "@type": "LocationFeatureSpecification", "name": "24小時保全", "value": true },
+    { "@type": "LocationFeatureSpecification", "name": "游泳池", "value": true }
+  ]
+}
+&lt;/script&gt;</pre>
+
+        <div class="code-header">3. 舞台劇作品介紹頁 (Schema: TheaterEvent)</div>
+<pre>
+&lt;script type="application/ld+json"&gt;
+{
+  "@context": "https://schema.org",
+  "@type": "TheaterEvent",
+  "name": "2026 年度大戲：幻影之城",
+  "startDate": "2026-05-20T19:30:00+08:00",
+  "location": {
+    "@type": "Place",
+    "name": "國家戲劇院",
+    "address": { "@type": "PostalAddress", "streetAddress": "中山南路21-1號" }
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "1200",
+    "priceCurrency": "TWD"
+  }
+}
+&lt;/script&gt;</pre>
+
+        <div class="code-header">4. 歷史演出紀錄列表頁 (Schema: ItemList)</div>
+<pre>
+&lt;script type="application/ld+json"&gt;
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": "歷年舞台劇作品演出紀錄",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "item": {
+        "@type": "TheaterEvent",
+        "name": "2024 時光旅人",
+        "eventStatus": "https://schema.org/EventPast",
+        "startDate": "2024-11-10T19:30:00+08:00"
+      }
+    }
+  ]
+}
+&lt;/script&gt;</pre>
+
+        <div class="code-header">5. 車款介紹頁 (Schema: Car)</div>
+<pre>
+&lt;script type="application/ld+json"&gt;
+{
+  "@context": "https://schema.org",
+  "@type": "Car",
+  "name": "豪華電動房車 Model X-2026",
+  "brand": { "@type": "Brand", "name": "您的品牌" },
+  "vehicleEngine": { "@type": "EngineSpecification", "engineType": "Electric" },
+  "fuelType": "Electric",
+  "offers": { "@type": "Offer", "price": "2150000", "priceCurrency": "TWD" }
+}
+&lt;/script&gt;</pre>
+
+        <div class="code-header">6. 新聞內容頁 (Schema: NewsArticle)</div>
+<pre>
+&lt;script type="application/ld+json"&gt;
+{
+  "@context": "https://schema.org",
+  "@type": "NewsArticle",
+  "headline": "2026 全新豪華遊輪首航：重新定義海上移動美學",
+  "description": "本文摘要：本公司今日宣布 2026 年全新旗艦遊輪正式啟航，搭載最新環保動力系統與奢華私人套房，將為全球旅客帶來前所未有的海上度假體驗。",
+  "image": [
+    "https://www.yourcompany.com/news/images/cruise-16x9.jpg",
+    "https://www.yourcompany.com/news/images/cruise-4x3.jpg",
+    "https://www.yourcompany.com/news/images/cruise-1x1.jpg"
+  ],
+  "datePublished": "2026-01-05T09:00:00+08:00",
+  "dateModified": "2026-01-05T14:30:00+08:00",
+  "author": {
+    "@type": "Person",
+    "name": "張小明",
+    "url": "https://www.yourcompany.com/authors/chang-xiao-ming"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "您的公司名稱",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://www.yourcompany.com/logo.png"
+    }
+  }
+}
+&lt;/script&gt;</pre>
+
+        <div class="code-header">7. 新聞/部落格列表頁 (Schema: ItemList / CollectionPage)</div>
+<pre>
+&lt;script type="application/ld+json"&gt;
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": "公司最新消息與活動列表",
+  "description": "提供本公司旗下汽車、不動產及舞台劇業務的最新動態與新聞發佈。",
+  "url": "https://www.yourcompany.com/news",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "url": "https://www.yourcompany.com/news/2026-cruise-launch",
+      "name": "2026 全新豪華遊輪首航：重新定義海上移動美學"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "url": "https://www.yourcompany.com/news/new-real-estate-project",
+      "name": "天際花園旗艦建案正式開工，預計 2028 年完工"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "url": "https://www.yourcompany.com/news/theater-awards-2025",
+      "name": "狂賀！本公司年度舞台劇榮獲國際劇場藝術大獎"
+    }
+  ]
+}
+&lt;/script&gt;</pre>
+
+<div class="code-header">8. 全站通用麵包屑導航 (Schema: BreadcrumbList)</div>
+<pre>
+&lt;script type="application/ld+json"&gt;
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "首頁",
+      "item": "https://www.yourcompany.com/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "遊輪旅程介紹",
+      "item": "https://www.yourcompany.com/cruise"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "2026 亞德里亞海豪華之旅",
+      "item": "https://www.yourcompany.com/cruise/trip-001"
+    }
+  ]
+}
+&lt;/script&gt;</pre>
+
+
+    </div>
+
+
+    
+    <div class="section" style="border-top: 8px solid var(--warning);">
+        <h2>四、 開發團隊實作規範與建議</h2>
+        
+        <h3>實作關鍵點 (Must-Do)</h3>
+        <ul class="highlight-list">
+            <li><strong>ISO 8601 時間：</strong> 所有日期必須包含時區資訊（例如 <code>+08:00</code>），否則搜尋引擎會顯示錯誤日期。</li>
+            <li><strong>絕對路徑：</strong> 標籤內的所有網址（圖片、連結）必須使用包含 <code>https://</code> 的絕對路徑。</li>
+            <li><strong>圖片解析度：</strong> 建議提供 16:9、4:3、1:1 三種比例，且寬度不低於 1200 像素。</li>
+            <li><strong>動態注入：</strong> 請後端開發人員將資料庫欄位映射至 JSON-LD 模板中，確保內容同步更新。</li>
+        </ul>
+
+        <h3>專業開發建議</h3>
+        <ul class="highlight-list">
+            <li><strong>優先使用 JSON-LD：</strong> 這是 Google 官方最推薦的格式，放置在 <code>&lt;head&gt;</code> 中，不干擾 HTML 佈局與 CSS 樣式。</li>
+            <li><strong>分頁處理：</strong> 列表頁僅需標註「當前頁面」看到的項目。</li>
+            <li><strong>測試工具：</strong> 部署前必須使用 <a href="https://search.google.com/test/rich-results" target="_blank">Google 富媒體搜尋結果測試工具</a> 進行驗證。</li>
+            <li><strong>與 Sitemap 結合：</strong> 結構化資料優化後，同步更新 XML Sitemap，引導 Google 重新爬取。</li>
+        </ul>
+    </div>
+
+    <div class="footer">
+        <p>此報告僅供內部會議使用 | 製作於 2026 年 1 月</p>
+    </div>
+</div>
+
+</body>
+</html>

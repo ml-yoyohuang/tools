@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Universal KV to Stylus (with Comments)</title>
+    <style>
+        :root { --primary: #8b5cf6; --bg: #f5f3ff; }
+        body { font-family: 'Fira Code', monospace; background: var(--bg); padding: 40px; color: #1e293b; }
+        .container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .panel { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; }
+        .header { padding: 12px 20px; background: #ddd6fe; border-bottom: 1px solid #c4b5fd; font-weight: bold; color: #5b21b6; }
+        textarea { height: 500px; border: none; padding: 20px; font-size: 14px; line-height: 1.6; outline: none; resize: none; }
+        #output { background: #fafafa; color: #1e293b; }
+        .hint { grid-column: 1 / -1; background: #fff; padding: 15px; border-radius: 8px; font-size: 13px; color: #666; border-left: 5px solid var(--primary); margin-bottom: 10px; }
+        .nav-back { margin-bottom: 20px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="nav-back">← 返回首頁</a>
+
+<div class="container">
+    <div class="hint">
+        <strong>💡 轉換邏輯：</strong> 自動偵測 <code>:</code> 分隔符，移除 Key 與 Value 周圍的引號（' 或 "）以及結尾的逗號。
+        <br/>
+        <strong>💡 註解支援：</strong> 現在會自動捕捉 <code>//</code> 之後的文字並保留在輸出的結尾。
+    </div>
+
+    <div class="panel">
+        <div class="header">JS Object / JSON (Input)</div>
+        <textarea id="input" placeholder="primary: '#ffffff', // 這是背景色
+'secondary': '#000000' // 這是文字色"></textarea>
+    </div>
+
+    <div class="panel">
+        <div class="header">Stylus Variables (Output)</div>
+        <textarea id="output" readonly></textarea>
+    </div>
+</div>
+
+<script>
+    const input = document.getElementById('input');
+    const output = document.getElementById('output');
+
+    input.addEventListener('input', () => {
+        const lines = input.value.split('\n');
+        const result = lines.map(line => {
+            if (!line.trim()) return "";
+
+            let comment = "";
+            let content = line;
+
+            // 1. 分離註解 (捕捉 // 之後的所有內容)
+            const commentIndex = line.indexOf('//');
+            if (commentIndex !== -1) {
+                content = line.substring(0, commentIndex);
+                comment = line.substring(commentIndex); // 保留 // 符號
+            }
+
+            // 2. 處理核心內容 (Key: Value)
+            const trimmedContent = content.trim();
+            const parts = trimmedContent.split(/:(.+)/);
+            
+            if (parts.length < 2) {
+                // 如果沒有冒號，可能是單獨的註解行或不完整行
+                return trimmedContent ? trimmedContent + (comment ? " " + comment : "") : comment;
+            }
+
+            let key = parts[0].trim();
+            let value = parts[1].trim();
+
+            // 清理 Key 引號
+            key = key.replace(/^['"]|['"]$/g, '');
+
+            // 清理 Value 引號與結尾逗號
+            value = value.replace(/,$/, '').trim();
+            value = value.replace(/^['"]|['"]$/g, '');
+
+            // 3. 組合輸出
+            return `${key} = ${value}${comment ? " " + comment : ""}`;
+        });
+
+        output.value = result.join('\n');
+    });
+
+    input.dispatchEvent(new Event('input'));
+</script>
+</body>
+</html>

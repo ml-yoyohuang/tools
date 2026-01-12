@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>長寬比約分工具</title>
+    <style>
+        :root { --primary: #f59e0b; --bg: #fffcf2; }
+        body { font-family: system-ui, sans-serif; background: var(--bg); display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 2.5rem; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); width: 100%; max-width: 450px; text-align: center; }
+        h3 { margin-bottom: 1.5rem; color: #451a03; }
+        .input-group { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
+        input { width: 100%; padding: 12px; border: 2px solid #fbbf24; border-radius: 10px; font-size: 18px; text-align: center; outline: none; }
+        input:focus { border-color: var(--primary); }
+        .result-area { border-top: 2px dashed #fef3c7; padding-top: 2rem; }
+        .ratio-box { font-size: 3rem; font-weight: 800; color: var(--primary); margin: 10px 0; }
+        .sub-info { font-size: 14px; color: #78350f; background: #fffbeb; padding: 10px; border-radius: 8px; margin-top: 10px; }
+        .nav-back { position: fixed; top: 20px; left: 20px; text-decoration: none; color: #b45309; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="nav-back">← 工具箱首頁</a>
+
+<div class="card">
+    <h3>長寬比約分 (Aspect Ratio)</h3>
+    
+    <div class="input-group">
+        <input type="number" id="w" value="1920" placeholder="寬">
+        <span>:</span>
+        <input type="number" id="h" value="1080" placeholder="高">
+    </div>
+
+    <div class="result-area">
+        <div class="label">最簡分數比</div>
+        <div class="ratio-box" id="ratioResult">16 : 9</div>
+        
+        <div class="sub-info" id="cssInfo">
+            CSS aspect-ratio: 16 / 9;<br>
+            百分比高寬比: 56.25%
+        </div>
+    </div>
+</div>
+
+<script>
+    const wIn = document.getElementById('w');
+    const hIn = document.getElementById('h');
+    const ratioResult = document.getElementById('ratioResult');
+    const cssInfo = document.getElementById('cssInfo');
+
+    // 最大公因數函數 (輾轉相除法)
+    function getGCD(a, b) {
+        return b === 0 ? a : getGCD(b, a % b);
+    }
+
+    function calculate() {
+        const w = parseInt(wIn.value) || 0;
+        const h = parseInt(hIn.value) || 0;
+
+        if (w > 0 && h > 0) {
+            const common = getGCD(w, h);
+            const simpleW = w / common;
+            const simpleH = h / common;
+            const percentage = ((h / w) * 100).toFixed(2);
+
+            ratioResult.innerText = `${simpleW} : ${simpleH}`;
+            cssInfo.innerHTML = `
+                CSS 屬性: aspect-ratio: ${simpleW} / ${simpleH};<br>
+                Legacy Padding 比例: ${percentage}%
+            `;
+        } else {
+            ratioResult.innerText = "0 : 0";
+        }
+    }
+
+    [wIn, hIn].forEach(el => el.addEventListener('input', calculate));
+</script>
+</body>
+</html>

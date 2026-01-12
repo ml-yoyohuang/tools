@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Tailwind Safelist Regex Generator</title>
+    <style>
+        :root { --primary: #38bdf8; --bg: #0f172a; }
+        body { font-family: 'Inter', 'Fira Code', monospace; background: var(--bg); padding: 40px; color: #f8fafc; }
+        .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 85vh; }
+        .panel { background: #1e293b; border-radius: 12px; border: 1px solid #334155; display: flex; flex-direction: column; overflow: hidden; }
+        .header { padding: 12px 20px; background: #334155; border-bottom: 1px solid #475569; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        textarea { flex: 1; border: none; padding: 20px; font-size: 13px; line-height: 1.6; outline: none; resize: none; background: transparent; color: #94a3b8; }
+        #output { color: #38bdf8; }
+        .btn { background: var(--primary); color: #0f172a; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .hint { grid-column: 1 / -1; margin-bottom: 10px; font-size: 14px; color: #94a3b8; }
+        .nav-back { margin-bottom: 20px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="nav-back">← 返回首頁</a>
+<div class="hint">貼上 Tailwind Config 的 Colors 物件，我會自動將 Key 值壓縮成優化的 Safelist Regex 格式。</div>
+
+<div class="container">
+    <div class="panel">
+        <div class="header">Tailwind Colors Object</div>
+        <textarea id="input" placeholder="const colors = {
+  'primary-100': '#fff',
+  'primary-200': '#eee',
+  ...
+}"></textarea>
+    </div>
+
+    <div class="panel">
+        <div class="header">
+            Safelist Configuration
+            <button class="btn" onclick="copyResult()">複製代碼</button>
+        </div>
+        <textarea id="output" readonly></textarea>
+    </div>
+</div>
+
+<script>
+    const input = document.getElementById('input');
+    const output = document.getElementById('output');
+
+    function generateSafelist() {
+        const text = input.value;
+        if (!text.trim()) {
+            output.value = "";
+            return;
+        }
+
+        // 1. 提取所有 Key
+        // 匹配 'key': 或 key: 格式
+        const keyRegex = /(['"]?)([a-zA-Z0-9-]+)\1\s*:/g;
+        let keys = [];
+        let match;
+        while ((match = keyRegex.exec(text)) !== null) {
+            keys.push(match[2]);
+        }
+
+        if (keys.length === 0) {
+            output.value = "// 找不到有效的顏色 Key 值";
+            return;
+        }
+
+        // 2. 壓縮邏輯：將具有相同前綴的 key 組合 (例如 primary-100, primary-200)
+        const groups = {};
+        const singles = [];
+
+        keys.forEach(key => {
+            if (key.includes('-')) {
+                const parts = key.split('-');
+                const suffix = parts.pop();
+                const prefix = parts.join('-');
+                if (!groups[prefix]) groups[prefix] = [];
+                groups[prefix].push(suffix);
+            } else {
+                singles.push(key);
+            }
+        });
+
+        const optimizedParts = [];
+        
+        // 處理群組 (prefix-(a|b|c))
+        for (const prefix in groups) {
+            const suffixes = groups[prefix];
+            if (suffixes.length > 1) {
+                optimizedParts.push(`${prefix}-(${suffixes.join('|')})`);
+            } else {
+                optimizedParts.push(`${prefix}-${suffixes[0]}`);
+            }
+        }
+        
+        // 處理單體
+        optimizedParts.push(...singles);
+
+        // 3. 組合輸出
+        const pattern = `/^(text|bg|border|ring|fill|stroke)-(${optimizedParts.join('|')})$/`;
+        
+        const result = `safelist: [
+  {
+    /* 自動生成的 Safelist，防止動態組字串時顏色被 Purge 移除。
+       匹配前綴：text-, bg-, border-, ring-, fill-, stroke- 
+    */
+    pattern: ${pattern},
+  },
+],`;
+
+        output.value = result;
+    }
+
+    input.addEventListener('input', generateSafelist);
+
+    function copyResult() {
+        output.select();
+        document.execCommand('copy');
+        alert('Safelist 已複製！');
+    }
+</script>
+</body>
+</html>
