@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>SVG to RWD Symbol Converter</title>
+    <style>
+        :root { --primary: #8b5cf6; --bg: #f5f3ff; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 40px; color: #4c1d95; }
+        .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 80vh; }
+        .panel { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #ddd6fe; }
+        .header { padding: 12px 20px; background: #ede9fe; border-bottom: 1px solid #ddd6fe; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        textarea { flex: 1; border: none; padding: 20px; font-size: 13px; line-height: 1.6; outline: none; resize: none; font-family: 'Fira Code', monospace; }
+        #output { background: #2e1065; color: #ddd6fe; }
+        .controls { display: flex; gap: 10px; align-items: center; }
+        input[type="text"] { padding: 4px 8px; border-radius: 4px; border: 1px solid #ddd6fe; font-size: 12px; width: 150px; }
+        .btn { background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .hint { grid-column: 1 / -1; margin-bottom: 10px; font-size: 14px; color: #6d28d9; }
+        .nav-back { margin-bottom: 20px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="nav-back">← 返回首頁</a>
+<div class="hint">轉換邏輯：移除寬高轉為註解、ID 自動加 <code>-rwd</code>、顏色轉為 <code>currentColor</code>。</div>
+
+<div class="container">
+    <div class="panel">
+        <div class="header">
+            SVG Source
+            <div class="controls">
+                <span>ID:</span>
+                <input type="text" id="symbolId" value="icon-new-icon" placeholder="輸入 ID">
+            </div>
+        </div>
+        <textarea id="input" placeholder="貼上 <svg>...</svg>"></textarea>
+    </div>
+
+    <div class="panel">
+        <div class="header">
+            RWD Symbol Result
+            <button class="btn" onclick="copyResult()">複製結果</button>
+        </div>
+        <textarea id="output" readonly></textarea>
+    </div>
+</div>
+
+<script>
+    const input = document.getElementById('input');
+    const output = document.getElementById('output');
+    const symbolIdInput = document.getElementById('symbolId');
+
+    function convert() {
+        let svg = input.value.trim();
+        if (!svg) {
+            output.value = "";
+            return;
+        }
+
+        // 1. 抓取原始寬高
+        const widthMatch = svg.match(/width="([^"]+)"/i);
+        const heightMatch = svg.match(/height="([^"]+)"/i);
+        const w = widthMatch ? widthMatch[1] : "unknown";
+        const h = heightMatch ? heightMatch[1] : "unknown";
+        const sizeComment = `\n`;
+
+        // 2. 處理 ID (自動加 -rwd)
+        const idBase = symbolIdInput.value || 'icon';
+        const finalId = `${idBase}-rwd`;
+
+        // 3. 標籤轉換與屬性清理
+        // 移除 width, height, xmlns (symbol 內通常不需要個別 xmlns)
+        let result = svg
+            .replace(/<svg/gi, `<symbol id="${finalId}"`)
+            .replace(/<\/svg>/gi, '</symbol>')
+            .replace(/\s+width="[^"]*"/gi, '')
+            .replace(/\s+height="[^"]*"/gi, '');
+
+        // 4. 顏色通用化 (排除 fill="none")
+        result = result.replace(/fill="(?!none)[^"]+"/gi, 'fill="currentColor"');
+        result = result.replace(/stroke="(?!none)[^"]+"/gi, 'stroke="currentColor"');
+
+        output.value = sizeComment + result;
+    }
+
+    input.addEventListener('input', convert);
+    symbolIdInput.addEventListener('input', convert);
+
+    function copyResult() {
+        output.select();
+        document.execCommand('copy');
+        const btn = document.querySelector('.btn');
+        btn.innerText = '已複製！';
+        setTimeout(() => btn.innerText = '複製結果', 1500);
+    }
+</script>
+</body>
+</html>
