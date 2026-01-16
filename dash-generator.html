@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>CSS Custom Dash Generator</title>
+    <style>
+        :root { --primary: #B64E3E; --bg: #fff5f5; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 40px; color: #4a1a1a; }
+        .container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 80vh; }
+        .panel { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #fbd5d5; }
+        .header { padding: 12px 20px; background: #ffebeb; border-bottom: 1px solid #fbd5d5; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        textarea { flex: 1; border: none; padding: 20px; font-size: 13px; line-height: 1.6; outline: none; resize: none; font-family: 'Fira Code', monospace; }
+        #output { background: #2d1a1a; color: #fbd5d5; }
+        .controls { display: flex; gap: 15px; padding: 20px; background: #fff; border-bottom: 1px solid #fbd5d5; }
+        .input-item { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+        input[type="number"] { width: 60px; padding: 6px; border: 1px solid #fbd5d5; border-radius: 4px; }
+        .btn { background: var(--primary); color: white; border: none; padding: 6px 15px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .preview-area { padding: 20px; background: white; border-top: 1px solid #fbd5d5; text-align: center; }
+        .preview-box { display: inline-block; padding-bottom: 5px; font-weight: bold; }
+        .nav-back { margin-bottom: 20px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="nav-back">← 返回首頁</a>
+
+<div class="controls">
+    <div class="input-item">
+        <label>線條長度:</label>
+        <input type="number" id="dashLen" value="10">
+    </div>
+    <div class="input-item">
+        <label>間距長度:</label>
+        <input type="number" id="gapLen" value="5">
+    </div>
+    <div class="input-item">
+        <label>粗細:</label>
+        <input type="number" id="strokeW" value="2">
+    </div>
+</div>
+
+<div class="container">
+    <div class="panel">
+        <div class="header">即時預覽</div>
+        <div class="preview-area">
+            <div id="preview" class="preview-box">這是一段測試虛線底線的文字</div>
+        </div>
+        <textarea id="cssPreview" readonly style="height: 100px; background: #fdf2f2; border-top: 1px solid #fbd5d5;"></textarea>
+    </div>
+
+    <div class="panel">
+        <div class="header">
+            Stylus Output
+            <button class="btn" onclick="copyResult()">複製結果</button>
+        </div>
+        <textarea id="output" readonly></textarea>
+    </div>
+</div>
+
+<script>
+    const dashIn = document.getElementById('dashLen');
+    const gapIn = document.getElementById('gapLen');
+    const strokeIn = document.getElementById('strokeW');
+    const preview = document.getElementById('preview');
+    const cssPreview = document.getElementById('cssPreview');
+    const output = document.getElementById('output');
+
+    function generate() {
+        const d = parseInt(dashIn.value) || 0;
+        const g = parseInt(gapIn.value) || 0;
+        const s = parseInt(strokeIn.value) || 0;
+        const total = d + g;
+
+        const className = `.custom-dash-${d}-${g}`;
+        const gradient = `repeating-linear-gradient(90deg, #B64E3E, #B64E3E ${d}px, transparent ${d}px, transparent ${total}px)`;
+        
+        const stylus = `${className}
+  // 設定背景為重複的線性漸層
+  // 參數：線條顏色 0-${d}px, 透明色(間距) ${d}-${total}px
+  background-image: ${gradient}
+  background-position: bottom
+  background-size: 100% ${s}px
+  background-repeat: no-repeat
+  padding-bottom: 5px`;
+
+        output.value = stylus;
+        
+        // 更新預覽
+        preview.style.backgroundImage = gradient;
+        preview.style.backgroundPosition = 'bottom';
+        preview.style.backgroundSize = `100% ${s}px`;
+        preview.style.backgroundRepeat = 'no-repeat';
+        
+        cssPreview.value = `background-image: ${gradient};`;
+    }
+
+    [dashIn, gapIn, strokeIn].forEach(el => el.addEventListener('input', generate));
+
+    function copyResult() {
+        output.select();
+        document.execCommand('copy');
+        alert('Stylus 已複製！');
+    }
+
+    generate();
+</script>
+</body>
+</html>
