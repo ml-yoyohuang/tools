@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>CSS Custom Dash Generator</title>
+    <title>CSS Custom Dash Generator Pro</title>
     <style>
         :root { --primary: #B64E3E; --bg: #fff5f5; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 40px; color: #4a1a1a; }
@@ -11,12 +11,15 @@
         .header { padding: 12px 20px; background: #ffebeb; border-bottom: 1px solid #fbd5d5; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         textarea { flex: 1; border: none; padding: 20px; font-size: 13px; line-height: 1.6; outline: none; resize: none; font-family: 'Fira Code', monospace; }
         #output { background: #2d1a1a; color: #fbd5d5; }
-        .controls { display: flex; gap: 15px; padding: 20px; background: #fff; border-bottom: 1px solid #fbd5d5; }
-        .input-item { display: flex; align-items: center; gap: 8px; font-size: 14px; }
-        input[type="number"] { width: 60px; padding: 6px; border: 1px solid #fbd5d5; border-radius: 4px; }
-        .btn { background: var(--primary); color: white; border: none; padding: 6px 15px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
-        .preview-area { padding: 20px; background: white; border-top: 1px solid #fbd5d5; text-align: center; }
-        .preview-box { display: inline-block; padding-bottom: 5px; font-weight: bold; }
+        .controls { display: flex; gap: 20px; padding: 25px; background: white; border-radius: 12px; margin-bottom: 20px; border: 1px solid #fbd5d5; flex-wrap: wrap; }
+        .input-item { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; }
+        input[type="number"] { width: 70px; padding: 8px; border: 1px solid #fbd5d5; border-radius: 6px; outline: none; }
+        input:focus { border-color: var(--primary); }
+        .btn { background: var(--primary); color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .preview-area { padding: 40px; background: white; text-align: center; border-bottom: 1px solid #fbd5d5; }
+        /* 讓預覽文字可編輯 */
+        .preview-box { display: inline-block; padding-bottom: 5px; font-size: 1.5rem; font-weight: 700; outline: none; border-bottom: none; cursor: text; }
+        .preview-hint { font-size: 12px; color: #999; margin-top: 10px; }
         .nav-back { margin-bottom: 20px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: bold; }
     </style>
 </head>
@@ -26,26 +29,31 @@
 
 <div class="controls">
     <div class="input-item">
-        <label>線條長度:</label>
+        <label>線條長 (Dash):</label>
         <input type="number" id="dashLen" value="10">
     </div>
     <div class="input-item">
-        <label>間距長度:</label>
+        <label>間距長 (Gap):</label>
         <input type="number" id="gapLen" value="5">
     </div>
     <div class="input-item">
-        <label>粗細:</label>
+        <label>粗細 (Width):</label>
         <input type="number" id="strokeW" value="2">
+    </div>
+    <div class="input-item">
+        <label>與文字距離 (Padding):</label>
+        <input type="number" id="padB" value="5">
     </div>
 </div>
 
 <div class="container">
     <div class="panel">
-        <div class="header">即時預覽</div>
+        <div class="header">視覺預覽 (文字可點擊編輯)</div>
         <div class="preview-area">
-            <div id="preview" class="preview-box">這是一段測試虛線底線的文字</div>
+            <div id="preview" class="preview-box" contenteditable="true">這是一段可以編輯的測試文字</div>
+            <div class="preview-hint">↑ 點擊上方文字可直接修改內容</div>
         </div>
-        <textarea id="cssPreview" readonly style="height: 100px; background: #fdf2f2; border-top: 1px solid #fbd5d5;"></textarea>
+        <textarea id="cssPreview" readonly style="height: 120px; background: #fdf2f2; border-top: 1px solid #fbd5d5; color: #B64E3E;"></textarea>
     </div>
 
     <div class="panel">
@@ -61,6 +69,7 @@
     const dashIn = document.getElementById('dashLen');
     const gapIn = document.getElementById('gapLen');
     const strokeIn = document.getElementById('strokeW');
+    const padBIn = document.getElementById('padB');
     const preview = document.getElementById('preview');
     const cssPreview = document.getElementById('cssPreview');
     const output = document.getElementById('output');
@@ -69,37 +78,42 @@
         const d = parseInt(dashIn.value) || 0;
         const g = parseInt(gapIn.value) || 0;
         const s = parseInt(strokeIn.value) || 0;
+        const p = parseInt(padBIn.value) || 0;
         const total = d + g;
 
-        const className = `.custom-dash-${d}-${g}`;
+        // 更新命名稱格式：.custom-dash-10-5-w2
+        const className = `.custom-dash-${d}-${g}-w${s}`;
         const gradient = `repeating-linear-gradient(90deg, #B64E3E, #B64E3E ${d}px, transparent ${d}px, transparent ${total}px)`;
         
         const stylus = `${className}
-  // 設定背景為重複的線性漸層
+  // 設定背景為重複的線性漸層虛線
   // 參數：線條顏色 0-${d}px, 透明色(間距) ${d}-${total}px
   background-image: ${gradient}
-  background-position: bottom
-  background-size: 100% ${s}px
+  background-position: bottom              // 放在底部
+  background-size: 100% ${s}px               // 寬度 100%, 高度(線條粗細) ${s}px
   background-repeat: no-repeat
-  padding-bottom: 5px`;
+  padding-bottom: ${p}px                     // 控制線條與文字的距離`;
 
         output.value = stylus;
         
-        // 更新預覽
+        // 更新預覽樣式
         preview.style.backgroundImage = gradient;
         preview.style.backgroundPosition = 'bottom';
         preview.style.backgroundSize = `100% ${s}px`;
         preview.style.backgroundRepeat = 'no-repeat';
+        preview.style.paddingBottom = `${p}px`;
         
-        cssPreview.value = `background-image: ${gradient};`;
+        cssPreview.value = `/* CSS 原生語法參考 */\nbackground-image: ${gradient};\nbackground-size: 100% ${s}px;\npadding-bottom: ${p}px;`;
     }
 
-    [dashIn, gapIn, strokeIn].forEach(el => el.addEventListener('input', generate));
+    [dashIn, gapIn, strokeIn, padBIn].forEach(el => el.addEventListener('input', generate));
 
     function copyResult() {
         output.select();
         document.execCommand('copy');
-        alert('Stylus 已複製！');
+        const btn = document.querySelector('.btn');
+        btn.innerText = '已複製！';
+        setTimeout(() => btn.innerText = '複製結果', 1500);
     }
 
     generate();
