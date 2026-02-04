@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>CSS Duplicate Selector Merger</title>
+    <style>
+        :root { --primary: #6366f1; --bg: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 40px; color: #1e293b; }
+        .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 80vh; }
+        .panel { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #e2e8f0; }
+        .header { padding: 12px 20px; background: #f1f5f9; border-bottom: 1px solid #e2e8f0; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        textarea { flex: 1; border: none; padding: 20px; font-size: 12px; line-height: 1.5; outline: none; resize: none; font-family: 'Fira Code', monospace; }
+        #output { background: #1e293b; color: #9cdcfe; }
+        .btn { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .hint { grid-column: 1 / -1; margin-bottom: 10px; font-size: 14px; color: #475569; border-left: 4px solid var(--primary); padding-left: 15px; }
+        .nav-back { margin-bottom: 20px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="nav-back">← 返回首頁</a>
+<div class="hint">
+    <strong>💡 修復原理：</strong> 掃描整份 CSS，將重複出現的選擇器內容合併，並保持第一次出現的順序，解決 SonarQube 的 Duplicate Selector 警告。
+</div>
+
+<div class="container">
+    <div class="panel">
+        <div class="header">打包後的 style.css 內容</div>
+        <textarea id="input" placeholder="貼上 style.css 原始碼..."></textarea>
+    </div>
+
+    <div class="panel">
+        <div class="header">
+            Optimized CSS
+            <button class="btn" onclick="copyResult()">複製結果</button>
+        </div>
+        <textarea id="output" readonly></textarea>
+    </div>
+</div>
+
+<script>
+
+const input = document.getElementById('input');
+    const output = document.getElementById('output');
+
+    function parseCSS(css) {
+        const blocks = [];
+        let currentBlock = { selector: "", content: "", media: "" };
+        let depth = 0;
+        let buffer = "";
+        let currentMedia = "";
+
+        // 逐字掃描，精準處理嵌套大括號
+        for (let i = 0; i < css.length; i++) {
+            const char = css[i];
+
+            if (char === '{') {
+                if (depth === 0) {
+                    // 進入第一層：可能是 @media 或普通選擇器
+                    const selector = buffer.trim();
+                    if (selector.startsWith('@media')) {
+                        currentMedia = selector;
+                    } else {
+                        currentBlock.selector = selector;
+                        currentBlock.media = currentMedia;
+                    }
+                    buffer = "";
+                } else if (depth === 1 && currentMedia) {
+                    // 在 @media 內部進入第二層：這是選擇器
+                    currentBlock.selector = buffer.trim();
+                    currentBlock.media = currentMedia;
+                    buffer = "";
+                }
+                depth++;
+            } else if (char === '}') {
+                depth--;
+                if (depth === 0) {
+                    if (currentMedia) {
+                        currentMedia = ""; // 結束 @media 區塊
+                    } else {
+                        currentBlock.content = buffer.trim();
+                        blocks.push({ ...currentBlock });
+                        currentBlock = { selector: "", content: "", media: "" };
+                    }
+                    buffer = "";
+                } else if (depth === 1 && currentMedia) {
+                    // 結束 @media 內部的選擇器
+                    currentBlock.content = buffer.trim();
+                    blocks.push({ ...currentBlock });
+                    currentBlock = { selector: "", content: "", media: "" };
+                    buffer = "";
+                }
+            } else {
+                buffer += char;
+            }
+        }
+        return blocks;
+    }
+
+
+function mergeCSS() {
+        const rawCss = input.value;
+        if (!rawCss.trim()) { output.value = ""; return; }
+
+        const allBlocks = parseCSS(rawCss);
+        const mergedMap = new Map();
+        const order = [];
+
+        allBlocks.forEach(block => {
+            const key = `${block.media} | ${block.selector}`;
+            
+            // 解析屬性內容為 Map，自動去重 (後者蓋前者)
+            const propLines = block.content.split(';').map(l => l.trim()).filter(l => l);
+            const propMap = new Map();
+            
+            propLines.forEach(line => {
+                const parts = line.split(':');
+                if (parts.length >= 2) {
+                    const propName = parts[0].trim();
+                    const propVal = parts.slice(1).join(':').trim();
+                    propMap.set(propName, propVal); // 如果 key 相同，Map 會自動覆蓋成最新的值
+                }
+            });
+
+            if (mergedMap.has(key)) {
+                // 合併屬性：將新的屬性 Map 合併到舊的 Map 中
+                const existingBlock = mergedMap.get(key);
+                propMap.forEach((val, name) => {
+                    existingBlock.propMap.set(name, val);
+                });
+            } else {
+                block.propMap = propMap;
+                mergedMap.set(key, block);
+                order.push(key);
+            }
+        });
+
+        // 重新組合字串
+        const renderBlock = (block) => {
+            let inner = "";
+            block.propMap.forEach((val, name) => {
+                inner += `  ${name}: ${val};\n`;
+            });
+            return `${block.selector} {\n${inner}}`;
+        };
+
+        const mediaGroups = {};
+        const globalRules = [];
+
+        order.forEach(key => {
+            const block = mergedMap.get(key);
+            if (block.media) {
+                if (!mediaGroups[block.media]) mediaGroups[block.media] = [];
+                mediaGroups[block.media].push(block);
+            } else {
+                globalRules.push(block);
+            }
+        });
+
+        let finalResult = globalRules.map(renderBlock).join('\n\n');
+
+        for (const media in mediaGroups) {
+            const rules = mediaGroups[media].map(b => {
+                let inner = "";
+                b.propMap.forEach((val, name) => {
+                    inner += `    ${name}: ${val};\n`;
+                });
+                return `  ${b.selector} {\n${inner}  }`;
+            }).join('\n\n');
+            finalResult += `\n\n${media} {\n${rules}\n}`;
+        }
+
+        output.value = finalResult;
+    }
+
+
+    input.addEventListener('input', mergeCSS);
+
+    function copyResult() {
+        output.select();
+        document.execCommand('copy');
+        const btn = document.querySelector('.btn');
+        btn.innerText = '已複製！';
+        setTimeout(() => btn.innerText = '複製結果', 1500);
+    }
+
+</script>
+</body>
+</html>

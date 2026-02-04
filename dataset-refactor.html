@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>JS Dataset Refactor Tool</title>
+    <style>
+        :root { --primary: #3b82f6; --bg: #f0f7ff; }
+        body { font-family: 'Inter', 'Fira Code', monospace; background: var(--bg); padding: 40px; color: #1e3a8a; }
+        .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 80vh; }
+        .panel { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #bfdbfe; }
+        .header { padding: 12px 20px; background: #dbeafe; border-bottom: 1px solid #bfdbfe; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        textarea { flex: 1; border: none; padding: 20px; font-size: 13px; line-height: 1.6; outline: none; resize: none; }
+        #output { background: #1e293b; color: #bae6fd; }
+        .btn { background: var(--primary); color: white; border: none; padding: 6px 15px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .hint { grid-column: 1 / -1; margin-bottom: 10px; font-size: 14px; color: #1e40af; }
+        .nav-back { margin-bottom: 20px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="nav-back">← 返回首頁</a>
+<div class="hint">💡 <b>SonarQube 優化：</b> 自動將 <code>getAttribute('data-*')</code> 轉為 <code>dataset['*']</code>，並將 <code>setAttribute('data-*', val)</code> 轉為 <code>dataset['*'] = val</code>。</div>
+
+<div class="container">
+    <div class="panel">
+        <div class="header">原始 JavaScript 代碼</div>
+        <textarea id="input" placeholder="貼上你的 JS 代碼...
+el.getAttribute('data-id');
+el.setAttribute('data-status', 'active');"></textarea>
+    </div>
+
+    <div class="panel">
+        <div class="header">
+            Refactored (Dataset)
+            <button class="btn" onclick="copyResult()">複製結果</button>
+        </div>
+        <textarea id="output" readonly></textarea>
+    </div>
+</div>
+
+<script>
+    const input = document.getElementById('input');
+    const output = document.getElementById('output');
+
+    function refactorDataset() {
+        let code = input.value;
+        if (!code) {
+            output.value = "";
+            return;
+        }
+
+        // 1. 修復 getAttribute('data-xxx') -> dataset['xxx']
+        // 正則解釋：比對 .getAttribute( 引號 data- 任何字 引號 )
+        code = code.replace(/\.getAttribute\(['"]data-([^'"]+)['"]\)/g, ".dataset['$1']");
+
+        // 2. 修復 setAttribute('data-xxx', value) -> dataset['xxx'] = value
+        // 正則解釋：比對 .setAttribute( 引號 data- 任何字 引號 , 任何內容 )
+        code = code.replace(/\.setAttribute\(['"]data-([^'"]+)['"]\s*,\s*([^)]+)\)/g, ".dataset['$1'] = $2");
+
+        output.value = code;
+    }
+
+    input.addEventListener('input', refactorDataset);
+
+    function copyResult() {
+        output.select();
+        document.execCommand('copy');
+        const btn = document.querySelector('.btn');
+        btn.innerText = '已複製！';
+        setTimeout(() => btn.innerText = '複製結果', 1500);
+    }
+</script>
+</body>
+</html>
