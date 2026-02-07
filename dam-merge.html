@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>ClubDAM 新舊資料比對合併器</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; padding: 30px; max-width: 1200px; margin: 0 auto; background: #f4f7f9; color: #333; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
+        textarea { width: 100%; height: 250px; border: 1px solid #ddd; border-radius: 6px; padding: 10px; font-family: monospace; box-sizing: border-box; font-size: 13px; }
+        .btn-group { margin: 20px 0; display: flex; gap: 10px; justify-content: center; }
+        button { padding: 12px 30px; cursor: pointer; border: none; border-radius: 6px; background: #0071e3; color: white; font-size: 16px; font-weight: bold; }
+        button:hover { background: #005bb5; }
+        .copy-btn { background: #34c759; }
+        .copy-btn:hover { background: #28a745; }
+        .stat { margin-top: 10px; font-size: 14px; color: #666; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 20px; font-size: 14px; }
+        th, td { border: 1px solid #eee; padding: 10px; text-align: left; }
+        th { background: #f8f9fa; }
+        .new-song { background-color: #fff9db; color: #d9480f; font-weight: bold; } /* 新歌高亮 */
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>ClubDAM 新舊資料比對合併器</h2>
+        <p style="font-size: 14px; color: #666;">將 Excel 中的內容直接複製貼上即可（包含 Tab 分隔字元）。</p>
+        
+        <div class="grid">
+            <div class="input-group">
+                <label>1. 去年已翻譯資料 (含中文歌名)</label>
+                <textarea id="oldDataInput" placeholder="格式：中文歌名 [TAB] 編號 [TAB] 片假名 [TAB] 歌手"></textarea>
+            </div>
+            <div class="input-group">
+                <label>2. 今年新抓取資料 (中文欄位空白)</label>
+                <textarea id="newDataInput" placeholder="格式：[空白] [TAB] 編號 [TAB] 片假名公式 [TAB] 歌手"></textarea>
+            </div>
+        </div>
+        
+        <div class="btn-group">
+            <button onclick="mergeData()">1. 開始比對合併</button>
+            <button class="copy-btn" onclick="copyResult()">2. 複製合併結果 (貼往 Excel)</button>
+        </div>
+        <div id="status" class="stat"></div>
+    </div>
+
+    <div class="card">
+        <strong>合併預覽 (黃色背景代表尚未翻譯的新歌)：</strong>
+        <table id="resultTable">
+            <thead>
+                <tr>
+                    <th>中文歌名</th>
+                    <th>編號</th>
+                    <th>歌名片假名(連結)</th>
+                    <th>歌手</th>
+                </tr>
+            </thead>
+            <tbody id="resultBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        let finalOutputText = "";
+
+        function mergeData() {
+            const oldRaw = document.getElementById('oldDataInput').value.trim();
+            const newDataRaw = document.getElementById('newDataInput').value.trim();
+            
+            if (!oldRaw || !newDataRaw) {
+                alert("請確保兩個格子都有貼入資料");
+                return;
+            }
+
+            const oldMap = new Map();
+            const idRegex = /\d{4}-\d{2}/; 
+
+            // 1. 先解析舊資料存入 Map (Key: ID, Value: 全整物件)
+            oldRaw.split('\n').forEach(line => {
+                const cols = line.split('\t');
+                const idIndex = cols.findIndex(col => idRegex.test(col.trim()));
+                if (idIndex !== -1) {
+                    const id = cols[idIndex].trim();
+                    const chinese = idIndex > 0 ? cols[idIndex - 1].trim().replace('🆕', '') : "";
+                    const ruby = cols[idIndex + 1]?.trim() || "";
+                    const artist = cols[idIndex + 2]?.trim() || "";
+                    oldMap.set(id, { chinese, id, ruby, artist, foundInNew: false });
+                }
+            });
+
+            const finalArray = [];
+            const processedNewIds = new Set();
+
+            // 2. 處理今年新資料 (優先放入 finalArray)
+            newDataRaw.split('\n').forEach(line => {
+                const cols = line.split('\t');
+                const idIndex = cols.findIndex(col => idRegex.test(col.trim()));
+                if (idIndex === -1) return;
+
+                const id = cols[idIndex].trim();
+                const ruby = cols[idIndex + 1]?.trim() || "";
+                const artist = cols[idIndex + 2]?.trim() || "";
+
+                if (oldMap.has(id)) {
+                    // 【重複歌】去年有，今年也有 -> 填入去年中文，標記已尋獲
+                    const oldItem = oldMap.get(id);
+                    finalArray.push({ chinese: oldItem.chinese, id, ruby, artist, isNew: false, isGhost: false });
+                    oldItem.foundInNew = true;
+                } else {
+                    // 【全新歌】今年才有 -> 標記 🆕
+                    finalArray.push({ chinese: "🆕", id, ruby, artist, isNew: true, isGhost: false });
+                }
+                processedNewIds.add(id);
+            });
+
+            // 3. 處理「消失的舊歌」 (去年有，但今年沒出現在新貼入的資料中)
+            // 這些歌會被加上 👻 標記並放在最下面
+            const ghostSongs = [];
+            oldMap.forEach((item, id) => {
+                if (!item.foundInNew) {
+                    ghostSongs.push({ 
+                        chinese: item.chinese, 
+                        id: item.id, 
+                        ruby: item.ruby, 
+                        artist: item.artist, 
+                        isNew: false, 
+                        isGhost: true 
+                    });
+                }
+            });
+
+            // 將消失的舊歌接在最後面
+            const resultList = [...finalArray, ...ghostSongs];
+
+            // 4. 渲染預覽與準備輸出
+            const tbody = document.getElementById('resultBody');
+            tbody.innerHTML = '';
+            let mergedLines = [];
+
+            resultList.forEach(item => {
+                const tr = document.createElement('tr');
+                if (item.isNew) tr.className = 'new-song';
+                if (item.isGhost) tr.style.opacity = "0.6"; // 消失的舊歌顯示淡一點
+                
+                let previewRubyHtml = item.ruby;
+                const formulaMatch = item.ruby.match(/=HYPERLINK\("([^"]+)",\s*"([^"]+)"\)/i);
+                if (formulaMatch) {
+                    previewRubyHtml = `<a href="${formulaMatch[1]}" target="_blank">${formulaMatch[2]} 🔗</a>`;
+                }
+
+                const ghostTag = item.isGhost ? " <small>(舊資料保留)</small>" : "";
+
+                tr.innerHTML = `
+                    <td style="${item.isNew ? 'font-size: 20px;' : ''}">${item.chinese}${ghostTag}</td>
+                    <td>${item.id}</td>
+                    <td>${previewRubyHtml}</td>
+                    <td>${item.artist}</td>
+                `;
+                tbody.appendChild(tr);
+
+                mergedLines.push(`${item.chinese}\t${item.id}\t${item.ruby}\t${item.artist}`);
+            });
+
+            finalOutputText = mergedLines.join('\n');
+            document.getElementById('status').innerText = `比對完成！今年歌曲 ${finalArray.length} 首，額外保留消失舊歌 ${ghostSongs.length} 首。`;
+        }       
+
+        function copyResult() {
+            if (!finalOutputText) {
+                alert("請先執行比對合併");
+                return;
+            }
+            navigator.clipboard.writeText(finalOutputText).then(() => {
+                alert("合併結果已複製！請直接在 Excel 貼上即可。");
+            });
+        }
+    </script>
+</body>
+</html>

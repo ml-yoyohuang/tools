@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>ClubDAM 歌曲清單產生器 V2</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; padding: 30px; max-width: 1100px; margin: 0 auto; background: #f0f2f5; color: #333; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h2 { margin-top: 0; color: #1c1e21; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        textarea { width: 100%; height: 200px; border: 1px solid #ddd; border-radius: 6px; padding: 10px; font-family: monospace; box-sizing: border-box; }
+        .btn-group { margin: 20px 0; display: flex; gap: 10px; }
+        button { padding: 12px 24px; cursor: pointer; border: none; border-radius: 6px; background: #0071e3; color: white; font-size: 16px; font-weight: 500; }
+        button:hover { background: #005bb5; }
+        .copy-btn { background: #34c759; }
+        .copy-btn:hover { background: #28a745; }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th, td { border: 1px solid #eee; padding: 12px; text-align: left; }
+        th { background: #f8f9fa; color: #666; }
+        .placeholder-text { color: #aaa; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>ClubDAM 資料提取工具</h2>
+        
+        <div class="input-group">
+            <label>1. 歌手名稱</label>
+            <input type="text" id="artistInput" placeholder="例如：茄子蛋" value="">
+        </div>
+
+        <div class="input-group">
+            <label>2. 貼上 HTML (ul.result-list)</label>
+            <textarea id="htmlInput" placeholder="請在此貼上解析出的 HTML 原始碼..."></textarea>
+        </div>
+        
+        <div class="btn-group">
+            <button onclick="processData()">1. 解析資料</button>
+            <button class="copy-btn" onclick="copyForExcel()">2. 複製 Excel 格式</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <table id="resultTable">
+            <thead>
+                <tr>
+                    <th>中文歌名 (待翻譯)</th>
+                    <th>編號</th>
+                    <th>原名 (片假名)</th>
+                    <th>歌手</th>
+                </tr>
+            </thead>
+            <tbody id="resultBody">
+                <tr><td colspan="4" style="text-align:center;" class="placeholder-text">尚無資料，請先執行解析</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function processData() {
+            const artistName = document.getElementById('artistInput').value.trim() || "未填寫歌手";
+            const htmlString = document.getElementById('htmlInput').value;
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, 'text/html');
+            
+            const items = doc.querySelectorAll('li.result-item');
+            const tbody = document.getElementById('resultBody');
+            tbody.innerHTML = '';
+
+            if (items.length === 0) {
+                alert('找不到歌曲資料，請確認貼上的內容正確。');
+                return;
+            }
+
+            items.forEach(item => {
+                // 1. 抓取片假名歌名 (原名)
+                const rubyName = item.querySelector('.song-wrap')?.innerText.trim() || "";
+                
+                // 2. 抓取編號 (優先從 data-url 抓取 requestNo)
+                const url = item.getAttribute('data-url') || "";
+                let reqNo = "";
+                if (url.includes('requestNo=')) {
+                    reqNo = url.split('requestNo=')[1];
+                } else {
+                    reqNo = item.querySelector('[data-requestno]')?.getAttribute('data-requestno') || "";
+                }
+
+                if (rubyName && reqNo) {
+                    const tr = document.createElement('tr');
+                    // 欄位順序：中文歌名(暫放片假名供參考) / 編號 / 原名(片假名) / 歌手
+                    tr.innerHTML = `
+                        <td style="color: #0071e3; font-weight: bold;">(待翻)</td>
+                        <td>${reqNo}</td>
+                        <td>${rubyName}</td>
+                        <td>${artistName}</td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            });
+        }
+
+        function copyForExcel() {
+            const artistName = document.getElementById('artistInput').value.trim() || "未填寫歌手";
+            const rows = document.querySelectorAll('#resultBody tr');
+            let text = "";
+            
+            rows.forEach(row => {
+                const cols = row.querySelectorAll('td');
+                if (cols.length < 4) return;
+                
+                const reqNo = cols[1].innerText;
+                const ruby = cols[2].innerText;
+                
+                // 建立 Excel 公式連結，將連結掛在「原名 (ruby)」上面
+                const baseUrl = "https://www.clubdam.com/karaokesearch/songleaf.html?requestNo=";
+                const excelHyperlink = `=HYPERLINK("${baseUrl}${reqNo}", "${ruby}")`;
+                
+                // 輸出格式：(空白/待翻) [TAB] 編號 [TAB] 原名(帶連結公式) [TAB] 歌手
+                text += `\t${reqNo}\t${excelHyperlink}\t${artistName}\n`;
+            });
+
+            if (!text) return alert('請先解析資料');
+
+            // 執行複製
+            navigator.clipboard.writeText(text).then(() => {
+                alert('已複製！貼至 Excel 後，「原名」欄位將自動帶有超連結。請在 Excel 貼上後，將「第一欄」交給我翻譯即可。');
+            });
+        }
+    </script>
+</body>
+</html>
