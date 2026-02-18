@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>2000萬超級紅包 v1.1.5</title>
+    <title>2000萬超級紅包 v1.1.6</title>
     <style>
         :root { --lotto-red: #d20000; --lotto-gold: #ffd700; --lotto-gold-dark: #b8860b; --card-bg: #e63946; }
         body { background-color: #222; font-family: "Microsoft JhengHei", sans-serif; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
@@ -14,6 +14,11 @@
             display: flex; flex-direction: column; gap: 12px; box-sizing: border-box;
         }
 
+        /* 文字初始透明，防止 Canvas 載入前的閃現 */
+        .content-area { position: relative; width: 100%; overflow: hidden; color: transparent; transition: color 0.1s; }
+        .content-area.revealed { color: #333; } /* Canvas 初始化後，切換回正常顏色 */
+        .revealed .prize-text { color: var(--lotto-red) !important; }
+
         @media (max-width: 600px) {
             .card-container { width: 320px; padding: 10px; border-width: 5px; }
             h1 { font-size: 18px !important; }
@@ -21,6 +26,8 @@
             #zone2 { display: flex !important; flex-wrap: wrap; justify-content: center; gap: 4px !important; }
             #zone2 .cell { width: calc(33% - 6px); }
             #zone2 .cell:nth-child(n+4):nth-child(-n+7) { width: calc(25% - 6px); }
+            /* Zone 7 手機版拆兩排 */
+            #zone7 { grid-template-columns: repeat(3, 1fr) !important; }
             .flex-mobile-stack { flex-direction: column !important; }
         }
 
@@ -28,17 +35,16 @@
         h1 { margin: 0; text-shadow: 2px 2px 0 #000; font-size: 26px; }
         .game-zone { background: #fffbe6; border: 2px solid var(--lotto-gold-dark); border-radius: 8px; color: #333; position: relative; }
         .zone-header { background: var(--lotto-gold-dark); color: white; font-size: 11px; padding: 4px 8px; font-weight: bold; }
-        .content-area { position: relative; width: 100%; overflow: hidden; }
+        
         .scratch-canvas { position: absolute; top: 0; left: 0; cursor: pointer; z-index: 10; touch-action: none; }
         
         .grid { display: grid; padding: 8px; gap: 4px; }
         .cell { display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid #eee; font-weight: bold; font-size: 14px; min-height: 50px; text-align: center;}
-        .prize-text { color: var(--lotto-red); font-size: 10px; }
+        .prize-text { color: inherit; font-size: 10px; } /* 繼承父層透明度 */
         .table-header { display: grid; grid-template-columns: 1fr 1fr 1.2fr; text-align: center; font-size: 10px; font-weight: bold; padding: 5px 0; background: #ffeaa7; }
 
-        /* 彈窗樣式優化 */
         #result-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .result-box { background: white; padding: 30px; border-radius: 20px; border: 5px solid var(--lotto-gold); text-align: center; width: 280px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        .result-box { background: white; padding: 30px; border-radius: 20px; border: 5px solid var(--lotto-gold); text-align: center; width: 280px; }
         #result-amount { font-size: 45px; color: var(--lotto-red); margin: 15px 0; font-family: 'Arial Black'; }
         
         .btn-group { display: flex; flex-direction: column; gap: 10px; }
@@ -49,23 +55,24 @@
 <body>
 
     <div class="card-container">
-        <div class="header-box"><h1>2,000萬超級紅包</h1><div style="font-size:10px">v1.1.5 Build 2026</div></div>
+        <div class="header-box"><h1>2,000萬超級紅包</h1><div style="font-size:10px">v1.1.6 Secure Build</div></div>
         
         <div class="game-zone"><div class="zone-header">1. 三個金額相同即得獎金</div><div class="content-area"><div id="zone1" class="grid" style="grid-template-columns: repeat(3, 1fr);"></div><canvas id="canvas1" class="scratch-canvas"></canvas></div></div>
         <div class="game-zone"><div class="zone-header">2. 對中幸運號碼即得獎金</div><div class="content-area"><div id="lucky2" class="grid" style="grid-template-columns: repeat(2, 1fr); background: #eee;"></div><div id="zone2" class="grid" style="grid-template-columns: repeat(5, 1fr);"></div><canvas id="canvas2" class="scratch-canvas"></canvas></div></div>
         
         <div class="flex-mobile-stack" style="display: flex; gap: 8px;">
             <div class="game-zone" style="flex:1"><div class="zone-header">3. 刮出即得</div><div class="content-area"><div id="zone3" class="cell"></div><canvas id="canvas3" class="scratch-canvas"></canvas></div></div>
-            <div class="game-zone" style="flex:1"><div class="zone-header">4. 刮出即得</div><div class="content-area"><div id="zone8" class="cell"></div><canvas id="canvas8" class="scratch-canvas"></canvas></div></div>
+            <div class="game-zone" style="flex:1"><div class="zone-header">8. 刮出即得</div><div class="content-area"><div id="zone8" class="cell"></div><canvas id="canvas8" class="scratch-canvas"></canvas></div></div>
         </div>
 
         <div class="flex-mobile-stack" style="display: flex; gap: 8px;">
-            <div class="game-zone" style="flex:1"><div class="zone-header">5. 三個相同金額</div><div class="content-area"><div id="zone4" class="grid" style="grid-template-columns: repeat(3, 1fr);"></div><canvas id="canvas4" class="scratch-canvas"></canvas></div></div>
+            <div class="game-zone" style="flex:1"><div class="zone-header">4. 三個相同金額</div><div class="content-area"><div id="zone4" class="grid" style="grid-template-columns: repeat(3, 1fr);"></div><canvas id="canvas4" class="scratch-canvas"></canvas></div></div>
             <div class="game-zone" style="flex:1"><div class="zone-header">6. 兩個相同金額</div><div class="content-area"><div id="zone6" class="grid" style="grid-template-columns: repeat(2, 1fr);"></div><canvas id="canvas6" class="scratch-canvas"></canvas></div></div>
         </div>
 
-        <div class="game-zone"><div class="zone-header">7. 您 > 對手 = 得獎金</div><div class="table-header"><div>您</div><div>對手</div><div>獎金</div></div><div class="content-area"><div id="zone5" class="grid" style="grid-template-columns: 1fr 1fr 1.2fr; padding:0;"></div><canvas id="canvas5" class="scratch-canvas"></canvas></div></div>
-        <div class="game-zone"><div class="zone-header">8. 您的符號對中幸運符號</div><div class="content-area"><div id="lucky7" class="grid" style="grid-template-columns: repeat(2, 1fr); background: #eee;"></div><div id="zone7" class="grid" style="grid-template-columns: repeat(6, 1fr);"></div><canvas id="canvas7" class="scratch-canvas"></canvas></div></div>
+        <div class="game-zone"><div class="zone-header">5. 您 > 對手 = 得獎金</div><div class="table-header"><div>您</div><div>對手</div><div>獎金</div></div><div class="content-area"><div id="zone5" class="grid" style="grid-template-columns: 1fr 1fr 1.2fr; padding:0;"></div><canvas id="canvas5" class="scratch-canvas"></canvas></div></div>
+        
+        <div class="game-zone"><div class="zone-header">7. 您的符號對中幸運符號</div><div class="content-area"><div id="lucky7" class="grid" style="grid-template-columns: repeat(2, 1fr); background: #eee;"></div><div id="zone7" class="grid" style="grid-template-columns: repeat(6, 1fr);"></div><canvas id="canvas7" class="scratch-canvas"></canvas></div></div>
     </div>
 
     <button class="btn-reset" onclick="location.reload()" style="margin-top: 20px;">再買一張 (1,000元)</button>
@@ -101,11 +108,32 @@
         renderZone6(winConfig[5]);
         renderZone7(winConfig[6]);
         renderZoneSingle(8, winConfig[7], 8);
+        
+        // Canvas 初始化
         setTimeout(() => {
             document.querySelectorAll('.scratch-canvas').forEach((canvas, idx) => setupScratch(canvas, idx));
+            // 確保 Canvas 已經畫上灰色矩形後，才顯示內容文字顏色
+            document.querySelectorAll('.content-area').forEach(el => el.classList.add('revealed'));
         }, 150);
     }
 
+    // --- 區域 7 特別修正：確保符號能正常顯示 ---
+    function renderZone7(isWin) {
+        let pool = shuffle([...SYMBOLS]);
+        const lucky = [pool[0], pool[1]];
+        document.getElementById('lucky7').innerHTML = lucky.map(s => `<div class="cell" style="background:white; color:#333;">幸運: ${s}</div>`).join('');
+        const winAmt = getRandomPrize();
+        const winIdx = isWin ? Math.floor(Math.random() * 6) : -1;
+        let html = '';
+        for(let i=0; i<6; i++) {
+            const hit = (i === winIdx);
+            const p = hit ? winAmt : getRandomFake();
+            html += `<div class="cell lotto-item" data-val="${hit ? winAmt : 0}"><span style="font-size:18px">${hit ? lucky[0] : pool[i+2]}</span><span class="prize-text">$${p.toLocaleString()}</span></div>`;
+        }
+        document.getElementById('zone7').innerHTML = html;
+    }
+
+    // --- 其他渲染函式保持 v1.1.5 優化邏輯 ---
     function renderZone1_4(id, isWin) {
         const el = document.getElementById('zone'+id);
         const limit = (id === 4) ? 3 : 6;
@@ -135,7 +163,7 @@
             let n = Math.floor(Math.random() * 99) + 1;
             if(!lucky.includes(n)) lucky.push(n);
         }
-        document.getElementById('lucky2').innerHTML = lucky.map(n => `<div class="cell">幸運: ${n.toString().padStart(2, '0')}</div>`).join('');
+        document.getElementById('lucky2').innerHTML = lucky.map(n => `<div class="cell" style="background:white; color:#333;">幸運: ${n.toString().padStart(2, '0')}</div>`).join('');
         const winAmt = getRandomPrize();
         const winIdx = isWin ? Math.floor(Math.random() * 10) : -1;
         let html = '';
@@ -209,21 +237,6 @@
         }).join('');
     }
 
-    function renderZone7(isWin) {
-        let pool = shuffle([...SYMBOLS]);
-        const lucky = [pool[0], pool[1]];
-        document.getElementById('lucky7').innerHTML = lucky.map(s => `<div class="cell">幸運: ${s}</div>`).join('');
-        const winAmt = getRandomPrize();
-        const winIdx = isWin ? Math.floor(Math.random() * 6) : -1;
-        let html = '';
-        for(let i=0; i<6; i++) {
-            const hit = (i === winIdx);
-            const p = hit ? winAmt : getRandomFake();
-            html += `<div class="cell lotto-item" data-val="${hit ? winAmt : 0}"><span style="font-size:18px">${hit ? lucky[0] : pool[i+2]}</span><span class="prize-text">$${p.toLocaleString()}</span></div>`;
-        }
-        document.getElementById('zone7').innerHTML = html;
-    }
-
     function renderZoneSingle(id, isWin) {
         const p = isWin ? getRandomPrize() : 0;
         document.getElementById('zone'+id).innerHTML = `<div class="lotto-item" data-val="${p}"><span>$${p.toLocaleString()}</span><br><span class="prize-text">獎金</span></div>`;
@@ -250,13 +263,7 @@
             ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI*2); ctx.fill();
         };
         const handleStart = (e) => { active = true; scratch(e); };
-        const handleEnd = () => { 
-            if(active) {
-                active = false;
-                scratchedZones.add(idx);
-                if(scratchedZones.size === 8) showFinalResult();
-            }
-        };
+        const handleEnd = () => { if(active) { active = false; scratchedZones.add(idx); if(scratchedZones.size === 8) showFinalResult(); } };
         canvas.addEventListener('mousedown', handleStart);
         canvas.addEventListener('touchstart', handleStart);
         window.addEventListener('mousemove', scratch);
