@@ -14,9 +14,22 @@
             display: flex; flex-direction: column; gap: 12px; box-sizing: border-box;
         }
 
-        /* 文字初始透明，防止 Canvas 載入前的閃現 */
-        .content-area { position: relative; width: 100%; overflow: hidden; color: transparent; transition: color 0.1s; }
-        .content-area.revealed { color: #333; } /* Canvas 初始化後，切換回正常顏色 */
+        /* 修改：改用 opacity (透明度) 而非 color (顏色透明)，這對 Emoji 更友善 */
+        .content-area { 
+            position: relative; 
+            width: 100%; 
+            overflow: hidden; 
+            opacity: 0; /* 初始完全隱藏 */
+            transition: opacity 0.2s; 
+        }
+
+        /* 當 Canvas 準備好，切換類別顯示內容 */
+        .content-area.revealed { 
+            opacity: 1; 
+        }
+
+        /* 確保文字與 Emoji 顏色正確 */
+        .revealed .cell { color: #333; }
         .revealed .prize-text { color: var(--lotto-red) !important; }
 
         @media (max-width: 600px) {
