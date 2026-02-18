@@ -3,53 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>2000萬超級紅包 v1.1.3</title>
+    <title>2000萬超級紅包 v1.1.5</title>
     <style>
         :root { --lotto-red: #d20000; --lotto-gold: #ffd700; --lotto-gold-dark: #b8860b; --card-bg: #e63946; }
         body { background-color: #222; font-family: "Microsoft JhengHei", sans-serif; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
         
         .card-container { 
-            width: 500px; 
-            background: var(--card-bg); 
-            border: 8px solid var(--lotto-gold); 
-            border-radius: 20px; 
-            padding: 15px; 
-            box-shadow: 0 10px 50px rgba(0,0,0,0.8); 
-            display: flex; 
-            flex-direction: column; 
-            gap: 12px; 
-            box-sizing: border-box;
+            width: 500px; background: var(--card-bg); border: 8px solid var(--lotto-gold); 
+            border-radius: 20px; padding: 15px; box-shadow: 0 10px 50px rgba(0,0,0,0.8); 
+            display: flex; flex-direction: column; gap: 12px; box-sizing: border-box;
         }
 
-        /* 響應式佈局：手機版微調 */
         @media (max-width: 600px) {
-            .card-container {
-                width: 320px;
-                padding: 10px;
-                border-width: 5px;
-            }
+            .card-container { width: 320px; padding: 10px; border-width: 5px; }
             h1 { font-size: 18px !important; }
             .cell { font-size: 12px !important; min-height: 40px !important; }
-            
-            /* Zone 2 號碼排列改為 3-4-3 */
-            #zone2 {
-                display: flex !important;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 4px !important;
-            }
-            #zone2 .cell {
-                width: calc(33% - 6px); /* 預設三格一排 */
-            }
-            /* 第 4 到第 7 個格（Index 3~6）調整為四格一排 */
-            #zone2 .cell:nth-child(n+4):nth-child(-n+7) {
-                width: calc(25% - 6px);
-            }
-            
-            /* 強制 Zone 4 與 Zone 6 獨立成行 */
-            .flex-mobile-stack {
-                flex-direction: column !important;
-            }
+            #zone2 { display: flex !important; flex-wrap: wrap; justify-content: center; gap: 4px !important; }
+            #zone2 .cell { width: calc(33% - 6px); }
+            #zone2 .cell:nth-child(n+4):nth-child(-n+7) { width: calc(25% - 6px); }
+            .flex-mobile-stack { flex-direction: column !important; }
         }
 
         .header-box { text-align: center; color: var(--lotto-gold); margin-bottom: 5px; }
@@ -64,19 +36,22 @@
         .prize-text { color: var(--lotto-red); font-size: 10px; }
         .table-header { display: grid; grid-template-columns: 1fr 1fr 1.2fr; text-align: center; font-size: 10px; font-weight: bold; padding: 5px 0; background: #ffeaa7; }
 
+        /* 彈窗樣式優化 */
         #result-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .result-box { background: white; padding: 30px; border-radius: 20px; border: 5px solid var(--lotto-gold); text-align: center; width: 280px; }
+        .result-box { background: white; padding: 30px; border-radius: 20px; border: 5px solid var(--lotto-gold); text-align: center; width: 280px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
         #result-amount { font-size: 45px; color: var(--lotto-red); margin: 15px 0; font-family: 'Arial Black'; }
-        .btn-reset { padding: 12px 30px; background: var(--lotto-gold); border: none; border-radius: 50px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        
+        .btn-group { display: flex; flex-direction: column; gap: 10px; }
+        .btn-reset { padding: 12px 30px; background: var(--lotto-gold); border: none; border-radius: 50px; font-weight: bold; cursor: pointer; color: #333; }
+        .btn-close { padding: 10px 30px; background: #eee; border: 1px solid #ccc; border-radius: 50px; font-weight: bold; cursor: pointer; color: #666; }
     </style>
 </head>
 <body>
 
     <div class="card-container">
-        <div class="header-box"><h1>2,000萬超級紅包</h1><div style="font-size:10px">v1.1.3 Mobile Perfect</div></div>
+        <div class="header-box"><h1>2,000萬超級紅包</h1><div style="font-size:10px">v1.1.5 Build 2026</div></div>
         
         <div class="game-zone"><div class="zone-header">1. 三個金額相同即得獎金</div><div class="content-area"><div id="zone1" class="grid" style="grid-template-columns: repeat(3, 1fr);"></div><canvas id="canvas1" class="scratch-canvas"></canvas></div></div>
-        
         <div class="game-zone"><div class="zone-header">2. 對中幸運號碼即得獎金</div><div class="content-area"><div id="lucky2" class="grid" style="grid-template-columns: repeat(2, 1fr); background: #eee;"></div><div id="zone2" class="grid" style="grid-template-columns: repeat(5, 1fr);"></div><canvas id="canvas2" class="scratch-canvas"></canvas></div></div>
         
         <div class="flex-mobile-stack" style="display: flex; gap: 8px;">
@@ -90,16 +65,23 @@
         </div>
 
         <div class="game-zone"><div class="zone-header">7. 您 > 對手 = 得獎金</div><div class="table-header"><div>您</div><div>對手</div><div>獎金</div></div><div class="content-area"><div id="zone5" class="grid" style="grid-template-columns: 1fr 1fr 1.2fr; padding:0;"></div><canvas id="canvas5" class="scratch-canvas"></canvas></div></div>
-        
         <div class="game-zone"><div class="zone-header">8. 您的符號對中幸運符號</div><div class="content-area"><div id="lucky7" class="grid" style="grid-template-columns: repeat(2, 1fr); background: #eee;"></div><div id="zone7" class="grid" style="grid-template-columns: repeat(6, 1fr);"></div><canvas id="canvas7" class="scratch-canvas"></canvas></div></div>
     </div>
 
-    <button class="btn-reset" onclick="location.reload()">再買一張 (1,000元)</button>
+    <button class="btn-reset" onclick="location.reload()" style="margin-top: 20px;">再買一張 (1,000元)</button>
 
-    <div id="result-overlay"><div class="result-box"><h2 id="result-title">結算中...</h2><div id="result-amount">$0</div><button class="btn-reset" onclick="location.reload()">確定</button></div></div>
+    <div id="result-overlay">
+        <div class="result-box">
+            <h2 id="result-title">結算中...</h2>
+            <div id="result-amount">$0</div>
+            <div class="btn-group">
+                <button class="btn-reset" onclick="location.reload()">再買一張</button>
+                <button class="btn-close" onclick="document.getElementById('result-overlay').style.display='none'">查看結果</button>
+            </div>
+        </div>
+    </div>
 
 <script>
-    /* 這裡的 JS 邏輯完全繼承 v1.1.2 的嚴密與隨機化設計 */
     const SYMBOLS = ['🧧', '💎', '💰', '🦁', '🏮', '🐲', '👑', '🍊', '🍍', '🔔', '🥇', '🐎'];
     const REAL_PRIZES = [500, 1000, 2000, 5000];
     const HIGH_PRIZES = [10000, 100000, 1000000, 20000000];
@@ -119,13 +101,11 @@
         renderZone6(winConfig[5]);
         renderZone7(winConfig[6]);
         renderZoneSingle(8, winConfig[7], 8);
-        
         setTimeout(() => {
             document.querySelectorAll('.scratch-canvas').forEach((canvas, idx) => setupScratch(canvas, idx));
         }, 150);
     }
 
-    /* 以下渲染函式與 v1.1.2 相同，確保邏輯一致性 */
     function renderZone1_4(id, isWin) {
         const el = document.getElementById('zone'+id);
         const limit = (id === 4) ? 3 : 6;
@@ -255,7 +235,6 @@
         canvas.height = parent.offsetHeight;
         const ctx = canvas.getContext('2d');
         ctx.fillStyle = '#C0C0C0'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
         let active = false;
         const getCoords = (e) => {
             const rect = canvas.getBoundingClientRect();
@@ -268,7 +247,7 @@
             if(e.cancelable) e.preventDefault();
             const { x, y } = getCoords(e);
             ctx.globalCompositeOperation = 'destination-out';
-            ctx.beginPath(); ctx.arc(x, y, 15, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI*2); ctx.fill();
         };
         const handleStart = (e) => { active = true; scratch(e); };
         const handleEnd = () => { 
@@ -278,7 +257,6 @@
                 if(scratchedZones.size === 8) showFinalResult();
             }
         };
-
         canvas.addEventListener('mousedown', handleStart);
         canvas.addEventListener('touchstart', handleStart);
         window.addEventListener('mousemove', scratch);
