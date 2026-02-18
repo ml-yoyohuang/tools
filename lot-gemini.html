@@ -169,17 +169,50 @@
         document.getElementById('zone2').innerHTML = html;
     }
 
+    /**
+     * 【區域 5 修正版 v1.1.4】
+     * 邏輯：您 > 對手 = 得獎金。
+     * 修正點：數字不再固定，改為在 10-99 之間完全隨機生成，增加真實感。
+     */
     function renderZone5(isWin) {
         const el = document.getElementById('zone5');
         const winAmt = getRandomPrize();
         const winRow = isWin ? Math.floor(Math.random() * 4) : -1;
         let html = '';
-        for(let i=0; i<4; i++) {
+
+        for (let i = 0; i < 4; i++) {
             const hit = (i === winRow);
             const p = hit ? winAmt : getRandomFake();
-            let my = hit ? 90 + i : 10 + i;
-            let opp = hit ? 20 + i : 80 + i;
-            html += `<div class="cell lotto-item" data-val="${hit ? winAmt : 0}">${my}</div><div class="cell" data-val="0">${opp}</div><div class="cell prize-text" data-val="0">$${p.toLocaleString()}</div>`;
+            
+            let my, opp;
+            
+            if (hit) {
+                // 中獎局：您的數字較大
+                // 先隨機決定您的數字 (30-99)
+                my = Math.floor(Math.random() * 70) + 30;
+                // 對手數字必須比您小，且兩者差值隨機 (1-20)
+                const diff = Math.floor(Math.random() * 20) + 1;
+                opp = Math.max(10, my - diff);
+            } else {
+                // 沒中獎局：對手數字較大
+                // 先隨機決定對手數字 (30-99)
+                opp = Math.floor(Math.random() * 70) + 30;
+                // 您的數字必須比對手小，且差值隨機 (1-20)
+                const diff = Math.floor(Math.random() * 20) + 1;
+                my = Math.max(10, opp - diff);
+            }
+
+            // 確保數字絕對不會相等 (極端保護)
+            if (my === opp) {
+                if (hit) my += 1;
+                else opp += 1;
+            }
+
+            html += `
+                <div class="cell lotto-item" data-val="${hit ? winAmt : 0}">${my}</div>
+                <div class="cell" data-val="0">${opp}</div>
+                <div class="cell prize-text" data-val="0">$${p.toLocaleString()}</div>
+            `;
         }
         el.innerHTML = html;
     }
