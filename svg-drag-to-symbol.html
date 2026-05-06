@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>SVG Batch to Symbol Converter</title>
+    <style>
+        :root { --primary: #0ea5e9; --bg: #f0f9ff; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 40px; color: #0c4a6e; }
+        .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 80vh; }
+        .panel { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #bae6fd; }
+        .header { padding: 12px 20px; background: #e0f2fe; border-bottom: 1px solid #bae6fd; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* 拖曳區域專屬樣式 */
+        #drop-zone { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            margin: 20px; 
+            border: 2px dashed #bae6fd; 
+            border-radius: 8px; 
+            transition: all 0.2s ease;
+            cursor: pointer;
+            color: #0369a1;
+            text-align: center;
+        }
+        #drop-zone.hover { background: #e0f2fe; border-color: var(--primary); }
+        #drop-zone p { pointer-events: none; }
+        
+        #output { flex: 1; border: none; padding: 20px; font-size: 13px; line-height: 1.6; outline: none; resize: none; font-family: 'Fira Code', monospace; background: #0c4a6e; color: #bae6fd; }
+        
+        .btn { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .btn:hover { background: #0284c7; }
+        .hint { grid-column: 1 / -1; margin-bottom: 10px; font-size: 14px; color: #0369a1; }
+        .nav-back { margin-bottom: 20px; display: inline-block; text-decoration: none; color: var(--primary); font-weight: bold; }
+        .file-status { font-size: 11px; margin-top: 10px; color: #0ea5e9; font-weight: normal; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="nav-back">← 返回首頁</a>
+<div class="hint">拖曳一或多個 SVG 檔案到左側，我會直接使用「檔名」作為 ID，並將顏色轉為 <code>currentColor</code>。</div>
+
+<div class="container">
+    <div class="panel">
+        <div class="header">SVG Files Dropzone</div>
+        <div id="drop-zone">
+            <p><strong>拖曳 SVG 檔案到此處</strong><br>或點擊選取檔案</p>
+            <div id="file-count" class="file-status"></div>
+        </div>
+        <input type="file" id="fileInput" multiple accept=".svg" style="display: none;">
+    </div>
+
+    <div class="panel">
+        <div class="header">
+            Symbol Result (Combined)
+            <button class="btn" onclick="copyResult()">複製全部代碼</button>
+        </div>
+        <textarea id="output" readonly placeholder="轉換後的 Symbol 會顯示在此..."></textarea>
+    </div>
+</div>
+
+<script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('fileInput');
+    const output = document.getElementById('output');
+    const fileCount = document.getElementById('file-count');
+
+    // 點擊觸發選擇
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    // 拖曳視覺效果
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('hover');
+    });
+
+    ['dragleave', 'dragend'].forEach(type => {
+        dropZone.addEventListener(type, () => dropZone.classList.remove('hover'));
+    });
+
+    // 處理檔案丟入
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('hover');
+        processFiles(e.dataTransfer.files);
+    });
+
+    // 處理點擊上傳的檔案
+    fileInput.addEventListener('change', (e) => {
+        processFiles(e.target.files);
+    });
+
+    async function processFiles(files) {
+        const svgFiles = Array.from(files).filter(file => file.name.toLowerCase().endsWith('.svg'));
+        
+        if (svgFiles.length === 0) return;
+
+        fileCount.innerText = `已處理: ${svgFiles.length} 個檔案`;
+        let combinedResult = "";
+
+        for (const file of svgFiles) {
+            const text = await file.text();
+            const id = file.name.replace(/\.[^/.]+$/, ""); // 移除副檔名
+            combinedResult += convertToSymbol(text, id) + "\n\n";
+        }
+
+        output.value = combinedResult.trim();
+    }
+
+    function convertToSymbol(svg, id) {
+        // 1. 將 <svg 替換為 <symbol，並加入 id
+        let result = svg.trim()
+            .replace(/<svg/gi, `<symbol id="${id}"`)
+            .replace(/<\/svg>/gi, '</symbol>');
+
+        // 2. 移除 xmlns (在 symbol 中通常不需要)
+        result = result.replace(/\s+xmlns="[^"]*"/gi, '');
+
+        // 3. 顏色處理：將 fill/stroke 設為 currentColor (排除 none)
+        result = result.replace(/fill="(?!none)[^"]+"/gi, 'fill="currentColor"');
+        result = result.replace(/stroke="(?!none)[^"]+"/gi, 'stroke="currentColor"');
+
+        return result;
+    }
+
+    function copyResult() {
+        if (!output.value) return;
+        output.select();
+        document.execCommand('copy');
+        alert('全部 Symbol 代碼已複製！');
+    }
+</script>
+</body>
+</html>

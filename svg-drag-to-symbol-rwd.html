@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>SVG Batch to RWD Symbol Converter</title>
+    <style>
+        :root { --primary: #8b5cf6; --bg: #f5f3ff; --accent: #6d28d9; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 40px; color: #4c1d95; margin: 0; }
+        .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 80vh; }
+        .panel { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #ddd6fe; }
+        .header { padding: 12px 20px; background: #ede9fe; border-bottom: 1px solid #ddd6fe; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* 拖曳區域樣式 */
+        #drop-zone { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            border: 3px dashed #ddd6fe; 
+            margin: 20px; 
+            border-radius: 12px; 
+            color: #8b5cf6; 
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-align: center;
+        }
+        #drop-zone.hover { background: #ede9fe; border-color: var(--primary); }
+        #drop-zone i { font-size: 48px; margin-bottom: 10px; }
+        
+        #output { flex: 1; border: none; padding: 20px; font-size: 13px; line-height: 1.6; outline: none; resize: none; font-family: 'Fira Code', monospace; background: #2e1065; color: #ddd6fe; }
+        
+        .btn { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.2s; }
+        .btn:hover { background: var(--accent); }
+        .hint { grid-column: 1 / -1; margin-bottom: 10px; font-size: 14px; color: #6d28d9; }
+        .file-list { font-size: 12px; margin-top: 10px; color: #7c3aed; max-height: 100px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+
+<div class="hint">
+    🚀 <b>批次模式：</b>直接將多個 SVG 檔案拖入左側區域。檔案名稱將自動設為 ID 並附加 <code>-rwd</code>。
+</div>
+
+<div class="container">
+    <div class="panel">
+        <div class="header">匯入 SVG 檔案</div>
+        <div id="drop-zone">
+            <div>
+                <span style="font-size: 40px;">📁</span>
+                <p>拖曳多個 SVG 檔案到這裡<br><small>(或點擊選擇檔案)</small></p>
+            </div>
+            <div class="file-list" id="file-list"></div>
+        </div>
+        <input type="file" id="file-input" multiple accept=".svg" style="display: none;">
+    </div>
+
+    <div class="panel">
+        <div class="header">
+            RWD Symbol Result (All in One)
+            <button class="btn" onclick="copyResult()">複製全部結果</button>
+        </div>
+        <textarea id="output" readonly placeholder="轉換後的原始碼會出現在這裡..."></textarea>
+    </div>
+</div>
+
+<script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const output = document.getElementById('output');
+    const fileListDisplay = document.getElementById('file-list');
+
+    // 點擊區域觸發檔案選擇
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    // 處理拖曳視覺效果
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('hover');
+    });
+
+    ['dragleave', 'dragend'].forEach(type => {
+        dropZone.addEventListener(type, () => dropZone.classList.remove('hover'));
+    });
+
+    // 處理檔案丟入
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('hover');
+        handleFiles(e.dataTransfer.files);
+    });
+
+    // 處理檔案選擇
+    fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+    });
+
+    async function handleFiles(files) {
+        const svgFiles = Array.from(files).filter(file => file.type === "image/svg+xml" || file.name.endsWith('.svg'));
+        
+        if (svgFiles.length === 0) return;
+
+        fileListDisplay.innerHTML = `已讀取 ${svgFiles.length} 個檔案`;
+        let allSymbols = "";
+
+        for (const file of svgFiles) {
+            const content = await file.text();
+            const fileName = file.name.replace(/\.svg$/i, ''); // 移除副檔名作為 ID
+            allSymbols += convertSVG(content, fileName) + "\n\n";
+        }
+
+        output.value = allSymbols.trim();
+    }
+
+    function convertSVG(svg, idBase) {
+        // 1. 抓取原始寬高 (保留作註解參考)
+        const widthMatch = svg.match(/width="([^"]+)"/i);
+        const heightMatch = svg.match(/height="([^"]+)"/i);
+        const w = widthMatch ? widthMatch[1] : "unknown";
+        const h = heightMatch ? heightMatch[1] : "unknown";
+        const sizeComment = `\n`;
+
+        // 2. 處理 ID (檔名 + -rwd)
+        const finalId = `${idBase}-rwd`;
+
+        // 3. 標籤轉換與屬性清理
+        let result = svg
+            .replace(/<svg/gi, `<symbol id="${finalId}"`)
+            .replace(/<\/svg>/gi, '</symbol>')
+            .replace(/\s+width="[^"]*"/gi, '')
+            .replace(/\s+height="[^"]*"/gi, '')
+            .replace(/\s+xmlns="[^"]*"/gi, '') // symbol 通常不需要 xmlns
+            .replace(/\s+xmlns:xlink="[^"]*"/gi, '');
+
+        // 4. 顏色通用化 (排除 fill="none")
+        result = result.replace(/fill="(?!none)[^"]+"/gi, 'fill="currentColor"');
+        result = result.replace(/stroke="(?!none)[^"]+"/gi, 'stroke="currentColor"');
+
+        return sizeComment + result;
+    }
+
+    function copyResult() {
+        if (!output.value) return;
+        output.select();
+        document.execCommand('copy');
+        const btn = document.querySelector('.btn');
+        btn.innerText = '✅ 已全部複製！';
+        setTimeout(() => btn.innerText = '複製全部結果', 1500);
+    }
+</script>
+</body>
+</html>
