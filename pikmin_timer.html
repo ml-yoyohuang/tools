@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>皮克敏計時器 Pro</title>
+    <style>
+        /* 優化 2: 全站 box-sizing 調整 */
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #4CAF50;
+            --danger-color: #f44336;
+            --bg-color: #e8f5e9;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            padding: 20px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h2 {
+            color: #2e7d32;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .config-panel {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .input-group label {
+            font-weight: bold;
+            font-size: 0.9em;
+            color: #555;
+            white-space: nowrap;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+            width: 100%; /* 配合 border-box 確保不溢出 */
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-color);
+        }
+
+        .add-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            white-space: nowrap;
+        }
+
+        .timer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .timer-card {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 6px solid var(--primary-color);
+        }
+
+        .timer-card.finished {
+            border-left-color: var(--danger-color);
+            background-color: #fff9f9;
+        }
+
+        .timer-content {
+            flex-grow: 1;
+            margin-right: 15px;
+            overflow: hidden;
+        }
+
+        .timer-name {
+            border: none;
+            font-size: 17px;
+            font-weight: bold;
+            width: 100%;
+            margin-bottom: 5px;
+            display: block;
+            outline: none;
+            background: transparent;
+        }
+
+        .time-display {
+            font-size: 32px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .finished .time-display {
+            color: var(--danger-color);
+        }
+
+        .delete-btn {
+            background-color: #ffeeee;
+            color: var(--danger-color);
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🍄 皮克敏搶蘑菇計時器</h2>
+
+    <div class="config-panel">
+        <div class="input-group">
+            <label>重生時間差:</label>
+            <input type="text" id="offsetInput" placeholder="MM:SS 或 HH:MM:SS" style="max-width: 120px;">
+        </div>
+        <div class="hint" style="margin-bottom: 15px;">(如 04:30，修改後自動儲存)</div>
+        <div class="input-group">
+            <input type="text" id="newTimeInput" placeholder="輸入蘑菇時間 (如 24:00 或 1:20:00)">
+            <button class="add-btn" onclick="addTimer()">啟動</button>
+        </div>
+    </div>
+
+    <div id="timerList" class="timer-list"></div>
+</div>
+
+<script>
+    let timers = [];
+
+    window.onload = function() {
+        const savedOffset = localStorage.getItem('pikmin_offset') || "04:30";
+        document.getElementById('offsetInput').value = savedOffset;
+
+        document.getElementById('offsetInput').addEventListener('change', function() {
+            localStorage.setItem('pikmin_offset', this.value);
+        });
+
+        const savedTimers = JSON.parse(localStorage.getItem('pikmin_timers') || "[]");
+        const now = Date.now();
+        timers = savedTimers.filter(t => t.endTime > now - 300000);
+        
+        timers.sort((a, b) => b.id - a.id);
+        timers.forEach(t => renderTimer(t));
+        saveToLocalStorage();
+    };
+
+    function saveToLocalStorage() {
+        localStorage.setItem('pikmin_timers', JSON.stringify(timers));
+    }
+
+    // 優化 1: 兼容 hh:mm:ss 的解析邏輯
+    function parseTimeToSeconds(str) {
+        const p = str.trim().split(':');
+        let h = 0, m = 0, s = 0;
+
+        if (p.length === 3) {
+            // hh:mm:ss
+            h = parseInt(p[0]);
+            m = parseInt(p[1]);
+            s = parseInt(p[2]);
+        } else if (p.length === 2) {
+            // mm:ss
+            m = parseInt(p[0]);
+            s = parseInt(p[1]);
+        } else {
+            return null;
+        }
+
+        if (isNaN(h) || isNaN(m) || isNaN(s)) return null;
+        return (h * 3600) + (m * 60) + s;
+    }
+
+    // 格式化輸出：如果超過一小時就顯示 hh:mm:ss
+    function formatSeconds(s) {
+        if (s <= 0) return "00:00";
+        const h = Math.floor(s / 3600);
+        const m = Math.floor((s % 3600) / 60);
+        const sec = s % 60;
+
+        if (h > 0) {
+            return `${h}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+        }
+        return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+    }
+
+    function addTimer() {
+        const timeVal = document.getElementById('newTimeInput').value;
+        const offsetVal = document.getElementById('offsetInput').value;
+
+        const mushroomSec = parseTimeToSeconds(timeVal);
+        const offsetSec = parseTimeToSeconds(offsetVal);
+
+        if (mushroomSec === null || offsetSec === null) {
+            alert("格式錯誤！請輸入 MM:SS (如 24:00) 或 HH:MM:SS (如 1:20:00)");
+            return;
+        }
+
+        const endTime = Date.now() + (mushroomSec + offsetSec) * 1000;
+
+        const newTimer = {
+            id: Date.now(),
+            name: "新蘑菇任務",
+            endTime: endTime,
+            notified: false
+        };
+
+        timers.unshift(newTimer);
+        renderTimer(newTimer);
+        saveToLocalStorage();
+        document.getElementById('newTimeInput').value = "";
+    }
+
+    function renderTimer(timerObj) {
+        const list = document.getElementById('timerList');
+        const card = document.createElement('div');
+        card.className = 'timer-card';
+        card.id = `timer-${timerObj.id}`;
+
+        card.innerHTML = `
+            <div class="timer-content">
+                <input type="text" class="timer-name" value="${timerObj.name}" 
+                    onchange="updateTimerName(${timerObj.id}, this.value)">
+                <div class="time-display" id="display-${timerObj.id}">--:--</div>
+            </div>
+            <button class="delete-btn" onclick="deleteTimer(${timerObj.id})">刪除</button>
+        `;
+
+        list.insertBefore(card, list.firstChild);
+
+        const tick = () => {
+            const now = Date.now();
+            const diff = Math.round((timerObj.endTime - now) / 1000);
+            const displayEl = document.getElementById(`display-${timerObj.id}`);
+
+            if (!displayEl) return;
+
+            if (diff <= 0) {
+                displayEl.innerText = "00:00";
+                const parentCard = document.getElementById(`timer-${timerObj.id}`);
+                if (parentCard && !parentCard.classList.contains('finished')) {
+                    parentCard.classList.add('finished');
+                    if (!timerObj.notified) {
+                        timerObj.notified = true;
+                        saveToLocalStorage();
+                        alert(`【${timerObj.name}】時間到！`);
+                    }
+                }
+            } else {
+                displayEl.innerText = formatSeconds(diff);
+                setTimeout(tick, 1000);
+            }
+        };
+        tick();
+    }
+
+    function updateTimerName(id, newName) {
+        const timer = timers.find(t => t.id === id);
+        if (timer) {
+            timer.name = newName;
+            saveToLocalStorage();
+        }
+    }
+
+    function deleteTimer(id) {
+        timers = timers.filter(t => t.id !== id);
+        const el = document.getElementById(`timer-${id}`);
+        if (el) el.remove();
+        saveToLocalStorage();
+    }
+</script>
+
+</body>
+</html>
