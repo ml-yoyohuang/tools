@@ -3,9 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>皮克敏計時器 Pro</title>
+    <title>皮克敏搶蘑菇計時器 Pro</title>
+    
+    <meta property="og:title" content="皮克敏搶蘑菇計時器 Pro">
+    <meta property="og:description" content="專為皮克敏玩家設計，支援重生時間補償與絕對時間戳計時，精準掌握蘑菇重生時刻！">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ml-yoyohuang.github.io/tools/pikmin_timer.html"> <meta property="og:image" content="https://ml-yoyohuang.github.io/tools/og-pikmin.png"> <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="皮克敏搶蘑菇計時器 Pro">
+    <meta name="twitter:description" content="精準計算皮克敏蘑菇重生時間，支援多人同步對時。">
+    <meta name="twitter:image" content="https://ml-yoyohuang.github.io/tools/og-pikmin.png">
+
     <style>
-        /* 優化 2: 全站 box-sizing 調整 */
         * {
             box-sizing: border-box;
         }
@@ -13,6 +21,7 @@
         :root {
             --primary-color: #4CAF50;
             --danger-color: #f44336;
+            --secondary-color: #666;
             --bg-color: #e8f5e9;
             --card-bg: #ffffff;
         }
@@ -50,7 +59,7 @@
         .input-group {
             display: flex;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 5px;
             gap: 10px;
             width: 100%;
         }
@@ -70,7 +79,7 @@
             font-size: 16px;
             outline: none;
             transition: border-color 0.3s;
-            width: 100%; /* 配合 border-box 確保不溢出 */
+            width: 100%;
         }
 
         input[type="text"]:focus {
@@ -123,10 +132,16 @@
             font-size: 17px;
             font-weight: bold;
             width: 100%;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
             display: block;
             outline: none;
             background: transparent;
+        }
+
+        .expire-time {
+            font-size: 12px;
+            color: var(--secondary-color);
+            margin-bottom: 8px;
         }
 
         .time-display {
@@ -155,6 +170,8 @@
         .hint {
             font-size: 12px;
             color: #888;
+            margin-bottom: 15px;
+            padding-left: 2px;
         }
     </style>
 </head>
@@ -168,11 +185,13 @@
             <label>重生時間差:</label>
             <input type="text" id="offsetInput" placeholder="MM:SS 或 HH:MM:SS" style="max-width: 120px;">
         </div>
-        <div class="hint" style="margin-bottom: 15px;">(如 04:30，修改後自動儲存)</div>
+        <div class="hint">(如 04:30，修改後自動儲存)</div>
+
         <div class="input-group">
-            <input type="text" id="newTimeInput" placeholder="輸入蘑菇時間 (如 24:00 或 1:20:00)">
+            <input type="text" id="newTimeInput" placeholder="輸入蘑菇剩餘時間">
             <button class="add-btn" onclick="addTimer()">啟動</button>
         </div>
+        <div class="hint">(如 24:00 或 1:20:00)</div>
     </div>
 
     <div id="timerList" class="timer-list"></div>
@@ -202,18 +221,15 @@
         localStorage.setItem('pikmin_timers', JSON.stringify(timers));
     }
 
-    // 優化 1: 兼容 hh:mm:ss 的解析邏輯
     function parseTimeToSeconds(str) {
         const p = str.trim().split(':');
         let h = 0, m = 0, s = 0;
 
         if (p.length === 3) {
-            // hh:mm:ss
             h = parseInt(p[0]);
             m = parseInt(p[1]);
             s = parseInt(p[2]);
         } else if (p.length === 2) {
-            // mm:ss
             m = parseInt(p[0]);
             s = parseInt(p[1]);
         } else {
@@ -224,7 +240,6 @@
         return (h * 3600) + (m * 60) + s;
     }
 
-    // 格式化輸出：如果超過一小時就顯示 hh:mm:ss
     function formatSeconds(s) {
         if (s <= 0) return "00:00";
         const h = Math.floor(s / 3600);
@@ -237,6 +252,16 @@
         return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
     }
 
+    function formatToLocalTime(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString('zh-TW', { 
+            hour12: false, 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit' 
+        });
+    }
+
     function addTimer() {
         const timeVal = document.getElementById('newTimeInput').value;
         const offsetVal = document.getElementById('offsetInput').value;
@@ -245,7 +270,7 @@
         const offsetSec = parseTimeToSeconds(offsetVal);
 
         if (mushroomSec === null || offsetSec === null) {
-            alert("格式錯誤！請輸入 MM:SS (如 24:00) 或 HH:MM:SS (如 1:20:00)");
+            alert("格式錯誤！請輸入 MM:SS 或 HH:MM:SS");
             return;
         }
 
@@ -270,10 +295,13 @@
         card.className = 'timer-card';
         card.id = `timer-${timerObj.id}`;
 
+        const expireLabel = formatToLocalTime(timerObj.endTime);
+
         card.innerHTML = `
             <div class="timer-content">
                 <input type="text" class="timer-name" value="${timerObj.name}" 
                     onchange="updateTimerName(${timerObj.id}, this.value)">
+                <div class="expire-time">🚩 預計到期：${expireLabel}</div>
                 <div class="time-display" id="display-${timerObj.id}">--:--</div>
             </div>
             <button class="delete-btn" onclick="deleteTimer(${timerObj.id})">刪除</button>
