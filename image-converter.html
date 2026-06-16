@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Converter 圖片轉檔工具</title>
+    
+    <!-- OG 標籤設定 -->
+    <meta property="og:title" content="Image Converter 圖片轉檔工具">
+    <meta property="og:description" content="純前端免上傳！自由轉換 PNG、JPEG、WebP 格式，支援品質調整，安全又快速。">
+    <meta property="og:type" content="website">
+
+    <style>
+        * { box-sizing: border-box; }
+        :root {
+            --primary-color: #4CAF50;
+            --primary-hover: #45a049;
+            --secondary-color: #666;
+            --bg-color: #e8f5e9;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            padding: 20px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container { width: 100%; max-width: 500px; }
+        h2 { color: #2e7d32; text-align: center; margin-bottom: 20px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+
+        .config-panel {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+
+        /* 拖拉上傳區 */
+        .dropzone {
+            border: 3px dashed #b9dfbb;
+            border-radius: 12px;
+            padding: 30px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+            margin-bottom: 20px;
+        }
+        .dropzone.dragover {
+            background: #e8f5e9;
+            border-color: var(--primary-color);
+        }
+        .dropzone p { margin: 5px 0; font-weight: bold; color: #555; }
+
+        .input-group { display: flex; align-items: center; margin-bottom: 15px; gap: 10px; width: 100%; }
+        .input-group label { font-weight: bold; font-size: 0.9em; color: #555; white-space: nowrap; width: 80px; }
+
+        select, input[type="range"] {
+            flex-grow: 1;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+        }
+        select:focus { border-color: var(--primary-color); }
+
+        .add-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .add-btn:hover { background-color: var(--primary-hover); }
+        .add-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        /* 預覽卡片 */
+        .preview-card {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            gap: 10px;
+            display: none; /* 預設隱藏 */
+        }
+        .preview-img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            object-fit: contain;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .file-info { font-size: 14px; color: var(--secondary-color); text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🔄 圖片轉檔工具</h2>
+
+    <div class="config-panel">
+        <!-- 拖拉區 -->
+        <div id="dropzone" class="dropzone" onclick="document.getElementById('fileInput').click()">
+            <span style="font-size: 30px;">📂</span>
+            <p id="dropzoneText">點擊或拖放圖片至此</p>
+            <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="loadImage(this.files[0])">
+        </div>
+
+        <!-- 設定區 -->
+        <div class="input-group">
+            <label>目標格式:</label>
+            <select id="formatSelect" onchange="toggleQualitySlider()">
+                <option value="image/png">PNG (.png)</option>
+                <option value="image/jpeg">JPEG (.jpg)</option>
+                <option value="image/webp">WebP (.webp)</option>
+            </select>
+        </div>
+
+        <div class="input-group" id="qualityGroup" style="display: none;">
+            <label>圖片品質:</label>
+            <input type="range" id="qualityRange" min="0.1" max="1.0" step="0.05" value="0.85" oninput="updateQualityLabel(this.value)">
+            <span id="qualityLabel" style="font-size: 14px; font-weight: bold; min-width: 35px;">85%</span>
+        </div>
+
+        <button id="convertBtn" class="add-btn" onclick="convertAndDownload()" disabled>轉換並下載</button>
+    </div>
+
+    <!-- 預覽區 -->
+    <div id="previewCard" class="preview-card">
+        <div class="file-info" id="originalInfo"></div>
+        <img id="previewImg" class="preview-img" src="" alt="預覽圖">
+    </div>
+</div>
+
+<script>
+    let sourceImage = null;
+    let originalFileName = "";
+    let originalFileType = "";
+
+    const dropzone = document.getElementById('dropzone');
+
+    // 拖拉視覺效果
+    ['dragenter', 'dragover'].forEach(name => {
+        dropzone.addEventListener(name, (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    });
+    ['dragleave', 'drop'].forEach(name => {
+        dropzone.addEventListener(name, (e) => { e.preventDefault(); dropzone.classList.remove('dragover'); });
+    });
+    dropzone.addEventListener('drop', (e) => {
+        loadImage(e.dataTransfer.files[0]);
+    });
+
+    // 載入圖片到 Canvas 記憶體中
+    function loadImage(file) {
+        if (!file || !file.type.startsWith('image/')) return;
+
+        originalFileName = file.name.substring(0, file.name.lastIndexOf('.'));
+        originalFileType = file.type;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                sourceImage = img;
+                
+                // 顯示預覽與啟用按鈕
+                document.getElementById('previewImg').src = e.target.result;
+                document.getElementById('originalInfo').innerHTML = `原始檔案：<b>${file.name}</b> (${img.width}x${img.height})`;
+                document.getElementById('previewCard').style.display = 'flex';
+                document.getElementById('convertBtn').disabled = false;
+                document.getElementById('dropzoneText').innerText = `已載入: ${file.name}`;
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // 控制品質拉條是否顯示 (PNG 不需要品質調整)
+    function toggleQualitySlider() {
+        const format = document.getElementById('formatSelect').value;
+        const qualityGroup = document.getElementById('qualityGroup');
+        if (format === 'image/png') {
+            qualityGroup.style.display = 'none';
+        } else {
+            qualityGroup.style.display = 'flex';
+        }
+    }
+
+    function updateQualityLabel(val) {
+        document.getElementById('qualityLabel').innerText = Math.round(val * 100) + '%';
+    }
+
+    // 核心功能：轉檔並下載
+    function convertAndDownload() {
+        if (!sourceImage) return;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = sourceImage.width;
+        canvas.height = sourceImage.height;
+        const ctx = canvas.getContext('2d');
+
+        // 如果目標是 JPEG，先鋪一層白底（避免透明 PNG 轉成 JPEG 變黑底）
+        const format = document.getElementById('formatSelect').value;
+        if (format === 'image/jpeg') {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        ctx.drawImage(sourceImage, 0, 0);
+
+        const quality = parseFloat(document.getElementById('qualityRange').value);
+        const extMapping = { 'image/png': '.png', 'image/jpeg': '.jpg', 'image/webp': '.webp' };
+        const newExt = extMapping[format];
+
+        // 導出 Blob 並下載
+        canvas.toBlob((blob) => {
+            if (!blob) return alert('轉檔失敗');
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = originalFileName + newExt;
+            a.click();
+            
+            // 釋放記憶體
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }, format, format === 'image/png' ? undefined : quality);
+    }
+</script>
+
+</body>
+</html>
