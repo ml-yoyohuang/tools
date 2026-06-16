@@ -43,7 +43,7 @@
 
         /* 搜尋框樣式 */
         .search-container {
-            margin: 30px auto;
+            margin: 30px auto 0;
             max-width: 500px;
         }
         #toolSearch {
@@ -57,6 +57,35 @@
         }
         #toolSearch:focus {
             border-color: var(--primary);
+        }
+
+        /* 篩選列 */
+        .filter-bar {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        .filter-btn {
+            padding: 6px 16px;
+            border-radius: 50px;
+            border: 1.5px solid #e2e8f0;
+            background: #fff;
+            color: var(--text-sub);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .filter-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
         }
 
         h2 {
@@ -129,7 +158,7 @@
             align-self: flex-start;
             text-transform: uppercase;
         }
-        
+
         /* 隱藏沒搜到的工具 */
         .hidden { display: none; }
         .section-hidden { display: none; }
@@ -144,42 +173,51 @@
         <div class="search-container">
             <input type="text" id="toolSearch" placeholder="輸入關鍵字搜尋工具 (例如: SVG, CSS, JSON)...">
         </div>
+        <div class="filter-bar">
+            <button class="filter-btn active" data-filter="all">全部</button>
+            <button class="filter-btn" data-filter="refactor">Refactor</button>
+            <button class="filter-btn" data-filter="converter">Converter</button>
+            <button class="filter-btn" data-filter="generator">Generator</button>
+            <button class="filter-btn" data-filter="svg">SVG</button>
+            <button class="filter-btn" data-filter="design-ops">Design Ops</button>
+            <button class="filter-btn" data-filter="image">Image & Media</button>
+        </div>
     </header>
 
     <section class="tool-section">
         <h2 id="debug-tools">Debug Tools</h2>
         <div class="grid">
-            <a href="style2attr.html" class="tool-card">
+            <a href="style2attr.html" class="tool-card" data-cat="refactor">
                 <div class="icon">🎨</div>
                 <h3>Style ➔ Attr</h3>
                 <p>將 Inline Style 內容轉換為 HTML 標籤屬性格式。</p>
                 <div class="tag">CSS Refactor</div>
             </a>
-            <a href="reduce-solve.html" class="tool-card">
+            <a href="reduce-solve.html" class="tool-card" data-cat="refactor">
                 <div class="icon">⚙️</div>
                 <h3>Reduce Solver</h3>
                 <p>將複雜的 Reduce 函式智能重構為 Filter 與 Map 組合。</p>
                 <div class="tag">JS Optimization</div>
             </a>
-            <a href="css-unfold.html" class="tool-card">
+            <a href="css-unfold.html" class="tool-card" data-cat="refactor">
                 <div class="icon">🧶</div>
                 <h3>CSS Unfolder</h3>
                 <p>將 Sass/Stylus 的巢狀 & 符號展開為完整的 Class 全名。</p>
                 <div class="tag">Refactor Tool</div>
             </a>
-            <a href="naming.html" class="tool-card">
+            <a href="naming.html" class="tool-card" data-cat="refactor">
                 <div class="icon">📝</div>
                 <h3>Case Converter</h3>
                 <p>大小駝峰、Kebab 與 Snake Case 命名一鍵轉換。</p>
                 <div class="tag">Naming</div>
             </a>
-            <a href="dataset-refactor.html" class="tool-card" data-cat="Refactor">
+            <a href="dataset-refactor.html" class="tool-card" data-cat="refactor">
                 <div class="icon">🚀</div>
                 <h3>Dataset Refactor</h3>
                 <p>自動將 getAttribute/setAttribute('data-*') 批量重構為 .dataset 語法，修復 SonarQube 警示。</p>
                 <div class="tag">JS Optimization</div>
             </a>
-            <a href="css-dedupe.html" class="tool-card" data-cat="Refactor">
+            <a href="css-dedupe.html" class="tool-card" data-cat="refactor">
                 <div class="icon">🧹</div>
                 <h3>CSS Selector Merger</h3>
                 <p>自動合併打包後 style.css 中重複出現的選擇器，並保持樣式權重順序，修復 SonarQube 警示。</p>
@@ -191,25 +229,25 @@
     <section class="tool-section">
         <h2 id="helpers">Helpers</h2>
         <div class="grid">
-            <a href="json.html" class="tool-card">
+            <a href="json.html" class="tool-card" data-cat="converter">
                 <div class="icon">🌳</div>
                 <h3>JSON Tree</h3>
                 <p>修復多餘逗號，將 JSON 轉換為可編輯的樹狀目錄。</p>
                 <div class="tag">Data Tool</div>
             </a>
-            <a href="size.html" class="tool-card">
+            <a href="size.html" class="tool-card" data-cat="design-ops">
                 <div class="icon">📏</div>
                 <h3>Viewport Checker</h3>
                 <p>即時顯示瀏覽器當前長寬，精準對齊 RWD 判定基準。</p>
                 <div class="tag">RWD Helper</div>
             </a>
-            <a href="ratio.html" class="tool-card">
+            <a href="ratio.html" class="tool-card" data-cat="design-ops">
                 <div class="icon">🖼️</div>
                 <h3>Ratio Simplifier</h3>
                 <p>將解析度自動約分為最簡比例，提供 CSS 換算。</p>
                 <div class="tag">Design Helper</div>
             </a>
-            <a href="selector.html" class="tool-card">
+            <a href="selector.html" class="tool-card" data-cat="generator">
                 <div class="icon">🔍</div>
                 <h3>Selector Gen</h3>
                 <p>快速產生複雜的 CSS 屬性選擇器匹配模式。</p>
@@ -221,133 +259,67 @@
     <section class="tool-section">
         <h2 id="generators">Generators</h2>
         <div class="grid">
-            <a href="html2pug.html" class="tool-card">
+            <a href="html2pug.html" class="tool-card" data-cat="converter">
                 <div class="icon">🐶</div>
                 <h3>HTML ➔ Pug</h3>
                 <p>將標準 HTML 代碼轉換為簡潔的 Pug 模板語法。</p>
                 <div class="tag">Template</div>
             </a>
-            <a href="csv2json.html" class="tool-card">
+            <a href="csv2json.html" class="tool-card" data-cat="converter">
                 <div class="icon">📊</div>
                 <h3>CSV Pro to JSON</h3>
                 <p>支援儲存格內換行的進階轉換器，自動處理跳脫字元。</p>
                 <div class="tag">Data Tool</div>
             </a>
-            <a href="triangle.html" class="tool-card">
+            <a href="triangle.html" class="tool-card" data-cat="generator">
                 <div class="icon">📐</div>
                 <h3>CSS Triangle</h3>
                 <p>透過圖像化介面產生偽元素三角形 CSS 語法。</p>
                 <div class="tag">Visual Generator</div>
             </a>
-            <a href="gradient.html" class="tool-card">
+            <a href="gradient.html" class="tool-card" data-cat="generator">
                 <div class="icon">🌈</div>
                 <h3>Gradient Gen</h3>
                 <p>視覺化調整多節點漸層、透明度與角度。</p>
                 <div class="tag">Visual Generator</div>
             </a>
-            <a href="swiper.html" class="tool-card">
+            <a href="swiper.html" class="tool-card" data-cat="generator">
                 <div class="icon">🎡</div>
                 <h3>Swiper Pro & A11y</h3>
                 <p>符合 WCAG 無障礙標準的 Swiper.js 配置產生器。</p>
                 <div class="tag">UI Components</div>
             </a>
-            <a href="html2emmet.html" class="tool-card">
+            <a href="html2emmet.html" class="tool-card" data-cat="converter">
                 <div class="icon">🚀</div>
                 <h3>HTML to Emmet</h3>
                 <p>將現有 HTML 結構逆向轉換為 Emmet 縮寫字串。</p>
                 <div class="tag">Refactor Tool</div>
             </a>
-            <a href="dash-generator.html" class="tool-card" data-cat="Visual">
+            <a href="dash-generator.html" class="tool-card" data-cat="generator">
                 <div class="icon">➖</div>
                 <h3>Custom Dash Gen</h3>
                 <p>透過漸層模擬可完全控製長度、間距與粗細的虛線底線，解決原生 border dashed 無法調整的問題。</p>
                 <div class="tag">Visual Generator</div>
             </a>
-        </div>
-    </section>
-
-    <section class="tool-section">
-        <h2 id="workflows">Workflows</h2>
-        <div class="grid">
-            <a href="figma2tailwind-color.html" class="tool-card">
-                <div class="icon">🎨</div>
-                <h3>Token Converter</h3>
-                <p>將 Figma JSON 色彩表轉換為 Tailwind 或 Stylus 變數。</p>
-                <div class="tag">Design Ops</div>
-            </a>
-            <a href="figma2tailwind-spacing.html" class="tool-card">
-                <div class="icon">📐</div>
-                <h3>Figma Size Master</h3>
-                <p>將 Figma 間距 JSON 轉換為 Tailwind Spacing。</p>
-                <div class="tag">Design Ops</div>
-            </a>
-            <a href="key2var.html" class="tool-card">
-                <div class="icon">🔗</div>
-                <h3>KV to Stylus</h3>
-                <p>將鍵值對 (JSON/JS) 快速轉換為 Stylus 變數。</p>
-                <div class="tag">Refactor Tool</div>
-            </a>
-            <a href="svg2symbol.html" class="tool-card">
-                <div class="icon">💠</div>
-                <h3>SVG to Symbol</h3>
-                <p>將 SVG 轉為 Symbol，並統一顏色為 currentColor。</p>
-                <div class="tag">SVG Tool</div>
-            </a>
-            <a href="svg-drag-to-symbol.html" class="tool-card">
-                <div class="icon">📦</div>
-                <h3>SVG Symbol Converter</h3>
-                <p>拖放 SVG 檔案自動封裝為 Symbol 格式，輕鬆建立圖示庫。</p>
-                <div class="tag">Workflow</div>
-            </a>
-            <a href="svg2rwd-symbol.html" class="tool-card" data-cat="Visual">
-                <div class="icon">🪄</div>
-                <h3>SVG to RWD Symbol</h3>
-                <p>移除寬高並轉為註解、ID 自動加 -rwd，並統一顏色為 currentColor，適合高品質 Sprite 開發。</p>
-                <div class="tag">SVG Tool</div>
-            </a>
-            <a href="tailwind-safelist-gen.html" class="tool-card">
-                <div class="icon">🛡️</div>
-                <h3>Tailwind Safelist</h3>
-                <p>將 Colors 配置轉換為優化的 Safelist 正則表達式。</p>
-                <div class="tag">Design Ops</div>
-            </a>
-            <a href="figma-text-css2stylus.html" class="tool-card">
-                <div class="icon">🖋️</div>
-                <h3>Text to Stylus</h3>
-                <p>將 Figma 文字 CSS 轉換為 Stylus，自動計算 rem。</p>
-                <div class="tag">Design Ops</div>
-            </a>
-            <a href="stylus2cssvar.html" class="tool-card">
-                <div class="icon">🧬</div>
-                <h3>Stylus to CSS Var</h3>
-                <p>將 Stylus 變數 (key = val) 轉為原生 CSS 變數。</p>
-                <div class="tag">Refactor Tool</div>
-            </a>
-            <a href="symbol-extractor.html" class="tool-card">
-                <div class="icon">📋</div>
-                <h3>Symbol Extractor</h3>
-                <p>批量提取 SVG Symbols 的 ID 與尺寸清單。</p>
-                <div class="tag">SVG Tool</div>
-            </a>
-            <a href="compressor.html" class="tool-card">
+            <a href="compressor.html" class="tool-card" data-cat="image">
                 <div class="icon">🐼</div>
                 <h3>TinyCompressor</h3>
                 <p>純前端智能圖片壓縮工具。支援多圖拖拉、自動優化與 ZIP 批次打包下載，省時又省流量！</p>
                 <div class="tag">Image Tool</div>
             </a>
-            <a href="image-converter.html" class="tool-card">
+            <a href="image-converter.html" class="tool-card" data-cat="image">
                 <div class="icon">🔄</div>
                 <h3>Image Converter</h3>
                 <p>純前端圖片格式轉換工具。自由切換 PNG、JPEG、WebP，支援品質調整，免上傳最安全。</p>
                 <div class="tag">Image Tool</div>
             </a>
-            <a href="qrcode-generator.html" class="tool-card">
+            <a href="qrcode-generator.html" class="tool-card" data-cat="image">
                 <div class="icon">📱</div>
                 <h3>QR Code Generator</h3>
                 <p>純前端安全 QR Code 產生器。貼上文字或網址即時自動生成，支援另存 PNG、SVG 格式。</p>
                 <div class="tag">Web Tool</div>
             </a>
-            <a href="qrcode-decoder.html" class="tool-card">
+            <a href="qrcode-decoder.html" class="tool-card" data-cat="image">
                 <div class="icon">🔍</div>
                 <h3>QR Code Decoder</h3>
                 <p>純前端 QR Code 解碼工具。拖曳圖片即可解析內容，支援 JPG、PNG、WebP，無需上傳伺服器。</p>
@@ -355,36 +327,111 @@
             </a>
         </div>
     </section>
+
+    <section class="tool-section">
+        <h2 id="workflows">Workflows</h2>
+        <div class="grid">
+            <a href="figma2tailwind-color.html" class="tool-card" data-cat="design-ops">
+                <div class="icon">🎨</div>
+                <h3>Token Converter</h3>
+                <p>將 Figma JSON 色彩表轉換為 Tailwind 或 Stylus 變數。</p>
+                <div class="tag">Design Ops</div>
+            </a>
+            <a href="figma2tailwind-spacing.html" class="tool-card" data-cat="design-ops">
+                <div class="icon">📐</div>
+                <h3>Figma Size Master</h3>
+                <p>將 Figma 間距 JSON 轉換為 Tailwind Spacing。</p>
+                <div class="tag">Design Ops</div>
+            </a>
+            <a href="key2var.html" class="tool-card" data-cat="refactor">
+                <div class="icon">🔗</div>
+                <h3>KV to Stylus</h3>
+                <p>將鍵值對 (JSON/JS) 快速轉換為 Stylus 變數。</p>
+                <div class="tag">Refactor Tool</div>
+            </a>
+            <a href="svg2symbol.html" class="tool-card" data-cat="svg">
+                <div class="icon">💠</div>
+                <h3>SVG to Symbol</h3>
+                <p>將 SVG 轉為 Symbol，並統一顏色為 currentColor。</p>
+                <div class="tag">SVG Tool</div>
+            </a>
+            <a href="svg-drag-to-symbol.html" class="tool-card" data-cat="svg">
+                <div class="icon">📦</div>
+                <h3>SVG Symbol Converter</h3>
+                <p>拖放 SVG 檔案自動封裝為 Symbol 格式，輕鬆建立圖示庫。</p>
+                <div class="tag">Workflow</div>
+            </a>
+            <a href="svg2rwd-symbol.html" class="tool-card" data-cat="svg">
+                <div class="icon">🪄</div>
+                <h3>SVG to RWD Symbol</h3>
+                <p>移除寬高並轉為註解、ID 自動加 -rwd，並統一顏色為 currentColor，適合高品質 Sprite 開發。</p>
+                <div class="tag">SVG Tool</div>
+            </a>
+            <a href="tailwind-safelist-gen.html" class="tool-card" data-cat="design-ops">
+                <div class="icon">🛡️</div>
+                <h3>Tailwind Safelist</h3>
+                <p>將 Colors 配置轉換為優化的 Safelist 正則表達式。</p>
+                <div class="tag">Design Ops</div>
+            </a>
+            <a href="figma-text-css2stylus.html" class="tool-card" data-cat="design-ops">
+                <div class="icon">🖋️</div>
+                <h3>Text to Stylus</h3>
+                <p>將 Figma 文字 CSS 轉換為 Stylus，自動計算 rem。</p>
+                <div class="tag">Design Ops</div>
+            </a>
+            <a href="stylus2cssvar.html" class="tool-card" data-cat="refactor">
+                <div class="icon">🧬</div>
+                <h3>Stylus to CSS Var</h3>
+                <p>將 Stylus 變數 (key = val) 轉為原生 CSS 變數。</p>
+                <div class="tag">Refactor Tool</div>
+            </a>
+            <a href="symbol-extractor.html" class="tool-card" data-cat="svg">
+                <div class="icon">📋</div>
+                <h3>Symbol Extractor</h3>
+                <p>批量提取 SVG Symbols 的 ID 與尺寸清單。</p>
+                <div class="tag">SVG Tool</div>
+            </a>
+        </div>
+    </section>
 </div>
 
 <script>
     const searchInput = document.getElementById('toolSearch');
-    const cards = document.querySelectorAll('.tool-card');
-    const sections = document.querySelectorAll('.tool-section');
+    const filterBtns  = document.querySelectorAll('.filter-btn');
+    const cards       = document.querySelectorAll('.tool-card');
+    const sections    = document.querySelectorAll('.tool-section');
 
-    searchInput.addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
+    let activeFilter = 'all';
+
+    function applyFilters() {
+        const term = searchInput.value.toLowerCase();
 
         cards.forEach(card => {
             const title = card.querySelector('h3').innerText.toLowerCase();
-            const desc = card.querySelector('p').innerText.toLowerCase();
-            const tag = card.querySelector('.tag').innerText.toLowerCase();
-            
-            if (title.includes(term) || desc.includes(term) || tag.includes(term)) {
-                card.classList.remove('hidden');
-            } else {
-                card.classList.add('hidden');
-            }
+            const desc  = card.querySelector('p').innerText.toLowerCase();
+            const tag   = card.querySelector('.tag').innerText.toLowerCase();
+            const cat   = (card.dataset.cat || '').toLowerCase();
+
+            const matchSearch = !term || title.includes(term) || desc.includes(term) || tag.includes(term);
+            const matchFilter = activeFilter === 'all' || cat === activeFilter;
+
+            card.classList.toggle('hidden', !(matchSearch && matchFilter));
         });
 
-        // 如果該分類下所有工具都被隱藏，則隱藏該標題
         sections.forEach(section => {
-            const visibleCards = section.querySelectorAll('.tool-card:not(.hidden)');
-            if (visibleCards.length === 0) {
-                section.classList.add('section-hidden');
-            } else {
-                section.classList.remove('section-hidden');
-            }
+            const hasVisible = section.querySelectorAll('.tool-card:not(.hidden)').length > 0;
+            section.classList.toggle('section-hidden', !hasVisible);
+        });
+    }
+
+    searchInput.addEventListener('input', applyFilters);
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            activeFilter = btn.dataset.filter;
+            applyFilters();
         });
     });
 </script>
