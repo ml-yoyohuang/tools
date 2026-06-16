@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TinyCompressor 智能圖片壓縮工具</title>
+    
+    <!-- OG 標籤設定 -->
+    <meta property="og:title" content="TinyCompressor 前端智能壓圖小工具">
+    <meta property="og:description" content="純前端免上傳伺服器！支援拖拉、自動壓縮、顯示省下百分比與批次下載，極致畫質與壓縮率。">
+    <meta property="og:type" content="website">
+
+    <!-- 引入前端強大壓縮庫與打包庫 -->
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <style>
+        * { box-sizing: border-box; }
+        :root {
+            --primary-color: #4caf50;
+            --primary-hover: #45a049;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --border-color: #e0e0e0;
+        }
+
+        body {
+            font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        /* 拖拉上傳區 */
+        .dropzone {
+            background: var(--card-bg);
+            border: 3px dashed #b9dfbb;
+            border-radius: 20px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .dropzone.dragover {
+            background: #e8f5e9;
+            border-color: var(--primary-color);
+            transform: scale(1.02);
+        }
+
+        .dropzone icon {
+            font-size: 50px;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .dropzone p {
+            font-size: 18px;
+            font-weight: bold;
+            color: #444;
+            margin: 5px 0;
+        }
+
+        /* 批次下載區 */
+        .action-bar {
+            margin: 20px 0;
+            display: flex;
+            justify-content: flex-end;
+            display: none; /* 有檔案時才顯示 */
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .btn:hover { background-color: var(--primary-hover); }
+
+        /* 檔案清單 */
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .file-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            gap: 15px;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        .preview-img {
+            width: 50px;
+            height: 50px;
+            border-radius: 6px;
+            object-fit: cover;
+            background: #eee;
+            flex-shrink: 0;
+        }
+
+        .file-details {
+            overflow: hidden;
+            flex-grow: 1;
+        }
+
+        .file-name {
+            font-weight: bold;
+            font-size: 15px;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+
+        .file-sizes {
+            font-size: 13px;
+            color: #777;
+        }
+
+        /* 節省百分比標籤 */
+        .savings-tag {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* 單張下載按鈕 */
+        .dl-btn {
+            background-color: #f1f3f4;
+            color: #333;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+        .dl-btn:hover {
+            background-color: #e8eaed;
+            color: var(--primary-color);
+        }
+
+        /* 進度條樣式 */
+        .progress-box {
+            font-size: 14px;
+            color: #999;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🐼 TinyCompressor</h1>
+    <div class="subtitle">純前端智能圖片壓縮工具（支援 PNG、JPEG、WebP）</div>
+
+    <!-- 拖拉上傳區域 -->
+    <div id="dropzone" class="dropzone" onclick="document.getElementById('fileInput').click()">
+        <icon>🖼️</icon>
+        <p>將圖片拖放到此處，或點擊瀏覽檔案</p>
+        <span style="font-size: 13px; color: #888;">支援多檔案同時上傳</span>
+        <input type="file" id="fileInput" multiple accept="image/*" style="display: none;" onchange="handleFiles(this.files)">
+    </div>
+
+    <!-- 批次下載按鈕 -->
+    <div id="actionBar" class="action-bar">
+        <button class="btn" onclick="downloadAllZip()">🎁 打包全下載 (.zip)</button>
+    </div>
+
+    <!-- 壓縮清單展示 -->
+    <div id="fileList" class="file-list"></div>
+</div>
+
+<script>
+    // 儲存所有壓縮完畢的檔案資料，供打包 ZIP 使用
+    let compressedItems = [];
+
+    const dropzone = document.getElementById('dropzone');
+
+    // 處理拖拉視覺特效
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+        }, false);
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        handleFiles(files);
+    }, false);
+
+    // 處理核心檔案群
+    function handleFiles(files) {
+        if (files.length === 0) return;
+        document.getElementById('actionBar').style.display = 'flex';
+
+        Array.from(files).forEach(file => {
+            if (!file.type.startsWith('image/')) return;
+            processImage(file);
+        });
+    }
+
+    // 格式化容量大小
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    // 核心：壓縮與渲染邏輯
+    async function processImage(file) {
+        const id = 'img-' + Date.now() + Math.random().toString(36).substr(2, 5);
+        const fileList = document.getElementById('fileList');
+
+        // 1. 先建立一個「壓縮中」的卡片結構
+        const card = document.createElement('div');
+        card.className = 'file-item';
+        card.id = id;
+        card.innerHTML = `
+            <div class="file-info">
+                <div class="preview-box"><span style="font-size:24px;">⏳</span></div>
+                <div class="file-details">
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-sizes">原始大小: ${formatBytes(file.size)}</div>
+                </div>
+            </div>
+            <div class="progress-box">正在極速壓縮中...</div>
+        `;
+        fileList.insertBefore(card, fileList.firstChild);
+
+        // 2. 設定壓縮參數 (平衡畫質與壓縮率)
+        const options = {
+            maxSizeMB: 1.5,             // 超過 1.5MB 的話會強制壓到限制內
+            maxWidthOrHeight: 2560,     // 限制最大解析度，保留高清細節
+            useWebWorker: true,          // 開啟多執行緒，網頁不卡死
+            initialQuality: 0.75        // TinyPNG 級別的 75% 智能破壞性壓縮畫質
+        };
+
+        try {
+            // 執行壓縮庫
+            let compressedBlob = await imageCompression(file, options);
+            
+            // 祕技：如果壓縮完竟然沒變小（例如原本就被高度壓過），就保留原圖
+            if (compressedBlob.size >= file.size) {
+                compressedBlob = file;
+            }
+
+            // 計算省下多少 %
+            const savings = Math.round(((file.size - compressedBlob.size) / file.size) * 100);
+            const displaySavings = savings > 0 ? `省下 ${savings}%` : '已達最優化';
+
+            // 產生預覽圖與下載連結
+            const previewUrl = URL.createObjectURL(compressedBlob);
+
+            // 將資料推入全域陣列，供 ZIP 打包使用
+            compressedItems.push({
+                name: file.name,
+                blob: compressedBlob
+            });
+
+            // 3. 壓縮成功，更新卡片 UI 樣式
+            card.innerHTML = `
+                <div class="file-info">
+                    <img class="preview-img" src="${previewUrl}">
+                    <div class="file-details">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-sizes">
+                            <del style="color:#aaa; margin-right:5px;">${formatBytes(file.size)}</del> 
+                            👉 <b>${formatBytes(compressedBlob.size)}</b>
+                        </div>
+                    </div>
+                </div>
+                <div class="savings-tag">${displaySavings}</div>
+                <button class="dl-btn" onclick="downloadSingle('${previewUrl}', '${file.name}')">下載</button>
+            `;
+
+        } catch (error) {
+            console.error(error);
+            card.querySelector('.progress-box').innerText = '❌ 壓縮失敗';
+            card.querySelector('.progress-box').style.color = 'var(--danger-color)';
+        }
+    }
+
+    // 單張下載
+    function downloadSingle(url, filename) {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'tiny_' + filename;
+        a.click();
+    }
+
+    // 批次打包 ZIP 下載
+    function downloadAllZip() {
+        if (compressedItems.length === 0) return;
+        
+        const zip = new JSZip();
+        
+        // 將所有 blob 塞入 zip 物件
+        compressedItems.forEach(item => {
+            zip.file('tiny_' + item.name, item.blob);
+        });
+
+        // 產生 zip 檔案並觸發下載
+        zip.generateAsync({ type: 'blob' }).then(function(content) {
+            const blobUrl = URL.createObjectURL(content);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = 'tiny_compressed_images.zip';
+            a.click();
+        });
+    }
+</script>
+
+</body>
+</html>
