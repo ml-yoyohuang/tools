@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Code 產生器</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 40px;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 100px;
+      padding: 12px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      resize: vertical;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+
+    textarea:focus { border-color: #0068b7; }
+
+    .options {
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .option-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .option-group label { margin-bottom: 0; }
+
+    select, input[type="number"], input[type="color"] {
+      padding: 8px 10px;
+      border: 1.5px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    select:focus, input[type="number"]:focus { border-color: #0068b7; }
+
+    input[type="color"] {
+      width: 48px;
+      height: 36px;
+      padding: 2px 4px;
+      cursor: pointer;
+    }
+
+    input[type="number"] { width: 80px; }
+
+    .btn-generate {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      background: #0068b7;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-generate:hover { background: #005499; }
+    .btn-generate:disabled { background: #aaa; cursor: not-allowed; }
+
+    .result {
+      margin-top: 28px;
+      text-align: center;
+      display: none;
+    }
+
+    .result.visible { display: block; }
+
+    #qrcode-canvas {
+      border: 1px solid #eee;
+      border-radius: 8px;
+    }
+
+    .btn-download {
+      display: inline-block;
+      margin-top: 16px;
+      padding: 10px 24px;
+      background: #f0f0f0;
+      color: #333;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-download:hover { background: #e0e0e0; }
+
+    .error {
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: #fff0f0;
+      border: 1px solid #fcc;
+      border-radius: 6px;
+      color: #c00;
+      font-size: 13px;
+      display: none;
+    }
+
+    .error.visible { display: block; }
+    .nav-back { display: inline-block; margin-bottom: 16px; text-decoration: none; color: #0068b7; font-size: 13px; font-weight: 600; }
+    .nav-back:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <a href="index.html" class="nav-back">← 返回首頁</a>
+    <h1>QR Code 產生器</h1>
+
+    <label for="input-text">輸入文字或網址</label>
+    <textarea id="input-text" placeholder="請輸入要轉換的文字或 URL…"></textarea>
+
+    <div class="options">
+      <div class="option-group">
+        <label for="qr-size">尺寸 (px)</label>
+        <input type="number" id="qr-size" value="256" min="128" max="1024" step="32">
+      </div>
+      <div class="option-group">
+        <label for="error-level">容錯等級</label>
+        <select id="error-level">
+          <option value="L">L（低 7%）</option>
+          <option value="M" selected>M（中 15%）</option>
+          <option value="Q">Q（較高 25%）</option>
+          <option value="H">H（高 30%）</option>
+        </select>
+      </div>
+      <div class="option-group">
+        <label for="fg-color">前景色</label>
+        <input type="color" id="fg-color" value="#000000">
+      </div>
+      <div class="option-group">
+        <label for="bg-color">背景色</label>
+        <input type="color" id="bg-color" value="#ffffff">
+      </div>
+    </div>
+
+    <button class="btn-generate" id="btn-generate">產生 QR Code</button>
+
+    <div class="error" id="error-msg"></div>
+
+    <div class="result" id="result">
+      <canvas id="qrcode-canvas"></canvas>
+      <br>
+      <a class="btn-download" id="btn-download" download="qrcode.png">下載 PNG</a>
+      <a class="btn-download" id="btn-download-svg" style="margin-left:8px;">下載 SVG</a>
+    </div>
+  </div>
+
+  <!-- qrcode.js — 純前端，無需後端 -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+  <script>
+    const inputEl   = document.getElementById('input-text')
+    const btnGen    = document.getElementById('btn-generate')
+    const sizeEl    = document.getElementById('qr-size')
+    const levelEl   = document.getElementById('error-level')
+    const fgEl      = document.getElementById('fg-color')
+    const bgEl      = document.getElementById('bg-color')
+    const canvas    = document.getElementById('qrcode-canvas')
+    const resultEl  = document.getElementById('result')
+    const errorEl   = document.getElementById('error-msg')
+    const downloadEl    = document.getElementById('btn-download')
+    const downloadSvgEl = document.getElementById('btn-download-svg')
+
+    function showError(msg) {
+      errorEl.textContent = msg
+      errorEl.classList.add('visible')
+      resultEl.classList.remove('visible')
+    }
+
+    function hideError() {
+      errorEl.classList.remove('visible')
+    }
+
+    async function generate() {
+      const text = inputEl.value.trim()
+      if (!text) { showError('請先輸入文字或網址。'); return }
+
+      const size  = Math.min(Math.max(parseInt(sizeEl.value) || 256, 128), 1024)
+      const level = levelEl.value
+      const fg    = fgEl.value
+      const bg    = bgEl.value
+
+      hideError()
+      btnGen.disabled = true
+      btnGen.textContent = '產生中…'
+
+      try {
+        await QRCode.toCanvas(canvas, text, {
+          width: size,
+          errorCorrectionLevel: level,
+          color: { dark: fg, light: bg },
+          margin: 2,
+        })
+        resultEl.classList.add('visible')
+        const slug = text.slice(0, 20).replace(/[^a-zA-Z0-9一-鿿]+/g, '_').replace(/^_+|_+$/g, '') || 'qrcode'
+        const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')
+        const baseName = `qrcode_${slug}_${ts}`
+        downloadEl.href = canvas.toDataURL('image/png')
+        downloadEl.download = baseName + '.png'
+
+        const qr = QRCode.create(text, { errorCorrectionLevel: level })
+        const modules = qr.modules
+        const count = modules.size
+        const margin = 2
+        const total = count + margin * 2
+        const rects = []
+        for (let r = 0; r < count; r++) {
+          for (let c = 0; c < count; c++) {
+            if (modules.get(r, c)) {
+              rects.push(`<rect x="${c + margin}" y="${r + margin}" width="1" height="1"/>`)
+            }
+          }
+        }
+        const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${total} ${total}" shape-rendering="crispEdges"><rect width="${total}" height="${total}" fill="${bg}"/><g fill="${fg}">${rects.join('')}</g></svg>`
+        const blob = new Blob([svgStr], { type: 'image/svg+xml' })
+        const oldUrl = downloadSvgEl.dataset.blobUrl
+        if (oldUrl) URL.revokeObjectURL(oldUrl)
+        const url = URL.createObjectURL(blob)
+        downloadSvgEl.href = url
+        downloadSvgEl.download = baseName + '.svg'
+        downloadSvgEl.dataset.blobUrl = url
+      } catch (err) {
+        showError('產生失敗：' + err.message)
+      } finally {
+        btnGen.disabled = false
+        btnGen.textContent = '產生 QR Code'
+      }
+    }
+
+    btnGen.addEventListener('click', generate)
+
+    // Enter 快速觸發（Shift+Enter 換行保留）
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault()
+        generate()
+      }
+    })
+  </script>
+</body>
+</html>
