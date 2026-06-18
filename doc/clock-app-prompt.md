@@ -1,0 +1,504 @@
+
+我要開發一個 iOS App，目標是做一個毫秒精準時鐘，
+視覺與行為要跟我附上的 clock.html 完全一致。
+
+## 我的環境
+- MacBook Pro，已安裝（或可安裝）最新版 Xcode
+- 已有 Apple Developer 帳號
+- 目標裝置：iPhone（iOS 16+）
+- 開發語言：SwiftUI（請全程使用 SwiftUI，不要用 UIKit）
+
+## 參考檔案：clock.html
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>精準時鐘</title>
+  <meta name="theme-color" content="#080808">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="精準時鐘">
+  <link rel="manifest" href="./clock-manifest.json">
+  <link rel="apple-touch-icon" href="./clock-icon.svg">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #080808;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      user-select: none;
+    }
+
+    .nav-back {
+      position: fixed;
+      top: 20px;
+      left: 24px;
+      text-decoration: none;
+      color: #555;
+      font-size: 13px;
+      font-weight: 600;
+      transition: color 0.2s;
+      z-index: 10;
+    }
+    .nav-back:hover { color: #aaa; }
+
+    /* 主時間 */
+    .time-main {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: clamp(72px, 18vw, 200px);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      color: #fff;
+      text-align: center;
+    }
+
+    .time-main .colon {
+      color: #444;
+      animation: blink 1s step-start infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.2; }
+    }
+
+    .time-ms {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: clamp(24px, 5vw, 56px);
+      font-weight: 400;
+      color: #444;
+      text-align: center;
+      margin-top: 8px;
+      letter-spacing: 0.05em;
+    }
+
+    .time-ms .ms-val {
+      color: #888;
+      min-width: 3ch;
+      display: inline-block;
+    }
+
+    /* 色塊列 */
+    .blocks-wrap {
+      margin-top: clamp(24px, 5vw, 48px);
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .blocks-label {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 2px;
+      margin-bottom: 10px;
+    }
+
+    .block-label-item {
+      flex: 1;
+      text-align: center;
+      font-size: clamp(11px, 1.8vw, 16px);
+      font-weight: 700;
+      color: #333;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      letter-spacing: 0;
+    }
+
+    .blocks {
+      display: flex;
+      gap: clamp(4px, 1vw, 10px);
+      height: clamp(60px, 12vw, 120px);
+    }
+
+    .block {
+      flex: 1;
+      border-radius: 8px;
+      border: 2px solid #1a1a1a;
+      background: #111;
+      transition: background 0.05s, border-color 0.05s, box-shadow 0.05s;
+      position: relative;
+    }
+
+    /* 已過去的 tenth（本秒已走過） */
+    .block.past {
+      background: #0d2b1a;
+      border-color: #1a4a2e;
+    }
+
+    /* 當前 tenth */
+    .block.active {
+      background: #00ff88;
+      border-color: #00ff88;
+      box-shadow: 0 0 24px #00ff8866, 0 0 60px #00ff8833;
+    }
+
+    /* 接近換秒（第 8、9 塊） */
+    .block.active.warn {
+      background: #ffaa00;
+      border-color: #ffaa00;
+      box-shadow: 0 0 24px #ffaa0066, 0 0 60px #ffaa0033;
+    }
+    .block.past.warn-past {
+      background: #2b1e00;
+      border-color: #4a3300;
+    }
+
+    /* 換秒閃光 */
+    @keyframes tick-flash {
+      0%   { background: #ffffff; box-shadow: 0 0 60px #fff, 0 0 120px #fff8; }
+      100% { background: #00ff88; box-shadow: 0 0 24px #00ff8866, 0 0 60px #00ff8833; }
+    }
+    .block.flash {
+      animation: tick-flash 0.15s ease-out forwards;
+    }
+
+    /* 懸浮視窗按鈕 */
+    .btn-pip {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      padding: 10px 20px;
+      background: #1a1a1a;
+      color: #aaa;
+      border: 1.5px solid #2a2a2a;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+      z-index: 10;
+    }
+    .btn-pip:hover { background: #222; color: #fff; border-color: #555; }
+    .btn-pip.active { background: #0a1f14; color: #00ff88; border-color: #00ff8844; }
+    .btn-pip.unsupported { display: none; }
+
+    /* 進度條（秒內進度） */
+    .progress-wrap {
+      margin-top: clamp(16px, 3vw, 28px);
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .progress-bar-bg {
+      height: 6px;
+      background: #1a1a1a;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #00ff88, #ffaa00);
+      border-radius: 99px;
+      transition: width 0.05s linear;
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="nav-back">← 返回首頁</a>
+
+  <div class="time-main" id="time-main">
+    <span id="hh">00</span><span class="colon">:</span><span id="mm">00</span><span class="colon">:</span><span id="ss">00</span>
+  </div>
+
+  <div class="time-ms">
+    .<span class="ms-val" id="ms">000</span>
+  </div>
+
+  <div class="blocks-wrap">
+    <div class="blocks-label" id="blocks-label"></div>
+    <div class="blocks" id="blocks"></div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <button class="btn-pip" id="btn-pip">⧉ 懸浮視窗</button>
+
+  <script>
+    const hhEl   = document.getElementById('hh')
+    const mmEl   = document.getElementById('mm')
+    const ssEl   = document.getElementById('ss')
+    const msEl   = document.getElementById('ms')
+    const blocksEl = document.getElementById('blocks')
+    const labelsEl = document.getElementById('blocks-label')
+    const fillEl = document.getElementById('progress-fill')
+
+    const TOTAL = 10
+    const blocks = []
+    let prevTenth = -1
+    let prevSec   = -1
+
+    // 建立色塊與標籤
+    for (let i = 0; i < TOTAL; i++) {
+      const label = document.createElement('div')
+      label.className = 'block-label-item'
+      label.textContent = '.' + ((i + 1) % 10)
+      labelsEl.appendChild(label)
+
+      const b = document.createElement('div')
+      b.className = 'block'
+      blocksEl.appendChild(b)
+      blocks.push(b)
+    }
+
+    function pad2(n) { return String(n).padStart(2, '0') }
+    function pad3(n) { return String(n).padStart(3, '0') }
+
+    function tick() {
+      const now    = new Date()
+      const h      = now.getHours()
+      const m      = now.getMinutes()
+      const s      = now.getSeconds()
+      const ms     = now.getMilliseconds()
+      const tenth  = Math.floor(ms / 100)
+      const pct    = ms / 1000
+
+      hhEl.textContent = pad2(h)
+      mmEl.textContent = pad2(m)
+      ssEl.textContent = pad2(s)
+      msEl.textContent = pad3(ms)
+      fillEl.style.width = (pct * 100).toFixed(2) + '%'
+
+      // 換秒 → 閃光第 0 塊
+      const secChanged = s !== prevSec
+      prevSec = s
+
+      const displayActive = (tenth + 9) % 10
+
+      for (let i = 0; i < TOTAL; i++) {
+        const b = blocks[i]
+        const isWarnZone = i >= 8
+
+        if (i === displayActive) {
+          b.className = 'block active' + (isWarnZone ? ' warn' : '')
+          if (secChanged && i === 9) {
+            b.classList.add('flash')
+            b.addEventListener('animationend', () => b.classList.remove('flash'), { once: true })
+          }
+        } else if (i < displayActive) {
+          b.className = 'block past' + (isWarnZone ? ' warn-past' : '')
+        } else {
+          b.className = 'block'
+        }
+      }
+
+      prevTenth = tenth
+      requestAnimationFrame(tick)
+    }
+
+    requestAnimationFrame(tick)
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw-clock.js')
+    }
+
+    // --- 懸浮視窗（Document Picture-in-Picture）---
+    const btnPip = document.getElementById('btn-pip')
+
+    if (!('documentPictureInPicture' in window)) {
+      btnPip.classList.add('unsupported')
+    }
+
+    btnPip.addEventListener('click', async () => {
+      // 已開啟則關閉
+      if (documentPictureInPicture.window) {
+        documentPictureInPicture.window.close()
+        return
+      }
+
+      const pip = await documentPictureInPicture.requestWindow({ width: 460, height: 210 })
+
+      // 樣式
+      const style = pip.document.createElement('style')
+      style.textContent = `
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+          background: #080808; color: #fff;
+          font-family: 'SF Mono','Fira Code','Consolas',monospace;
+          display: flex; flex-direction: column;
+          align-items: center; justify-content: center;
+          height: 100vh; padding: 14px; user-select: none;
+        }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+        @keyframes tick-flash {
+          0%   { background:#fff; box-shadow:0 0 20px #fff; }
+          100% { background:#00ff88; box-shadow:0 0 8px #00ff8866; }
+        }
+      `
+      pip.document.head.appendChild(style)
+
+      // 結構
+      pip.document.body.innerHTML = `
+        <div style="font-size:58px;font-weight:700;letter-spacing:-0.03em;line-height:1;">
+          <span id="p-hh">00</span><span style="color:#444;animation:blink 1s step-start infinite">:</span>
+          <span id="p-mm">00</span><span style="color:#444;animation:blink 1s step-start infinite">:</span>
+          <span id="p-ss">00</span>
+        </div>
+        <div style="font-size:22px;color:#888;margin-top:4px;">.<span id="p-ms">000</span></div>
+        <div id="p-blocks" style="display:flex;gap:5px;margin-top:10px;width:100%;height:26px;"></div>
+        <div style="width:100%;height:4px;background:#1a1a1a;border-radius:99px;margin-top:8px;overflow:hidden;">
+          <div id="p-fill" style="height:100%;background:linear-gradient(90deg,#00ff88,#ffaa00);border-radius:99px;width:0%;transition:width 0.05s linear;"></div>
+        </div>
+      `
+
+      // 色塊
+      const pipBlocksEl = pip.document.getElementById('p-blocks')
+      const pipBlocks = []
+      for (let i = 0; i < 10; i++) {
+        const b = pip.document.createElement('div')
+        b.style.cssText = 'flex:1;border-radius:4px;border:1.5px solid #1a1a1a;background:#111;'
+        pipBlocksEl.appendChild(b)
+        pipBlocks.push(b)
+      }
+
+      const pHh   = pip.document.getElementById('p-hh')
+      const pMm   = pip.document.getElementById('p-mm')
+      const pSs   = pip.document.getElementById('p-ss')
+      const pMs   = pip.document.getElementById('p-ms')
+      const pFill = pip.document.getElementById('p-fill')
+      let pipPrevSec = -1
+
+      function pipTick() {
+        if (!documentPictureInPicture.window) return
+        const now  = new Date()
+        const h = now.getHours(), m = now.getMinutes()
+        const s = now.getSeconds(), ms = now.getMilliseconds()
+        const displayActive = (Math.floor(ms / 100) + 9) % 10
+        const secChanged = s !== pipPrevSec
+        pipPrevSec = s
+
+        pHh.textContent = pad2(h); pMm.textContent = pad2(m)
+        pSs.textContent = pad2(s); pMs.textContent = pad3(ms)
+        pFill.style.width = (ms / 10).toFixed(2) + '%'
+
+        for (let i = 0; i < 10; i++) {
+          const b = pipBlocks[i]
+          const warn = i >= 8
+          if (i === displayActive) {
+            b.style.background   = warn ? '#ffaa00' : '#00ff88'
+            b.style.borderColor  = warn ? '#ffaa00' : '#00ff88'
+            b.style.boxShadow    = warn ? '0 0 8px #ffaa0066' : '0 0 8px #00ff8866'
+            if (secChanged && i === 9) {
+              b.style.animation = 'tick-flash 0.15s ease-out forwards'
+              b.addEventListener('animationend', () => { b.style.animation = '' }, { once: true })
+            }
+          } else if (i < displayActive) {
+            b.style.background  = warn ? '#2b1e00' : '#0d2b1a'
+            b.style.borderColor = warn ? '#4a3300' : '#1a4a2e'
+            b.style.boxShadow   = ''
+          } else {
+            b.style.background  = '#111'
+            b.style.borderColor = '#1a1a1a'
+            b.style.boxShadow   = ''
+          }
+        }
+        pip.requestAnimationFrame(pipTick)
+      }
+      pip.requestAnimationFrame(pipTick)
+
+      btnPip.textContent = '⧉ 關閉懸浮'
+      btnPip.classList.add('active')
+      pip.addEventListener('pagehide', () => {
+        btnPip.textContent = '⧉ 懸浮視窗'
+        btnPip.classList.remove('active')
+      })
+    })
+  </script>
+</body>
+</html>
+
+
+## 視覺規格
+
+### 整體
+- 背景色：#080808（極深黑）
+- 全螢幕顯示，無多餘 padding
+
+### 主時間顯示
+- 格式：HH:MM:SS，等寬字型（SF Mono 或系統等寬字）
+- 字級：盡可能大，佔滿螢幕寬度
+- 字色：白色 #FFFFFF
+- 冒號「:」顏色：#444444，以 1 秒週期做閃爍動畫
+  （0.5 秒亮、0.5 秒暗至 opacity 0.2）
+
+### 毫秒顯示
+- 格式：.XXX（例如 .042）
+- 字級約為主時間的 1/3
+- 字色：#888888
+
+### 10 格色塊列
+排列在毫秒顯示下方，橫向等寬排滿螢幕。
+
+**標籤順序（左到右）：**
+.1  .2  .3  .4  .5  .6  .7  .8  .9  .0
+
+**對應邏輯：**
+- 將目前毫秒換算為 tenth = floor(ms / 100)（0～9）
+- displayActive = (tenth + 9) % 10
+  → tenth=0 時 displayActive=9（.0 格，最右邊亮）
+  → tenth=1 時 displayActive=0（.1 格，最左邊亮）
+  → 以此類推
+
+**色塊狀態（index 0 = 最左的 .1 格）：**
+- i < displayActive → past（已過）
+  - index 0～7：背景 #0d2b1a，邊框 #1a4a2e
+  - index 8～9（.9、.0）：背景 #2b1e00，邊框 #4a3300
+- i == displayActive → active（當前）
+  - index 0～7：背景 #00ff88，邊框 #00ff88，有綠色光暈
+  - index 8～9：背景 #ffaa00，邊框 #ffaa00，有橘色光暈
+- i > displayActive → off（未到）
+  - 背景 #111111，邊框 #1a1a1a
+
+**換秒閃光動畫：**
+- 每當秒數變化（新的一秒開始），且 displayActive === 9（.0 格）
+- 該色塊做一次閃光：從白色 #FFFFFF 快速過渡回 #00ff88
+- 動畫時長約 0.15 秒
+
+### 進度條
+- 在色塊列下方
+- 高度 6px，圓角
+- 背景：#1a1a1a
+- 填充色：左 #00ff88 → 右 #ffaa00 的漸層
+- 寬度 = (ms / 1000) * 100%，即本秒內進度
+
+## 精準度要求
+- 必須使用 Timer 搭配 RunLoop.main 以高頻率更新（建議 每 8ms 或更短觸發一次）
+- 或使用 CADisplayLink 達到每幀更新
+- 不可使用一般的 1 秒 Timer，毫秒數字必須流暢滾動
+
+## 懸浮視窗（重要功能）
+- App 需要支援 iOS 的「畫中畫（Picture in Picture）」模式
+  或系統懸浮視窗，讓時鐘可以浮在其他 App 上方
+- 建議使用 AVPictureInPictureController 或
+  SwiftUI 的 .persistentSystemOverlays / overlay 機制
+- 懸浮時顯示精簡版：HH:MM:SS + .ms + 10 格色塊即可
+
+## 專案設定要求
+1. Bundle ID 自訂，例如 com.yourname.precisionclock
+2. 最低支援 iOS 16.0
+3. 支援 Portrait 方向即可
+4. 不需要登入、帳號、網路功能，純本機運作
+5. 請提供完整可編譯的 SwiftUI 專案結構，包含：
+   - ContentView.swift（主畫面）
+   - 所有需要的 Swift 檔案
+   - Info.plist 需要的 key（如 PiP 相關權限）
+   - 告知我哪些 Xcode 專案設定需要手動開啟
+     （例如 Background Modes、Capabilities）
+
+## 請一步一步告訴我
+1. 建立 Xcode 專案的步驟
+2. 各個 Swift 檔案的完整程式碼
+3. Xcode 裡需要手動設定的地方（截圖說明或文字描述）
+4. 如何在模擬器測試
+5. 如何用 TestFlight 安裝到自己的 iPhone
