@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Base64 編解碼器</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .nav-back {
+      display: inline-block;
+      margin-bottom: 20px;
+      text-decoration: none;
+      color: #4f46e5;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .nav-back:hover { text-decoration: underline; }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 36px;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 24px;
+    }
+
+    /* 模式切換 */
+    .mode-tabs {
+      display: flex;
+      gap: 0;
+      background: #f1f5f9;
+      border-radius: 8px;
+      padding: 4px;
+      margin-bottom: 24px;
+      width: fit-content;
+    }
+
+    .mode-tab {
+      padding: 7px 20px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+
+    .mode-tab.active {
+      background: #fff;
+      color: #4f46e5;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+    }
+
+    /* 區塊 */
+    .pane-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 160px;
+      padding: 14px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+      color: #1a1a1a;
+    }
+    textarea:focus { border-color: #4f46e5; }
+    textarea[readonly] { background: #fafafa; }
+
+    /* 動作列 */
+    .action-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .btn {
+      padding: 10px 22px;
+      border: none;
+      border-radius: 7px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.18s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: #4f46e5;
+      color: #fff;
+    }
+    .btn-primary:hover { background: #4338ca; }
+
+    .btn-ghost {
+      background: #f1f5f9;
+      color: #475569;
+    }
+    .btn-ghost:hover { background: #e2e8f0; }
+
+    .btn-copy {
+      background: #f1f5f9;
+      color: #475569;
+      margin-left: auto;
+    }
+    .btn-copy:hover { background: #e2e8f0; }
+    .btn-copy.copied { background: #dcfce7; color: #16a34a; }
+
+    /* 錯誤訊息 */
+    .error {
+      margin-top: 10px;
+      padding: 10px 14px;
+      background: #fff0f0;
+      border: 1px solid #fcc;
+      border-radius: 6px;
+      color: #c00;
+      font-size: 13px;
+      display: none;
+    }
+    .error.visible { display: block; }
+
+    /* 圖片預覽（編碼模式） */
+    .image-section {
+      margin-top: 28px;
+      padding-top: 24px;
+      border-top: 1.5px solid #f0f0f0;
+    }
+
+    .image-section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #555;
+      margin-bottom: 12px;
+    }
+
+    .drop-zone {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 28px;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .drop-zone.dragover { border-color: #4f46e5; background: #f0f0ff; }
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .drop-zone-hint { font-size: 13px; color: #999; }
+    .drop-zone-hint strong { display: block; color: #555; margin-bottom: 4px; font-size: 14px; }
+
+    .img-preview {
+      margin-top: 12px;
+      display: none;
+      text-align: center;
+    }
+    .img-preview img {
+      max-width: 100%;
+      max-height: 180px;
+      border-radius: 6px;
+      border: 1px solid #eee;
+    }
+    .img-preview-name {
+      font-size: 12px;
+      color: #888;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div style="max-width:720px; margin:0 auto;">
+    <a href="index.html" class="nav-back">← 返回首頁</a>
+  </div>
+
+  <div class="card">
+    <h1>Base64 編解碼器</h1>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" id="tab-encode">編碼 Encode</button>
+      <button class="mode-tab" id="tab-decode">解碼 Decode</button>
+    </div>
+
+    <!-- 編碼模式 -->
+    <div id="pane-encode">
+      <div class="pane-label">原始文字</div>
+      <textarea id="encode-input" placeholder="輸入要編碼的文字…"></textarea>
+
+      <div class="action-row">
+        <button class="btn btn-primary" id="btn-encode">編碼 →</button>
+        <button class="btn btn-ghost" id="btn-encode-clear">清除</button>
+        <button class="btn btn-copy" id="btn-encode-copy">複製結果</button>
+      </div>
+
+      <div class="pane-label">Base64 結果</div>
+      <textarea id="encode-output" readonly placeholder="Base64 結果將顯示在這裡…"></textarea>
+      <div class="error" id="encode-error"></div>
+
+      <!-- 圖片轉 Base64 -->
+      <div class="image-section">
+        <div class="image-section-title">圖片轉 Base64 Data URI</div>
+        <div class="drop-zone" id="img-drop-zone">
+          <input type="file" id="img-file-input" accept="image/*">
+          <div class="drop-zone-hint">
+            <strong>拖曳圖片到這裡</strong>
+            或點擊選擇（PNG、JPG、SVG、WebP…）
+          </div>
+        </div>
+        <div class="img-preview" id="img-preview">
+          <img id="img-preview-el" alt="預覽">
+          <div class="img-preview-name" id="img-preview-name"></div>
+        </div>
+        <div class="action-row" style="margin-top:12px;">
+          <button class="btn btn-copy" id="btn-img-copy" style="margin-left:0;" disabled>複製 Data URI</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 解碼模式 -->
+    <div id="pane-decode" style="display:none;">
+      <div class="pane-label">Base64 字串</div>
+      <textarea id="decode-input" placeholder="貼上要解碼的 Base64 字串（可含 data:… 前綴）…"></textarea>
+
+      <div class="action-row">
+        <button class="btn btn-primary" id="btn-decode">解碼 →</button>
+        <button class="btn btn-ghost" id="btn-decode-clear">清除</button>
+        <button class="btn btn-copy" id="btn-decode-copy">複製結果</button>
+      </div>
+
+      <div class="pane-label">解碼結果</div>
+      <textarea id="decode-output" readonly placeholder="解碼結果將顯示在這裡…"></textarea>
+      <div class="error" id="decode-error"></div>
+    </div>
+  </div>
+
+  <script>
+    // --- 模式切換 ---
+    const tabEncode  = document.getElementById('tab-encode')
+    const tabDecode  = document.getElementById('tab-decode')
+    const paneEncode = document.getElementById('pane-encode')
+    const paneDecode = document.getElementById('pane-decode')
+
+    tabEncode.addEventListener('click', () => {
+      tabEncode.classList.add('active')
+      tabDecode.classList.remove('active')
+      paneEncode.style.display = ''
+      paneDecode.style.display = 'none'
+    })
+    tabDecode.addEventListener('click', () => {
+      tabDecode.classList.add('active')
+      tabEncode.classList.remove('active')
+      paneDecode.style.display = ''
+      paneEncode.style.display = 'none'
+    })
+
+    // --- 工具函式 ---
+    function fallbackCopy(text, onCopied) {
+      const ta = document.createElement('textarea')
+      ta.value = text
+      ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0'
+      document.body.appendChild(ta)
+      ta.focus()
+      ta.select()
+      try { document.execCommand('copy'); onCopied() } catch (_) {}
+      document.body.removeChild(ta)
+    }
+
+    function showError(el, msg) {
+      el.textContent = msg
+      el.classList.add('visible')
+    }
+    function hideError(el) { el.classList.remove('visible') }
+
+    function makeCopyBtn(btn, getText) {
+      btn.addEventListener('click', () => {
+        const text = getText()
+        if (!text) return
+        function onCopied() {
+          btn.textContent = '已複製！'
+          btn.classList.add('copied')
+          setTimeout(() => {
+            btn.textContent = btn.dataset.label || '複製結果'
+            btn.classList.remove('copied')
+          }, 2000)
+        }
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(text).then(onCopied).catch(() => fallbackCopy(text, onCopied))
+        } else {
+          fallbackCopy(text, onCopied)
+        }
+      })
+    }
+
+    // --- 編碼 ---
+    const encodeInput  = document.getElementById('encode-input')
+    const encodeOutput = document.getElementById('encode-output')
+    const encodeError  = document.getElementById('encode-error')
+
+    document.getElementById('btn-encode').addEventListener('click', () => {
+      hideError(encodeError)
+      const text = encodeInput.value
+      if (!text) { showError(encodeError, '請先輸入要編碼的文字。'); return }
+      try {
+        encodeOutput.value = btoa(unescape(encodeURIComponent(text)))
+      } catch (e) {
+        showError(encodeError, '編碼失敗：' + e.message)
+      }
+    })
+
+    document.getElementById('btn-encode-clear').addEventListener('click', () => {
+      encodeInput.value = ''
+      encodeOutput.value = ''
+      hideError(encodeError)
+    })
+
+    const btnEncodeCopy = document.getElementById('btn-encode-copy')
+    btnEncodeCopy.dataset.label = '複製結果'
+    makeCopyBtn(btnEncodeCopy, () => encodeOutput.value)
+
+    // --- 解碼 ---
+    const decodeInput  = document.getElementById('decode-input')
+    const decodeOutput = document.getElementById('decode-output')
+    const decodeError  = document.getElementById('decode-error')
+
+    document.getElementById('btn-decode').addEventListener('click', () => {
+      hideError(decodeError)
+      let raw = decodeInput.value.trim()
+      if (!raw) { showError(decodeError, '請先貼上 Base64 字串。'); return }
+      // 去除 data URI 前綴
+      const dataUriMatch = raw.match(/^data:[^;]+;base64,(.+)$/s)
+      if (dataUriMatch) raw = dataUriMatch[1]
+      try {
+        decodeOutput.value = decodeURIComponent(escape(atob(raw)))
+      } catch (e) {
+        showError(decodeError, '解碼失敗：字串不是合法的 Base64。')
+      }
+    })
+
+    document.getElementById('btn-decode-clear').addEventListener('click', () => {
+      decodeInput.value = ''
+      decodeOutput.value = ''
+      hideError(decodeError)
+    })
+
+    const btnDecodeCopy = document.getElementById('btn-decode-copy')
+    btnDecodeCopy.dataset.label = '複製結果'
+    makeCopyBtn(btnDecodeCopy, () => decodeOutput.value)
+
+    // --- 圖片轉 Base64 ---
+    const imgDropZone   = document.getElementById('img-drop-zone')
+    const imgFileInput  = document.getElementById('img-file-input')
+    const imgPreview    = document.getElementById('img-preview')
+    const imgPreviewEl  = document.getElementById('img-preview-el')
+    const imgPreviewName = document.getElementById('img-preview-name')
+    const btnImgCopy    = document.getElementById('btn-img-copy')
+    let currentDataUri  = ''
+
+    function handleImageFile(file) {
+      if (!file || !file.type.startsWith('image/')) return
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        currentDataUri = e.target.result
+        imgPreviewEl.src = currentDataUri
+        imgPreviewName.textContent = `${file.name}（${(file.size / 1024).toFixed(1)} KB）`
+        imgPreview.style.display = 'block'
+        btnImgCopy.disabled = false
+      }
+      reader.readAsDataURL(file)
+    }
+
+    imgDropZone.addEventListener('dragover', (e) => {
+      e.preventDefault()
+      imgDropZone.classList.add('dragover')
+    })
+    imgDropZone.addEventListener('dragleave', () => imgDropZone.classList.remove('dragover'))
+    imgDropZone.addEventListener('drop', (e) => {
+      e.preventDefault()
+      imgDropZone.classList.remove('dragover')
+      handleImageFile(e.dataTransfer.files[0])
+    })
+    imgFileInput.addEventListener('change', () => {
+      handleImageFile(imgFileInput.files[0])
+      imgFileInput.value = ''
+    })
+
+    btnImgCopy.dataset.label = '複製 Data URI'
+    makeCopyBtn(btnImgCopy, () => currentDataUri)
+  </script>
+</body>
+</html>

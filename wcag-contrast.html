@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WCAG 色彩對比度檢查</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .nav-back {
+      display: inline-block;
+      margin-bottom: 20px;
+      text-decoration: none;
+      color: #4f46e5;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .nav-back:hover { text-decoration: underline; }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 36px;
+      max-width: 580px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 28px;
+    }
+
+    /* 顏色選擇區 */
+    .color-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .color-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .color-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .color-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      padding: 8px 12px;
+      transition: border-color 0.2s;
+    }
+    .color-input-wrap:focus-within { border-color: #4f46e5; }
+
+    input[type="color"] {
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: none;
+      padding: 0;
+      cursor: pointer;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .hex-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 15px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      color: #1a1a1a;
+      background: transparent;
+      text-transform: uppercase;
+    }
+
+    /* 預覽區 */
+    .preview {
+      border-radius: 10px;
+      padding: 28px 24px;
+      margin-bottom: 24px;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .preview-normal {
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .preview-large {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .preview-small {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    /* 對比值顯示 */
+    .ratio-display {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .ratio-number {
+      font-size: 52px;
+      font-weight: 800;
+      color: #1a1a1a;
+      line-height: 1;
+      letter-spacing: -2px;
+    }
+
+    .ratio-label {
+      font-size: 13px;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    /* WCAG 結果表格 */
+    .wcag-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .wcag-table th {
+      font-size: 11px;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0 0 10px;
+      text-align: left;
+      border-bottom: 1.5px solid #eee;
+    }
+
+    .wcag-table th:not(:first-child) { text-align: center; }
+
+    .wcag-table td {
+      padding: 12px 0;
+      font-size: 14px;
+      color: #333;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: middle;
+    }
+
+    .wcag-table td:not(:first-child) { text-align: center; }
+
+    .wcag-table tr:last-child td { border-bottom: none; }
+
+    .wcag-table .row-desc {
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 2px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .badge-pass {
+      background: #dcfce7;
+      color: #16a34a;
+    }
+
+    .badge-fail {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+  </style>
+</head>
+<body>
+  <div style="max-width:580px; margin:0 auto;">
+    <a href="index.html" class="nav-back">← 返回首頁</a>
+  </div>
+
+  <div class="card">
+    <h1>WCAG 色彩對比度檢查</h1>
+
+    <div class="color-row">
+      <div class="color-group">
+        <div class="color-label">前景色（文字）</div>
+        <div class="color-input-wrap">
+          <input type="color" id="fg-picker" value="#000000">
+          <input type="text" class="hex-input" id="fg-hex" value="#000000" maxlength="7" spellcheck="false">
+        </div>
+      </div>
+      <div class="color-group">
+        <div class="color-label">背景色</div>
+        <div class="color-input-wrap">
+          <input type="color" id="bg-picker" value="#ffffff">
+          <input type="text" class="hex-input" id="bg-hex" value="#FFFFFF" maxlength="7" spellcheck="false">
+        </div>
+      </div>
+    </div>
+
+    <div class="preview" id="preview">
+      <div class="preview-large">大文字範例 Large Text</div>
+      <div class="preview-normal">一般文字範例 Normal Text (16px)</div>
+      <div class="preview-small">小文字範例 Small Text (12px)</div>
+    </div>
+
+    <div class="ratio-display">
+      <div class="ratio-number" id="ratio-number">21.00</div>
+      <div class="ratio-label">對比比例 Contrast Ratio</div>
+    </div>
+
+    <table class="wcag-table">
+      <thead>
+        <tr>
+          <th>情境</th>
+          <th>AA</th>
+          <th>AAA</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            一般文字
+            <div class="row-desc">Normal Text（&lt; 18pt / 14pt Bold）— 需 4.5 : 1 / 7 : 1</div>
+          </td>
+          <td><span class="badge" id="aa-normal"></span></td>
+          <td><span class="badge" id="aaa-normal"></span></td>
+        </tr>
+        <tr>
+          <td>
+            大文字
+            <div class="row-desc">Large Text（≥ 18pt 或 ≥ 14pt Bold）— 需 3 : 1 / 4.5 : 1</div>
+          </td>
+          <td><span class="badge" id="aa-large"></span></td>
+          <td><span class="badge" id="aaa-large"></span></td>
+        </tr>
+        <tr>
+          <td>
+            UI 元件 / 圖示
+            <div class="row-desc">Non-text Contrast（邊框、圖示、輸入框）— 需 3 : 1</div>
+          </td>
+          <td><span class="badge" id="aa-ui"></span></td>
+          <td><span class="badge" id="aaa-ui">N/A</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const fgPicker = document.getElementById('fg-picker')
+    const bgPicker = document.getElementById('bg-picker')
+    const fgHex    = document.getElementById('fg-hex')
+    const bgHex    = document.getElementById('bg-hex')
+    const preview  = document.getElementById('preview')
+    const ratioEl  = document.getElementById('ratio-number')
+
+    function hexToRgb(hex) {
+      const h = hex.replace('#', '')
+      if (h.length !== 6) return null
+      return {
+        r: parseInt(h.slice(0,2), 16),
+        g: parseInt(h.slice(2,4), 16),
+        b: parseInt(h.slice(4,6), 16),
+      }
+    }
+
+    function linearize(c) {
+      const s = c / 255
+      return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4)
+    }
+
+    function luminance({ r, g, b }) {
+      return 0.2126 * linearize(r) + 0.7152 * linearize(g) + 0.0722 * linearize(b)
+    }
+
+    function contrastRatio(hex1, hex2) {
+      const c1 = hexToRgb(hex1)
+      const c2 = hexToRgb(hex2)
+      if (!c1 || !c2) return null
+      const l1 = luminance(c1)
+      const l2 = luminance(c2)
+      const lighter = Math.max(l1, l2)
+      const darker  = Math.min(l1, l2)
+      return (lighter + 0.05) / (darker + 0.05)
+    }
+
+    function badge(el, pass) {
+      el.textContent = pass ? '✓ Pass' : '✗ Fail'
+      el.className   = 'badge ' + (pass ? 'badge-pass' : 'badge-fail')
+    }
+
+    function update() {
+      const fg = fgHex.value.trim()
+      const bg = bgHex.value.trim()
+      const ratio = contrastRatio(fg, bg)
+      if (ratio === null) return
+
+      ratioEl.textContent = ratio.toFixed(2)
+
+      preview.style.background = bg
+      preview.style.color = fg
+
+      badge(document.getElementById('aa-normal'),  ratio >= 4.5)
+      badge(document.getElementById('aaa-normal'), ratio >= 7)
+      badge(document.getElementById('aa-large'),   ratio >= 3)
+      badge(document.getElementById('aaa-large'),  ratio >= 4.5)
+      badge(document.getElementById('aa-ui'),      ratio >= 3)
+
+      const uiAaa = document.getElementById('aaa-ui')
+      uiAaa.textContent = 'N/A'
+      uiAaa.className   = 'badge'
+      uiAaa.style.color = '#aaa'
+    }
+
+    function syncPickerToHex(picker, hexInput) {
+      picker.addEventListener('input', () => {
+        hexInput.value = picker.value.toUpperCase()
+        update()
+      })
+    }
+
+    function syncHexToPicker(hexInput, picker) {
+      hexInput.addEventListener('input', () => {
+        const v = hexInput.value.trim()
+        if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+          picker.value = v
+          update()
+        }
+      })
+    }
+
+    syncPickerToHex(fgPicker, fgHex)
+    syncPickerToHex(bgPicker, bgHex)
+    syncHexToPicker(fgHex, fgPicker)
+    syncHexToPicker(bgHex, bgPicker)
+
+    update()
+  </script>
+</body>
+</html>

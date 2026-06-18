@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>精準時鐘</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #080808;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      user-select: none;
+    }
+
+    .nav-back {
+      position: fixed;
+      top: 20px;
+      left: 24px;
+      text-decoration: none;
+      color: #555;
+      font-size: 13px;
+      font-weight: 600;
+      transition: color 0.2s;
+      z-index: 10;
+    }
+    .nav-back:hover { color: #aaa; }
+
+    /* 主時間 */
+    .time-main {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: clamp(72px, 18vw, 200px);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      color: #fff;
+      text-align: center;
+    }
+
+    .time-main .colon {
+      color: #444;
+      animation: blink 1s step-start infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.2; }
+    }
+
+    .time-ms {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: clamp(24px, 5vw, 56px);
+      font-weight: 400;
+      color: #444;
+      text-align: center;
+      margin-top: 8px;
+      letter-spacing: 0.05em;
+    }
+
+    .time-ms .ms-val {
+      color: #888;
+      min-width: 3ch;
+      display: inline-block;
+    }
+
+    /* 色塊列 */
+    .blocks-wrap {
+      margin-top: clamp(24px, 5vw, 48px);
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .blocks-label {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 2px;
+      margin-bottom: 10px;
+    }
+
+    .block-label-item {
+      flex: 1;
+      text-align: center;
+      font-size: clamp(11px, 1.8vw, 16px);
+      font-weight: 700;
+      color: #333;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      letter-spacing: 0;
+    }
+
+    .blocks {
+      display: flex;
+      gap: clamp(4px, 1vw, 10px);
+      height: clamp(60px, 12vw, 120px);
+    }
+
+    .block {
+      flex: 1;
+      border-radius: 8px;
+      border: 2px solid #1a1a1a;
+      background: #111;
+      transition: background 0.05s, border-color 0.05s, box-shadow 0.05s;
+      position: relative;
+    }
+
+    /* 已過去的 tenth（本秒已走過） */
+    .block.past {
+      background: #0d2b1a;
+      border-color: #1a4a2e;
+    }
+
+    /* 當前 tenth */
+    .block.active {
+      background: #00ff88;
+      border-color: #00ff88;
+      box-shadow: 0 0 24px #00ff8866, 0 0 60px #00ff8833;
+    }
+
+    /* 接近換秒（第 8、9 塊） */
+    .block.active.warn {
+      background: #ffaa00;
+      border-color: #ffaa00;
+      box-shadow: 0 0 24px #ffaa0066, 0 0 60px #ffaa0033;
+    }
+    .block.past.warn-past {
+      background: #2b1e00;
+      border-color: #4a3300;
+    }
+
+    /* 換秒閃光 */
+    @keyframes tick-flash {
+      0%   { background: #ffffff; box-shadow: 0 0 60px #fff, 0 0 120px #fff8; }
+      100% { background: #00ff88; box-shadow: 0 0 24px #00ff8866, 0 0 60px #00ff8833; }
+    }
+    .block.flash {
+      animation: tick-flash 0.15s ease-out forwards;
+    }
+
+    /* 進度條（秒內進度） */
+    .progress-wrap {
+      margin-top: clamp(16px, 3vw, 28px);
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .progress-bar-bg {
+      height: 6px;
+      background: #1a1a1a;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #00ff88, #ffaa00);
+      border-radius: 99px;
+      transition: width 0.05s linear;
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="nav-back">← 返回首頁</a>
+
+  <div class="time-main" id="time-main">
+    <span id="hh">00</span><span class="colon">:</span><span id="mm">00</span><span class="colon">:</span><span id="ss">00</span>
+  </div>
+
+  <div class="time-ms">
+    .<span class="ms-val" id="ms">000</span>
+  </div>
+
+  <div class="blocks-wrap">
+    <div class="blocks-label" id="blocks-label"></div>
+    <div class="blocks" id="blocks"></div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <script>
+    const hhEl   = document.getElementById('hh')
+    const mmEl   = document.getElementById('mm')
+    const ssEl   = document.getElementById('ss')
+    const msEl   = document.getElementById('ms')
+    const blocksEl = document.getElementById('blocks')
+    const labelsEl = document.getElementById('blocks-label')
+    const fillEl = document.getElementById('progress-fill')
+
+    const TOTAL = 10
+    const blocks = []
+    let prevTenth = -1
+    let prevSec   = -1
+
+    // 建立色塊與標籤
+    for (let i = 0; i < TOTAL; i++) {
+      const label = document.createElement('div')
+      label.className = 'block-label-item'
+      label.textContent = '.' + i
+      labelsEl.appendChild(label)
+
+      const b = document.createElement('div')
+      b.className = 'block'
+      blocksEl.appendChild(b)
+      blocks.push(b)
+    }
+
+    function pad2(n) { return String(n).padStart(2, '0') }
+    function pad3(n) { return String(n).padStart(3, '0') }
+
+    function tick() {
+      const now    = new Date()
+      const h      = now.getHours()
+      const m      = now.getMinutes()
+      const s      = now.getSeconds()
+      const ms     = now.getMilliseconds()
+      const tenth  = Math.floor(ms / 100)
+      const pct    = ms / 1000
+
+      hhEl.textContent = pad2(h)
+      mmEl.textContent = pad2(m)
+      ssEl.textContent = pad2(s)
+      msEl.textContent = pad3(ms)
+      fillEl.style.width = (pct * 100).toFixed(2) + '%'
+
+      // 換秒 → 閃光第 0 塊
+      const secChanged = s !== prevSec
+      prevSec = s
+
+      for (let i = 0; i < TOTAL; i++) {
+        const b = blocks[i]
+        const isWarnZone = i >= 8
+
+        if (i === tenth) {
+          b.className = 'block active' + (isWarnZone ? ' warn' : '')
+          if (secChanged && i === 0) {
+            b.classList.add('flash')
+            b.addEventListener('animationend', () => b.classList.remove('flash'), { once: true })
+          }
+        } else if (i < tenth) {
+          b.className = 'block past' + (isWarnZone ? ' warn-past' : '')
+        } else {
+          b.className = 'block'
+        }
+      }
+
+      prevTenth = tenth
+      requestAnimationFrame(tick)
+    }
+
+    requestAnimationFrame(tick)
+  </script>
+</body>
+</html>
