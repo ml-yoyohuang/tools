@@ -188,6 +188,19 @@
       border-radius: 99px;
       transition: width 0.05s linear;
     }
+
+    /* 對時狀態 */
+    .sync-status {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #444;
+      letter-spacing: 0.04em;
+      min-height: 18px;
+      transition: color 0.3s;
+    }
+    .sync-status.ok   { color: #00ff88; }
+    .sync-status.warn { color: #ffaa00; }
+    .sync-status.fail { color: #555; }
   </style>
 </head>
 <body>
@@ -210,6 +223,7 @@
     <div class="progress-bar-bg">
       <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
     </div>
+    <div class="sync-status" id="sync-status"></div>
   </div>
 
   <button class="btn-pip" id="btn-pip">⧉ 懸浮視窗</button>
@@ -244,8 +258,55 @@
     function pad2(n) { return String(n).padStart(2, '0') }
     function pad3(n) { return String(n).padStart(3, '0') }
 
+    let timeOffset = 0
+    const syncEl = document.getElementById('sync-status')
+
+    function showSyncResult(offset) {
+      const abs = Math.abs(offset)
+      if (abs < 1000) {
+        syncEl.className = 'sync-status ok'
+        syncEl.textContent = '✓ 裝置時間正常（誤差 < 1 秒）'
+      } else {
+        const secs = (abs / 1000).toFixed(1)
+        const dir  = offset > 0 ? '慢' : '快'
+        syncEl.className = 'sync-status warn'
+        syncEl.textContent = `⚠ 裝置比標準時間${dir}約 ${secs} 秒`
+      }
+    }
+
+    function showSyncFail() {
+      syncEl.className = 'sync-status fail'
+      syncEl.textContent = '無法對時，顯示裝置時間'
+    }
+
+    async function syncTime() {
+      syncEl.className = 'sync-status'
+      syncEl.textContent = '同步中...'
+      const TRIES = 5, KEEP = 3
+      const results = []
+      for (let i = 0; i < TRIES; i++) {
+        const t0 = Date.now()
+        try {
+          const res = await fetch(`./clock.html?timesync=${Date.now()}`, {
+            method: 'HEAD', cache: 'no-store'
+          })
+          const t1 = Date.now()
+          const dateHeader = res.headers.get('Date')
+          if (!dateHeader) continue
+          const serverMs = new Date(dateHeader).getTime()
+          if (isNaN(serverMs)) continue
+          results.push({ offset: serverMs - (t0 + t1) / 2, rtt: t1 - t0 })
+        } catch (_) {}
+      }
+      if (!results.length) { showSyncFail(); return }
+      results.sort((a, b) => a.rtt - b.rtt)
+      const best = results.slice(0, KEEP)
+      timeOffset = Math.round(best.reduce((s, r) => s + r.offset, 0) / best.length)
+      showSyncResult(timeOffset)
+    }
+
     function tick() {
-      const now    = new Date()
+      const now    = new Date(Date.now() + timeOffset)
       const h      = now.getHours()
       const m      = now.getMinutes()
       const s      = now.getSeconds()
@@ -287,6 +348,7 @@
     }
 
     requestAnimationFrame(tick)
+    syncTime()
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw-clock.js')

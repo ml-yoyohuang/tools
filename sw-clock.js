@@ -1,4 +1,4 @@
-const CACHE = 'clock-v1'
+const CACHE = 'clock-v2'
 const FILES = [
   './clock.html',
   './clock-manifest.json',
@@ -20,7 +20,9 @@ self.addEventListener('activate', e => {
 })
 
 self.addEventListener('fetch', e => {
-  e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request))
-  )
+  if (new URL(e.request.url).searchParams.has('timesync')) {
+    e.respondWith(fetch(e.request))
+    return
+  }
+  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)))
 })
