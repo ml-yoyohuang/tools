@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>圖片轉 ICO 圖標轉換器</title>
+    <style>
+        * { box-sizing: border-box; }
+        :root {
+            --primary-color: #2196F3;
+            --primary-hover: #1E88E5;
+            --bg-color: #f0f4f8;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            padding: 20px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container { width: 100%; max-width: 500px; }
+        h2 { color: #1976D2; text-align: center; margin-bottom: 20px; }
+
+        .config-panel {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+
+        .drop-zone {
+            border: 2px dashed #90CAF9;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            background: #E3F2FD;
+            transition: background 0.3s, border-color 0.3s;
+            color: #1565C0;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .drop-zone:hover { background: #BBDEFB; border-color: var(--primary-color); }
+        .drop-zone input { display: none; }
+
+        .input-group { display: flex; flex-direction: column; margin-bottom: 15px; gap: 8px; width: 100%; }
+        .input-group.row { flex-direction: row; align-items: center; }
+        .input-group label { font-weight: bold; font-size: 0.9em; color: #555; }
+        .input-group.row label { white-space: nowrap; width: 80px; }
+
+        select {
+            flex-grow: 1;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+        }
+        select:focus { border-color: var(--primary-color); }
+
+        .add-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+        }
+        .add-btn:hover { background-color: var(--primary-hover); }
+        .add-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        .preview-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            gap: 15px;
+            display: none;
+        }
+
+        #previewImg {
+            border: 1px solid #eee;
+            background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%);
+            background-size: 10px 10px;
+            background-position: 0 0, 0 5px, 5px -5px, -5px 0;
+            max-width: 128px;
+            max-height: 128px;
+        }
+        .info-text { font-size: 12px; color: #666; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🎨 圖片轉 ICO 產生器</h2>
+
+    <div class="config-panel">
+        <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
+            <span id="dropZoneText">📁 點擊或拖曳圖片到這裡 (PNG, JPG, WEBP)</span>
+            <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
+        </div>
+
+        <div class="input-group row">
+            <label>圖標尺寸：</label>
+            <select id="sizeSelect" onchange="processImage()">
+                <option value="16">16 x 16 (網頁 Favicon)</option>
+                <option value="32" selected>32 x 32 (標準圖標)</option>
+                <option value="48">48 x 48 (桌面圖標)</option>
+                <option value="128">128 x 128 (大圖標)</option>
+                <option value="256">256 x 256 (高清圖標)</option>
+            </select>
+        </div>
+
+        <button id="downloadBtn" class="add-btn" onclick="downloadICO()" disabled>儲存並下載 .ico 檔案</button>
+    </div>
+
+    <div id="previewCard" class="preview-card">
+        <div style="font-size: 14px; color: #555; font-weight: bold;">✨ 縮放預覽：</div>
+        <canvas id="convertCanvas" style="display:none;"></canvas>
+        <img id="previewImg" alt="預覽">
+        <div class="info-text" id="infoText"></div>
+    </div>
+</div>
+
+<script>
+    let sourceImage = null;
+
+    // 處理檔案選擇
+    function handleFileSelect(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                sourceImage = img;
+                document.getElementById('dropZoneText').innerText = `已選取：${file.name}`;
+                processImage();
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // 將圖片繪製到目標尺寸的 Canvas 上
+    function processImage() {
+        if (!sourceImage) return;
+
+        const size = parseInt(document.getElementById('sizeSelect').value);
+        const canvas = document.getElementById('convertCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = size;
+        canvas.height = size;
+
+        // 清除畫布並繪製（等比例縮放填滿中心，保留透明度）
+        ctx.clearRect(0, 0, size, size);
+        
+        // 計算等比例置中裁剪
+        const minSide = Math.min(sourceImage.width, sourceImage.height);
+        const sx = (sourceImage.width - minSide) / 2;
+        const sy = (sourceImage.height - minSide) / 2;
+
+        ctx.drawImage(sourceImage, sx, sy, minSide, minSide, 0, 0, size, size);
+
+        // 更新 UI 預覽
+        const previewImg = document.getElementById('previewImg');
+        previewImg.src = canvas.toDataURL('image/png');
+        previewImg.style.width = size > 128 ? '128px' : size + 'px';
+        previewImg.style.height = size > 128 ? '128px' : size + 'px';
+
+        document.getElementById('infoText').innerText = `當前轉換規格：${size}x${size} 像素 (PNG編碼封裝)`;
+        document.getElementById('previewCard').style.display = 'flex';
+        document.getElementById('downloadBtn').disabled = false;
+    }
+
+    // 📥 核心功能：純原生 JavaScript 把 Canvas 轉為標準 ICO 格式二進位流
+    function downloadICO() {
+        const canvas = document.getElementById('convertCanvas');
+        const size = canvas.width;
+
+        // 先把畫布內容轉成標準 PNG 二進位數據
+        canvas.toBlob((pngBlob) => {
+            if (!pngBlob) return alert('圖片處理失敗');
+
+            const reader = new FileReader();
+            reader.onload = function() {
+                const pngBuffer = reader.result;
+                const pngArray = new Uint8Array(pngBuffer);
+
+                // 建立 ICO 檔案結構的 Buffer
+                // ICO 標頭 (6位元組) + 1個目錄項 (16位元組) + PNG數據大小
+                const icoHeaderSize = 6;
+                const icoDirectorySize = 16;
+                const totalSize = icoHeaderSize + icoDirectorySize + pngArray.length;
+                
+                const icoBuffer = new ArrayBuffer(totalSize);
+                const view = new DataView(icoBuffer);
+
+                // 1. 寫入 ICO 檔案頭 (Icon Header)
+                view.setUint16(0, 0, true);     // 保留字，必須為 0
+                view.setUint16(2, 1, true);     // 檔案類型：1 代表圖標 (.ico)
+                view.setUint16(4, 1, true);     // 檔案內含的圖片張數：1 張
+
+                // 2. 寫入圖片目錄項 (Icon Directory Entry)
+                view.setUint8(6, size >= 256 ? 0 : size); // 寬度 (0 代表 256)
+                view.setUint8(7, size >= 256 ? 0 : size); // 高度 (0 代表 256)
+                view.setUint8(8, 0);            // 顏色的調色盤數 (0 代表無調色盤)
+                view.setUint8(9, 0);            // 保留字，必須為 0
+                view.setUint16(10, 1, true);    // 色彩平面數 (Color Planes)
+                view.setUint16(12, 32, true);   // 像素位元深 (Bits per pixel, 32位元帶透明度)
+                view.setUint32(14, pngArray.length, true); // 圖片資料總大小 (bytes)
+                view.setUint32(18, icoHeaderSize + icoDirectorySize, true); // 圖片資料起點位移偏移量 (Offset)
+
+                // 3. 把真實的 PNG 數據填入尾端
+                const finalIcoArray = new Uint8Array(icoBuffer);
+                finalIcoArray.set(pngArray, icoHeaderSize + icoDirectorySize);
+
+                // 4. 觸發瀏覽器離線下載
+                const icoBlob = new Blob([finalIcoArray], { type: 'image/x-icon' });
+                const url = URL.createObjectURL(icoBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'favicon.ico';
+                a.click();
+
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            };
+            reader.readAsArrayBuffer(pngBlob);
+        }, 'image/png');
+    }
+
+    // 支援拖曳上傳
+    const dropZone = document.querySelector('.drop-zone');
+    ['dragover', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, e => e.preventDefault(), false);
+    });
+    dropZone.addEventListener('drop', e => {
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            document.getElementById('fileInput').files = files;
+            handleFileSelect({ target: { files: files } });
+        }
+    });
+</script>
+
+</body>
+</html>
