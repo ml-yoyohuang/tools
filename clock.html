@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>精準時鐘</title>
+  <meta name="theme-color" content="#080808">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="精準時鐘">
+  <link rel="manifest" href="./clock-manifest.json">
+  <link rel="apple-touch-icon" href="./clock-icon.svg">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -259,6 +265,10 @@
     }
 
     requestAnimationFrame(tick)
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw-clock.js')
+    }
   </script>
 </body>
 </html>

@@ -1,0 +1,25 @@
+{
+  "name": "精準時鐘",
+  "short_name": "精準時鐘",
+  "description": "毫秒級精準時鐘，搶票卡點必備",
+  "start_url": "./clock.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#080808",
+  "theme_color": "#080808",
+  "icons": [
+    {
+      "src": "./clock-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./clock-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
