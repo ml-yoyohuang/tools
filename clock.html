@@ -148,6 +148,26 @@
       animation: tick-flash 0.15s ease-out forwards;
     }
 
+    /* 懸浮視窗按鈕 */
+    .btn-pip {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      padding: 10px 20px;
+      background: #1a1a1a;
+      color: #aaa;
+      border: 1.5px solid #2a2a2a;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+      z-index: 10;
+    }
+    .btn-pip:hover { background: #222; color: #fff; border-color: #555; }
+    .btn-pip.active { background: #0a1f14; color: #00ff88; border-color: #00ff8844; }
+    .btn-pip.unsupported { display: none; }
+
     /* 進度條（秒內進度） */
     .progress-wrap {
       margin-top: clamp(16px, 3vw, 28px);
@@ -191,6 +211,8 @@
       <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
     </div>
   </div>
+
+  <button class="btn-pip" id="btn-pip">⧉ 懸浮視窗</button>
 
   <script>
     const hhEl   = document.getElementById('hh')
@@ -269,6 +291,118 @@
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw-clock.js')
     }
+
+    // --- 懸浮視窗（Document Picture-in-Picture）---
+    const btnPip = document.getElementById('btn-pip')
+
+    if (!('documentPictureInPicture' in window)) {
+      btnPip.classList.add('unsupported')
+    }
+
+    btnPip.addEventListener('click', async () => {
+      // 已開啟則關閉
+      if (documentPictureInPicture.window) {
+        documentPictureInPicture.window.close()
+        return
+      }
+
+      const pip = await documentPictureInPicture.requestWindow({ width: 460, height: 210 })
+
+      // 樣式
+      const style = pip.document.createElement('style')
+      style.textContent = `
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+          background: #080808; color: #fff;
+          font-family: 'SF Mono','Fira Code','Consolas',monospace;
+          display: flex; flex-direction: column;
+          align-items: center; justify-content: center;
+          height: 100vh; padding: 14px; user-select: none;
+        }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+        @keyframes tick-flash {
+          0%   { background:#fff; box-shadow:0 0 20px #fff; }
+          100% { background:#00ff88; box-shadow:0 0 8px #00ff8866; }
+        }
+      `
+      pip.document.head.appendChild(style)
+
+      // 結構
+      pip.document.body.innerHTML = `
+        <div style="font-size:58px;font-weight:700;letter-spacing:-0.03em;line-height:1;">
+          <span id="p-hh">00</span><span style="color:#444;animation:blink 1s step-start infinite">:</span>
+          <span id="p-mm">00</span><span style="color:#444;animation:blink 1s step-start infinite">:</span>
+          <span id="p-ss">00</span>
+        </div>
+        <div style="font-size:22px;color:#888;margin-top:4px;">.<span id="p-ms">000</span></div>
+        <div id="p-blocks" style="display:flex;gap:5px;margin-top:10px;width:100%;height:26px;"></div>
+        <div style="width:100%;height:4px;background:#1a1a1a;border-radius:99px;margin-top:8px;overflow:hidden;">
+          <div id="p-fill" style="height:100%;background:linear-gradient(90deg,#00ff88,#ffaa00);border-radius:99px;width:0%;transition:width 0.05s linear;"></div>
+        </div>
+      `
+
+      // 色塊
+      const pipBlocksEl = pip.document.getElementById('p-blocks')
+      const pipBlocks = []
+      for (let i = 0; i < 10; i++) {
+        const b = pip.document.createElement('div')
+        b.style.cssText = 'flex:1;border-radius:4px;border:1.5px solid #1a1a1a;background:#111;'
+        pipBlocksEl.appendChild(b)
+        pipBlocks.push(b)
+      }
+
+      const pHh   = pip.document.getElementById('p-hh')
+      const pMm   = pip.document.getElementById('p-mm')
+      const pSs   = pip.document.getElementById('p-ss')
+      const pMs   = pip.document.getElementById('p-ms')
+      const pFill = pip.document.getElementById('p-fill')
+      let pipPrevSec = -1
+
+      function pipTick() {
+        if (!documentPictureInPicture.window) return
+        const now  = new Date()
+        const h = now.getHours(), m = now.getMinutes()
+        const s = now.getSeconds(), ms = now.getMilliseconds()
+        const displayActive = (Math.floor(ms / 100) + 9) % 10
+        const secChanged = s !== pipPrevSec
+        pipPrevSec = s
+
+        pHh.textContent = pad2(h); pMm.textContent = pad2(m)
+        pSs.textContent = pad2(s); pMs.textContent = pad3(ms)
+        pFill.style.width = (ms / 10).toFixed(2) + '%'
+
+        for (let i = 0; i < 10; i++) {
+          const b = pipBlocks[i]
+          const warn = i >= 8
+          if (i === displayActive) {
+            b.style.background   = warn ? '#ffaa00' : '#00ff88'
+            b.style.borderColor  = warn ? '#ffaa00' : '#00ff88'
+            b.style.boxShadow    = warn ? '0 0 8px #ffaa0066' : '0 0 8px #00ff8866'
+            if (secChanged && i === 9) {
+              b.style.animation = 'tick-flash 0.15s ease-out forwards'
+              b.addEventListener('animationend', () => { b.style.animation = '' }, { once: true })
+            }
+          } else if (i < displayActive) {
+            b.style.background  = warn ? '#2b1e00' : '#0d2b1a'
+            b.style.borderColor = warn ? '#4a3300' : '#1a4a2e'
+            b.style.boxShadow   = ''
+          } else {
+            b.style.background  = '#111'
+            b.style.borderColor = '#1a1a1a'
+            b.style.boxShadow   = ''
+          }
+        }
+        pip.requestAnimationFrame(pipTick)
+      }
+      pip.requestAnimationFrame(pipTick)
+
+      btnPip.textContent = '⧉ 關閉懸浮'
+      btnPip.classList.add('active')
+      pip.addEventListener('pagehide', () => {
+        btnPip.textContent = '⧉ 懸浮視窗'
+        btnPip.classList.remove('active')
+      })
+    })
   </script>
 </body>
 </html>
