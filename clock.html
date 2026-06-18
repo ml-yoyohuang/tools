@@ -204,7 +204,7 @@
     for (let i = 0; i < TOTAL; i++) {
       const label = document.createElement('div')
       label.className = 'block-label-item'
-      label.textContent = '.' + i
+      label.textContent = '.' + ((i + 1) % 10)
       labelsEl.appendChild(label)
 
       const b = document.createElement('div')
@@ -235,17 +235,19 @@
       const secChanged = s !== prevSec
       prevSec = s
 
+      const displayActive = (tenth + 9) % 10
+
       for (let i = 0; i < TOTAL; i++) {
         const b = blocks[i]
         const isWarnZone = i >= 8
 
-        if (i === tenth) {
+        if (i === displayActive) {
           b.className = 'block active' + (isWarnZone ? ' warn' : '')
-          if (secChanged && i === 0) {
+          if (secChanged && i === 9) {
             b.classList.add('flash')
             b.addEventListener('animationend', () => b.classList.remove('flash'), { once: true })
           }
-        } else if (i < tenth) {
+        } else if (i < displayActive) {
           b.className = 'block past' + (isWarnZone ? ' warn-past' : '')
         } else {
           b.className = 'block'
