@@ -209,6 +209,60 @@
       letter-spacing: 0.04em;
       line-height: 1.4;
     }
+
+    .sw-update-toast {
+      position: fixed;
+      left: 50%;
+      bottom: 20px;
+      transform: translateX(-50%);
+      width: min(92vw, 520px);
+      background: #131313;
+      border: 1px solid #2b2b2b;
+      color: #fff;
+      border-radius: 12px;
+      padding: 12px 14px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      z-index: 20;
+    }
+
+    .sw-update-toast.open {
+      display: flex;
+    }
+
+    .sw-update-msg {
+      font-size: 13px;
+      line-height: 1.35;
+      color: #d3d3d3;
+    }
+
+    .sw-update-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .sw-btn {
+      border: none;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .sw-btn.later {
+      background: #242424;
+      color: #ddd;
+    }
+
+    .sw-btn.update {
+      background: #00ff88;
+      color: #062414;
+    }
   </style>
 </head>
 <body>
@@ -237,6 +291,14 @@
 
   <button class="btn-pip" id="btn-pip">⧉ 懸浮視窗</button>
 
+  <div class="sw-update-toast" id="swUpdateToast" role="status" aria-live="polite">
+    <div class="sw-update-msg">偵測到新版本，建議立即更新以使用最新修正。</div>
+    <div class="sw-update-actions">
+      <button type="button" class="sw-btn later" id="swLaterBtn">稍後</button>
+      <button type="button" class="sw-btn update" id="swUpdateBtn">立即更新</button>
+    </div>
+  </div>
+
   <script>
     const hhEl   = document.getElementById('hh')
     const mmEl   = document.getElementById('mm')
@@ -245,11 +307,15 @@
     const blocksEl = document.getElementById('blocks')
     const labelsEl = document.getElementById('blocks-label')
     const fillEl = document.getElementById('progress-fill')
+    const swUpdateToast = document.getElementById('swUpdateToast')
+    const swLaterBtn = document.getElementById('swLaterBtn')
+    const swUpdateBtn = document.getElementById('swUpdateBtn')
 
     const TOTAL = 10
     const blocks = []
     let prevTenth = -1
     let prevSec   = -1
+    let waitingServiceWorker = null
 
     // 建立色塊與標籤
     for (let i = 0; i < TOTAL; i++) {
@@ -361,8 +427,49 @@
     requestAnimationFrame(tick)
     syncTime()
 
+    function showSwUpdateToast(worker) {
+      waitingServiceWorker = worker
+      swUpdateToast.classList.add('open')
+    }
+
+    function hideSwUpdateToast() {
+      swUpdateToast.classList.remove('open')
+    }
+
+    swLaterBtn.addEventListener('click', hideSwUpdateToast)
+    swUpdateBtn.addEventListener('click', () => {
+      if (waitingServiceWorker) {
+        waitingServiceWorker.postMessage({ type: 'SKIP_WAITING' })
+      }
+    })
+
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw-clock.js')
+      let refreshing = false
+
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return
+        refreshing = true
+        window.location.reload()
+      })
+
+      navigator.serviceWorker.register('./sw-clock.js').then(registration => {
+        if (registration.waiting) {
+          showSwUpdateToast(registration.waiting)
+        }
+
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing
+          if (!newWorker) return
+
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              showSwUpdateToast(newWorker)
+            }
+          })
+        })
+      }).catch(error => {
+        console.error('Service Worker registration failed:', error)
+      })
     }
 
     // --- 懸浮視窗（Document Picture-in-Picture）---

@@ -1,0 +1,25 @@
+{
+  "name": "皮克敏搶蘑菇計時器 Pro",
+  "short_name": "皮克敏計時",
+  "description": "皮克敏蘑菇重生計時，支援離線使用與常用名稱快速輸入",
+  "start_url": "./pikmin_timer.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#e8f5e9",
+  "theme_color": "#2e7d32",
+  "icons": [
+    {
+      "src": "./pikmin-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./pikmin-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

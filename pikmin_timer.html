@@ -14,6 +14,12 @@
     <meta name="twitter:title" content="皮克敏搶蘑菇計時器 Pro">
     <meta name="twitter:description" content="精準計算皮克敏蘑菇重生時間，支援多人同步對時。">
     <meta name="twitter:image" content="https://ml-yoyohuang.github.io/tools/og-pikmin.png">
+    <meta name="theme-color" content="#2e7d32">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="皮克敏計時">
+    <link rel="manifest" href="./pikmin-manifest.json">
+    <link rel="apple-touch-icon" href="./pikmin-icon.svg">
 
     <style>
         * { box-sizing: border-box; }
@@ -307,6 +313,58 @@
             background: #ececec;
             color: #333;
         }
+
+        .sw-update-toast {
+            position: fixed;
+            left: 50%;
+            bottom: 20px;
+            transform: translateX(-50%);
+            width: min(92vw, 520px);
+            background: #1f2d1f;
+            color: #fff;
+            border-radius: 12px;
+            padding: 12px 14px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.22);
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            z-index: 1300;
+        }
+
+        .sw-update-toast.open {
+            display: flex;
+        }
+
+        .sw-update-msg {
+            font-size: 14px;
+            line-height: 1.35;
+        }
+
+        .sw-update-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .sw-btn {
+            border: none;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .sw-btn.update {
+            background: #7ddf7d;
+            color: #123012;
+        }
+
+        .sw-btn.later {
+            background: rgba(255,255,255,0.18);
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -352,10 +410,19 @@
     </div>
 </div>
 
+<div class="sw-update-toast" id="swUpdateToast" role="status" aria-live="polite">
+    <div class="sw-update-msg">偵測到新版本，建議立即更新以使用最新修正。</div>
+    <div class="sw-update-actions">
+        <button type="button" class="sw-btn later" id="swLaterBtn">稍後</button>
+        <button type="button" class="sw-btn update" id="swUpdateBtn">立即更新</button>
+    </div>
+</div>
+
 <script>
     let timers = [];
     let logs = [];
     let commonNames = [];
+    let waitingServiceWorker = null;
 
     window.onload = function() {
         const savedOffset = localStorage.getItem('pikmin_offset') || "04:30";
@@ -684,6 +751,65 @@
     function deleteTimer(id) {
         timers = timers.filter(t => t.id !== id);
         refreshList();
+    }
+
+    function showSwUpdateToast(worker) {
+        waitingServiceWorker = worker;
+        const toast = document.getElementById('swUpdateToast');
+        toast.classList.add('open');
+    }
+
+    function hideSwUpdateToast() {
+        const toast = document.getElementById('swUpdateToast');
+        toast.classList.remove('open');
+    }
+
+    function bindSwUpdateActions() {
+        const laterBtn = document.getElementById('swLaterBtn');
+        const updateBtn = document.getElementById('swUpdateBtn');
+
+        laterBtn.addEventListener('click', function() {
+            hideSwUpdateToast();
+        });
+
+        updateBtn.addEventListener('click', function() {
+            if (waitingServiceWorker) {
+                waitingServiceWorker.postMessage({ type: 'SKIP_WAITING' });
+            }
+        });
+    }
+
+    bindSwUpdateActions();
+
+    if ('serviceWorker' in navigator) {
+        let refreshing = false;
+
+        navigator.serviceWorker.addEventListener('controllerchange', function() {
+            if (refreshing) return;
+            refreshing = true;
+            window.location.reload();
+        });
+
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('./sw-pikmin.js').then(function(registration) {
+                if (registration.waiting) {
+                    showSwUpdateToast(registration.waiting);
+                }
+
+                registration.addEventListener('updatefound', function() {
+                    const newWorker = registration.installing;
+                    if (!newWorker) return;
+
+                    newWorker.addEventListener('statechange', function() {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            showSwUpdateToast(newWorker);
+                        }
+                    });
+                });
+            }).catch(function(error) {
+                console.error('Service Worker registration failed:', error);
+            });
+        });
     }
 </script>
 
