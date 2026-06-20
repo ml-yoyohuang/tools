@@ -423,6 +423,7 @@
     let logs = [];
     let commonNames = [];
     let waitingServiceWorker = null;
+    const DEFAULT_TIMER_NAME = "新蘑菇任務";
 
     window.onload = function() {
         const savedOffset = localStorage.getItem('pikmin_offset') || "04:30";
@@ -456,8 +457,19 @@
         localStorage.setItem('pikmin_logs', JSON.stringify(logs));
     }
 
+    function normalizeTimeInput(str) {
+        if (!str) return '';
+        return str
+            .replace(/[\uFF10-\uFF19]/g, function(ch) {
+                return String.fromCharCode(ch.charCodeAt(0) - 0xFF10 + 0x30);
+            })
+            .replace(/\uFF1A/g, ':')
+            .trim();
+    }
+
     function parseTimeToSeconds(str) {
-        const p = str.trim().split(':');
+        const normalized = normalizeTimeInput(str);
+        const p = normalized.split(':');
         let h = 0, m = 0, s = 0;
         if (p.length === 3) {
             h = parseInt(p[0]); m = parseInt(p[1]); s = parseInt(p[2]);
@@ -585,7 +597,7 @@
         if (mushroomSec === null || offsetSec === null) return;
 
         const endTime = Date.now() + (mushroomSec + offsetSec) * 1000;
-        const newTimer = { id: Date.now(), name: "新蘑菇任務", endTime: endTime };
+        const newTimer = { id: Date.now(), name: DEFAULT_TIMER_NAME, endTime: endTime };
 
         timers.push(newTimer);
         refreshList();
@@ -660,6 +672,14 @@
             activeIndex = -1;
         };
 
+        const clearDefaultNameOnBackspace = () => {
+            if (input.value.trim() !== DEFAULT_TIMER_NAME) return false;
+            input.value = '';
+            updateTimerName(id, '');
+            closePanel();
+            return true;
+        };
+
         const selectSuggestion = (name) => {
             input.value = name;
             updateTimerName(id, name);
@@ -708,7 +728,17 @@
 
         input.addEventListener('focus', renderSuggestions);
         input.addEventListener('input', renderSuggestions);
+        input.addEventListener('beforeinput', function(event) {
+            if (event.inputType === 'deleteContentBackward' && clearDefaultNameOnBackspace()) {
+                event.preventDefault();
+            }
+        });
         input.addEventListener('keydown', function(event) {
+            if (event.key === 'Backspace' && clearDefaultNameOnBackspace()) {
+                event.preventDefault();
+                return;
+            }
+
             if (!panel.classList.contains('open') && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
                 renderSuggestions();
             }
