@@ -175,9 +175,96 @@
             color: #999;
             font-size: 13px;
         }
+
+        .settings-btn {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            width: 42px;
+            height: 42px;
+            border: none;
+            border-radius: 50%;
+            background: #2e7d32;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        .settings-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.45);
+            z-index: 1100;
+            padding: 20px;
+        }
+
+        .settings-modal.open { display: flex; }
+
+        .settings-panel {
+            width: min(560px, 100%);
+            background: #fff;
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+        }
+
+        .settings-panel h3 {
+            margin: 0 0 8px;
+            color: #2e7d32;
+        }
+
+        .settings-note {
+            margin: 0 0 10px;
+            color: #666;
+            font-size: 13px;
+        }
+
+        #commonNamesInput {
+            width: 100%;
+            min-height: 180px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            resize: vertical;
+            font-size: 14px;
+            line-height: 1.4;
+            outline: none;
+        }
+
+        .settings-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            border: none;
+            border-radius: 8px;
+            padding: 9px 14px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .modal-btn.save {
+            background: #2e7d32;
+            color: #fff;
+        }
+
+        .modal-btn.cancel {
+            background: #ececec;
+            color: #333;
+        }
     </style>
 </head>
 <body>
+
+<button class="settings-btn" id="settingsBtn" type="button" aria-label="設定常用名稱">⚙</button>
 
 <div class="container">
     <h2>🍄 皮克敏搶蘑菇計時器</h2>
@@ -204,9 +291,26 @@
     </div>
 </div>
 
+<div class="settings-modal" id="settingsModal">
+    <div class="settings-panel">
+        <h3>常用名稱設定</h3>
+        <p class="settings-note">每行一個名稱，儲存後會套用到蘑菇名稱 autocomplete。</p>
+        <textarea id="commonNamesInput" placeholder="例如：
+新蘑菇任務一
+公園北門"></textarea>
+        <div class="settings-actions">
+            <button class="modal-btn cancel" id="cancelSettingsBtn" type="button">取消</button>
+            <button class="modal-btn save" id="saveSettingsBtn" type="button">儲存</button>
+        </div>
+    </div>
+</div>
+
+<datalist id="commonNameList"></datalist>
+
 <script>
     let timers = [];
     let logs = [];
+    let commonNames = [];
 
     window.onload = function() {
         const savedOffset = localStorage.getItem('pikmin_offset') || "04:30";
@@ -221,7 +325,10 @@
         timers = savedTimers.filter(t => t.endTime > now - 600000);
         
         logs = JSON.parse(localStorage.getItem('pikmin_logs') || "[]");
+        commonNames = JSON.parse(localStorage.getItem('pikmin_common_names') || "[]");
         
+        bindSettingsEvents();
+        refreshCommonNameList();
         refreshList();
         refreshLogList();
     };
@@ -308,6 +415,59 @@
         saveToLocalStorage();
     }
 
+    function bindSettingsEvents() {
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
+        const commonNamesInput = document.getElementById('commonNamesInput');
+        const cancelSettingsBtn = document.getElementById('cancelSettingsBtn');
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+
+        settingsBtn.addEventListener('click', function() {
+            commonNamesInput.value = commonNames.join('\n');
+            settingsModal.classList.add('open');
+            commonNamesInput.focus();
+        });
+
+        cancelSettingsBtn.addEventListener('click', function() {
+            settingsModal.classList.remove('open');
+        });
+
+        saveSettingsBtn.addEventListener('click', function() {
+            const parsed = commonNamesInput.value
+                .split('\n')
+                .map(name => name.trim())
+                .filter(Boolean);
+
+            commonNames = Array.from(new Set(parsed));
+            localStorage.setItem('pikmin_common_names', JSON.stringify(commonNames));
+            refreshCommonNameList();
+            settingsModal.classList.remove('open');
+        });
+
+        settingsModal.addEventListener('click', function(event) {
+            if (event.target === settingsModal) {
+                settingsModal.classList.remove('open');
+            }
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && settingsModal.classList.contains('open')) {
+                settingsModal.classList.remove('open');
+            }
+        });
+    }
+
+    function refreshCommonNameList() {
+        const datalist = document.getElementById('commonNameList');
+        datalist.innerHTML = '';
+
+        commonNames.forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            datalist.appendChild(option);
+        });
+    }
+
     function addTimer() {
         const timeInput = document.getElementById('newTimeInput');
         const offsetVal = document.getElementById('offsetInput').value;
@@ -336,7 +496,7 @@
 
         card.innerHTML = `
             <div class="timer-content">
-                <input type="text" class="timer-name" value="${timerObj.name}" 
+                <input type="text" class="timer-name" list="commonNameList" value="${timerObj.name}" 
                     onchange="updateTimerName(${timerObj.id}, this.value)">
                 <div class="expire-time">🚩 預計到期：${expireLabel}</div>
                 <div class="time-display" id="display-${timerObj.id}">--:--</div>
