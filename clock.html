@@ -201,6 +201,15 @@
     .sync-status.ok   { color: #00ff88; }
     .sync-status.warn { color: #ffaa00; }
     .sync-status.fail { color: #555; }
+
+    /* 警語 */
+    .sync-warning {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #555;
+      letter-spacing: 0.04em;
+      line-height: 1.4;
+    }
   </style>
 </head>
 <body>
@@ -224,6 +233,7 @@
       <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
     </div>
     <div class="sync-status" id="sync-status"></div>
+    <div class="sync-warning">注意：本時鐘已於載入時與伺服器同步。受限於網路及設備精度，顯示時間可能存在 ±20∼50 ms 誤差。</div>
   </div>
 
   <button class="btn-pip" id="btn-pip">⧉ 懸浮視窗</button>
@@ -280,6 +290,8 @@
     }
 
     async function syncTime() {
+      // 注意：本時鐘已於載入時與伺服器同步一次。受限於網路延遲及設備時鐘精度，
+      // 顯示時間與絕對真實時間可能存在 ±20∼50 ms 的誤差。長時間開啟後，誤差可能逐漸累積。
       syncEl.className = 'sync-status'
       syncEl.textContent = '同步中...'
       const TRIES = 5, KEEP = 3
@@ -422,7 +434,7 @@
 
       function pipTick() {
         if (!documentPictureInPicture.window) return
-        const now  = new Date()
+        const now = new Date(Date.now() + timeOffset)
         const h = now.getHours(), m = now.getMinutes()
         const s = now.getSeconds(), ms = now.getMilliseconds()
         const displayActive = (Math.floor(ms / 100) + 9) % 10
