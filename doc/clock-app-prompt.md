@@ -478,6 +478,9 @@
 - 不可使用一般的 1 秒 Timer，毫秒數字必須流暢滾動
 
 ## 懸浮視窗（重要功能）
+- 技術澄清：本 App 核心是時鐘（非影音播放 App）。若需在 iOS 上實現跨 App 懸浮，
+  將以 Picture in Picture（PiP）作為系統可行承載方式，也就是以影音容器承載時鐘畫面來達成懸浮顯示。
+- 需求限制：請勿把功能設計成影片播放器介面；PiP 僅用於懸浮顯示精簡時鐘畫面。
 - App 需要支援 iOS 的「畫中畫（Picture in Picture）」模式
   或系統懸浮視窗，讓時鐘可以浮在其他 App 上方
 - 建議使用 AVPictureInPictureController 或
