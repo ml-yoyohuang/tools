@@ -316,6 +316,8 @@
     let prevTenth = -1
     let prevSec   = -1
     let waitingServiceWorker = null
+    let hasShownSwUpdateToast = false
+    let shouldReloadAfterSwUpdate = false
 
     // 建立色塊與標籤
     for (let i = 0; i < TOTAL; i++) {
@@ -428,7 +430,9 @@
     syncTime()
 
     function showSwUpdateToast(worker) {
+      if (hasShownSwUpdateToast) return
       waitingServiceWorker = worker
+      hasShownSwUpdateToast = true
       swUpdateToast.classList.add('open')
     }
 
@@ -439,6 +443,7 @@
     swLaterBtn.addEventListener('click', hideSwUpdateToast)
     swUpdateBtn.addEventListener('click', () => {
       if (waitingServiceWorker) {
+        shouldReloadAfterSwUpdate = true
         waitingServiceWorker.postMessage({ type: 'SKIP_WAITING' })
       }
     })
@@ -447,7 +452,7 @@
       let refreshing = false
 
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (refreshing) return
+        if (!shouldReloadAfterSwUpdate || refreshing) return
         refreshing = true
         window.location.reload()
       })
