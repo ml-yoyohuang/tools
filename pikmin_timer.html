@@ -102,7 +102,7 @@
             100% { background-color: #fff0f0; box-shadow: 0 0 10px rgba(244, 67, 54, 0.2); }
         }
 
-        .timer-content { flex-grow: 1; margin-right: 15px; overflow: hidden; }
+        .timer-content { flex-grow: 1; margin-right: 15px; overflow: visible; }
         .timer-name {
             border: none;
             font-size: 17px;
@@ -154,6 +154,11 @@
 
         .name-suggestion-item:active {
             background: #f2f8f2;
+        }
+
+        .name-suggestion-item.active,
+        .name-suggestion-item:hover {
+            background: #eef7ee;
         }
 
         .expire-time { font-size: 12px; color: var(--secondary-color); margin-bottom: 8px; }
@@ -347,8 +352,6 @@
     </div>
 </div>
 
-<datalist id="commonNameList"></datalist>
-
 <script>
     let timers = [];
     let logs = [];
@@ -500,17 +503,10 @@
     }
 
     function refreshCommonNameList() {
-        const datalist = document.getElementById('commonNameList');
-        datalist.innerHTML = '';
-
-        commonNames.forEach(name => {
-            const option = document.createElement('option');
-            option.value = name;
-            datalist.appendChild(option);
+        // 自訂清單使用即時資料，這裡只關閉已展開面板避免舊畫面殘留
+        document.querySelectorAll('.name-suggestions.open').forEach(panel => {
+            panel.classList.remove('open');
         });
-
-        // iOS Safari 對 datalist 支援不穩，重新掛載每張卡片的自訂建議清單
-        timers.forEach(timer => setupTimerNameAutocomplete(timer.id));
     }
 
     function addTimer() {
@@ -542,7 +538,7 @@
         card.innerHTML = `
             <div class="timer-content">
                 <div class="timer-name-wrap">
-                    <input type="text" class="timer-name" list="commonNameList" value="${timerObj.name}" 
+                    <input type="text" class="timer-name" value="${timerObj.name}" 
                         onchange="updateTimerName(${timerObj.id}, this.value)">
                     <div class="name-suggestions" id="suggestions-${timerObj.id}"></div>
                 </div>
@@ -586,17 +582,47 @@
         const panel = document.getElementById(`suggestions-${id}`);
         if (!input || !panel) return;
 
+        if (input.dataset.autocompleteBound === 'true') return;
+        input.dataset.autocompleteBound = 'true';
+
+        let matched = [];
+        let activeIndex = -1;
+
+        const closePanel = () => {
+            panel.classList.remove('open');
+            activeIndex = -1;
+        };
+
+        const selectSuggestion = (name) => {
+            input.value = name;
+            updateTimerName(id, name);
+            closePanel();
+        };
+
+        const updateActiveItem = () => {
+            const items = panel.querySelectorAll('.name-suggestion-item');
+            items.forEach((item, index) => {
+                item.classList.toggle('active', index === activeIndex);
+            });
+
+            if (activeIndex >= 0 && items[activeIndex]) {
+                items[activeIndex].scrollIntoView({ block: 'nearest' });
+            }
+        };
+
         const renderSuggestions = () => {
             const keyword = input.value.trim().toLowerCase();
-            const matched = commonNames
+            matched = commonNames
                 .filter(name => !keyword || name.toLowerCase().includes(keyword))
                 .slice(0, 8);
 
             panel.innerHTML = '';
             if (matched.length === 0) {
-                panel.classList.remove('open');
+                closePanel();
                 return;
             }
+
+            activeIndex = -1;
 
             matched.forEach(name => {
                 const btn = document.createElement('button');
@@ -605,9 +631,7 @@
                 btn.textContent = name;
                 btn.addEventListener('mousedown', function(event) {
                     event.preventDefault();
-                    input.value = name;
-                    updateTimerName(id, name);
-                    panel.classList.remove('open');
+                    selectSuggestion(name);
                 });
                 panel.appendChild(btn);
             });
@@ -617,9 +641,34 @@
 
         input.addEventListener('focus', renderSuggestions);
         input.addEventListener('input', renderSuggestions);
+        input.addEventListener('keydown', function(event) {
+            if (!panel.classList.contains('open') && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+                renderSuggestions();
+            }
+
+            if (!panel.classList.contains('open')) return;
+
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                activeIndex = activeIndex < matched.length - 1 ? activeIndex + 1 : 0;
+                updateActiveItem();
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                activeIndex = activeIndex > 0 ? activeIndex - 1 : matched.length - 1;
+                updateActiveItem();
+            } else if (event.key === 'Enter') {
+                if (matched.length === 0) return;
+                event.preventDefault();
+                const pickIndex = activeIndex >= 0 ? activeIndex : 0;
+                selectSuggestion(matched[pickIndex]);
+            } else if (event.key === 'Escape') {
+                event.preventDefault();
+                closePanel();
+            }
+        });
         input.addEventListener('blur', function() {
             setTimeout(function() {
-                panel.classList.remove('open');
+                closePanel();
             }, 120);
         });
     }
