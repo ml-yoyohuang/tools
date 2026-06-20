@@ -233,7 +233,7 @@
       <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
     </div>
     <div class="sync-status" id="sync-status"></div>
-    <div class="sync-warning">注意：本時鐘已於載入時與伺服器同步。受限於網路及設備精度，顯示時間可能存在 ±20∼50 ms 誤差。</div>
+    <div class="sync-warning">注意：本時鐘已於載入時與伺服器同步。受限於網路及設備精度，顯示時間可能存在 ±10∼30 ms 誤差。</div>
   </div>
 
   <button class="btn-pip" id="btn-pip">⧉ 懸浮視窗</button>
@@ -291,7 +291,7 @@
 
     async function syncTime() {
       // 注意：本時鐘已於載入時與伺服器同步一次。受限於網路延遲及設備時鐘精度，
-      // 顯示時間與絕對真實時間可能存在 ±20∼50 ms 的誤差。長時間開啟後，誤差可能逐漸累積。
+      // 顯示時間與絕對真實時間可能存在 ±10∼30 ms 的誤差。長時間開啟後，誤差可能逐漸累積。
       syncEl.className = 'sync-status'
       syncEl.textContent = '同步中...'
       const TRIES = 5, KEEP = 3
@@ -307,7 +307,7 @@
           if (!dateHeader) continue
           const serverMs = new Date(dateHeader).getTime()
           if (isNaN(serverMs)) continue
-          results.push({ offset: serverMs - (t0 + t1) / 2, rtt: t1 - t0 })
+          results.push({ offset: (serverMs + 500) - (t0 + t1) / 2, rtt: t1 - t0 })
         } catch (_) {}
       }
       if (!results.length) { showSyncFail(); return }
