@@ -114,6 +114,48 @@
             background: transparent;
         }
 
+        .timer-name-wrap {
+            position: relative;
+        }
+
+        .name-suggestions {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            z-index: 30;
+            background: #fff;
+            border: 1px solid #dcdcdc;
+            border-radius: 8px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+            max-height: 180px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .name-suggestions.open {
+            display: block;
+        }
+
+        .name-suggestion-item {
+            width: 100%;
+            border: none;
+            background: transparent;
+            text-align: left;
+            padding: 10px 12px;
+            cursor: pointer;
+            color: #222;
+            font-size: 14px;
+        }
+
+        .name-suggestion-item + .name-suggestion-item {
+            border-top: 1px solid #efefef;
+        }
+
+        .name-suggestion-item:active {
+            background: #f2f8f2;
+        }
+
         .expire-time { font-size: 12px; color: var(--secondary-color); margin-bottom: 8px; }
         .time-display { font-size: 32px; font-family: 'Courier New', Courier, monospace; font-weight: bold; color: #333; }
         
@@ -466,6 +508,9 @@
             option.value = name;
             datalist.appendChild(option);
         });
+
+        // iOS Safari 對 datalist 支援不穩，重新掛載每張卡片的自訂建議清單
+        timers.forEach(timer => setupTimerNameAutocomplete(timer.id));
     }
 
     function addTimer() {
@@ -496,8 +541,11 @@
 
         card.innerHTML = `
             <div class="timer-content">
-                <input type="text" class="timer-name" list="commonNameList" value="${timerObj.name}" 
-                    onchange="updateTimerName(${timerObj.id}, this.value)">
+                <div class="timer-name-wrap">
+                    <input type="text" class="timer-name" list="commonNameList" value="${timerObj.name}" 
+                        onchange="updateTimerName(${timerObj.id}, this.value)">
+                    <div class="name-suggestions" id="suggestions-${timerObj.id}"></div>
+                </div>
                 <div class="expire-time">🚩 預計到期：${expireLabel}</div>
                 <div class="time-display" id="display-${timerObj.id}">--:--</div>
             </div>
@@ -505,6 +553,7 @@
         `;
 
         list.appendChild(card);
+        setupTimerNameAutocomplete(timerObj.id);
 
         const checkStatus = () => {
             const now = Date.now();
@@ -527,6 +576,52 @@
             }
         };
         checkStatus();
+    }
+
+    function setupTimerNameAutocomplete(id) {
+        const card = document.getElementById(`timer-${id}`);
+        if (!card) return;
+
+        const input = card.querySelector('.timer-name');
+        const panel = document.getElementById(`suggestions-${id}`);
+        if (!input || !panel) return;
+
+        const renderSuggestions = () => {
+            const keyword = input.value.trim().toLowerCase();
+            const matched = commonNames
+                .filter(name => !keyword || name.toLowerCase().includes(keyword))
+                .slice(0, 8);
+
+            panel.innerHTML = '';
+            if (matched.length === 0) {
+                panel.classList.remove('open');
+                return;
+            }
+
+            matched.forEach(name => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'name-suggestion-item';
+                btn.textContent = name;
+                btn.addEventListener('mousedown', function(event) {
+                    event.preventDefault();
+                    input.value = name;
+                    updateTimerName(id, name);
+                    panel.classList.remove('open');
+                });
+                panel.appendChild(btn);
+            });
+
+            panel.classList.add('open');
+        };
+
+        input.addEventListener('focus', renderSuggestions);
+        input.addEventListener('input', renderSuggestions);
+        input.addEventListener('blur', function() {
+            setTimeout(function() {
+                panel.classList.remove('open');
+            }, 120);
+        });
     }
 
     function updateTimerName(id, newName) {
