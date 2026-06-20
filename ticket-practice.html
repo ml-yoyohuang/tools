@@ -324,6 +324,7 @@
     const blocks = []
     let prevSec = -1
     let logCount = 0
+    let timeOffset = 0
 
     for (let i = 0; i < TOTAL; i++) {
       const label = document.createElement('div')
@@ -340,8 +341,31 @@
     function pad2(n) { return String(n).padStart(2, '0') }
     function pad3(n) { return String(n).padStart(3, '0') }
 
+    async function syncTime() {
+      const TRIES = 5, KEEP = 3
+      const results = []
+      for (let i = 0; i < TRIES; i++) {
+        const t0 = Date.now()
+        try {
+          const res = await fetch(`./ticket-practice.html?timesync=${Date.now()}`, {
+            method: 'HEAD', cache: 'no-store'
+          })
+          const t1 = Date.now()
+          const dateHeader = res.headers.get('Date')
+          if (!dateHeader) continue
+          const serverMs = new Date(dateHeader).getTime()
+          if (isNaN(serverMs)) continue
+          results.push({ offset: (serverMs + 500) - (t0 + t1) / 2, rtt: t1 - t0 })
+        } catch (_) {}
+      }
+      if (!results.length) return
+      results.sort((a, b) => a.rtt - b.rtt)
+      const best = results.slice(0, KEEP)
+      timeOffset = Math.round(best.reduce((s, r) => s + r.offset, 0) / best.length)
+    }
+
     function tick() {
-      const now   = new Date()
+      const now   = new Date(Date.now() + timeOffset)
       const h     = now.getHours()
       const m     = now.getMinutes()
       const s     = now.getSeconds()
@@ -380,10 +404,11 @@
     }
 
     requestAnimationFrame(tick)
+    syncTime()
 
     // 記錄時間
-    function recordTime() {
-      const now = new Date()
+    function recordTime(atMs) {
+      const now = new Date(atMs != null ? atMs : (Date.now() + timeOffset))
       const h   = now.getHours()
       const m   = now.getMinutes()
       const s   = now.getSeconds()
@@ -407,10 +432,41 @@
       if (e.key === 'Enter') recordTime()
     })
 
-    // 觸控／滑鼠點擊畫面（排除清除、匯出按鈕與返回連結）
+    // 觸控／滑鼠輕觸記錄（避免捲動時誤觸發）
+    const TAP_MOVE_THRESHOLD = 10
+    let tapTracking = null
+
     document.addEventListener('pointerdown', (e) => {
+      if (!e.isPrimary) return
       if (e.target.closest('#btn-clear, #btn-export, .nav-back')) return
-      recordTime()
+      tapTracking = {
+        id: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        moved: false,
+        pressedAt: Date.now() + timeOffset
+      }
+    })
+
+    document.addEventListener('pointermove', (e) => {
+      if (!tapTracking || e.pointerId !== tapTracking.id) return
+      const dx = Math.abs(e.clientX - tapTracking.startX)
+      const dy = Math.abs(e.clientY - tapTracking.startY)
+      if (dx > TAP_MOVE_THRESHOLD || dy > TAP_MOVE_THRESHOLD) {
+        tapTracking.moved = true
+      }
+    })
+
+    document.addEventListener('pointerup', (e) => {
+      if (!tapTracking || e.pointerId !== tapTracking.id) return
+      const shouldRecord = !tapTracking.moved
+      const pressedAt = tapTracking.pressedAt
+      tapTracking = null
+      if (shouldRecord) recordTime(pressedAt)
+    })
+
+    document.addEventListener('pointercancel', () => {
+      tapTracking = null
     })
 
     document.getElementById('btn-clear').addEventListener('click', () => {

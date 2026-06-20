@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ura | 非工作工具</title>
+    <style>
+        :root {
+            --bg: #0b1220;
+            --bg-accent: #111a2b;
+            --card-bg: #172033;
+            --card-border: #23324d;
+            --text-main: #e2e8f0;
+            --text-sub: #93a3bd;
+            --primary: #f59e0b;
+            --secondary: #34d399;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Avenir Next", "Segoe UI", sans-serif;
+            color: var(--text-main);
+            background:
+                radial-gradient(circle at 10% 0%, rgba(245, 158, 11, 0.18), transparent 36%),
+                radial-gradient(circle at 90% 100%, rgba(52, 211, 153, 0.12), transparent 40%),
+                linear-gradient(160deg, var(--bg), var(--bg-accent));
+        }
+        .container {
+            width: min(980px, 100% - 40px);
+            margin: 0 auto;
+            padding: 44px 0 60px;
+        }
+        header {
+            margin-bottom: 28px;
+        }
+        h1 {
+            margin: 0;
+            font-size: clamp(2rem, 5vw, 3rem);
+            letter-spacing: -1px;
+        }
+        .subtitle {
+            margin: 8px 0 0;
+            color: var(--text-sub);
+            font-size: 1rem;
+        }
+        .top-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .top-actions a {
+            text-decoration: none;
+            border-radius: 999px;
+            padding: 10px 16px;
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.02);
+            font-size: 0.9rem;
+            font-weight: 700;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .top-actions a:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+        .tool-card {
+            text-decoration: none;
+            color: inherit;
+            padding: 20px;
+            border-radius: 14px;
+            border: 1px solid var(--card-border);
+            background: linear-gradient(165deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+            min-height: 160px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+        }
+        .tool-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--secondary);
+            box-shadow: 0 16px 28px rgba(0, 0, 0, 0.24);
+        }
+        .icon {
+            font-size: 1.7rem;
+            line-height: 1;
+        }
+        .tool-card h2 {
+            margin: 0;
+            font-size: 1.1rem;
+            letter-spacing: -0.2px;
+        }
+        .tool-card p {
+            margin: 0;
+            color: var(--text-sub);
+            font-size: 0.9rem;
+            line-height: 1.55;
+            flex-grow: 1;
+        }
+        .tag {
+            align-self: flex-start;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #ffe7ba;
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            text-transform: uppercase;
+        }
+        @media (max-width: 640px) {
+            .container {
+                width: calc(100% - 28px);
+                padding-top: 30px;
+            }
+            .tool-card {
+                min-height: 148px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Ura</h1>
+            <p class="subtitle">收納和工作主流程無關，但你想保留的工具。</p>
+            <div class="top-actions">
+                <a href="index.html">回首頁</a>
+            </div>
+        </header>
+
+        <section class="grid" aria-label="Ura tools">
+            <a href="pikmin_timer.html" class="tool-card">
+                <div class="icon">🕒</div>
+                <h2>Pikmin Timer</h2>
+                <p>皮克敏風格計時器，快速進入計時與提醒。</p>
+                <div class="tag">Game</div>
+            </a>
+
+            <a href="clock.html" class="tool-card">
+                <div class="icon">⏰</div>
+                <h2>Clock</h2>
+                <p>時鐘顯示工具，誤差小於30ms。</p>
+                <div class="tag">Ticket</div>
+            </a>
+
+            <a href="ticket-practice.html" class="tool-card">
+                <div class="icon">🎟️</div>
+                <h2>Ticket Practice</h2>
+                <p>時鐘練習工具，訓練反應能力。</p>
+                <div class="tag">Ticket</div>
+            </a>
+
+            <a href="stock4.html" class="tool-card">
+                <div class="icon">📈</div>
+                <h2>Stock4</h2>
+                <p>台股投資規畫工具分享圖版本。</p>
+                <div class="tag">Finance</div>
+            </a>
+
+            <a href="dam-gen.html" class="tool-card">
+                <div class="icon">🧱</div>
+                <h2>Dam Gen</h2>
+                <p>DAM 相關產生器工具。</p>
+                <div class="tag">Karaoke</div>
+            </a>
+
+            <a href="dam-merge.html" class="tool-card">
+                <div class="icon">🧩</div>
+                <h2>Dam Merge</h2>
+                <p>DAM 合併處理工具。</p>
+                <div class="tag">Karaoke</div>
+            </a>
+        </section>
+    </div>
+</body>
+</html>
