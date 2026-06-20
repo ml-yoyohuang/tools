@@ -133,6 +133,48 @@
         }
 
         .hint { font-size: 12px; color: #888; margin-bottom: 15px; padding-left: 2px; }
+
+        .log-panel {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-top: 25px;
+        }
+
+        .log-panel h3 {
+            color: #2e7d32;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 16px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        .log-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .log-item {
+            padding: 10px 12px;
+            background-color: #f9f9f9;
+            border-left: 3px solid #4CAF50;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #333;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .log-empty {
+            padding: 10px;
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+        }
     </style>
 </head>
 <body>
@@ -155,10 +197,16 @@
     </div>
 
     <div id="timerList" class="timer-list"></div>
+
+    <div class="log-panel">
+        <h3>最近十筆到期紀錄</h3>
+        <div id="logList" class="log-list"></div>
+    </div>
 </div>
 
 <script>
     let timers = [];
+    let logs = [];
 
     window.onload = function() {
         const savedOffset = localStorage.getItem('pikmin_offset') || "04:30";
@@ -172,7 +220,10 @@
         const now = Date.now();
         timers = savedTimers.filter(t => t.endTime > now - 600000);
         
+        logs = JSON.parse(localStorage.getItem('pikmin_logs') || "[]");
+        
         refreshList();
+        refreshLogList();
     };
 
     function handleKeyPress(event) {
@@ -183,6 +234,7 @@
 
     function saveToLocalStorage() {
         localStorage.setItem('pikmin_timers', JSON.stringify(timers));
+        localStorage.setItem('pikmin_logs', JSON.stringify(logs));
     }
 
     function parseTimeToSeconds(str) {
@@ -209,6 +261,43 @@
     function formatToLocalTime(timestamp) {
         const date = new Date(timestamp);
         return date.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function addLog(name, expireTime) {
+        const date = new Date(expireTime);
+        const timeStr = date.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        
+        logs.unshift({
+            id: Date.now(),
+            name: name,
+            time: timeStr,
+            timestamp: expireTime
+        });
+        
+        // 只保留最近 10 筆
+        if (logs.length > 10) {
+            logs = logs.slice(0, 10);
+        }
+        
+        saveToLocalStorage();
+        refreshLogList();
+    }
+
+    function refreshLogList() {
+        const logListEl = document.getElementById('logList');
+        logListEl.innerHTML = "";
+        
+        if (logs.length === 0) {
+            logListEl.innerHTML = '<div class="log-empty">暫無到期紀錄</div>';
+            return;
+        }
+        
+        logs.forEach(log => {
+            const logItem = document.createElement('div');
+            logItem.className = 'log-item';
+            logItem.textContent = `${log.name} ${log.time} 到期`;
+            logListEl.appendChild(logItem);
+        });
     }
 
     function refreshList() {
@@ -269,6 +358,8 @@
                 displayEl.innerText = "00:00";
                 if (!parentCard.classList.contains('finished')) {
                     parentCard.classList.add('finished');
+                    // 計時器剛好到期時，添加到日誌
+                    addLog(timerObj.name, timerObj.endTime);
                 }
             } else {
                 displayEl.innerText = formatSeconds(diff);
