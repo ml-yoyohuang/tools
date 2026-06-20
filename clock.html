@@ -504,6 +504,40 @@
           align-items: center; justify-content: center;
           height: 100vh; padding: 14px; user-select: none;
         }
+        .p-time {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0;
+          font-size: min(58px, calc((100vw - 28px) / 8.2));
+          font-weight: 700;
+          letter-spacing: -0.03em;
+          line-height: 1;
+          white-space: nowrap;
+          overflow: hidden;
+        }
+        .p-unit {
+          display: inline-block;
+          width: 2ch;
+          text-align: center;
+        }
+        .p-sep {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 0.6ch;
+          color: #444;
+          animation: blink 1s step-start infinite;
+        }
+        .p-ms-line {
+          width: 100%;
+          text-align: center;
+          font-size: min(22px, calc((100vw - 28px) / 16));
+          color: #888;
+          margin-top: 4px;
+          white-space: nowrap;
+        }
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
         @keyframes tick-flash {
           0%   { background:#fff; box-shadow:0 0 20px #fff; }
@@ -514,12 +548,10 @@
 
       // 結構
       pip.document.body.innerHTML = `
-        <div style="font-size:58px;font-weight:700;letter-spacing:-0.03em;line-height:1;">
-          <span id="p-hh">00</span><span style="color:#444;animation:blink 1s step-start infinite">:</span>
-          <span id="p-mm">00</span><span style="color:#444;animation:blink 1s step-start infinite">:</span>
-          <span id="p-ss">00</span>
+        <div class="p-time">
+          <span id="p-hh" class="p-unit">00</span><span class="p-sep">:</span><span id="p-mm" class="p-unit">00</span><span class="p-sep">:</span><span id="p-ss" class="p-unit">00</span>
         </div>
-        <div style="font-size:22px;color:#888;margin-top:4px;">.<span id="p-ms">000</span></div>
+        <div class="p-ms-line">.<span id="p-ms">000</span></div>
         <div id="p-blocks" style="display:flex;gap:5px;margin-top:10px;width:100%;height:26px;"></div>
         <div style="width:100%;height:4px;background:#1a1a1a;border-radius:99px;margin-top:8px;overflow:hidden;">
           <div id="p-fill" style="height:100%;background:linear-gradient(90deg,#00ff88,#ffaa00);border-radius:99px;width:0%;"></div>
