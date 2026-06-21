@@ -41,6 +41,23 @@
             align-items: center;
         }
 
+        .now-clock {
+            position: fixed;
+            top: calc(env(safe-area-inset-top, 0px) + 12px);
+            left: calc(env(safe-area-inset-left, 0px) + 12px);
+            background: rgba(255, 255, 255, 0.92);
+            color: #1f4d22;
+            border: 1px solid #cde3cf;
+            border-radius: 10px;
+            padding: 7px 10px;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 0.03em;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+            z-index: 1000;
+        }
+
         .container { width: 100%; max-width: 500px; }
         h2 { color: #2e7d32; text-align: center; margin-bottom: 20px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
 
@@ -369,6 +386,7 @@
 </head>
 <body>
 
+<div class="now-clock" id="nowClock">00:00:00</div>
 <button class="settings-btn" id="settingsBtn" type="button" aria-label="設定常用名稱">⚙</button>
 
 <div class="container">
@@ -441,10 +459,27 @@
         commonNames = JSON.parse(localStorage.getItem('pikmin_common_names') || "[]");
         
         bindSettingsEvents();
+        startNowClock();
         refreshCommonNameList();
         refreshList();
         refreshLogList();
     };
+
+    function startNowClock() {
+        const clockEl = document.getElementById('nowClock');
+        if (!clockEl) return;
+
+        const render = function() {
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            const ss = String(now.getSeconds()).padStart(2, '0');
+            clockEl.textContent = `${hh}:${mm}:${ss}`;
+        };
+
+        render();
+        setInterval(render, 250);
+    }
 
     function handleKeyPress(event) {
         if (event.key === "Enter") {
