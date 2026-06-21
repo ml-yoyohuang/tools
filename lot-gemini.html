@@ -97,8 +97,9 @@
             text-shadow: 0 0 8px rgba(255, 100, 0, 0.8), 0 0 4px rgba(255, 200, 0, 1) !important;
         }
 
-        #result-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .result-box { background: white; padding: 30px; border-radius: 20px; border: 5px solid var(--lotto-gold); text-align: center; width: 280px; }
+        #result-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; overflow: hidden; }
+        #fireworks-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+        .result-box { position: relative; z-index: 2; background: white; padding: 30px; border-radius: 20px; border: 5px solid var(--lotto-gold); text-align: center; width: 280px; }
         #result-amount { font-size: 45px; color: var(--lotto-red); margin: 15px 0; font-family: 'Arial Black'; }
         
         .btn-group { display: flex; flex-direction: column; gap: 10px; }
@@ -132,6 +133,7 @@
     <button class="btn-reset" onclick="location.reload()" style="margin-top: 20px;">再買一張 (1,000元)</button>
 
     <div id="result-overlay">
+        <canvas id="fireworks-canvas"></canvas>
         <div class="result-box">
             <h2 id="result-title">結算中...</h2>
             <div id="result-amount">$0</div>
@@ -162,6 +164,9 @@
     const SCRATCH_COMPLETE_RATIO = 0.35;
     let scratchedZones = new Set();
     let currentTicketTotal = 0;
+    let fireworksTimer = null;
+    let fireworksRaf = null;
+    let fireworksParticles = [];
 
     function getRandomDisplayAmount(exclusions = []) {
         const pool = DISPLAY_AMOUNTS.filter(amount => !exclusions.includes(amount));
@@ -447,6 +452,7 @@
     }
 
     function closeResultOverlay() {
+        stopFireworks();
         const prizeElements = document.querySelectorAll('.lotto-item');
         prizeElements.forEach(el => {
             if (parseInt(el.getAttribute('data-val')) > 0) {
@@ -463,6 +469,94 @@
         }, 1600);
     }
 
+    function createBurst(x, y, count = 48) {
+        const palette = ['#ffd700', '#ff7a00', '#ff3b3b', '#7afcff', '#ffffff'];
+        for (let i = 0; i < count; i++) {
+            const angle = (Math.PI * 2 * i) / count + Math.random() * 0.35;
+            const speed = 1.8 + Math.random() * 3.6;
+            fireworksParticles.push({
+                x,
+                y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                life: 1,
+                decay: 0.012 + Math.random() * 0.01,
+                size: 1.5 + Math.random() * 2.5,
+                color: palette[Math.floor(Math.random() * palette.length)]
+            });
+        }
+    }
+
+    function startFireworks() {
+        const canvas = document.getElementById('fireworks-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const resize = () => {
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+        };
+        resize();
+
+        stopFireworks();
+        fireworksParticles = [];
+
+        fireworksTimer = setInterval(() => {
+            const x = Math.random() * canvas.width;
+            const y = canvas.height * (0.15 + Math.random() * 0.45);
+            createBurst(x, y, 36 + Math.floor(Math.random() * 24));
+        }, 360);
+
+        const tick = () => {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = fireworksParticles.length - 1; i >= 0; i--) {
+                const p = fireworksParticles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.035;
+                p.vx *= 0.992;
+                p.life -= p.decay;
+
+                if (p.life <= 0) {
+                    fireworksParticles.splice(i, 1);
+                    continue;
+                }
+
+                ctx.globalAlpha = Math.max(p.life, 0);
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.globalAlpha = 1;
+            fireworksRaf = requestAnimationFrame(tick);
+        };
+
+        fireworksRaf = requestAnimationFrame(tick);
+        window.addEventListener('resize', resize, { once: true });
+    }
+
+    function stopFireworks() {
+        if (fireworksTimer) {
+            clearInterval(fireworksTimer);
+            fireworksTimer = null;
+        }
+        if (fireworksRaf) {
+            cancelAnimationFrame(fireworksRaf);
+            fireworksRaf = null;
+        }
+        fireworksParticles = [];
+        const canvas = document.getElementById('fireworks-canvas');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    }
+
     function showFinalResult() {
         let total = 0;
         document.querySelectorAll('.lotto-item').forEach(el => { total += parseInt(el.getAttribute('data-val') || 0); });
@@ -477,7 +571,10 @@
                 const prog = Math.min((ts - start) / 2000, 1);
                 amountEl.innerText = `$${Math.floor(prog * total).toLocaleString()}`;
                 if(prog < 1) window.requestAnimationFrame(step);
-                else document.getElementById('result-title').innerText = total > 0 ? "恭喜中獎！" : "再接再厲";
+                else {
+                    document.getElementById('result-title').innerText = total > 0 ? "恭喜中獎！" : "再接再厲";
+                    if (total > 0) startFireworks();
+                }
             };
             window.requestAnimationFrame(step);
         }, 500);
