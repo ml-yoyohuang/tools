@@ -441,6 +441,7 @@
     let logs = [];
     let commonNames = [];
     let waitingServiceWorker = null;
+    let timerTicker = null;
     const DEFAULT_TIMER_NAME = "新蘑菇任務";
 
     window.onload = function() {
@@ -463,6 +464,7 @@
         refreshCommonNameList();
         refreshList();
         refreshLogList();
+        startTimerTicker();
     };
 
     function startNowClock() {
@@ -571,7 +573,42 @@
         const list = document.getElementById('timerList');
         list.innerHTML = ""; 
         timers.forEach(t => renderTimerCard(t));
+        updateAllTimerDisplays();
         saveToLocalStorage();
+    }
+
+    function startTimerTicker() {
+        if (timerTicker !== null) {
+            clearInterval(timerTicker);
+        }
+
+        updateAllTimerDisplays();
+        timerTicker = setInterval(updateAllTimerDisplays, 1000);
+    }
+
+    function updateAllTimerDisplays() {
+        const now = Date.now();
+
+        timers.forEach(timerObj => {
+            const diff = Math.round((timerObj.endTime - now) / 1000);
+            const displayEl = document.getElementById(`display-${timerObj.id}`);
+            const parentCard = document.getElementById(`timer-${timerObj.id}`);
+
+            if (!displayEl || !parentCard) return;
+
+            if (diff <= 0) {
+                displayEl.innerText = "00:00";
+                parentCard.classList.add('finished');
+
+                if (!timerObj.expiredLogged) {
+                    timerObj.expiredLogged = true;
+                    addLog(timerObj.name, timerObj.endTime);
+                }
+            } else {
+                displayEl.innerText = formatSeconds(diff);
+                parentCard.classList.remove('finished');
+            }
+        });
     }
 
     function bindSettingsEvents() {
@@ -632,7 +669,12 @@
         if (mushroomSec === null || offsetSec === null) return;
 
         const endTime = Date.now() + (mushroomSec + offsetSec) * 1000;
-        const newTimer = { id: Date.now(), name: DEFAULT_TIMER_NAME, endTime: endTime };
+        const newTimer = {
+            id: Date.now(),
+            name: DEFAULT_TIMER_NAME,
+            endTime: endTime,
+            expiredLogged: false
+        };
 
         timers.push(newTimer);
         refreshList();
@@ -664,28 +706,6 @@
 
         list.appendChild(card);
         setupTimerNameAutocomplete(timerObj.id);
-
-        const checkStatus = () => {
-            const now = Date.now();
-            const diff = Math.round((timerObj.endTime - now) / 1000);
-            const displayEl = document.getElementById(`display-${timerObj.id}`);
-            const parentCard = document.getElementById(`timer-${timerObj.id}`);
-
-            if (!displayEl || !parentCard) return;
-
-            if (diff <= 0) {
-                displayEl.innerText = "00:00";
-                if (!parentCard.classList.contains('finished')) {
-                    parentCard.classList.add('finished');
-                    // 計時器剛好到期時，添加到日誌
-                    addLog(timerObj.name, timerObj.endTime);
-                }
-            } else {
-                displayEl.innerText = formatSeconds(diff);
-                setTimeout(checkStatus, 1000);
-            }
-        };
-        checkStatus();
     }
 
     function setupTimerNameAutocomplete(id) {
