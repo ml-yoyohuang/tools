@@ -597,6 +597,17 @@
         }, 250);
     }
 
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            if (timerTicker !== null) {
+                clearInterval(timerTicker);
+                timerTicker = null;
+            }
+        } else {
+            startTimerTicker();
+        }
+    });
+
     function updateAllTimerDisplays() {
         const now = Date.now();
 
