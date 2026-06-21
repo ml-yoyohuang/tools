@@ -41,10 +41,19 @@
             align-items: center;
         }
 
+        .top-sticky-bar {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            padding: calc(env(safe-area-inset-top, 0px) + 8px) 0 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+
         .now-clock {
-            position: fixed;
-            top: calc(env(safe-area-inset-top, 0px) + 12px);
-            left: calc(env(safe-area-inset-left, 0px) + 12px);
+            margin-left: 4px;
             background: rgba(255, 255, 255, 0.92);
             color: #1f4d22;
             border: 1px solid #cde3cf;
@@ -247,9 +256,6 @@
         }
 
         .settings-btn {
-            position: fixed;
-            top: 16px;
-            right: 16px;
             width: 42px;
             height: 42px;
             border: none;
@@ -259,7 +265,7 @@
             font-size: 20px;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 1000;
+            margin-right: 4px;
         }
 
         .settings-modal {
@@ -386,8 +392,10 @@
 </head>
 <body>
 
-<div class="now-clock" id="nowClock">00:00:00</div>
-<button class="settings-btn" id="settingsBtn" type="button" aria-label="設定常用名稱">⚙</button>
+<div class="top-sticky-bar">
+    <div class="now-clock" id="nowClock">00:00:00</div>
+    <button class="settings-btn" id="settingsBtn" type="button" aria-label="設定常用名稱">⚙</button>
+</div>
 
 <div class="container">
     <h2>🍄 皮克敏搶蘑菇計時器</h2>
