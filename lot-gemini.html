@@ -28,6 +28,12 @@
             opacity: 1; 
         }
 
+        .content-area > :not(.scratch-canvas) {
+            user-select: none;
+            -webkit-user-select: none;
+            pointer-events: none;
+        }
+
         /* 確保文字與 Emoji 顏色正確 */
         .revealed .cell { color: #333; }
         .revealed .prize-text { color: var(--lotto-red) !important; }
@@ -39,8 +45,8 @@
             #zone2 { display: flex !important; flex-wrap: wrap; justify-content: center; gap: 4px !important; }
             #zone2 .cell { width: calc(33% - 6px); }
             #zone2 .cell:nth-child(n+4):nth-child(-n+7) { width: calc(25% - 6px); }
-            /* Zone 7 手機版拆兩排 */
-            #zone7 { grid-template-columns: repeat(3, 1fr) !important; }
+            /* Zone 8 手機版拆兩排 */
+            #zone8 { grid-template-columns: repeat(3, 1fr) !important; }
             .flex-mobile-stack { flex-direction: column !important; }
         }
 
@@ -75,17 +81,17 @@
         
         <div class="flex-mobile-stack" style="display: flex; gap: 8px;">
             <div class="game-zone" style="flex:1"><div class="zone-header">3. 刮出即得</div><div class="content-area"><div id="zone3" class="cell"></div><canvas id="canvas3" class="scratch-canvas"></canvas></div></div>
-            <div class="game-zone" style="flex:1"><div class="zone-header">4. 刮出即得</div><div class="content-area"><div id="zone8" class="cell"></div><canvas id="canvas8" class="scratch-canvas"></canvas></div></div>
+            <div class="game-zone" style="flex:1"><div class="zone-header">4. 刮出即得</div><div class="content-area"><div id="zone4" class="cell"></div><canvas id="canvas4" class="scratch-canvas"></canvas></div></div>
         </div>
 
         <div class="flex-mobile-stack" style="display: flex; gap: 8px;">
-            <div class="game-zone" style="flex:1"><div class="zone-header">5. 三個相同金額</div><div class="content-area"><div id="zone4" class="grid" style="grid-template-columns: repeat(3, 1fr);"></div><canvas id="canvas4" class="scratch-canvas"></canvas></div></div>
+            <div class="game-zone" style="flex:1"><div class="zone-header">5. 三個相同金額</div><div class="content-area"><div id="zone5" class="grid" style="grid-template-columns: repeat(3, 1fr);"></div><canvas id="canvas5" class="scratch-canvas"></canvas></div></div>
             <div class="game-zone" style="flex:1"><div class="zone-header">6. 兩個相同金額</div><div class="content-area"><div id="zone6" class="grid" style="grid-template-columns: repeat(2, 1fr);"></div><canvas id="canvas6" class="scratch-canvas"></canvas></div></div>
         </div>
 
-        <div class="game-zone"><div class="zone-header">7. 您 > 對手 = 得獎金</div><div class="table-header"><div>您</div><div>對手</div><div>獎金</div></div><div class="content-area"><div id="zone5" class="grid" style="grid-template-columns: 1fr 1fr 1.2fr; padding:0;"></div><canvas id="canvas5" class="scratch-canvas"></canvas></div></div>
+        <div class="game-zone"><div class="zone-header">7. 您 > 對手 = 得獎金</div><div class="table-header"><div>您</div><div>對手</div><div>獎金</div></div><div class="content-area"><div id="zone7" class="grid" style="grid-template-columns: 1fr 1fr 1.2fr; padding:0;"></div><canvas id="canvas7" class="scratch-canvas"></canvas></div></div>
         
-        <div class="game-zone"><div class="zone-header">8. 您的符號對中幸運符號</div><div class="content-area"><div id="lucky7" class="grid" style="grid-template-columns: repeat(2, 1fr); background: #eee;"></div><div id="zone7" class="grid" style="grid-template-columns: repeat(6, 1fr);"></div><canvas id="canvas7" class="scratch-canvas"></canvas></div></div>
+        <div class="game-zone"><div class="zone-header">8. 您的符號對中幸運符號</div><div class="content-area"><div id="lucky8" class="grid" style="grid-template-columns: repeat(2, 1fr); background: #eee;"></div><div id="zone8" class="grid" style="grid-template-columns: repeat(6, 1fr);"></div><canvas id="canvas8" class="scratch-canvas"></canvas></div></div>
     </div>
 
     <button class="btn-reset" onclick="location.reload()" style="margin-top: 20px;">再買一張 (1,000元)</button>
@@ -105,22 +111,29 @@
     const SYMBOLS = ['🧧', '💎', '💰', '🦁', '🏮', '🐲', '👑', '🍊', '🍍', '🔔', '🥇', '🐎'];
     const REAL_PRIZES = [500, 1000, 2000, 5000];
     const HIGH_PRIZES = [10000, 100000, 1000000, 20000000];
+    const SCRATCH_COMPLETE_RATIO = 0.35;
     let scratchedZones = new Set();
 
     function getRandomPrize() { return REAL_PRIZES[Math.floor(Math.random()*REAL_PRIZES.length)]; }
     function getRandomFake() { return HIGH_PRIZES[Math.floor(Math.random()*HIGH_PRIZES.length)]; }
-    function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
+    function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
 
     function initGame() {
         const winConfig = Array.from({length: 8}, () => Math.random() < 0.2);
-        renderZone1_4(1, winConfig[0]);
-        renderZone2(winConfig[1]);
-        renderZoneSingle(3, winConfig[2], 3);
-        renderZone1_4(4, winConfig[3]);
-        renderZone5(winConfig[4]);
-        renderZone6(winConfig[5]);
-        renderZone7(winConfig[6]);
-        renderZoneSingle(8, winConfig[7], 8);
+        renderTripleMatchZone(1, winConfig[0]);
+        renderLuckyNumberZone(winConfig[1]);
+        renderInstantWinZone(3, winConfig[2]);
+        renderInstantWinZone(4, winConfig[3]);
+        renderTripleMatchZone(5, winConfig[4]);
+        renderDoubleMatchZone(winConfig[5]);
+        renderComparisonZone(winConfig[6]);
+        renderLuckySymbolZone(winConfig[7]);
         
         // Canvas 初始化
         setTimeout(() => {
@@ -130,26 +143,26 @@
         }, 150);
     }
 
-    // --- 區域 7 特別修正：確保符號能正常顯示 ---
-    function renderZone7(isWin) {
+    // --- 區域 8：確保符號能正常顯示 ---
+    function renderLuckySymbolZone(isWin) {
         let pool = shuffle([...SYMBOLS]);
         const lucky = [pool[0], pool[1]];
-        document.getElementById('lucky7').innerHTML = lucky.map(s => `<div class="cell" style="background:white; color:#333;">幸運: ${s}</div>`).join('');
+        document.getElementById('lucky8').innerHTML = lucky.map(s => `<div class="cell" style="background:white; color:#333;">幸運: ${s}</div>`).join('');
         const winAmt = getRandomPrize();
         const winIdx = isWin ? Math.floor(Math.random() * 6) : -1;
+        const winningLuckySymbol = lucky[Math.floor(Math.random() * lucky.length)];
         let html = '';
         for(let i=0; i<6; i++) {
             const hit = (i === winIdx);
             const p = hit ? winAmt : getRandomFake();
-            html += `<div class="cell lotto-item" data-val="${hit ? winAmt : 0}"><span style="font-size:18px">${hit ? lucky[0] : pool[i+2]}</span><span class="prize-text">$${p.toLocaleString()}</span></div>`;
+            html += `<div class="cell lotto-item" data-val="${hit ? winAmt : 0}"><span style="font-size:18px">${hit ? winningLuckySymbol : pool[i+2]}</span><span class="prize-text">$${p.toLocaleString()}</span></div>`;
         }
-        document.getElementById('zone7').innerHTML = html;
+        document.getElementById('zone8').innerHTML = html;
     }
 
-    // --- 其他渲染函式保持 v1.1.5 優化邏輯 ---
-    function renderZone1_4(id, isWin) {
-        const el = document.getElementById('zone'+id);
-        const limit = (id === 4) ? 3 : 6;
+    function renderTripleMatchZone(zoneNumber, isWin) {
+        const el = document.getElementById('zone' + zoneNumber);
+        const limit = (zoneNumber === 5) ? 3 : 6;
         const winAmt = getRandomPrize();
         let items = [];
         if (isWin) {
@@ -170,7 +183,7 @@
         }).join('');
     }
 
-    function renderZone2(isWin) {
+    function renderLuckyNumberZone(isWin) {
         let lucky = [];
         while(lucky.length < 2) {
             let n = Math.floor(Math.random() * 99) + 1;
@@ -179,10 +192,11 @@
         document.getElementById('lucky2').innerHTML = lucky.map(n => `<div class="cell" style="background:white; color:#333;">幸運: ${n.toString().padStart(2, '0')}</div>`).join('');
         const winAmt = getRandomPrize();
         const winIdx = isWin ? Math.floor(Math.random() * 10) : -1;
+        const winningLuckyNumber = lucky[Math.floor(Math.random() * lucky.length)];
         let html = '';
         for(let i=0; i<10; i++) {
             const hit = (i === winIdx);
-            let num = hit ? lucky[0] : 0;
+            let num = hit ? winningLuckyNumber : 0;
             if(!hit) { do { num = Math.floor(Math.random() * 99) + 1; } while(lucky.includes(num)); }
             const p = hit ? winAmt : getRandomFake();
             html += `<div class="cell lotto-item" data-val="${hit ? winAmt : 0}"><span>${num.toString().padStart(2, '0')}</span><span class="prize-text">$${p.toLocaleString()}</span></div>`;
@@ -191,12 +205,12 @@
     }
 
     /**
-     * 【區域 5 修正版 v1.1.4】
+     * 【區域 7 修正版 v1.1.4】
      * 邏輯：您 > 對手 = 得獎金。
      * 修正點：數字不再固定，改為在 10-99 之間完全隨機生成，增加真實感。
      */
-    function renderZone5(isWin) {
-        const el = document.getElementById('zone5');
+    function renderComparisonZone(isWin) {
+        const el = document.getElementById('zone7');
         const winAmt = getRandomPrize();
         const winRow = isWin ? Math.floor(Math.random() * 4) : -1;
         let html = '';
@@ -238,7 +252,7 @@
         el.innerHTML = html;
     }
 
-    function renderZone6(isWin) {
+    function renderDoubleMatchZone(isWin) {
         const winAmt = getRandomPrize();
         const items = isWin ? [winAmt, winAmt] : [getRandomFake(), 100];
         const el6 = document.getElementById('zone6');
@@ -250,9 +264,9 @@
         }).join('');
     }
 
-    function renderZoneSingle(id, isWin) {
+    function renderInstantWinZone(zoneNumber, isWin) {
         const p = isWin ? getRandomPrize() : 0;
-        document.getElementById('zone'+id).innerHTML = `<div class="lotto-item" data-val="${p}"><span>$${p.toLocaleString()}</span><br><span class="prize-text">獎金</span></div>`;
+        document.getElementById('zone' + zoneNumber).innerHTML = `<div class="lotto-item" data-val="${p}"><span>$${p.toLocaleString()}</span><br><span class="prize-text">獎金</span></div>`;
     }
 
     function setupScratch(canvas, idx) {
@@ -262,27 +276,48 @@
         const ctx = canvas.getContext('2d');
         ctx.fillStyle = '#C0C0C0'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         let active = false;
+        let isCompleted = false;
         const getCoords = (e) => {
             const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const { clientX, clientY } = e;
             return { x: clientX - rect.left, y: clientY - rect.top };
         };
+        const getScratchedRatio = () => {
+            const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            let transparentPixels = 0;
+            for (let i = 3; i < data.length; i += 4) {
+                if (data[i] === 0) transparentPixels += 1;
+            }
+            return transparentPixels / (canvas.width * canvas.height);
+        };
         const scratch = (e) => {
-            if(!active) return;
+            if(!active || isCompleted) return;
             if(e.cancelable) e.preventDefault();
             const { x, y } = getCoords(e);
             ctx.globalCompositeOperation = 'destination-out';
             ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI*2); ctx.fill();
         };
-        const handleStart = (e) => { active = true; scratch(e); };
-        const handleEnd = () => { if(active) { active = false; scratchedZones.add(idx); if(scratchedZones.size === 8) showFinalResult(); } };
-        canvas.addEventListener('mousedown', handleStart);
-        canvas.addEventListener('touchstart', handleStart);
-        window.addEventListener('mousemove', scratch);
-        window.addEventListener('touchmove', scratch, { passive: false });
-        window.addEventListener('mouseup', handleEnd);
-        window.addEventListener('touchend', handleEnd);
+        const handleStart = (e) => {
+            if (isCompleted) return;
+            active = true;
+            canvas.setPointerCapture(e.pointerId);
+            scratch(e);
+        };
+        const handleMove = (e) => { scratch(e); };
+        const handleEnd = () => {
+            if(!active) return;
+            active = false;
+            if (isCompleted) return;
+            if (getScratchedRatio() < SCRATCH_COMPLETE_RATIO) return;
+            isCompleted = true;
+            scratchedZones.add(idx);
+            canvas.style.pointerEvents = 'none';
+            if(scratchedZones.size === 8) showFinalResult();
+        };
+        canvas.addEventListener('pointerdown', handleStart);
+        canvas.addEventListener('pointermove', handleMove);
+        canvas.addEventListener('pointerup', handleEnd);
+        canvas.addEventListener('pointercancel', handleEnd);
     }
 
     function showFinalResult() {
