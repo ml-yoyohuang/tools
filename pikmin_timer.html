@@ -476,19 +476,18 @@
     };
 
     function startNowClock() {
+        updateNowClock();
+    }
+
+    function updateNowClock() {
         const clockEl = document.getElementById('nowClock');
         if (!clockEl) return;
 
-        const render = function() {
-            const now = new Date();
-            const hh = String(now.getHours()).padStart(2, '0');
-            const mm = String(now.getMinutes()).padStart(2, '0');
-            const ss = String(now.getSeconds()).padStart(2, '0');
-            clockEl.textContent = `${hh}:${mm}:${ss}`;
-        };
-
-        render();
-        setInterval(render, 250);
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        const ss = String(now.getSeconds()).padStart(2, '0');
+        clockEl.textContent = `${hh}:${mm}:${ss}`;
     }
 
     function handleKeyPress(event) {
@@ -590,8 +589,12 @@
             clearInterval(timerTicker);
         }
 
+        updateNowClock();
         updateAllTimerDisplays();
-        timerTicker = setInterval(updateAllTimerDisplays, 1000);
+        timerTicker = setInterval(function() {
+            updateNowClock();
+            updateAllTimerDisplays();
+        }, 250);
     }
 
     function updateAllTimerDisplays() {
