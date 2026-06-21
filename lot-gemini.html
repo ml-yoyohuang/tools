@@ -62,6 +62,41 @@
         .prize-text { color: inherit; font-size: 10px; } /* 繼承父層透明度 */
         .table-header { display: grid; grid-template-columns: 1fr 1fr 1.2fr; text-align: center; font-size: 10px; font-weight: bold; padding: 5px 0; background: #ffeaa7; }
 
+        @keyframes prizeFlash {
+            0% { 
+                transform: scale(1) rotate(0deg); 
+                filter: brightness(1) drop-shadow(0 0 0px rgba(255, 215, 0, 0));
+                background-color: rgba(255, 215, 0, 0);
+            }
+            25% { 
+                transform: scale(1.25) rotate(5deg); 
+                filter: brightness(1.5) drop-shadow(0 0 20px rgba(255, 100, 0, 1));
+                background-color: rgba(255, 215, 0, 0.3);
+            }
+            50% { 
+                transform: scale(1.1) rotate(-3deg); 
+                filter: brightness(1.2) drop-shadow(0 0 15px rgba(255, 215, 0, 0.8));
+                background-color: rgba(255, 215, 0, 0.2);
+            }
+            75% { 
+                transform: scale(1.2) rotate(3deg); 
+                filter: brightness(1.4) drop-shadow(0 0 18px rgba(255, 100, 0, 0.9));
+                background-color: rgba(255, 215, 0, 0.25);
+            }
+            100% { 
+                transform: scale(1) rotate(0deg); 
+                filter: brightness(1) drop-shadow(0 0 0px rgba(255, 215, 0, 0));
+                background-color: rgba(255, 215, 0, 0);
+            }
+        }
+        .prize-highlight { 
+            animation: prizeFlash 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+            border: 2px solid rgba(255, 100, 0, 0.6) !important;
+        }
+        .prize-highlight span { 
+            text-shadow: 0 0 8px rgba(255, 100, 0, 0.8), 0 0 4px rgba(255, 200, 0, 1) !important;
+        }
+
         #result-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
         .result-box { background: white; padding: 30px; border-radius: 20px; border: 5px solid var(--lotto-gold); text-align: center; width: 280px; }
         #result-amount { font-size: 45px; color: var(--lotto-red); margin: 15px 0; font-family: 'Arial Black'; }
@@ -102,20 +137,37 @@
             <div id="result-amount">$0</div>
             <div class="btn-group">
                 <button class="btn-reset" onclick="location.reload()">再買一張</button>
-                <button class="btn-close" onclick="document.getElementById('result-overlay').style.display='none'">查看結果</button>
+                <button class="btn-close" onclick="closeResultOverlay()">查看結果</button>
             </div>
         </div>
     </div>
 
 <script>
     const SYMBOLS = ['🧧', '💎', '💰', '🦁', '🏮', '🐲', '👑', '🍊', '🍍', '🔔', '🥇', '🐎'];
-    const REAL_PRIZES = [500, 1000, 2000, 5000];
-    const HIGH_PRIZES = [10000, 100000, 1000000, 20000000];
+    const DISPLAY_AMOUNTS = [500, 1000, 2000, 5000, 10000, 50000, 100000, 500000, 1000000, 5000000, 10000000, 20000000];
+    const TOTAL_PAYOUT_TABLE = [
+        { amount: 500, weight: 36 },
+        { amount: 1000, weight: 40 },
+        { amount: 1500, weight: 14 },
+        { amount: 2000, weight: 6 },
+        { amount: 5000, weight: 3 },
+        { amount: 10000, weight: 0.93847 },
+        { amount: 50000, weight: 0.05 },
+        { amount: 100000, weight: 0.01 },
+        { amount: 500000, weight: 0.001 },
+        { amount: 1000000, weight: 0.0005 },
+        { amount: 10000000, weight: 0.00002 },
+        { amount: 20000000, weight: 0.00001 }
+    ];
     const SCRATCH_COMPLETE_RATIO = 0.35;
     let scratchedZones = new Set();
+    let currentTicketTotal = 0;
 
-    function getRandomPrize() { return REAL_PRIZES[Math.floor(Math.random()*REAL_PRIZES.length)]; }
-    function getRandomFake() { return HIGH_PRIZES[Math.floor(Math.random()*HIGH_PRIZES.length)]; }
+    function getRandomDisplayAmount(exclusions = []) {
+        const pool = DISPLAY_AMOUNTS.filter(amount => !exclusions.includes(amount));
+        return pool[Math.floor(Math.random() * pool.length)];
+    }
+
     function shuffle(arr) {
         for (let i = arr.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -124,16 +176,75 @@
         return arr;
     }
 
+    function pickTicketTotal() {
+        const roll = Math.random() * 100;
+        let cumulative = 0;
+
+        for (const entry of TOTAL_PAYOUT_TABLE) {
+            cumulative += entry.weight;
+            if (roll < cumulative) return entry.amount;
+        }
+
+        return TOTAL_PAYOUT_TABLE[TOTAL_PAYOUT_TABLE.length - 1].amount;
+    }
+
+    function pickPayoutFragments(total) {
+        const templates = {
+            500: [[500]],
+            1000: [[1000], [500, 500]],
+            1500: [[1000, 500]],
+            2000: [[2000], [1000, 500, 500]],
+            5000: [[5000], [2000, 2000, 1000], [2000, 1000, 1000, 1000]],
+            10000: [[5000, 5000], [5000, 2000, 2000, 1000], [2000, 2000, 2000, 2000, 2000]],
+            50000: [[50000], [10000, 10000, 10000, 10000, 10000], [10000, 10000, 10000, 10000, 5000, 5000]],
+            100000: [[100000], [50000, 50000], [50000, 10000, 10000, 10000, 10000, 10000]],
+            500000: [[500000], [100000, 100000, 100000, 100000, 100000], [100000, 100000, 100000, 50000, 50000, 50000, 50000]],
+            1000000: [[1000000], [500000, 500000], [500000, 100000, 100000, 100000, 100000, 100000]],
+            10000000: [[10000000], [5000000, 5000000], [5000000, 1000000, 1000000, 1000000, 1000000, 1000000]],
+            20000000: [[20000000], [10000000, 10000000], [10000000, 5000000, 5000000]]
+        };
+        const options = templates[total] || [[total]];
+        return [...options[Math.floor(Math.random() * options.length)]];
+    }
+
+    function allocateZonePayouts(total) {
+        const fragments = pickPayoutFragments(total).sort((a, b) => b - a);
+        const zonePayouts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 };
+        const primaryZones = shuffle([3, 4, 6, 7, 8]);
+        const supportZones = shuffle([1, 2, 5, 7, 8, 3, 4, 6]);
+        const usedZones = new Set();
+
+        fragments.forEach((fragment, index) => {
+            const isHeadlinePrize = index === 0 && fragment >= 50000;
+            const preferredPool = isHeadlinePrize
+                ? primaryZones
+                : fragment >= 10000
+                    ? supportZones
+                    : shuffle([3, 4, 6, 1, 5, 2, 7, 8]);
+
+            const zone = preferredPool.find(candidate => !usedZones.has(candidate));
+            if (zone == null) return;
+
+            zonePayouts[zone] = fragment;
+            usedZones.add(zone);
+        });
+
+        return zonePayouts;
+    }
+
     function initGame() {
-        const winConfig = Array.from({length: 8}, () => Math.random() < 0.2);
-        renderTripleMatchZone(1, winConfig[0]);
-        renderLuckyNumberZone(winConfig[1]);
-        renderInstantWinZone(3, winConfig[2]);
-        renderInstantWinZone(4, winConfig[3]);
-        renderTripleMatchZone(5, winConfig[4]);
-        renderDoubleMatchZone(winConfig[5]);
-        renderComparisonZone(winConfig[6]);
-        renderLuckySymbolZone(winConfig[7]);
+        scratchedZones = new Set();
+        currentTicketTotal = pickTicketTotal();
+        const zonePayouts = allocateZonePayouts(currentTicketTotal);
+
+        renderTripleMatchZone(1, zonePayouts[1]);
+        renderLuckyNumberZone(zonePayouts[2]);
+        renderInstantWinZone(3, zonePayouts[3]);
+        renderInstantWinZone(4, zonePayouts[4]);
+        renderTripleMatchZone(5, zonePayouts[5]);
+        renderDoubleMatchZone(zonePayouts[6]);
+        renderComparisonZone(zonePayouts[7]);
+        renderLuckySymbolZone(zonePayouts[8]);
         
         // Canvas 初始化
         setTimeout(() => {
@@ -144,34 +255,36 @@
     }
 
     // --- 區域 8：確保符號能正常顯示 ---
-    function renderLuckySymbolZone(isWin) {
+    function renderLuckySymbolZone(payout) {
         let pool = shuffle([...SYMBOLS]);
         const lucky = [pool[0], pool[1]];
         document.getElementById('lucky8').innerHTML = lucky.map(s => `<div class="cell" style="background:white; color:#333;">幸運: ${s}</div>`).join('');
-        const winAmt = getRandomPrize();
+        const isWin = payout > 0;
+        const winAmt = payout;
         const winIdx = isWin ? Math.floor(Math.random() * 6) : -1;
-        const winningLuckySymbol = lucky[Math.floor(Math.random() * lucky.length)];
+        const winningLuckySymbol = isWin ? lucky[Math.floor(Math.random() * lucky.length)] : null;
         let html = '';
         for(let i=0; i<6; i++) {
             const hit = (i === winIdx);
-            const p = hit ? winAmt : getRandomFake();
+            const p = hit ? winAmt : getRandomDisplayAmount(isWin ? [winAmt] : []);
             html += `<div class="cell lotto-item" data-val="${hit ? winAmt : 0}"><span style="font-size:18px">${hit ? winningLuckySymbol : pool[i+2]}</span><span class="prize-text">$${p.toLocaleString()}</span></div>`;
         }
         document.getElementById('zone8').innerHTML = html;
     }
 
-    function renderTripleMatchZone(zoneNumber, isWin) {
+    function renderTripleMatchZone(zoneNumber, payout) {
         const el = document.getElementById('zone' + zoneNumber);
         const limit = (zoneNumber === 5) ? 3 : 6;
-        const winAmt = getRandomPrize();
+        const isWin = payout > 0;
+        const winAmt = payout;
         let items = [];
         if (isWin) {
             items = [winAmt, winAmt, winAmt];
-            let fakes = shuffle([...HIGH_PRIZES]);
-            while(items.length < limit) items.push(fakes.pop());
+            const fakes = shuffle(DISPLAY_AMOUNTS.filter(amount => amount !== winAmt));
+            while(items.length < limit) items.push(fakes[items.length - 3]);
         } else {
             let pool = []; 
-            [...HIGH_PRIZES, 100, 200, 300].filter(v => v !== winAmt).forEach(v => pool.push(v, v));
+            DISPLAY_AMOUNTS.forEach(value => pool.push(value, value));
             items = shuffle(pool).slice(0, limit);
         }
         shuffle(items);
@@ -183,22 +296,23 @@
         }).join('');
     }
 
-    function renderLuckyNumberZone(isWin) {
+    function renderLuckyNumberZone(payout) {
         let lucky = [];
         while(lucky.length < 2) {
             let n = Math.floor(Math.random() * 99) + 1;
             if(!lucky.includes(n)) lucky.push(n);
         }
         document.getElementById('lucky2').innerHTML = lucky.map(n => `<div class="cell" style="background:white; color:#333;">幸運: ${n.toString().padStart(2, '0')}</div>`).join('');
-        const winAmt = getRandomPrize();
+        const isWin = payout > 0;
+        const winAmt = payout;
         const winIdx = isWin ? Math.floor(Math.random() * 10) : -1;
-        const winningLuckyNumber = lucky[Math.floor(Math.random() * lucky.length)];
+        const winningLuckyNumber = isWin ? lucky[Math.floor(Math.random() * lucky.length)] : null;
         let html = '';
         for(let i=0; i<10; i++) {
             const hit = (i === winIdx);
             let num = hit ? winningLuckyNumber : 0;
             if(!hit) { do { num = Math.floor(Math.random() * 99) + 1; } while(lucky.includes(num)); }
-            const p = hit ? winAmt : getRandomFake();
+            const p = hit ? winAmt : getRandomDisplayAmount(isWin ? [winAmt] : []);
             html += `<div class="cell lotto-item" data-val="${hit ? winAmt : 0}"><span>${num.toString().padStart(2, '0')}</span><span class="prize-text">$${p.toLocaleString()}</span></div>`;
         }
         document.getElementById('zone2').innerHTML = html;
@@ -209,15 +323,16 @@
      * 邏輯：您 > 對手 = 得獎金。
      * 修正點：數字不再固定，改為在 10-99 之間完全隨機生成，增加真實感。
      */
-    function renderComparisonZone(isWin) {
+    function renderComparisonZone(payout) {
         const el = document.getElementById('zone7');
-        const winAmt = getRandomPrize();
+        const isWin = payout > 0;
+        const winAmt = payout;
         const winRow = isWin ? Math.floor(Math.random() * 4) : -1;
         let html = '';
 
         for (let i = 0; i < 4; i++) {
             const hit = (i === winRow);
-            const p = hit ? winAmt : getRandomFake();
+            const p = hit ? winAmt : getRandomDisplayAmount(isWin ? [winAmt] : []);
             
             let my, opp;
             
@@ -252,9 +367,17 @@
         el.innerHTML = html;
     }
 
-    function renderDoubleMatchZone(isWin) {
-        const winAmt = getRandomPrize();
-        const items = isWin ? [winAmt, winAmt] : [getRandomFake(), 100];
+    function renderDoubleMatchZone(payout) {
+        const isWin = payout > 0;
+        const winAmt = payout;
+        let items = [];
+        if (isWin) {
+            items = [winAmt, winAmt];
+        } else {
+            const firstFake = getRandomDisplayAmount();
+            const secondFake = getRandomDisplayAmount([firstFake]);
+            items = shuffle([firstFake, secondFake]);
+        }
         const el6 = document.getElementById('zone6');
         let winFound = false;
         el6.innerHTML = items.map(a => {
@@ -264,9 +387,12 @@
         }).join('');
     }
 
-    function renderInstantWinZone(zoneNumber, isWin) {
-        const p = isWin ? getRandomPrize() : 0;
-        document.getElementById('zone' + zoneNumber).innerHTML = `<div class="lotto-item" data-val="${p}"><span>$${p.toLocaleString()}</span><br><span class="prize-text">獎金</span></div>`;
+    function renderInstantWinZone(zoneNumber, payout) {
+        const isWin = payout > 0;
+        const content = isWin
+            ? `<div class="lotto-item" data-val="${payout}"><span>$${payout.toLocaleString()}</span><br><span class="prize-text">獎金</span></div>`
+            : `<div class="lotto-item" data-val="0"><span>$0</span><br><span class="prize-text">未中獎</span></div>`;
+        document.getElementById('zone' + zoneNumber).innerHTML = content;
     }
 
     function setupScratch(canvas, idx) {
@@ -320,9 +446,27 @@
         canvas.addEventListener('pointercancel', handleEnd);
     }
 
+    function closeResultOverlay() {
+        const prizeElements = document.querySelectorAll('.lotto-item');
+        prizeElements.forEach(el => {
+            if (parseInt(el.getAttribute('data-val')) > 0) {
+                el.classList.add('prize-highlight');
+            }
+        });
+        // 清除所有刮刮膜
+        document.querySelectorAll('.scratch-canvas').forEach(canvas => {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+        setTimeout(() => {
+            document.getElementById('result-overlay').style.display = 'none';
+        }, 1600);
+    }
+
     function showFinalResult() {
         let total = 0;
         document.querySelectorAll('.lotto-item').forEach(el => { total += parseInt(el.getAttribute('data-val') || 0); });
+        if (total !== currentTicketTotal) console.warn('Ticket total mismatch', { total, currentTicketTotal });
         setTimeout(() => {
             const overlay = document.getElementById('result-overlay');
             const amountEl = document.getElementById('result-amount');
