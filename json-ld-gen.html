@@ -51,6 +51,30 @@
 
         .nav-back { display: inline-block; margin-bottom: 16px; text-decoration: none; color: #4f46e5; font-size: 13px; font-weight: 600; }
         .nav-back:hover { text-decoration: underline; }
+
+        /* 使用說明按鈕 */
+        .btn-help { background: #fff; color: #0369a1; border: 1px solid #7dd3fc; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.2s; white-space: nowrap; }
+        .btn-help:hover { background: #e0f2fe; }
+
+        /* 使用說明 Modal */
+        .help-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+        .help-modal-overlay.open { display: flex; }
+        .help-modal { background: #fff; border-radius: 12px; max-width: 820px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.25); }
+        .help-modal-header { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .help-modal-header h2 { margin: 0; font-size: 17px; color: #0369a1; }
+        .help-modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b; line-height: 1; padding: 4px 8px; }
+        .help-modal-close:hover { color: #1e293b; }
+        .help-modal-body { padding: 20px 24px; overflow-y: auto; font-size: 13px; color: #334155; line-height: 1.6; }
+        .help-modal-body h3 { font-size: 14px; color: #0284c7; margin: 22px 0 10px; }
+        .help-modal-body h3:first-child { margin-top: 0; }
+        .help-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+        .help-table th, .help-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+        .help-table th { background: #f8fafc; font-size: 12px; color: #475569; white-space: nowrap; }
+        .help-table td { font-size: 12.5px; }
+        .help-table code { background: #f1f5f9; padding: 1px 5px; border-radius: 4px; color: #4f46e5; font-size: 12px; }
+        .help-note { background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 14px; margin: 14px 0; font-size: 12.5px; color: #92400e; }
+        .help-tips { margin: 0; padding-left: 20px; }
+        .help-tips li { margin-bottom: 6px; }
     </style>
 </head>
 <body>
@@ -60,7 +84,10 @@
 <div class="container">
     <!-- 左側：設定區 -->
     <div class="panel">
-        <div class="header">JSON-LD 結構化資料設定 (架構分層版)</div>
+        <div class="header">
+            <span>JSON-LD 結構化資料設定 (架構分層版)</span>
+            <button class="btn-help" id="btn-help" type="button">❓ 使用說明</button>
+        </div>
         <div class="panel-content">
             
             <!-- Step 1 -->
@@ -74,7 +101,7 @@
                 <label class="checkbox-label"><input type="checkbox" value="Person"> <span>👤 人物/作者 (Person)</span></label>
             </div>
 
-            <div class="layer-title">第二層：頁面類型模組 (MVP)</div>
+            <div class="layer-title">第二層：頁面類型模組 (常用)</div>
             <div class="checkbox-group">
                 <label class="checkbox-label"><input type="checkbox" value="Article"> <span>📰 文章 (Article)</span></label>
                 <label class="checkbox-label"><input type="checkbox" value="Product"> <span>🛍️ 產品 (Product)</span></label>
@@ -82,7 +109,7 @@
                 <label class="checkbox-label"><input type="checkbox" value="Event"> <span>📅 活動 (Event)</span></label>
             </div>
 
-            <div class="layer-title">第二層：頁面類型模組 (Phase 2 垂直領域)</div>
+            <div class="layer-title">第二層：頁面類型模組 (特定產業)</div>
             <div class="checkbox-group">
                 <label class="checkbox-label"><input type="checkbox" value="SoftwareApp"> <span>📱 軟體應用程式 (SoftwareApp)</span></label>
                 <label class="checkbox-label"><input type="checkbox" value="QAPage"> <span>❓ 問答頁面 (QAPage)</span></label>
@@ -338,7 +365,65 @@
     </div>
 </div>
 
+<div class="help-modal-overlay" id="helpModalOverlay">
+    <div class="help-modal">
+        <div class="help-modal-header">
+            <h2>📖 種類說明總覽：什麼時候該勾選什麼？</h2>
+            <button class="help-modal-close" id="helpModalClose" type="button">✕</button>
+        </div>
+        <div class="help-modal-body">
+            <h3>第一層：核心通用型別（建議全站共用，每頁都可以掛）</h3>
+            <table class="help-table">
+                <tr><th>類型</th><th>說明</th><th>為什麼值得加</th></tr>
+                <tr><td><code>WebSite</code></td><td>宣告「這是一個網站」，附帶站內搜尋框資訊</td><td>讓 Google 有機會在搜尋結果下方直接顯示「站內搜尋框」，使用者能跳過首頁直接搜內容</td></tr>
+                <tr><td><code>Organization</code></td><td>公司/品牌的基本資料（名稱、Logo、社群連結）</td><td>Google 會用這個資料在搜尋結果側邊欄顯示品牌 Logo 與知識面板，強化品牌信任感</td></tr>
+                <tr><td><code>Breadcrumb</code></td><td>麵包屑導覽（首頁 &gt; 分類 &gt; 文章）</td><td>讓搜尋結果直接顯示頁面的路徑階層，取代冗長網址，使用者更容易理解頁面位置</td></tr>
+                <tr><td><code>Person</code></td><td>作者或個人的基本資料</td><td>標示內容作者身份，有助 Google 判斷內容的專業性（E-E-A-T：經驗、專業、權威、可信）</td></tr>
+            </table>
+
+            <h3>第二層：頁面類型模組（依內容性質，一個頁面通常只勾一個）</h3>
+            <table class="help-table">
+                <tr><th>類型</th><th>說明</th><th>為什麼值得加</th></tr>
+                <tr><td><code>Article</code></td><td>一般文章、部落格文</td><td>文章可能以「大圖卡片」形式出現在 Google 搜尋與 Discover 上，提高點擊率</td></tr>
+                <tr><td><code>Product</code></td><td>產品頁（含價格、評價星數）</td><td>搜尋結果直接顯示價格與星等評分，電商網站的必備項目，能大幅提升點擊率</td></tr>
+                <tr><td><code>LocalBusiness</code></td><td>實體商家資訊（地址、電話）</td><td>讓商家出現在 Google Maps 與「附近店家」搜尋結果，對線下店面極其重要</td></tr>
+                <tr><td><code>Event</code></td><td>活動資訊（時間、地點、狀態）</td><td>搜尋結果可顯示活動卡片與日期，適合任何「有場次、有時間」的頁面（含運動賽事、瑜珈課程等）</td></tr>
+                <tr><td><code>SoftwareApp</code></td><td>App / 軟體介紹頁</td><td>顯示評分、價格、系統需求，App 官網或下載頁必備</td></tr>
+                <tr><td><code>QAPage</code></td><td>論壇/社群式問答（一問一最佳解答）</td><td>⚠️ 這不是一般網站的常見問題（FAQ）。FAQ 的 rich result 已被 Google 大幅限縮，QAPage 適合像 Stack Overflow 那種「使用者提問、有人採納最佳解答」的頁面</td></tr>
+                <tr><td><code>ProfilePage</code></td><td>個人檔案頁（像社群平台的個人頁）</td><td>讓 Google 辨識這是「介紹某個人」的頁面，適合作者介紹頁、講師介紹頁</td></tr>
+                <tr><td><code>JobPosting</code></td><td>職缺頁</td><td>會出現在 Google 專屬的「找工作」搜尋功能中，人力銀行、企業徵才頁必備</td></tr>
+                <tr><td><code>Recipe</code></td><td>食譜頁</td><td>顯示準備時間、烹調時間與圖片，食譜類網站的標配，能在搜尋結果中脫穎而出</td></tr>
+                <tr><td><code>VideoObject</code></td><td>影片內容</td><td>Google 影片 rich result 觸及率高，有嵌 YouTube 的頁面幾乎都該加</td></tr>
+                <tr><td><code>HowTo</code></td><td>步驟教學</td><td>可在搜尋結果展示步驟卡片，對教學型內容 SEO 效果強</td></tr>
+                <tr><td><code>ItemList</code></td><td>列表/排行頁</td><td>讓 Google 在搜尋結果顯示 carousel，常見於「十大推薦…」這類頁面</td></tr>
+                <tr><td><code>NewsArticle</code></td><td>新聞文章</td><td>Article 的子類型，新聞媒體、部落格用，可進入 Google News</td></tr>
+                <tr><td><code>Course</code></td><td>線上課程</td><td>課程平台必備，Google 有專屬 rich result</td></tr>
+            </table>
+
+            <div class="help-note">⚠️ 注意：不動產（RealEstateListing）、車輛（Vehicle）、公園（Park）、觀光景點（TouristAttraction）、運動場地（SportsActivityLocation）等類型目前<b>不受 Google rich results 支援</b>（部分已被官方棄用），本工具故意不提供，避免加了也沒效果。這些情境請改用清單中已有的 <code>LocalBusiness</code> 或 <code>Event</code>。</div>
+
+            <h3>使用原則（三個提醒）</h3>
+            <ol class="help-tips">
+                <li>第一層可以每頁都掛，第二層通常一個頁面只選「最貼近這個頁面內容」的一個，別亂勾。</li>
+                <li>有標示「必填」的欄位一定要填，沒填 Google 驗證會直接失敗，加了也沒用。</li>
+                <li>想確認有沒有做對，貼到 <a href="https://search.google.com/test/rich-results" target="_blank" rel="noopener">Google Rich Results Test</a> 檢查，出現綠色勾勾才算真的成功套用。</li>
+            </ol>
+        </div>
+    </div>
+</div>
+
 <script>
+    // 使用說明 Modal
+    const helpModalOverlay = document.getElementById('helpModalOverlay');
+    document.getElementById('btn-help').addEventListener('click', () => helpModalOverlay.classList.add('open'));
+    document.getElementById('helpModalClose').addEventListener('click', () => helpModalOverlay.classList.remove('open'));
+    helpModalOverlay.addEventListener('click', (e) => {
+        if (e.target === helpModalOverlay) helpModalOverlay.classList.remove('open');
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') helpModalOverlay.classList.remove('open');
+    });
+
     const checkboxes = document.querySelectorAll('.checkbox-group input[type="checkbox"]');
     checkboxes.forEach(chk => {
         chk.addEventListener('change', (e) => {
