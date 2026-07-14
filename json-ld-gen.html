@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>SEO JSON-LD 結構化資料產生器 (專家分層版)</title>
+    <style>
+        :root { --primary: #0284c7; --bg: #f8fafc; --border: #cbd5e1; --panel-bg: #ffffff; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); padding: 30px; color: #1e293b; margin: 0; }
+        .container { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 5fr 4fr; gap: 20px; height: 92vh; }
+        
+        .panel { background: var(--panel-bg); border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border); }
+        .panel-content { padding: 25px; overflow-y: auto; flex: 1; }
+        .header { padding: 15px 25px; background: #e0f2fe; border-bottom: 1px solid var(--border); font-weight: bold; display: flex; justify-content: space-between; align-items: center; color: #0369a1; }
+        
+        /* 步驟標題 */
+        .step-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; color: #0369a1; display: flex; align-items: center; gap: 8px; }
+        .step-title span { background: var(--primary); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        
+        /* 分層群組標題 */
+        .layer-title { font-size: 14px; font-weight: 700; color: #475569; margin: 20px 0 10px 0; padding-bottom: 5px; border-bottom: 2px solid #e2e8f0; }
+        .layer-title:first-child { margin-top: 0; }
+
+        /* Checkboxes Grid */
+        .checkbox-group { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-bottom: 10px; }
+        .checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; background: #f1f5f9; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0; transition: 0.2s; font-size: 13px; color: #475569; user-select: none; }
+        .checkbox-label:hover { background: #e2e8f0; border-color: #cbd5e1; }
+        .checkbox-label input { width: 14px; height: 14px; cursor: pointer; }
+        .checkbox-label input:checked + span { font-weight: bold; color: var(--primary); }
+        
+        /* Form Inputs */
+        .schema-section { margin-bottom: 25px; padding: 20px; border: 1px solid #bae6fd; border-radius: 10px; background: #f8fafc; display: none; }
+        .schema-section.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .schema-section h3 { margin-top: 0; margin-bottom: 18px; font-size: 15px; color: #0284c7; border-bottom: 1px solid #e0f2fe; padding-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group.full { grid-column: 1 / -1; }
+        .form-group label { display: block; font-size: 12px; margin-bottom: 6px; font-weight: 600; color: #475569; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; box-sizing: border-box; outline: none; transition: 0.2s; background: white; }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1); }
+        
+        /* Output */
+        #output { flex: 1; border: none; padding: 20px; font-size: 13px; line-height: 1.5; outline: none; resize: none; font-family: 'Fira Code', Consolas, monospace; background: #0f172a; color: #38bdf8; width: 100%; box-sizing: border-box; }
+        
+        .btn { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
+        .btn:hover { background: #0369a1; }
+        
+        hr { border: none; border-top: 1px solid #e2e8f0; margin: 30px 0; }
+        .tag-core { color: #b45309; background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 4px; }
+
+        .nav-back { display: inline-block; margin-bottom: 16px; text-decoration: none; color: #4f46e5; font-size: 13px; font-weight: 600; }
+        .nav-back:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="nav-back">← 返回首頁</a>
+
+<div class="container">
+    <!-- 左側：設定區 -->
+    <div class="panel">
+        <div class="header">JSON-LD 結構化資料設定 (架構分層版)</div>
+        <div class="panel-content">
+            
+            <!-- Step 1 -->
+            <div class="step-title"><span>1</span> 勾選需要的結構化資料種類</div>
+            
+            <div class="layer-title">第一層：核心通用型別 (建議全站共用)</div>
+            <div class="checkbox-group">
+                <label class="checkbox-label"><input type="checkbox" value="WebSite"> <span>🌐 網站主體 (WebSite)</span></label>
+                <label class="checkbox-label"><input type="checkbox" value="Organization"> <span>🏢 組織資訊 (Organization)</span></label>
+                <label class="checkbox-label"><input type="checkbox" value="Breadcrumb"> <span>🍞 麵包屑導覽 (Breadcrumb)</span></label>
+                <label class="checkbox-label"><input type="checkbox" value="Person"> <span>👤 人物/作者 (Person)</span></label>
+            </div>
+
+            <div class="layer-title">第二層：頁面類型模組 (MVP)</div>
+            <div class="checkbox-group">
+                <label class="checkbox-label"><input type="checkbox" value="Article"> <span>📰 文章 (Article)</span></label>
+                <label class="checkbox-label"><input type="checkbox" value="Product"> <span>🛍️ 產品 (Product)</span></label>
+                <label class="checkbox-label"><input type="checkbox" value="LocalBusiness"> <span>📍 在地商家 (LocalBusiness)</span></label>
+                <label class="checkbox-label"><input type="checkbox" value="Event"> <span>📅 活動 (Event)</span></label>
+            </div>
+
+            <div class="layer-title">第二層：頁面類型模組 (Phase 2 垂直領域)</div>
+            <div class="checkbox-group">
+                <label class="checkbox-label"><input type="checkbox" value="SoftwareApp"> <span>📱 軟體應用程式 (SoftwareApp)</span></label>
+                <label class="checkbox-label"><input type="checkbox" value="QAPage"> <span>❓ 問答頁面 (QAPage)</span></label>
+                <label class="checkbox-label"><input type="checkbox" value="ProfilePage"> <span>🪪 個人檔案頁 (ProfilePage)</span></label>
+                <label class="checkbox-label"><input type="checkbox" value="Job"> <span>💼 職缺 (JobPosting)</span></label>
+                <label class="checkbox-label"><input type="checkbox" value="Recipe"> <span>🍳 食譜 (Recipe)</span></label>
+                <label class="checkbox-label"><input type="checkbox" value="VideoObject"> <span>🎬 影片 (VideoObject)</span></label>
+                <label class="checkbox-label"><input type="checkbox" value="HowTo"> <span>🔧 步驟教學 (HowTo)</span></label>
+                <label class="checkbox-label"><input type="checkbox" value="ItemList"> <span>📋 列表頁 (ItemList)</span></label>
+                <label class="checkbox-label"><input type="checkbox" value="NewsArticle"> <span>📡 新聞文章 (NewsArticle)</span></label>
+                <label class="checkbox-label"><input type="checkbox" value="Course"> <span>🎓 線上課程 (Course)</span></label>
+            </div>
+
+            <hr>
+
+            <!-- Step 2 -->
+            <div class="step-title"><span>2</span> 填寫對應數值 (免填留空會自動忽略)</div>
+            <div id="form-container">
+                
+                <!-- ================= 第一層 ================= -->
+                
+                <div class="schema-section" id="sec-WebSite">
+                    <h3>🌐 網站主體 (WebSite) <span class="tag-core">第一層</span></h3>
+                    <div class="form-grid">
+                        <div class="form-group full"><label>網站名稱</label><input type="text" id="web-name" placeholder="例如：我的品牌官網" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>網站首頁 URL</label><input type="url" id="web-url" placeholder="https://" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>站內搜尋路徑 (選填)</label><input type="text" id="web-search" placeholder="https://example.com/search?q=" oninput="generateJSON()"></div>
+                    </div>
+                </div>
+
+                <div class="schema-section" id="sec-Organization">
+                    <h3>🏢 組織資訊 (Organization) <span class="tag-core">第一層</span></h3>
+                    <div class="form-grid">
+                        <div class="form-group full"><label>組織名稱</label><input type="text" id="org-name" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>官方網站 URL</label><input type="url" id="org-url" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>Logo 圖片 URL</label><input type="url" id="org-logo" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>社群連結 (用逗號分隔)</label><input type="text" id="org-social" placeholder="FB網址, IG網址" oninput="generateJSON()"></div>
+                    </div>
+                </div>
+
+                <div class="schema-section" id="sec-Breadcrumb">
+                    <h3>🍞 麵包屑 (BreadcrumbList) <span class="tag-core">第一層</span></h3>
+                    <div class="form-grid">
+                        <div class="form-group"><label>第 1 層：名稱</label><input type="text" id="br-n1" value="首頁" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>第 1 層：網址</label><input type="text" id="br-u1" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>第 2 層：名稱</label><input type="text" id="br-n2" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>第 2 層：網址</label><input type="text" id="br-u2" oninput="generateJSON()"></div>
+                    </div>
+                </div>
+
+                <div class="schema-section" id="sec-Person">
+                    <h3>👤 人物/作者 (Person) <span class="tag-core">第一層</span></h3>
+                    <div class="form-grid">
+                        <div class="form-group"><label>姓名</label><input type="text" id="per-name" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>職位 / 頭銜</label><input type="text" id="per-job" oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>個人網頁 URL</label><input type="url" id="per-url" oninput="generateJSON()"></div>
+                    </div>
+                </div>
+
+                <!-- ================= 第二層 (MVP) ================= -->
+
+                <div class="schema-section" id="sec-Article">
+                    <h3>📰 文章 (Article / BlogPosting)</h3>
+                    <div class="form-grid">
+                        <div class="form-group full"><label>文章標題 (Headline)</label><input type="text" id="art-headline" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>作者名稱</label><input type="text" id="art-author" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>發佈日期</label><input type="date" id="art-date" oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>縮圖網址 (Image URL)</label><input type="url" id="art-image" placeholder="https://" oninput="generateJSON()"></div>
+                    </div>
+                </div>
+
+                <div class="schema-section" id="sec-Product">
+                    <h3>🛍️ 產品 (Product) - 含 Offer 與評價</h3>
+                    <div class="form-grid">
+                        <div class="form-group full"><label>產品名稱</label><input type="text" id="prd-name" oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>產品描述</label><textarea id="prd-desc" rows="2" oninput="generateJSON()"></textarea></div>
+                        <div class="form-group"><label>價格 (純數字)</label><input type="number" id="prd-price" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>幣別代碼</label><input type="text" id="prd-currency" value="TWD" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>評價星數 (1.0 - 5.0)</label><input type="number" step="0.1" id="prd-rating" placeholder="例如: 4.8" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>評論總數</label><input type="number" id="prd-review" placeholder="例如: 125" oninput="generateJSON()"></div>
+                    </div>
+                </div>
+
+                <div class="schema-section" id="sec-LocalBusiness">
+                    <h3>📍 在地商家 (LocalBusiness)</h3>
+                    <div class="form-grid">
+                        <div class="form-group full"><label>商家名稱</label><input type="text" id="loc-name" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>街道地址</label><input type="text" id="loc-street" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>電話號碼</label><input type="text" id="loc-phone" oninput="generateJSON()"></div>
+                    </div>
+                </div>
+
+                <div class="schema-section" id="sec-Event">
+                    <h3>📅 活動 (Event)</h3>
+                    <div class="form-grid">
+                        <div class="form-group full"><label>活動名稱</label><input type="text" id="evt-name" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>開始時間</label><input type="datetime-local" id="evt-start" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>結束時間 (選填)</label><input type="datetime-local" id="evt-end" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>活動狀態 <span style="color:#b45309;font-size:11px;">必填</span></label>
+                            <select id="evt-status" oninput="generateJSON()">
+                                <option value="EventScheduled">如期舉辦 (EventScheduled)</option>
+                                <option value="EventPostponed">延期 (EventPostponed)</option>
+                                <option value="EventCancelled">取消 (EventCancelled)</option>
+                                <option value="EventMovedOnline">改為線上 (EventMovedOnline)</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>出席方式 <span style="color:#b45309;font-size:11px;">必填</span></label>
+                            <select id="evt-mode" oninput="generateJSON()">
+                                <option value="OfflineEventAttendanceMode">實體活動</option>
+                                <option value="OnlineEventAttendanceMode">線上活動</option>
+                                <option value="MixedEventAttendanceMode">實體＋線上</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>地點名稱</label><input type="text" id="evt-locname" oninput="generateJSON()"></div>
+                    </div>
+                </div>
+
+                <!-- ================= 第二層 (Phase 2) ================= -->
+                
+                <div class="schema-section" id="sec-SoftwareApp">
+                    <h3>📱 軟體應用程式 (SoftwareApplication)</h3>
+                    <div class="form-grid">
+                        <div class="form-group full"><label>App / 軟體名稱</label><input type="text" id="app-name" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>分類 (如 BusinessApplication)</label><input type="text" id="app-cat" placeholder="GameApplication..." oninput="generateJSON()"></div>
+                        <div class="form-group"><label>作業系統</label><input type="text" id="app-os" placeholder="iOS, Android, Windows" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>價格</label><input type="number" id="app-price" placeholder="0 表示免費" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>幣別</label><input type="text" id="app-currency" value="TWD" oninput="generateJSON()"></div>
+                    </div>
+                </div>
+
+                <div class="schema-section" id="sec-QAPage">
+                    <h3>❓ 問答頁面 (QAPage)</h3>
+                    <p style="font-size:12px; color:#64748b; margin-top:-10px;">(取代已退場的 FAQPage，適用於論壇或社群問答型頁面)</p>
+                    <div class="form-grid">
+                        <div class="form-group full"><label>問題標題</label><input type="text" id="qa-q" placeholder="例如：如何修復 404 錯誤？" oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>被採納的最佳解答</label><textarea id="qa-a" rows="2" oninput="generateJSON()"></textarea></div>
+                        <div class="form-group"><label>解答按讚數/投票數</label><input type="number" id="qa-upvote" placeholder="例如: 15" oninput="generateJSON()"></div>
+                    </div>
+                </div>
+
+                <div class="schema-section" id="sec-ProfilePage">
+                    <h3>🪪 個人檔案頁 (ProfilePage)</h3>
+                    <div class="form-grid">
+                        <div class="form-group full"><label>頁面標題</label><input type="text" id="prof-headline" placeholder="例如：約翰的個人檔案" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>人物姓名</label><input type="text" id="prof-name" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>個人簡介</label><input type="text" id="prof-desc" oninput="generateJSON()"></div>
+                    </div>
+                </div>
+
+                <div class="schema-section" id="sec-Job">
+                    <h3>💼 職缺 (JobPosting)</h3>
+                    <div class="form-grid">
+                        <div class="form-group full"><label>職缺名稱</label><input type="text" id="job-title" oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>職缺說明 <span style="color:#b45309;font-size:11px;">必填</span></label><textarea id="job-desc" rows="2" placeholder="描述職缺內容、責任與要求…" oninput="generateJSON()"></textarea></div>
+                        <div class="form-group"><label>公司名稱</label><input type="text" id="job-company" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>發布日期 <span style="color:#b45309;font-size:11px;">必填</span></label><input type="date" id="job-date" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>工作類型</label>
+                            <select id="job-type" oninput="generateJSON()">
+                                <option value="FULL_TIME">全職 (FULL_TIME)</option>
+                                <option value="PART_TIME">兼職 (PART_TIME)</option>
+                                <option value="CONTRACTOR">約聘 (CONTRACTOR)</option>
+                                <option value="TEMPORARY">臨時 (TEMPORARY)</option>
+                                <option value="INTERN">實習 (INTERN)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="schema-section" id="sec-Recipe">
+                    <h3>🍳 食譜 (Recipe)</h3>
+                    <div class="form-grid">
+                        <div class="form-group full"><label>食譜名稱</label><input type="text" id="rec-name" oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>食譜圖片 URL <span style="color:#b45309;font-size:11px;">必填</span></label><input type="url" id="rec-image" placeholder="https://" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>準備時間</label><input type="text" id="rec-prep" placeholder="PT15M (15分鐘)" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>烹調時間</label><input type="text" id="rec-cook" placeholder="PT30M (30分鐘)" oninput="generateJSON()"></div>
+                    </div>
+                </div>
+
+                <div class="schema-section" id="sec-VideoObject">
+                    <h3>🎬 影片 (VideoObject)</h3>
+                    <div class="form-grid">
+                        <div class="form-group full"><label>影片標題 <span style="color:#b45309;font-size:11px;">必填</span></label><input type="text" id="vid-name" oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>影片描述 <span style="color:#b45309;font-size:11px;">必填</span></label><textarea id="vid-desc" rows="2" oninput="generateJSON()"></textarea></div>
+                        <div class="form-group full"><label>縮圖 URL <span style="color:#b45309;font-size:11px;">必填</span></label><input type="url" id="vid-thumb" placeholder="https://" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>上傳日期 <span style="color:#b45309;font-size:11px;">必填</span></label><input type="date" id="vid-date" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>影片時長</label><input type="text" id="vid-duration" placeholder="PT5M30S (5分30秒)" oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>影片嵌入 URL (選填)</label><input type="url" id="vid-embed" placeholder="https://www.youtube.com/embed/..." oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>影片直連 URL (選填)</label><input type="url" id="vid-content" placeholder="https://" oninput="generateJSON()"></div>
+                    </div>
+                </div>
+
+                <div class="schema-section" id="sec-HowTo">
+                    <h3>🔧 步驟教學 (HowTo)</h3>
+                    <p style="font-size:12px; color:#64748b; margin-top:-10px;">搜尋結果可顯示步驟卡片，適合教學、DIY 型內容</p>
+                    <div class="form-grid">
+                        <div class="form-group full"><label>教學標題 <span style="color:#b45309;font-size:11px;">必填</span></label><input type="text" id="how-name" placeholder="例如：如何安裝 Node.js" oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>第 1 步驟名稱</label><input type="text" id="how-s1" oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>第 1 步驟說明</label><input type="text" id="how-d1" oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>第 2 步驟名稱</label><input type="text" id="how-s2" oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>第 2 步驟說明</label><input type="text" id="how-d2" oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>第 3 步驟名稱</label><input type="text" id="how-s3" oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>第 3 步驟說明</label><input type="text" id="how-d3" oninput="generateJSON()"></div>
+                    </div>
+                </div>
+
+                <div class="schema-section" id="sec-ItemList">
+                    <h3>📋 列表頁 (ItemList)</h3>
+                    <p style="font-size:12px; color:#64748b; margin-top:-10px;">讓 Google 在搜尋結果顯示 carousel，適合「十大推薦…」型頁面</p>
+                    <div class="form-grid">
+                        <div class="form-group full"><label>第 1 項目名稱</label><input type="text" id="il-n1" oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>第 1 項目 URL</label><input type="url" id="il-u1" placeholder="https://" oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>第 2 項目名稱</label><input type="text" id="il-n2" oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>第 2 項目 URL</label><input type="url" id="il-u2" placeholder="https://" oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>第 3 項目名稱</label><input type="text" id="il-n3" oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>第 3 項目 URL</label><input type="url" id="il-u3" placeholder="https://" oninput="generateJSON()"></div>
+                    </div>
+                </div>
+
+                <div class="schema-section" id="sec-NewsArticle">
+                    <h3>📡 新聞文章 (NewsArticle)</h3>
+                    <p style="font-size:12px; color:#64748b; margin-top:-10px;">Article 的子類型，可進入 Google News 與 Top Stories</p>
+                    <div class="form-grid">
+                        <div class="form-group full"><label>新聞標題 <span style="color:#b45309;font-size:11px;">必填</span></label><input type="text" id="news-headline" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>作者名稱</label><input type="text" id="news-author" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>發佈日期 <span style="color:#b45309;font-size:11px;">必填</span></label><input type="date" id="news-date" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>修改日期 (選填)</label><input type="date" id="news-modified" oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>縮圖 URL <span style="color:#b45309;font-size:11px;">必填</span></label><input type="url" id="news-image" placeholder="https://" oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>發布媒體名稱</label><input type="text" id="news-publisher" placeholder="例如：The News Daily" oninput="generateJSON()"></div>
+                    </div>
+                </div>
+
+                <div class="schema-section" id="sec-Course">
+                    <h3>🎓 線上課程 (Course)</h3>
+                    <div class="form-grid">
+                        <div class="form-group full"><label>課程名稱 <span style="color:#b45309;font-size:11px;">必填</span></label><input type="text" id="crs-name" oninput="generateJSON()"></div>
+                        <div class="form-group full"><label>課程描述 <span style="color:#b45309;font-size:11px;">必填</span></label><textarea id="crs-desc" rows="2" oninput="generateJSON()"></textarea></div>
+                        <div class="form-group"><label>開課單位名稱</label><input type="text" id="crs-provider" oninput="generateJSON()"></div>
+                        <div class="form-group"><label>課程 URL</label><input type="url" id="crs-url" placeholder="https://" oninput="generateJSON()"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- 右側：輸出區 -->
+    <div class="panel">
+        <div class="header">
+            <div class="step-title" style="margin:0;"><span>3</span> 即時 JSON-LD 預覽</div>
+            <button class="btn" onclick="copyResult()">📋 複製代碼</button>
+        </div>
+        <textarea id="output" readonly placeholder="在此預覽 Google 認可的結構化資料代碼..."></textarea>
+    </div>
+</div>
+
+<script>
+    const checkboxes = document.querySelectorAll('.checkbox-group input[type="checkbox"]');
+    checkboxes.forEach(chk => {
+        chk.addEventListener('change', (e) => {
+            const section = document.getElementById(`sec-${e.target.value}`);
+            if (e.target.checked) {
+                section.classList.add('active');
+            } else {
+                section.classList.remove('active');
+            }
+            generateJSON(); 
+        });
+    });
+
+    function getVal(id) {
+        const el = document.getElementById(id);
+        if(!el) return undefined;
+        const val = el.value.trim();
+        return val !== "" ? val : undefined;
+    }
+
+    function generateJSON() {
+        const output = document.getElementById('output');
+        let graphData = [];
+
+        // 【第一層】 WebSite
+        if (document.querySelector('input[value="WebSite"]').checked) {
+            const searchUrl = getVal('web-search');
+            graphData.push({
+                "@type": "WebSite",
+                "name": getVal('web-name'),
+                "url": getVal('web-url'),
+                "potentialAction": searchUrl ? {
+                    "@type": "SearchAction",
+                    "target": searchUrl + "{search_term_string}",
+                    "query-input": "required name=search_term_string"
+                } : undefined
+            });
+        }
+
+        // 【第一層】 Organization
+        if (document.querySelector('input[value="Organization"]').checked) {
+            const socialStr = getVal('org-social');
+            graphData.push({
+                "@type": "Organization",
+                "name": getVal('org-name'),
+                "url": getVal('org-url'),
+                "logo": getVal('org-logo'),
+                "sameAs": socialStr ? socialStr.split(',').map(s => s.trim()) : undefined
+            });
+        }
+
+        // 【第一層】 BreadcrumbList
+        if (document.querySelector('input[value="Breadcrumb"]').checked) {
+            let items = [];
+            if(getVal('br-n1')) items.push({ "@type": "ListItem", "position": 1, "name": getVal('br-n1'), "item": getVal('br-u1') });
+            if(getVal('br-n2')) items.push({ "@type": "ListItem", "position": 2, "name": getVal('br-n2'), "item": getVal('br-u2') });
+            if(items.length > 0) graphData.push({ "@type": "BreadcrumbList", "itemListElement": items });
+        }
+
+        // 【第一層】 Person
+        if (document.querySelector('input[value="Person"]').checked) {
+            graphData.push({
+                "@type": "Person",
+                "name": getVal('per-name'),
+                "jobTitle": getVal('per-job'),
+                "url": getVal('per-url')
+            });
+        }
+
+        // 【第二層】 Article
+        if (document.querySelector('input[value="Article"]').checked) {
+            graphData.push({
+                "@type": "Article",
+                "headline": getVal('art-headline'),
+                "author": getVal('art-author') ? { "@type": "Person", "name": getVal('art-author') } : undefined,
+                "datePublished": getVal('art-date'),
+                "image": getVal('art-image') ? [getVal('art-image')] : undefined
+            });
+        }
+
+        // 【第二層】 Product (+ Review/Rating)
+        if (document.querySelector('input[value="Product"]').checked) {
+            const rating = getVal('prd-rating');
+            const reviewCount = getVal('prd-review');
+            const aggRating = (rating && reviewCount) ? { "@type": "AggregateRating", "ratingValue": rating, "reviewCount": reviewCount } : undefined;
+            
+            graphData.push({
+                "@type": "Product",
+                "name": getVal('prd-name'),
+                "description": getVal('prd-desc'),
+                "offers": getVal('prd-price') ? { "@type": "Offer", "price": getVal('prd-price'), "priceCurrency": getVal('prd-currency') || "TWD" } : undefined,
+                "aggregateRating": aggRating
+            });
+        }
+
+        // 【第二層】 LocalBusiness
+        if (document.querySelector('input[value="LocalBusiness"]').checked) {
+            graphData.push({
+                "@type": "LocalBusiness",
+                "name": getVal('loc-name'),
+                "telephone": getVal('loc-phone'),
+                "address": getVal('loc-street') ? { "@type": "PostalAddress", "streetAddress": getVal('loc-street') } : undefined
+            });
+        }
+
+        // 【第二層】 Event
+        if (document.querySelector('input[value="Event"]').checked) {
+            graphData.push({
+                "@type": "Event",
+                "name": getVal('evt-name'),
+                "startDate": getVal('evt-start'),
+                "endDate": getVal('evt-end'),
+                "eventStatus": "https://schema.org/" + document.getElementById('evt-status').value,
+                "eventAttendanceMode": "https://schema.org/" + document.getElementById('evt-mode').value,
+                "location": getVal('evt-locname') ? { "@type": "Place", "name": getVal('evt-locname') } : undefined
+            });
+        }
+
+        // 【第二層】 SoftwareApp
+        if (document.querySelector('input[value="SoftwareApp"]').checked) {
+            graphData.push({
+                "@type": "SoftwareApplication",
+                "name": getVal('app-name'),
+                "applicationCategory": getVal('app-cat'),
+                "operatingSystem": getVal('app-os'),
+                "offers": getVal('app-price') ? { "@type": "Offer", "price": getVal('app-price'), "priceCurrency": getVal('app-currency') || "TWD" } : undefined
+            });
+        }
+
+        // 【第二層】 QAPage
+        if (document.querySelector('input[value="QAPage"]').checked) {
+            const question = getVal('qa-q');
+            const answer = getVal('qa-a');
+            const upvote = getVal('qa-upvote');
+            if (question && answer) {
+                graphData.push({
+                    "@type": "QAPage",
+                    "mainEntity": {
+                        "@type": "Question",
+                        "name": question,
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": answer,
+                            "upvoteCount": upvote ? parseInt(upvote) : 0
+                        }
+                    }
+                });
+            }
+        }
+
+        // 【第二層】 ProfilePage
+        if (document.querySelector('input[value="ProfilePage"]').checked) {
+            const profName = getVal('prof-name')
+            const profDesc = getVal('prof-desc')
+            const mainEntity = (profName || profDesc) ? {
+                "@type": "Person",
+                "name": profName,
+                "description": profDesc
+            } : undefined
+            graphData.push({
+                "@type": "ProfilePage",
+                "headline": getVal('prof-headline'),
+                "mainEntity": mainEntity
+            });
+        }
+
+        // 【第二層】 JobPosting
+        if (document.querySelector('input[value="Job"]').checked) {
+            graphData.push({
+                "@type": "JobPosting",
+                "title": getVal('job-title'),
+                "description": getVal('job-desc'),
+                "datePosted": getVal('job-date'),
+                "employmentType": getVal('job-type'),
+                "hiringOrganization": getVal('job-company') ? { "@type": "Organization", "name": getVal('job-company') } : undefined
+            });
+        }
+
+        // 【第二層】 Recipe
+        if (document.querySelector('input[value="Recipe"]').checked) {
+            graphData.push({
+                "@type": "Recipe",
+                "name": getVal('rec-name'),
+                "image": getVal('rec-image') ? [getVal('rec-image')] : undefined,
+                "prepTime": getVal('rec-prep'),
+                "cookTime": getVal('rec-cook')
+            });
+        }
+
+        // 【第二層】 VideoObject
+        if (document.querySelector('input[value="VideoObject"]').checked) {
+            graphData.push({
+                "@type": "VideoObject",
+                "name": getVal('vid-name'),
+                "description": getVal('vid-desc'),
+                "thumbnailUrl": getVal('vid-thumb') ? [getVal('vid-thumb')] : undefined,
+                "uploadDate": getVal('vid-date'),
+                "duration": getVal('vid-duration'),
+                "embedUrl": getVal('vid-embed'),
+                "contentUrl": getVal('vid-content')
+            });
+        }
+
+        // 【第二層】 HowTo
+        if (document.querySelector('input[value="HowTo"]').checked) {
+            const steps = []
+            ;[1, 2, 3].forEach(i => {
+                const name = getVal('how-s' + i)
+                const text = getVal('how-d' + i)
+                if (name) steps.push({ "@type": "HowToStep", "name": name, "text": text })
+            })
+            graphData.push({
+                "@type": "HowTo",
+                "name": getVal('how-name'),
+                "step": steps.length ? steps : undefined
+            });
+        }
+
+        // 【第二層】 ItemList
+        if (document.querySelector('input[value="ItemList"]').checked) {
+            const items = []
+            ;[1, 2, 3].forEach(i => {
+                const name = getVal('il-n' + i)
+                const url  = getVal('il-u' + i)
+                if (name) items.push({ "@type": "ListItem", "position": i, "name": name, "url": url })
+            })
+            if (items.length) graphData.push({ "@type": "ItemList", "itemListElement": items });
+        }
+
+        // 【第二層】 NewsArticle
+        if (document.querySelector('input[value="NewsArticle"]').checked) {
+            graphData.push({
+                "@type": "NewsArticle",
+                "headline": getVal('news-headline'),
+                "datePublished": getVal('news-date'),
+                "dateModified": getVal('news-modified'),
+                "image": getVal('news-image') ? [getVal('news-image')] : undefined,
+                "author": getVal('news-author') ? { "@type": "Person", "name": getVal('news-author') } : undefined,
+                "publisher": getVal('news-publisher') ? {
+                    "@type": "Organization",
+                    "name": getVal('news-publisher'),
+                    "logo": { "@type": "ImageObject", "url": "" }
+                } : undefined
+            });
+        }
+
+        // 【第二層】 Course
+        if (document.querySelector('input[value="Course"]').checked) {
+            graphData.push({
+                "@type": "Course",
+                "name": getVal('crs-name'),
+                "description": getVal('crs-desc'),
+                "url": getVal('crs-url'),
+                "provider": getVal('crs-provider') ? { "@type": "Organization", "name": getVal('crs-provider') } : undefined
+            });
+        }
+
+        if (graphData.length === 0) {
+            output.value = "";
+            return;
+        }
+
+        // 清理空物件，確保產生出符合 Google 嚴格標準的乾淨 JSON
+        const cleanObj = (obj) => {
+            Object.keys(obj).forEach(key => {
+                if (obj[key] === undefined) {
+                    delete obj[key];
+                } else if (Array.isArray(obj[key])) {
+                    obj[key].forEach(item => { if (item && typeof item === 'object') cleanObj(item); });
+                } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+                    cleanObj(obj[key]);
+                    if (Object.keys(obj[key]).length === 0) delete obj[key];
+                }
+            });
+            return obj;
+        };
+
+        const finalData = {
+            "@context": "https://schema.org",
+            "@graph": graphData.map(cleanObj)
+        };
+
+        const jsonString = JSON.stringify(finalData, null, 4);
+        output.value = `<script type="application/ld+json">\n${jsonString}\n<\/script>`;
+    }
+
+    function copyResult() {
+        const output = document.getElementById('output');
+        if (!output.value) return alert('請先勾選並填寫資料！');
+
+        const btn = document.querySelector('.btn');
+        const originalText = btn.innerHTML;
+        function onCopied() {
+            btn.innerHTML = '✅ 已複製！';
+            btn.style.background = '#059669';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.background = 'var(--primary)';
+            }, 1500);
+        }
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(output.value).then(onCopied).catch(() => fallbackCopy(output.value, onCopied));
+        } else {
+            fallbackCopy(output.value, onCopied);
+        }
+    }
+
+    function fallbackCopy(text, onCopied) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        try { document.execCommand('copy'); onCopied(); } catch (_) {}
+        document.body.removeChild(ta);
+    }
+</script>
+
+</body>
+</html>
