@@ -13,6 +13,8 @@
             --primary-active: #059669;
             --play-color: #3b82f6;
             --play-hover: #60a5fa;
+            --mic-color: #a855f7;
+            --mic-hover: #c084fc;
         }
 
         body {
@@ -207,6 +209,62 @@
         }
         #play-btn.playing:hover { background: var(--play-hover); }
 
+        /* AUTO / 麥克風並排列 */
+        .controls-row {
+            display: flex;
+            gap: 12px;
+        }
+        .controls-row #play-btn,
+        .controls-row #mic-btn {
+            width: auto;
+            flex: 1;
+            white-space: nowrap;
+        }
+
+        /* 麥克風偵測按鈕 */
+        #mic-btn {
+            background: #1e293b;
+            color: #94a3b8;
+            border: 2px solid #334155;
+            padding: 12px 20px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+            letter-spacing: 2px;
+            user-select: none;
+        }
+
+        #mic-btn:hover { background: #334155; color: white; }
+
+        #mic-btn.listening {
+            background: var(--mic-color);
+            border-color: var(--mic-color);
+            color: white;
+            animation: mic-pulse 1s ease-in-out infinite;
+        }
+        #mic-btn.listening:hover { background: var(--mic-hover); }
+
+        @keyframes mic-pulse {
+            0%, 100% { box-shadow: 0 0 8px rgba(168, 85, 247, 0.4); }
+            50%      { box-shadow: 0 0 20px rgba(168, 85, 247, 0.9); }
+        }
+
+        #mic-error {
+            display: block;
+            color: #f87171;
+            font-size: 13px;
+            margin-top: 10px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        #mic-error.visible { opacity: 1; }
+
         /* 時間軸設計 */
         .timeline-container {
             position: relative;
@@ -299,12 +357,16 @@
                 font-size: 24px;
                 margin-top: 20px;
             }
-            #play-btn {
-                width: 120px;
-                padding: 10px 20px;
-                font-size: 14px;
+            #play-btn, #mic-btn {
+                padding: 10px 14px;
+                font-size: 13px;
             }
-            
+            .controls-row {
+                gap: 8px;
+                width: 100%;
+                max-width: 280px;
+            }
+
             /* 3. 壓縮時間軸與提示文字的間距 */
             .timeline-container {
                 height: 70px;
@@ -348,7 +410,10 @@
 
         <div class="controls">
             <button id="tap-btn">TAP</button>
-            <button id="play-btn"><span>▶️</span> AUTO</button>
+            <div class="controls-row">
+                <button id="play-btn"><span>▶️</span> AUTO</button>
+                <button id="mic-btn"><span>🎤</span> MIC</button>
+            </div>
         </div>
 
         <div class="timeline-container">
@@ -360,6 +425,7 @@
             點擊按鈕，或使用 <kbd>空白鍵</kbd> 跟隨節奏敲擊<br>
             <!-- 提示文字同步更新 -->
             <span id="edit-hint">（開啟 AUTO 模式後可點擊數字修改速度）</span>
+            <span id="mic-error"></span>
         </div>
     </div>
 
@@ -373,14 +439,24 @@
         const soundSelect = document.getElementById('sound-select');
         const editHint = document.getElementById('edit-hint');
         const tapHint = document.getElementById('tap-hint');
+        const micBtn = document.getElementById('mic-btn');
+        const micError = document.getElementById('mic-error');
 
         let tapTimes = [];
         let resetTimeout;
         let isSoundEnabled = true;
-        
+
         let currentBPM = 120;
         let isPlaying = false;
         let metronomeTimer = null;
+
+        let isListening = false;
+        let micStream = null;
+        let analyser = null;
+        let micDataArray = null;
+        let micRafId = null;
+        let lastOnsetTime = 0;
+        let energyHistory = [];
 
         /* === Web Audio API === */
         let audioCtx;
@@ -465,7 +541,8 @@
         }
 
         playBtn.addEventListener('click', () => {
-            initAudio(); 
+            initAudio();
+            if (isListening) stopMicDetection();
             isPlaying = !isPlaying;
 
             if (isPlaying) {
@@ -517,19 +594,14 @@
             }
         });
 
-        /* === 手動 TAP 邏輯 === */
-        function handleTap(e) {
-            if (e) e.preventDefault();
-            const currentTime = performance.now();
-
-            playTickSound();
-            tapBtn.classList.add('active-state');
+        /* === 共用節拍登記邏輯（TAP / 麥克風共用）=== */
+        function registerBeat(timestamp) {
             triggerVisuals();
 
-            if (tapTimes.length > 0 && (currentTime - tapTimes[tapTimes.length - 1]) > 2000) {
+            if (tapTimes.length > 0 && (timestamp - tapTimes[tapTimes.length - 1]) > 2000) {
                 tapTimes = [];
             }
-            tapTimes.push(currentTime);
+            tapTimes.push(timestamp);
 
             if (tapTimes.length > 5) tapTimes.shift();
 
@@ -550,6 +622,88 @@
                 tapHint.classList.add('visible');
             }
         }
+
+        /* === 手動 TAP 邏輯 === */
+        function handleTap(e) {
+            if (e) e.preventDefault();
+            if (isListening) stopMicDetection();
+
+            playTickSound();
+            tapBtn.classList.add('active-state');
+            registerBeat(performance.now());
+        }
+
+        /* === 麥克風偵測邏輯（陽春版 onset detection）=== */
+        async function startMicDetection() {
+            try {
+                initAudio();
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const source = audioCtx.createMediaStreamSource(micStream);
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 1024;
+                micDataArray = new Uint8Array(analyser.frequencyBinCount);
+                source.connect(analyser);
+
+                isListening = true;
+                micBtn.classList.add('listening');
+                micBtn.innerHTML = `<span>🎤</span> 聆聽中`;
+                micError.classList.remove('visible');
+                energyHistory = [];
+                lastOnsetTime = 0;
+                tapTimes = [];
+
+                detectLoop();
+            } catch (err) {
+                micError.textContent = '⚠ 無法存取麥克風，請檢查瀏覽器權限設定';
+                micError.classList.add('visible');
+                stopMicDetection();
+            }
+        }
+
+        function detectLoop() {
+            if (!isListening) return;
+            analyser.getByteTimeDomainData(micDataArray);
+
+            let sumSquares = 0;
+            for (let i = 0; i < micDataArray.length; i++) {
+                const norm = (micDataArray[i] - 128) / 128;
+                sumSquares += norm * norm;
+            }
+            const rms = Math.sqrt(sumSquares / micDataArray.length);
+
+            energyHistory.push(rms);
+            if (energyHistory.length > 43) energyHistory.shift();
+
+            const avgEnergy = energyHistory.reduce((a, b) => a + b, 0) / energyHistory.length;
+            const threshold = avgEnergy * 1.4 + 0.02;
+
+            const now = performance.now();
+            if (rms > threshold && (now - lastOnsetTime) > 250) {
+                lastOnsetTime = now;
+                registerBeat(now);
+            }
+
+            micRafId = requestAnimationFrame(detectLoop);
+        }
+
+        function stopMicDetection() {
+            isListening = false;
+            if (micRafId) cancelAnimationFrame(micRafId);
+            if (micStream) {
+                micStream.getTracks().forEach(track => track.stop());
+                micStream = null;
+            }
+            micBtn.classList.remove('listening');
+            micBtn.innerHTML = `<span>🎤</span> MIC`;
+        }
+
+        micBtn.addEventListener('click', () => {
+            if (isListening) {
+                stopMicDetection();
+            } else {
+                startMicDetection();
+            }
+        });
 
         /* === 事件綁定 === */
         soundToggle.addEventListener('click', () => {
