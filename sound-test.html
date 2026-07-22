@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Audio API 音效試聽機</title>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #1e293b; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; gap: 20px; }
+        .btn { padding: 15px 30px; font-size: 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; width: 250px; }
+        .btn-wood { background: #d97706; color: white; }
+        .btn-8bit { background: #2563eb; color: white; }
+        .btn-kick { background: #dc2626; color: white; }
+        .btn-laser { background: #9333ea; color: white; }
+        .btn:hover { filter: brightness(1.2); transform: scale(1.05); }
+        .btn:active { transform: scale(0.95); }
+    </style>
+</head>
+<body>
+
+    <h2>🎧 點擊按鈕試聽音效</h2>
+
+    <button class="btn btn-wood" onclick="playWoodblock()">🪵 原始木魚聲 (Sine)</button>
+    <button class="btn btn-8bit" onclick="play8Bit()">👾 復古電玩 (Square)</button>
+    <button class="btn btn-kick" onclick="playKick()">🥁 電子大鼓 (Kick)</button>
+    <button class="btn btn-laser" onclick="playLaser()">🔫 雷射槍 (Laser)</button>
+
+    <script>
+        let audioCtx;
+        function init() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        // 1. 原始木魚 (平滑的正弦波 sine)
+        function playWoodblock() {
+            init();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.type = 'sine'; // 正弦波：聲音最圓潤
+            // 音高：從 800Hz 快速掉到 100Hz (產生「篤」的打擊感)
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.05);
+            
+            // 音量：瞬間大聲，0.1秒內淡出
+            gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            
+            osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        // 2. 復古電玩 (方波 square)
+        function play8Bit() {
+            init();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.type = 'square'; // 方波：瑪利歐那種 8-bit 電子聲
+            // 音高：固定在 600Hz，不滑音，聽起來很死板復古
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            
+            // 音量：設定得稍微小聲一點 (0.2)，方波聽起來比較刺耳
+            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            
+            osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        // 3. 電子大鼓 (低頻滑音)
+        function playKick() {
+            init();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.type = 'sine'; 
+            // 音高：從 150Hz 瞬間掉到極低頻 0.01Hz，這就是大鼓 "咚" 的原理
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+            
+            // 音量：0.15秒內淡出，稍微長一點點讓低音有共鳴
+            gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+            
+            osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+        }
+
+        // 4. 雷射槍 (鋸齒波 sawtooth + 大滑音)
+        function playLaser() {
+            init();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.type = 'sawtooth'; // 鋸齒波：聲音有金屬摩擦感、尖銳
+            // 音高：從很高 (900Hz) 在 0.2 秒內滑到很低 (100Hz)，這就是 "Pew Pew" 的由來
+            osc.frequency.setValueAtTime(900, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+            
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+            
+            osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+        }
+    </script>
+</body>
+</html>
