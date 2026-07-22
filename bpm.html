@@ -135,6 +135,16 @@
             margin-top: 10px;
         }
 
+        .tap-hint {
+            font-size: 13px;
+            color: var(--primary-color);
+            margin-top: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            letter-spacing: 2px;
+        }
+        .tap-hint.visible { opacity: 1; }
+
         /* 大按鈕區塊 */
         .controls {
             display: flex;
@@ -331,8 +341,9 @@
     <div class="container">
         <div class="bpm-display">
             <!-- 預設加上 readonly，防止平常誤觸鍵盤 -->
-            <input type="number" id="bpm-value" class="bpm-value" placeholder="---" min="1" max="999" readonly>
+            <input type="number" id="bpm-value" class="bpm-value" placeholder="---" min="1" max="999" maxlength="3" readonly>
             <div class="bpm-label">BPM</div>
+            <div class="tap-hint" id="tap-hint">再敲一次</div>
         </div>
 
         <div class="controls">
@@ -361,7 +372,8 @@
         const soundToggle = document.getElementById('sound-toggle');
         const soundSelect = document.getElementById('sound-select');
         const editHint = document.getElementById('edit-hint');
-        
+        const tapHint = document.getElementById('tap-hint');
+
         let tapTimes = [];
         let resetTimeout;
         let isSoundEnabled = true;
@@ -462,7 +474,8 @@
                 playBtn.innerHTML = `<span>⏹</span> STOP`;
                 bpmValue.removeAttribute('readonly'); // 開放手寫輸入
                 editHint.style.color = 'var(--primary-color)';
-                
+                tapHint.classList.remove('visible');
+
                 if (!bpmValue.value) {
                     bpmValue.value = currentBPM;
                 } else {
@@ -482,10 +495,14 @@
 
         /* === 手動輸入 BPM 邏輯 === */
         bpmValue.addEventListener('input', (e) => {
+            if (e.target.value.length > 3) {
+                e.target.value = e.target.value.slice(0, 3);
+            }
             const val = parseInt(e.target.value);
-            if (!isNaN(val) && val > 0) {
+            if (!isNaN(val) && val >= 1 && val <= 999) {
                 currentBPM = val;
-                tapTimes = []; 
+                tapTimes = [];
+                tapHint.classList.remove('visible');
                 if (isPlaying) {
                     clearTimeout(metronomeTimer);
                     metronomeTimer = setTimeout(playBeat, 60000 / currentBPM);
@@ -494,7 +511,8 @@
         });
 
         bpmValue.addEventListener('blur', (e) => {
-            if (!e.target.value || isNaN(parseInt(e.target.value))) {
+            const val = parseInt(e.target.value);
+            if (!e.target.value || isNaN(val) || val < 1 || val > 999) {
                 e.target.value = currentBPM;
             }
         });
@@ -516,16 +534,20 @@
             if (tapTimes.length > 5) tapTimes.shift();
 
             if (tapTimes.length >= 2) {
+                tapHint.classList.remove('visible');
+
                 const totalDuration = tapTimes[tapTimes.length - 1] - tapTimes[0];
                 const averageInterval = totalDuration / (tapTimes.length - 1);
                 currentBPM = Math.round(60000 / averageInterval);
-                
+
                 bpmValue.value = currentBPM;
-                
+
                 if (isPlaying) {
                     clearTimeout(metronomeTimer);
                     metronomeTimer = setTimeout(playBeat, 60000 / currentBPM);
                 }
+            } else {
+                tapHint.classList.add('visible');
             }
         }
 
