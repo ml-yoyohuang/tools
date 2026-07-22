@@ -144,6 +144,7 @@
         #tap-btn {
             width: 160px;
             height: 160px;
+            margin-top: 24px;
             border-radius: 50%;
             background: var(--primary-color);
             border: none;
@@ -531,10 +532,12 @@
             if (isSoundEnabled) {
                 soundToggle.classList.add('on');
                 soundToggle.innerHTML = `<span>🔊</span>`;
+                soundSelect.style.display = '';
                 initAudio();
             } else {
                 soundToggle.classList.remove('on');
                 soundToggle.innerHTML = `<span>🔇</span>`;
+                soundSelect.style.display = 'none';
             }
         });
 
