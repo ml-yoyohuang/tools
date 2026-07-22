@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BPM 量測器 (Tap Tempo)</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --text-color: #f8fafc;
+            --primary-color: #10b981;
+            --primary-hover: #34d399;
+            --primary-active: #059669;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            touch-action: manipulation;
+            position: relative;
+        }
+
+        /* 音效開關按鈕 */
+        .sound-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+            user-select: none;
+        }
+        .sound-toggle:hover { background: #334155; color: white; }
+        .sound-toggle.on { color: var(--primary-color); border-color: var(--primary-color); }
+
+        .container {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* BPM 顯示區 */
+        .bpm-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 140px;
+            margin-bottom: 20px;
+        }
+
+        .bpm-value {
+            font-size: 100px;
+            font-weight: 900;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            text-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+            transition: transform 0.05s ease-out;
+        }
+
+        .bpm-value.pulse { transform: scale(1.1); color: var(--primary-color); }
+
+        .bpm-label {
+            font-size: 20px;
+            font-weight: 600;
+            color: #94a3b8;
+            letter-spacing: 4px;
+            margin-top: 10px;
+        }
+
+        /* 大按鈕設計 */
+        #tap-btn {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            border: none;
+            color: #022c22;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4), inset 0 4px 6px rgba(255, 255, 255, 0.3);
+            transition: all 0.1s;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            z-index: 20;
+        }
+
+        #tap-btn:active, #tap-btn.active-state {
+            background: var(--primary-active);
+            transform: scale(0.95);
+            box-shadow: 0 0px 10px rgba(16, 185, 129, 0.6), inset 0 10px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 節奏遊戲時間軸設計 */
+        .timeline-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            height: 100px;
+            margin: 30px 0;
+            overflow: hidden;
+            -webkit-mask-image: linear-gradient(to right, transparent, black 20%, black 80%, transparent);
+            mask-image: linear-gradient(to right, transparent, black 20%, black 80%, transparent);
+        }
+
+        .timeline-track {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-image: linear-gradient(to right, #475569 50%, transparent 50%);
+            background-size: 30px 2px;
+            animation: scrollTrack 0.15s linear infinite; 
+        }
+
+        @keyframes scrollTrack {
+            from { background-position: 0 0; }
+            to { background-position: -30px 0; }
+        }
+
+        .hit-target {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 44px;
+            height: 44px;
+            border: 3px solid rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 10;
+            transition: all 0.05s ease-out;
+        }
+
+        .hit-target.active {
+            border-color: var(--primary-color);
+            transform: translate(-50%, -50%) scale(1.15);
+            background: rgba(16, 185, 129, 0.2);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.6);
+        }
+
+        .note {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.8);
+            transform: translate(-50%, -50%);
+            z-index: 5;
+            animation: moveNote 5s linear forwards;
+        }
+
+        @keyframes moveNote {
+            to { transform: translate(calc(-50% - 1000px), -50%); }
+        }
+
+        .hint { color: #64748b; font-size: 14px; margin-top: 10px; }
+        .hint kbd { background: #1e293b; padding: 4px 8px; border-radius: 4px; border: 1px solid #334155; font-family: monospace; color: #cbd5e1; }
+    </style>
+</head>
+<body>
+
+    <!-- 音效開關 -->
+    <button id="sound-toggle" class="sound-toggle on">
+        <span id="sound-icon">🔊</span> 音效: <span>開</span>
+    </button>
+
+    <div class="container">
+        <div class="bpm-display">
+            <div id="bpm-value" class="bpm-value">---</div>
+            <div class="bpm-label">BPM</div>
+        </div>
+
+        <button id="tap-btn">TAP</button>
+
+        <div class="timeline-container">
+            <div class="timeline-track"></div>
+            <div id="hit-target" class="hit-target"></div>
+        </div>
+
+        <div class="hint">
+            點擊按鈕，或使用 <kbd>空白鍵</kbd> 跟隨節奏敲擊<br>
+        </div>
+    </div>
+
+    <script>
+        const bpmValue = document.getElementById('bpm-value');
+        const tapBtn = document.getElementById('tap-btn');
+        const hitTarget = document.getElementById('hit-target');
+        const timelineContainer = document.querySelector('.timeline-container');
+        const soundToggle = document.getElementById('sound-toggle');
+        
+        let tapTimes = [];
+        let resetTimeout;
+        let isSoundEnabled = true;
+
+        /* === Web Audio API 音效合成引擎 === */
+        // 延遲初始化，因為瀏覽器規定必須要有使用者互動後才能開啟音訊
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // 合成「木魚/短鼓聲」的函數
+        function playTickSound() {
+            if (!isSoundEnabled) return;
+            initAudio();
+
+            // 創建振盪器 (產生聲音)
+            const osc = audioCtx.createOscillator();
+            // 創建增益節點 (控制音量大小)
+            const gainNode = audioCtx.createGain();
+
+            // 設定波型：使用正弦波 (sine) 比較圓潤，類似木魚
+            osc.type = 'sine';
+            
+            // 頻率變化：從高頻瞬間掉到低頻，產生「打擊」的清脆感
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.05);
+
+            // 音量變化：瞬間最大聲，然後在 0.1 秒內衰減到無聲 (呈現短促感)
+            gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+
+            // 連接並播放
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1); // 0.1秒後停止，節省資源
+        }
+
+        /* === 音效開關切換 === */
+        soundToggle.addEventListener('click', () => {
+            isSoundEnabled = !isSoundEnabled;
+            if (isSoundEnabled) {
+                soundToggle.classList.add('on');
+                soundToggle.innerHTML = `<span>🔊</span> 音效: <span>開</span>`;
+                initAudio(); // 確保解鎖音訊權限
+            } else {
+                soundToggle.classList.remove('on');
+                soundToggle.innerHTML = `<span>🔇</span> 音效: <span>關</span>`;
+            }
+        });
+
+
+        /* === 核心 BPM 計算與視覺邏輯 === */
+        function handleTap(e) {
+            if (e) e.preventDefault();
+            const currentTime = performance.now();
+
+            // 1. 播放音效
+            playTickSound();
+
+            // 2. BPM 計算邏輯
+            if (tapTimes.length > 0 && (currentTime - tapTimes[tapTimes.length - 1]) > 2000) {
+                tapTimes = [];
+            }
+            tapTimes.push(currentTime);
+
+            if (tapTimes.length >= 2) {
+                const totalDuration = tapTimes[tapTimes.length - 1] - tapTimes[0];
+                const averageInterval = totalDuration / (tapTimes.length - 1);
+                const bpm = Math.round(60000 / averageInterval);
+                bpmValue.textContent = bpm;
+            } else {
+                bpmValue.textContent = "---";
+            }
+
+            // 3. 視覺動畫
+            bpmValue.classList.remove('pulse');
+            void bpmValue.offsetWidth; 
+            bpmValue.classList.add('pulse');
+
+            tapBtn.classList.add('active-state');
+            hitTarget.classList.remove('active');
+            void hitTarget.offsetWidth;
+            hitTarget.classList.add('active');
+
+            clearTimeout(resetTimeout);
+            resetTimeout = setTimeout(() => {
+                tapBtn.classList.remove('active-state');
+                bpmValue.classList.remove('pulse');
+                hitTarget.classList.remove('active');
+            }, 100);
+
+            // 4. 時間軸產生音符
+            spawnNote();
+        }
+
+        function spawnNote() {
+            const note = document.createElement('div');
+            note.className = 'note';
+            timelineContainer.appendChild(note);
+
+            setTimeout(() => {
+                if (note.parentElement) note.remove();
+            }, 5000);
+        }
+
+        // 綁定事件
+        tapBtn.addEventListener('pointerdown', handleTap);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && !e.repeat) {
+                e.preventDefault();
+                handleTap();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.code === 'Space') {
+                tapBtn.classList.remove('active-state');
+                hitTarget.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
