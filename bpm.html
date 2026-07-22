@@ -258,16 +258,66 @@
         .hint { color: #64748b; font-size: 14px; margin-top: 10px; }
         .hint kbd { background: #1e293b; padding: 4px 8px; border-radius: 4px; border: 1px solid #334155; font-family: monospace; color: #cbd5e1; }
         #edit-hint { font-size: 12px; opacity: 0.7; line-height: 1.6; display: block; margin-top: 12px; }
+
+        /* === 手機版響應式設計 (RWD) === */
+        @media (max-width: 600px), (max-height: 750px) {
+            /* 1. 縮小 BPM 顯示區與文字 */
+            .bpm-display {
+                height: 100px;
+                margin-bottom: 10px;
+            }
+            .bpm-value {
+                font-size: 80px;
+                width: 100%;
+            }
+            .bpm-label {
+                font-size: 16px;
+                margin-top: 0px;
+            }
+            
+            /* 2. 縮小控制區按鈕 */
+            .controls {
+                gap: 15px;
+            }
+            #tap-btn {
+                width: 130px;
+                height: 130px;
+                font-size: 24px;
+                margin-top: 20px;
+            }
+            #play-btn {
+                width: 120px;
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+            
+            /* 3. 壓縮時間軸與提示文字的間距 */
+            .timeline-container {
+                height: 70px;
+                margin: 20px 0;
+            }
+            .hint {
+                font-size: 12px;
+                margin-top: 5px;
+            }
+            
+            /* 4. 微調右上角選單 */
+            .sound-controls {
+                top: 15px;
+                right: 15px;
+            }
+        }
+
     </style>
 </head>
 <body>
 
     <div class="sound-controls">
         <select id="sound-select" class="sound-select">
-            <option value="wood">🪵 木魚</option>
-            <option value="8bit">👾 8-Bit</option>
-            <option value="kick">🥁 大鼓</option>
-            <option value="laser">🔫 雷射</option>
+            <option value="wood">🪵木魚</option>
+            <option value="8bit">👾8-Bit</option>
+            <option value="kick">🥁大鼓</option>
+            <option value="laser">🔫雷射</option>
         </select>
         <button id="sound-toggle" class="sound-toggle on">
             <span id="sound-icon">🔊</span>
