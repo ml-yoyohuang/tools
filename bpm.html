@@ -44,28 +44,19 @@
             background-color: #1e293b;
             border: 1px solid #334155;
             color: #e2e8f0;
-            /* 隱藏原生箭頭 */
             appearance: none; 
             -webkit-appearance: none; 
-            
-            /* 自訂的 SVG 箭頭 */
             background-image: url('data:image/svg+xml;utf8,<svg fill="%2394a3b8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
             background-repeat: no-repeat;
-            
-            /* 【修改這裡】將箭頭定位在靠右 12px、垂直置中 */
-            background-position: right 12px center;
+            background-position: right 8px center;
             background-size: 18px;
-            
-            /* 【修改這裡】調整 Padding：右邊留 40px 的空間給箭頭，左邊恢復正常的 12px */
-            padding: 8px 40px 8px 12px;
-            
+            padding: 8px 32px 8px 12px;
             border-radius: 8px;
             font-size: 14px;
             outline: none;
             cursor: pointer;
             transition: 0.2s;
         }
-        
         .sound-select:hover { border-color: #475569; }
 
         .sound-toggle {
@@ -101,6 +92,7 @@
             justify-content: center;
             height: 140px;
             margin-bottom: 20px;
+            position: relative;
         }
 
         .bpm-value {
@@ -109,9 +101,27 @@
             line-height: 1;
             font-variant-numeric: tabular-nums;
             text-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
-            transition: transform 0.05s ease-out;
+            transition: transform 0.05s ease-out, border-color 0.2s;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-color);
+            text-align: center;
+            width: 250px;
+            outline: none;
+            font-family: inherit;
         }
 
+        /* 隱藏 Input Number 的上下箭頭 */
+        .bpm-value::-webkit-outer-spin-button,
+        .bpm-value::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .bpm-value { -moz-appearance: textfield; }
+
+        /* 唯讀狀態時，滑鼠游標不顯示可輸入的 I 游標 */
+        .bpm-value[readonly] { cursor: default; }
+        /* 只有在非唯讀(AUTO開啟)時，點擊才會有底線提示 */
+        .bpm-value:not([readonly]):focus { border-bottom: 2px solid var(--primary-color); }
+        .bpm-value::placeholder { color: #334155; }
         .bpm-value.pulse { transform: scale(1.1); color: var(--primary-color); }
 
         .bpm-label {
@@ -183,7 +193,7 @@
         }
         #play-btn.playing:hover { background: var(--play-hover); }
 
-        /* 節奏遊戲時間軸設計 */
+        /* 時間軸設計 */
         .timeline-container {
             position: relative;
             width: 100%;
@@ -206,10 +216,7 @@
             animation: scrollTrack 0.15s linear infinite; 
         }
 
-        @keyframes scrollTrack {
-            from { background-position: 0 0; }
-            to { background-position: -30px 0; }
-        }
+        @keyframes scrollTrack { from { background-position: 0 0; } to { background-position: -30px 0; } }
 
         .hit-target {
             position: absolute;
@@ -246,12 +253,11 @@
             animation: moveNote 5s linear forwards;
         }
 
-        @keyframes moveNote {
-            to { transform: translate(calc(-50% - 1000px), -50%); }
-        }
+        @keyframes moveNote { to { transform: translate(calc(-50% - 1000px), -50%); } }
 
         .hint { color: #64748b; font-size: 14px; margin-top: 10px; }
         .hint kbd { background: #1e293b; padding: 4px 8px; border-radius: 4px; border: 1px solid #334155; font-family: monospace; color: #cbd5e1; }
+        #edit-hint { font-size: 12px; opacity: 0.7; line-height: 1.6; display: block; margin-top: 12px; }
     </style>
 </head>
 <body>
@@ -270,7 +276,8 @@
 
     <div class="container">
         <div class="bpm-display">
-            <div id="bpm-value" class="bpm-value">---</div>
+            <!-- 預設加上 readonly，防止平常誤觸鍵盤 -->
+            <input type="number" id="bpm-value" class="bpm-value" placeholder="---" min="1" max="999" readonly>
             <div class="bpm-label">BPM</div>
         </div>
 
@@ -285,7 +292,9 @@
         </div>
 
         <div class="hint">
-            點擊按鈕，或使用 <kbd>空白鍵</kbd> 跟隨節奏敲擊
+            點擊按鈕，或使用 <kbd>空白鍵</kbd> 跟隨節奏敲擊<br>
+            <!-- 提示文字同步更新 -->
+            <span id="edit-hint">（開啟 AUTO 模式後可點擊數字修改速度）</span>
         </div>
     </div>
 
@@ -297,17 +306,17 @@
         const timelineContainer = document.querySelector('.timeline-container');
         const soundToggle = document.getElementById('sound-toggle');
         const soundSelect = document.getElementById('sound-select');
+        const editHint = document.getElementById('edit-hint');
         
         let tapTimes = [];
         let resetTimeout;
         let isSoundEnabled = true;
         
-        // 節拍器變數
         let currentBPM = 120;
         let isPlaying = false;
         let metronomeTimer = null;
 
-        /* === Web Audio API 合成器引擎 === */
+        /* === Web Audio API === */
         let audioCtx;
         function initAudio() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -320,10 +329,8 @@
             const osc = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             const now = audioCtx.currentTime;
-            
             const soundType = soundSelect.value;
 
-            // 依照下拉選單套用不同的合成參數
             if (soundType === 'wood') {
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(800, now);
@@ -331,14 +338,12 @@
                 gainNode.gain.setValueAtTime(1, now);
                 gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
                 osc.start(now); osc.stop(now + 0.1);
-                
             } else if (soundType === '8bit') {
                 osc.type = 'square';
                 osc.frequency.setValueAtTime(600, now);
-                gainNode.gain.setValueAtTime(0.15, now); // 方波比較刺耳，音量稍微調小
+                gainNode.gain.setValueAtTime(0.15, now); 
                 gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
                 osc.start(now); osc.stop(now + 0.1);
-                
             } else if (soundType === 'kick') {
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(150, now);
@@ -346,7 +351,6 @@
                 gainNode.gain.setValueAtTime(1, now);
                 gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
                 osc.start(now); osc.stop(now + 0.15);
-                
             } else if (soundType === 'laser') {
                 osc.type = 'sawtooth';
                 osc.frequency.setValueAtTime(900, now);
@@ -355,7 +359,6 @@
                 gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
                 osc.start(now); osc.stop(now + 0.2);
             }
-
             osc.connect(gainNode);
             gainNode.connect(audioCtx.destination);
         }
@@ -400,17 +403,45 @@
             isPlaying = !isPlaying;
 
             if (isPlaying) {
+                // 開始播放：解鎖大數字的唯讀狀態
                 playBtn.classList.add('playing');
                 playBtn.innerHTML = `<span>⏹</span> STOP`;
+                bpmValue.removeAttribute('readonly'); // 開放手寫輸入
+                editHint.style.color = 'var(--primary-color)';
                 
-                if (bpmValue.textContent === "---") {
-                    bpmValue.textContent = currentBPM;
+                if (!bpmValue.value) {
+                    bpmValue.value = currentBPM;
+                } else {
+                    currentBPM = parseInt(bpmValue.value);
                 }
                 playBeat();
             } else {
+                // 停止播放：鎖回唯讀狀態
                 playBtn.classList.remove('playing');
                 playBtn.innerHTML = `<span>▶️</span> AUTO`;
+                bpmValue.setAttribute('readonly', 'true'); // 關閉手寫輸入
+                bpmValue.blur(); // 自動收起手機鍵盤
+                editHint.style.color = '';
                 clearTimeout(metronomeTimer);
+            }
+        });
+
+        /* === 手動輸入 BPM 邏輯 === */
+        bpmValue.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            if (!isNaN(val) && val > 0) {
+                currentBPM = val;
+                tapTimes = []; 
+                if (isPlaying) {
+                    clearTimeout(metronomeTimer);
+                    metronomeTimer = setTimeout(playBeat, 60000 / currentBPM);
+                }
+            }
+        });
+
+        bpmValue.addEventListener('blur', (e) => {
+            if (!e.target.value || isNaN(parseInt(e.target.value))) {
+                e.target.value = currentBPM;
             }
         });
 
@@ -428,22 +459,19 @@
             }
             tapTimes.push(currentTime);
 
-            // 滑動視窗：只保留最近 5 次，保持靈敏度
             if (tapTimes.length > 5) tapTimes.shift();
 
             if (tapTimes.length >= 2) {
                 const totalDuration = tapTimes[tapTimes.length - 1] - tapTimes[0];
                 const averageInterval = totalDuration / (tapTimes.length - 1);
                 currentBPM = Math.round(60000 / averageInterval);
-                bpmValue.textContent = currentBPM;
                 
-                // 即時接管速度
+                bpmValue.value = currentBPM;
+                
                 if (isPlaying) {
                     clearTimeout(metronomeTimer);
                     metronomeTimer = setTimeout(playBeat, 60000 / currentBPM);
                 }
-            } else if (!isPlaying) {
-                bpmValue.textContent = "---";
             }
         }
 
@@ -460,12 +488,12 @@
             }
         });
 
-        // 切換音效時確保引擎初始化，這樣切換後馬上按就會有聲音
         soundSelect.addEventListener('change', initAudio);
-
         tapBtn.addEventListener('pointerdown', handleTap);
 
         document.addEventListener('keydown', (e) => {
+            if (document.activeElement === bpmValue) return;
+
             if (e.code === 'Space' && !e.repeat) {
                 e.preventDefault();
                 handleTap();
@@ -473,7 +501,7 @@
         });
 
         document.addEventListener('keyup', (e) => {
-            if (e.code === 'Space') {
+            if (e.code === 'Space' && document.activeElement !== bpmValue) {
                 tapBtn.classList.remove('active-state');
             }
         });
