@@ -1,12 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import db, { createDefaultProgress, type UserProgress } from '@/db/db'
-import questionsData from '@/data/n1-questions.json'
 import type { Question, QuestionCategory } from '@/types/question'
 import { todayKey } from '@/utils/date'
 import { isDueForReview, riskLevel, type RiskLevel } from '@/utils/srs'
-
-const seedQuestions = questionsData as unknown as Question[]
 
 export interface WrongQuestionEntry {
   question: Question
@@ -23,6 +20,9 @@ export const useQuizStore = defineStore('quiz', () => {
 
   async function init() {
     if (initialized.value) return
+
+    const response = await fetch(`${import.meta.env.BASE_URL}data/n1-questions.json`)
+    const seedQuestions: Question[] = await response.json()
 
     await db.questions.bulkPut(seedQuestions)
     questions.value = await db.questions.toArray()

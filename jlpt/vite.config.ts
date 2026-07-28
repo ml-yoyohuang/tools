@@ -40,6 +40,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,json}'],
+        // 題庫 JSON 會隨著新增分段持續變大，預留空間避免超過預設 2MB 上限而無法離線快取
+        maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
       },
     }),
   ],
