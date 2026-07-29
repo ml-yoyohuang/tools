@@ -141,7 +141,7 @@ function onTouchEnd(e: TouchEvent) {
       {{ question.readingText }}
     </p>
 
-    <p class="mb-4 text-lg font-medium leading-relaxed text-gray-900 dark:text-gray-100">
+    <p class="mb-4 whitespace-pre-line text-lg font-medium leading-relaxed text-gray-900 dark:text-gray-100">
       {{ question.question }}
     </p>
 
