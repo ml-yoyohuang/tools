@@ -66,6 +66,37 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
             z-index: 1000;
         }
+        
+        .top-actions {
+            display: flex;
+            gap: 8px;
+            margin-right: 4px;
+        }
+
+        .icon-btn {
+            width: 42px;
+            height: 42px;
+            border: none;
+            border-radius: 50%;
+            background: #2e7d32;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: background 0.3s, opacity 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-btn:hover {
+            background: #1b5e20;
+        }
+
+        .icon-btn.granted {
+            opacity: 0.6;
+            cursor: default;
+        }
 
         .container { width: 100%; max-width: 500px; }
         h2 { color: #2e7d32; text-align: center; margin-bottom: 20px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
@@ -89,7 +120,7 @@
             font-size: 16px;
             outline: none;
             transition: border-color 0.3s;
-            min-width: 0; /* 讓 flex 項目可以縮小到比內容窄，避免撐破外殼 */
+            min-width: 0; 
         }
         input[type="text"]:focus { border-color: var(--primary-color); }
 
@@ -103,8 +134,8 @@
             font-weight: bold;
             cursor: pointer;
             transition: background 0.3s;
-            flex-shrink: 0; /* 修正：不准被壓縮 */
-            white-space: nowrap; /* 修正：強制不換行 */
+            flex-shrink: 0; 
+            white-space: nowrap; 
         }
 
         .timer-list { display: flex; flex-direction: column; gap: 15px; }
@@ -146,9 +177,7 @@
             background: transparent;
         }
 
-        .timer-name-wrap {
-            position: relative;
-        }
+        .timer-name-wrap { position: relative; }
 
         .name-suggestions {
             position: absolute;
@@ -165,9 +194,7 @@
             display: none;
         }
 
-        .name-suggestions.open {
-            display: block;
-        }
+        .name-suggestions.open { display: block; }
 
         .name-suggestion-item {
             width: 100%;
@@ -180,22 +207,13 @@
             font-size: 14px;
         }
 
-        .name-suggestion-item + .name-suggestion-item {
-            border-top: 1px solid #efefef;
-        }
-
-        .name-suggestion-item:active {
-            background: #f2f8f2;
-        }
-
+        .name-suggestion-item + .name-suggestion-item { border-top: 1px solid #efefef; }
+        .name-suggestion-item:active { background: #f2f8f2; }
         .name-suggestion-item.active,
-        .name-suggestion-item:hover {
-            background: #eef7ee;
-        }
+        .name-suggestion-item:hover { background: #eef7ee; }
 
         .expire-time { font-size: 12px; color: var(--secondary-color); margin-bottom: 8px; }
         .time-display { font-size: 32px; font-family: 'Courier New', Courier, monospace; font-weight: bold; color: #333; }
-        
         .finished .time-display { color: var(--danger-color); }
 
         .delete-btn {
@@ -207,7 +225,7 @@
             cursor: pointer;
             font-size: 14px;
             font-weight: bold;
-            flex-shrink: 0; /* 修正：刪除按鈕也不准被壓縮 */
+            flex-shrink: 0; 
             white-space: nowrap;
         }
 
@@ -248,25 +266,7 @@
             font-family: 'Courier New', Courier, monospace;
         }
 
-        .log-empty {
-            padding: 10px;
-            text-align: center;
-            color: #999;
-            font-size: 13px;
-        }
-
-        .settings-btn {
-            width: 42px;
-            height: 42px;
-            border: none;
-            border-radius: 50%;
-            background: #2e7d32;
-            color: #fff;
-            font-size: 20px;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            margin-right: 4px;
-        }
+        .log-empty { padding: 10px; text-align: center; color: #999; font-size: 13px; }
 
         .settings-modal {
             position: fixed;
@@ -289,16 +289,8 @@
             box-shadow: 0 8px 24px rgba(0,0,0,0.22);
         }
 
-        .settings-panel h3 {
-            margin: 0 0 8px;
-            color: #2e7d32;
-        }
-
-        .settings-note {
-            margin: 0 0 10px;
-            color: #666;
-            font-size: 13px;
-        }
+        .settings-panel h3 { margin: 0 0 8px; color: #2e7d32; }
+        .settings-note { margin: 0 0 10px; color: #666; font-size: 13px; }
 
         #commonNamesInput {
             width: 100%;
@@ -319,23 +311,9 @@
             justify-content: flex-end;
         }
 
-        .modal-btn {
-            border: none;
-            border-radius: 8px;
-            padding: 9px 14px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .modal-btn.save {
-            background: #2e7d32;
-            color: #fff;
-        }
-
-        .modal-btn.cancel {
-            background: #ececec;
-            color: #333;
-        }
+        .modal-btn { border: none; border-radius: 8px; padding: 9px 14px; cursor: pointer; font-weight: 600; }
+        .modal-btn.save { background: #2e7d32; color: #fff; }
+        .modal-btn.cancel { background: #ececec; color: #333; }
 
         .sw-update-toast {
             position: fixed;
@@ -355,46 +333,22 @@
             z-index: 1300;
         }
 
-        .sw-update-toast.open {
-            display: flex;
-        }
-
-        .sw-update-msg {
-            font-size: 14px;
-            line-height: 1.35;
-        }
-
-        .sw-update-actions {
-            display: flex;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-
-        .sw-btn {
-            border: none;
-            border-radius: 8px;
-            padding: 8px 10px;
-            font-size: 13px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .sw-btn.update {
-            background: #7ddf7d;
-            color: #123012;
-        }
-
-        .sw-btn.later {
-            background: rgba(255,255,255,0.18);
-            color: #fff;
-        }
+        .sw-update-toast.open { display: flex; }
+        .sw-update-msg { font-size: 14px; line-height: 1.35; }
+        .sw-update-actions { display: flex; gap: 8px; flex-shrink: 0; }
+        .sw-btn { border: none; border-radius: 8px; padding: 8px 10px; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .sw-btn.update { background: #7ddf7d; color: #123012; }
+        .sw-btn.later { background: rgba(255,255,255,0.18); color: #fff; }
     </style>
 </head>
 <body>
 
 <div class="top-sticky-bar">
     <div class="now-clock" id="nowClock">00:00:00</div>
-    <button class="settings-btn" id="settingsBtn" type="button" aria-label="設定常用名稱">⚙</button>
+    <div class="top-actions">
+        <button class="icon-btn" id="notifyBtn" type="button" aria-label="開啟通知" title="開啟到期通知">🔔</button>
+        <button class="icon-btn" id="settingsBtn" type="button" aria-label="設定常用名稱" title="設定">⚙</button>
+    </div>
 </div>
 
 <div class="container">
@@ -468,6 +422,7 @@
         commonNames = JSON.parse(localStorage.getItem('pikmin_common_names') || "[]");
         
         bindSettingsEvents();
+        bindNotifyEvents();
         startNowClock();
         refreshCommonNameList();
         refreshList();
@@ -549,7 +504,6 @@
             timestamp: expireTime
         });
         
-        // 只保留最近 10 筆
         if (logs.length > 10) {
             logs = logs.slice(0, 10);
         }
@@ -625,6 +579,7 @@
                 if (!timerObj.expiredLogged) {
                     timerObj.expiredLogged = true;
                     addLog(timerObj.name, timerObj.endTime);
+                    sendNotification(timerObj.name); // 觸發通知
                 }
             } else {
                 displayEl.innerText = formatSeconds(diff);
@@ -632,6 +587,63 @@
             }
         });
     }
+
+    // ================= 通知功能區塊 =================
+    function bindNotifyEvents() {
+        const notifyBtn = document.getElementById('notifyBtn');
+        if (!notifyBtn) return;
+
+        // 初始化檢查按鈕狀態
+        if ("Notification" in window && Notification.permission === "granted") {
+            notifyBtn.classList.add('granted');
+            notifyBtn.title = "通知已啟用";
+        }
+
+        notifyBtn.addEventListener('click', function() {
+            if (!("Notification" in window)) {
+                alert("抱歉，您的瀏覽器不支援桌面通知功能。");
+                return;
+            }
+
+            if (Notification.permission === "granted") {
+                alert("通知權限已經開通囉！當蘑菇到期時會提醒你。");
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        notifyBtn.classList.add('granted');
+                        notifyBtn.title = "通知已啟用";
+                        alert("授權成功！後續蘑菇到期將會發送通知。");
+                    }
+                });
+            } else {
+                alert("通知權限已被拒絕。若要開啟，請至瀏覽器設定中修改權限。");
+            }
+        });
+    }
+
+    function sendNotification(mushroomName) {
+        if (!("Notification" in window) || Notification.permission !== "granted") {
+            return;
+        }
+
+        const title = "🍄 蘑菇到期囉！";
+        const options = {
+            body: `${mushroomName} 已經重生了，快去搶吧！`,
+            icon: './pikmin-icon.svg',
+            vibrate: [200, 100, 200]
+        };
+
+        // 優先嘗試透過 Service Worker 發送推播，這在手機上體驗最好
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.ready.then(function(registration) {
+                registration.showNotification(title, options);
+            });
+        } else {
+            // 降級方案：一般瀏覽器 Notification
+            new Notification(title, options);
+        }
+    }
+    // ===============================================
 
     function bindSettingsEvents() {
         const settingsBtn = document.getElementById('settingsBtn');
@@ -676,7 +688,6 @@
     }
 
     function refreshCommonNameList() {
-        // 自訂清單使用即時資料，這裡只關閉已展開面板避免舊畫面殘留
         document.querySelectorAll('.name-suggestions.open').forEach(panel => {
             panel.classList.remove('open');
         });
