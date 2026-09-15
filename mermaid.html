@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mermaid 轉圖產生器 (多風格版)</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #f8fafc;
+            --border: #e2e8f0;
+            --panel-bg: #ffffff;
+            --text-main: #334155;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 30px;
+            height: 100vh;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-title {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* 頂部風格控制列 */
+        .style-controls {
+            display: flex;
+            gap: 15px;
+            background: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        select {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            font-size: 13px;
+            color: #1e293b;
+            outline: none;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        select:hover { border-color: var(--primary); }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 12px 20px;
+            background: #f1f5f9;
+            border-bottom: 1px solid var(--border);
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .actions { display: flex; gap: 10px; }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover { background: var(--primary-hover); }
+        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+        .btn-outline:hover { background: #e0e7ff; }
+
+        /* 編輯器區域 */
+        textarea {
+            flex: 1;
+            border: none;
+            padding: 20px;
+            font-family: 'Fira Code', Consolas, monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+            color: #1e293b;
+            background: #fafafa;
+        }
+        textarea:focus { background: #ffffff; }
+
+        /* 預覽區域 */
+        #preview-container {
+            flex: 1;
+            padding: 20px;
+            overflow: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+            background-size: 20px 20px;
+            position: relative;
+            transition: background-color 0.3s;
+        }
+
+        /* 當切換到 Dark 模式時，預覽區底色變黑 */
+        #preview-container.theme-dark {
+            background-color: #1e293b;
+            background-image: radial-gradient(#334155 1px, transparent 1px);
+        }
+
+        #mermaid-output { transition: all 0.3s; }
+
+        .error-msg {
+            color: #ef4444;
+            background: #fef2f2;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #fecaca;
+            font-size: 13px;
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            display: none;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+
+        .nav-back { margin-bottom: 16px; align-self: flex-start; display: inline-block; text-decoration: none; color: var(--primary); font-weight: bold; }
+        .nav-back:hover { color: var(--primary-hover); }
+
+        @media (max-width: 768px) {
+            body { padding: 15px; }
+            .header-title { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="nav-back">← 返回首頁</a>
+
+    <div class="header-title">
+        <h2 style="margin:0;">🧜‍♀️ Mermaid 轉圖產生器</h2>
+        
+        <!-- 新增：風格控制列 -->
+        <div class="style-controls">
+            <div class="control-group">
+                🎨 色系
+                <select id="theme-select">
+                    <option value="default">預設 (Default)</option>
+                    <option value="dark">深色 (Dark)</option>
+                    <option value="forest">森林綠 (Forest)</option>
+                    <option value="neutral">中性灰 (Neutral)</option>
+                </select>
+            </div>
+            <div class="control-group">
+                ✍️ 筆觸
+                <select id="look-select">
+                    <option value="classic">標準直線 (Classic)</option>
+                    <option value="handDrawn">手繪塗鴉 (Hand-drawn)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 左側：原始碼輸入區 -->
+        <div class="panel">
+            <div class="panel-header">
+                Mermaid 語法
+                <button class="btn btn-outline" id="btn-format">清空</button>
+            </div>
+            <textarea id="editor" spellcheck="false">
+graph TD
+    A[開始專案] --> B{有設計稿嗎?}
+    B -- 有 --> C[開始前端切版]
+    B -- 沒有 --> D[與設計師喝咖啡]
+    C --> E[串接 API]
+    D --> B
+    E --> F((上線🚀))
+            </textarea>
+        </div>
+
+        <!-- 右側：視覺化預覽區 -->
+        <div class="panel">
+            <div class="panel-header">
+                圖表預覽
+                <div class="actions">
+                    <button class="btn btn-outline" id="btn-svg">⬇️ SVG</button>
+                    <button class="btn" id="btn-png">⬇️ PNG 圖片</button>
+                </div>
+            </div>
+            <div id="preview-container">
+                <div id="mermaid-output"></div>
+                <div id="error-display" class="error-msg"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 升級至 Mermaid v11 以支援 Hand-drawn 筆觸 -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+
+        const editor = document.getElementById('editor');
+        const output = document.getElementById('mermaid-output');
+        const errorDisplay = document.getElementById('error-display');
+        const previewContainer = document.getElementById('preview-container');
+        
+        // 控制選項元件
+        const themeSelect = document.getElementById('theme-select');
+        const lookSelect = document.getElementById('look-select');
+        
+        let renderTimeout;
+
+        // 核心渲染函數
+        async function renderChart() {
+            const code = editor.value.trim();
+            if (!code) {
+                output.innerHTML = '';
+                errorDisplay.style.display = 'none';
+                return;
+            }
+
+            const currentTheme = themeSelect.value;
+            const currentLook = lookSelect.value;
+
+            // 根據是否為深色主題，切換預覽區的背景 CSS
+            if (currentTheme === 'dark') {
+                previewContainer.classList.add('theme-dark');
+            } else {
+                previewContainer.classList.remove('theme-dark');
+            }
+
+            try {
+                // 每次渲染前，根據下拉選單設定新的 Mermaid 參數
+                mermaid.initialize({ 
+                    startOnLoad: false, 
+                    theme: currentTheme,
+                    look: currentLook,
+                    securityLevel: 'loose' 
+                });
+
+                // 產生隨機 ID，強迫 Mermaid 重新繪製 (避免快取卡住舊風格)
+                const id = 'mermaid-' + Date.now();
+                const { svg } = await mermaid.render(id, code);
+                
+                output.innerHTML = svg;
+                errorDisplay.style.display = 'none'; 
+            } catch (error) {
+                // 發生語法錯誤時的處理
+                errorDisplay.textContent = error.message.split('\n')[0];
+                errorDisplay.style.display = 'block';
+            }
+        }
+
+        // 綁定輸入與選單切換事件
+        editor.addEventListener('input', () => {
+            clearTimeout(renderTimeout);
+            renderTimeout = setTimeout(renderChart, 300);
+        });
+
+        themeSelect.addEventListener('change', renderChart);
+        lookSelect.addEventListener('change', renderChart);
+
+        // 首次載入渲染
+        renderChart();
+
+        /* =========================================
+           轉檔與下載邏輯
+           ========================================= */
+
+        const btnSvg = document.getElementById('btn-svg');
+        const btnPng = document.getElementById('btn-png');
+        const btnClear = document.getElementById('btn-format');
+
+        btnClear.addEventListener('click', () => {
+            editor.value = '';
+            renderChart();
+            editor.focus();
+        });
+
+        // ⬇️ 下載 SVG
+        btnSvg.addEventListener('click', () => {
+            const svgElement = output.querySelector('svg');
+            if (!svgElement) return alert('沒有可下載的圖表！');
+
+            const serializer = new XMLSerializer();
+            let source = serializer.serializeToString(svgElement);
+            
+            if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+                source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+            }
+            source = '<?xml version="1.0" standalone="no"?>\r\n' + source;
+
+            const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
+            triggerDownload(url, `mermaid-${themeSelect.value}.svg`);
+        });
+
+        // ⬇️ 下載 PNG
+        btnPng.addEventListener('click', () => {
+            const svgElement = output.querySelector('svg');
+            if (!svgElement) return alert('沒有可下載的圖表！');
+
+            const serializer = new XMLSerializer();
+            const svgString = serializer.serializeToString(svgElement);
+            
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const DOMURL = window.URL || window.webkitURL || window;
+
+            const img = new Image();
+            const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+            const url = DOMURL.createObjectURL(svgBlob);
+
+            img.onload = function () {
+                const scale = 2; // 兩倍高畫質
+                canvas.width = img.width * scale;
+                canvas.height = img.height * scale;
+                
+                // 動態判斷背景色：Dark 主題填深藍灰，其餘填白色
+                if (themeSelect.value === 'dark') {
+                    ctx.fillStyle = "#1e293b";
+                } else {
+                    ctx.fillStyle = "#ffffff";
+                }
+                
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.scale(scale, scale);
+                ctx.drawImage(img, 0, 0);
+                DOMURL.revokeObjectURL(url);
+
+                const imgURI = canvas.toDataURL('image/png');
+                triggerDownload(imgURI, `mermaid-${themeSelect.value}.png`);
+            };
+            img.src = url;
+        });
+
+        // 輔助函數：觸發下載
+        function triggerDownload(uri, filename) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = uri;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
