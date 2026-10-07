@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="大餅乾">
+  <title>大餅乾</title>
+  <defs>
+    <radialGradient id="ck" cx="36%" cy="30%" r="78%">
+      <stop offset="0" stop-color="#dcb486"/>
+      <stop offset="0.6" stop-color="#c98b45"/>
+      <stop offset="1" stop-color="#8d6130"/>
+    </radialGradient>
+  </defs>
+  <circle cx="100" cy="100" r="92" fill="url(#ck)" stroke="#654623" stroke-width="5"/>
+  <g fill="#4c351a">
+    <circle cx="68" cy="66" r="13"/><circle cx="131" cy="78" r="11"/>
+    <circle cx="96" cy="112" r="14"/><circle cx="58" cy="128" r="10"/>
+    <circle cx="137" cy="134" r="12"/><circle cx="104" cy="44" r="8"/>
+  </g>
+  <ellipse cx="68" cy="52" rx="26" ry="16" fill="#ffffff" opacity=".18" transform="rotate(-28 68 52)"/>
+</svg>

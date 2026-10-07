@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="純前端放置遊戲：點擊製作餅乾，解鎖八種生產設備、三十多個永久升級與消耗道具，建立你的餅乾帝國。">
+    <meta name="color-scheme" content="light dark">
+    <title>餅乾帝國 | DevToolbox</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script>
+        // 在樣式套用前先決定主題，避免重新整理時閃爍
+        (function () {
+            try {
+                var raw = localStorage.getItem('tools.bakery.settings');
+                var settings = raw ? JSON.parse(raw) : null;
+                var theme = settings && settings.theme ? settings.theme : 'system';
+                if (theme === 'system') {
+                    theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
+                var motion = settings && settings.motion ? settings.motion : 'system';
+                var reduced = motion === 'reduced' || (motion === 'system' &&
+                    window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+                if (reduced) document.documentElement.classList.add('reduce-motion');
+            } catch (err) {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
+</head>
+<body>
+
+<div class="app">
+
+    <div class="topbar">
+        <a href="../ura.html" class="nav-back">← 返回 Ura</a>
+        <h1 class="title">餅乾帝國</h1>
+        <div class="topbar__actions">
+            <button type="button" class="btn btn--ghost" id="btn-help">說明</button>
+            <button type="button" class="btn btn--ghost" id="btn-settings">設定</button>
+        </div>
+    </div>
+
+    <p class="readonly-banner" id="readonly-banner" hidden>
+        偵測到另一個分頁正在進行遊戲，這個分頁只會顯示畫面、不會計算收益或寫入存檔。
+        <button type="button" class="link-btn" id="btn-takeover">改由這個分頁接管</button>
+    </p>
+
+    <div class="layout">
+
+        <!-- 左側：餅乾與狀態 -->
+        <section class="bake-panel" aria-label="製作區">
+            <div class="counters">
+                <p class="counter">
+                    <button type="button" class="counter__value" id="counter-cookies"
+                            title="點一下切換完整數值">0</button>
+                    <span class="counter__label">塊餅乾</span>
+                </p>
+                <p class="counter__sub" id="counter-rate">每秒 0 塊</p>
+            </div>
+
+            <div class="cookie-stage" id="cookie-stage">
+                <button type="button" class="cookie-button" id="cookie-button" aria-describedby="click-value">
+                    <span class="cookie-button__art" id="cookie-art" aria-hidden="true"></span>
+                    <span class="visually-hidden">製作餅乾</span>
+                </button>
+                <div class="floaters" id="floaters" aria-hidden="true"></div>
+                <button type="button" class="golden" id="golden-cookie" hidden>
+                    <span class="golden__art" id="golden-art" aria-hidden="true"></span>
+                    <span class="visually-hidden">點擊黃金餅乾領取獎勵</span>
+                </button>
+            </div>
+
+            <p class="click-value" id="click-value">每次點擊 1 塊</p>
+
+            <ul class="buff-bar" id="buff-bar" aria-label="生效中的限時效果"></ul>
+
+            <dl class="mini-stats">
+                <div><dt>本輪累積</dt><dd id="stat-baked">0</dd></div>
+                <div><dt>歷史累積</dt><dd id="stat-all-time">0</dd></div>
+                <div><dt>點擊次數</dt><dd id="stat-clicks">0</dd></div>
+                <div><dt>黃金餅乾</dt><dd id="stat-golden">0</dd></div>
+            </dl>
+
+            <section class="goals" aria-labelledby="goals-title">
+                <h2 class="goals__title" id="goals-title">接下來的目標</h2>
+                <ul class="goals__list" id="goals-list"></ul>
+            </section>
+        </section>
+
+        <!-- 右側：商店與其他分頁 -->
+        <section class="store" aria-label="商店">
+            <div class="tabs" role="tablist" aria-label="商店分頁">
+                <button type="button" class="tab" role="tab" id="tab-buildings" aria-controls="panel-buildings" aria-selected="true">設備</button>
+                <button type="button" class="tab" role="tab" id="tab-upgrades" aria-controls="panel-upgrades" aria-selected="false">升級<span class="badge" id="badge-upgrades" hidden>0</span></button>
+                <button type="button" class="tab" role="tab" id="tab-items" aria-controls="panel-items" aria-selected="false">道具<span class="badge" id="badge-items" hidden>0</span></button>
+                <button type="button" class="tab" role="tab" id="tab-achievements" aria-controls="panel-achievements" aria-selected="false">成就</button>
+            </div>
+
+            <div class="panel" role="tabpanel" id="panel-buildings" aria-labelledby="tab-buildings">
+                <div class="buy-mode" role="group" aria-label="購買數量">
+                    <span class="buy-mode__label">購買數量</span>
+                    <button type="button" class="chip" data-buy-mode="1" aria-pressed="true">1</button>
+                    <button type="button" class="chip" data-buy-mode="10" aria-pressed="false">10</button>
+                    <button type="button" class="chip" data-buy-mode="max" aria-pressed="false">最大</button>
+                </div>
+                <ul class="shop-list" id="building-list"></ul>
+            </div>
+
+            <div class="panel" role="tabpanel" id="panel-upgrades" aria-labelledby="tab-upgrades" hidden>
+                <p class="panel__note">升級只能購買一次，效果永久生效。</p>
+                <ul class="upgrade-list" id="upgrade-list"></ul>
+                <h3 class="panel__sub">已購買</h3>
+                <ul class="upgrade-list upgrade-list--owned" id="upgrade-owned"></ul>
+            </div>
+
+            <div class="panel" role="tabpanel" id="panel-items" aria-labelledby="tab-items" hidden>
+                <p class="panel__note">道具來自成就與黃金餅乾，由你決定什麼時候用。同類限時道具重複使用只會延長時間。</p>
+                <ul class="item-list" id="item-list"></ul>
+            </div>
+
+            <div class="panel" role="tabpanel" id="panel-achievements" aria-labelledby="tab-achievements" hidden>
+                <p class="panel__note"><span id="achievement-count">0</span> / <span id="achievement-total">0</span> 已達成。部分成就會給一次性道具獎勵。</p>
+                <ul class="achievement-list" id="achievement-list"></ul>
+            </div>
+        </section>
+    </div>
+</div>
+
+<div class="visually-hidden" id="live-region" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<!-- 說明 -->
+<dialog id="dlg-help" aria-labelledby="help-title">
+    <div class="dialog__body">
+        <h2 id="help-title">玩法說明</h2>
+        <ul>
+            <li>點擊中央的大餅乾製作餅乾，初始每次 1 塊。</li>
+            <li>買設備讓它們自動生產；同類設備每多買一個就會變貴。</li>
+            <li>升級只能買一次，效果永久。搭配類升級會依「設備數量」互相加成。</li>
+            <li>道具由成就與黃金餅乾取得，放在背包裡，由你決定使用時機。</li>
+            <li>黃金餅乾偶爾出現，點到可得額外餅乾或道具；不點也不會影響正常發展。</li>
+        </ul>
+        <h3 class="dialog__sub">限時效果規則</h3>
+        <ul>
+            <li>不同類型的效果可以同時生效，倍率相乘。</li>
+            <li>同一類型重複使用只會<strong>延長時間</strong>，不會重複乘倍率，而且各有時間上限。</li>
+            <li>限時採購券只影響結帳金額，不會改變設備數量或價格成長進度。</li>
+            <li>時間砂糖以<strong>未含限時效果</strong>的產量結算，不會推進任何計時器。</li>
+        </ul>
+        <h3 class="dialog__sub">離線收益</h3>
+        <p id="help-offline">—</p>
+        <p>切到背景分頁、關閉頁面或當機，判斷方式完全相同：每一段時間只會結算一次，不可能重複領取。</p>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn btn--primary" data-close-dialog>知道了</button>
+    </div>
+</dialog>
+
+<!-- 設定 -->
+<dialog id="dlg-settings" aria-labelledby="settings-title">
+    <div class="dialog__body">
+        <h2 id="settings-title">設定</h2>
+
+        <fieldset>
+            <legend>外觀</legend>
+            <div class="radio-row">
+                <label><input type="radio" name="theme" value="system" checked> 跟隨系統</label>
+                <label><input type="radio" name="theme" value="light"> 淺色</label>
+                <label><input type="radio" name="theme" value="dark"> 深色</label>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>動畫</legend>
+            <div class="radio-row">
+                <label><input type="radio" name="motion" value="system" checked> 跟隨系統</label>
+                <label><input type="radio" name="motion" value="full"> 完整</label>
+                <label><input type="radio" name="motion" value="reduced"> 減少</label>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>數字顯示</legend>
+            <div class="radio-row">
+                <label><input type="radio" name="numberStyle" value="short" checked> 縮寫</label>
+                <label><input type="radio" name="numberStyle" value="full"> 完整</label>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>存檔</legend>
+            <p class="hint" id="save-status">—</p>
+            <div class="button-row">
+                <button type="button" class="btn" id="btn-save">立即存檔</button>
+                <button type="button" class="btn" id="btn-export">匯出</button>
+                <button type="button" class="btn" id="btn-import">匯入</button>
+                <button type="button" class="btn btn--danger" id="btn-clear">清除紀錄…</button>
+            </div>
+        </fieldset>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn btn--primary" data-close-dialog>關閉</button>
+    </div>
+</dialog>
+
+<!-- 匯出 -->
+<dialog id="dlg-export" aria-labelledby="export-title">
+    <div class="dialog__body">
+        <h2 id="export-title">匯出存檔</h2>
+        <p>複製下面這串文字保存。之後貼回「匯入」就能還原。</p>
+        <textarea id="export-text" rows="6" readonly aria-label="存檔字串"></textarea>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn" id="btn-copy-export">複製</button>
+        <button type="button" class="btn btn--primary" data-close-dialog>關閉</button>
+    </div>
+</dialog>
+
+<!-- 匯入 -->
+<dialog id="dlg-import" aria-labelledby="import-title">
+    <div class="dialog__body">
+        <h2 id="import-title">匯入存檔</h2>
+        <p>貼上先前匯出的字串。資料會先驗證，失敗不會動到目前的存檔。</p>
+        <textarea id="import-text" rows="6" aria-label="要匯入的存檔字串" placeholder="BAKERY1:..."></textarea>
+        <p class="error-text" id="import-error" hidden></p>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn" data-close-dialog>取消</button>
+        <button type="button" class="btn btn--primary" id="btn-import-confirm">匯入並覆寫</button>
+    </div>
+</dialog>
+
+<!-- 確認 -->
+<dialog id="dlg-confirm" aria-labelledby="confirm-title">
+    <div class="dialog__body">
+        <h2 id="confirm-title">確認</h2>
+        <p id="confirm-text"></p>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn" data-close-dialog>取消</button>
+        <button type="button" class="btn btn--primary" id="confirm-ok">確定</button>
+    </div>
+</dialog>
+
+<!-- 離線結算 -->
+<dialog id="dlg-offline" aria-labelledby="offline-title">
+    <div class="dialog__body">
+        <h2 id="offline-title">歡迎回來</h2>
+        <p id="offline-text"></p>
+        <p class="hint" id="offline-note"></p>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn btn--primary" data-close-dialog>收下</button>
+    </div>
+</dialog>
+
+<script src="js/format.js"></script>
+<script src="js/config.js"></script>
+<script src="js/content.js"></script>
+<script src="js/economy.js"></script>
+<script src="js/game.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/images.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

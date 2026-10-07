@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="黃金餅乾">
+  <title>黃金餅乾</title>
+  <defs>
+    <radialGradient id="gc" cx="34%" cy="28%" r="80%">
+      <stop offset="0" stop-color="#fff3c4"/>
+      <stop offset="0.55" stop-color="#e8b320"/>
+      <stop offset="1" stop-color="#977415"/>
+    </radialGradient>
+  </defs>
+  <circle cx="60" cy="60" r="52" fill="url(#gc)" stroke="#745a10" stroke-width="4"/>
+  <g fill="#68510e" opacity=".75">
+    <circle cx="44" cy="44" r="7"/><circle cx="78" cy="52" r="6"/><circle cx="58" cy="76" r="8"/>
+  </g>
+  <path d="M60 6 L66 24 L84 20 L72 34 L60 6Z" fill="#fff6d0" opacity=".8"/>
+</svg>

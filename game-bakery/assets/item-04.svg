@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="時間砂糖">
+  <title>時間砂糖</title>
+  <defs>
+    <linearGradient id="i3" x1="20%" y1="8%" x2="80%" y2="96%">
+      <stop offset="0" stop-color="#a594da"/>
+      <stop offset="0.55" stop-color="#7b61c9"/>
+      <stop offset="1" stop-color="#5b4895"/>
+    </linearGradient>
+  </defs>
+  <rect x="6" y="6" width="108" height="108" rx="24" fill="url(#i3)" stroke="#2f254c" stroke-width="3"/>
+  <text x="60" y="58" text-anchor="middle" font-family="'Segoe UI','PingFang TC','Microsoft JhengHei',system-ui,sans-serif" font-size="40" font-weight="700"
+        fill="#ffffff" opacity=".95">★</text>
+  <rect x="14" y="80" width="92" height="24" rx="12" fill="#ffffff" opacity=".88"/>
+  <text x="60" y="96.5" text-anchor="middle" font-family="'Segoe UI','PingFang TC','Microsoft JhengHei',system-ui,sans-serif" font-size="13" font-weight="700"
+        fill="#2f254c">時間砂糖</text>
+</svg>
