@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="純前端果實合成遊戲，使用 Matter.js 物理引擎，支援桌機滑鼠鍵盤與手機拖曳操作。">
+    <title>果實合成 | DevToolbox</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app">
+
+    <div class="topbar">
+        <a href="../ura.html" class="nav-back">← 返回 Ura</a>
+        <div class="topbar__actions">
+            <button type="button" class="btn btn--ghost" id="btn-index">合成圖鑑</button>
+            <button type="button" class="btn btn--ghost" id="btn-help">操作說明</button>
+        </div>
+    </div>
+
+    <header class="title-row">
+        <h1 class="title">果實合成</h1>
+        <p class="tagline">相同的果實相碰就會合成下一級</p>
+    </header>
+
+    <div class="layout">
+
+        <div class="board-column">
+            <div class="board-wrap">
+                <canvas id="board" width="480" height="780" aria-label="遊戲畫面：果實容器。畫面資訊同時顯示在下方的分數與狀態欄位。"></canvas>
+
+                <p class="danger-banner" id="danger-banner" hidden>⚠ 快要超過警戒線了</p>
+
+                <div class="board__overlay" id="board-overlay" role="group" aria-labelledby="overlay-title" hidden>
+                    <h2 id="overlay-title">已暫停</h2>
+                    <p id="overlay-text"></p>
+                    <div class="overlay-actions" id="overlay-actions"></div>
+                </div>
+            </div>
+
+            <p class="hint">
+                桌機：移動滑鼠定位、點擊投放，或用 <kbd>←</kbd><kbd>→</kbd> 移動、<kbd>Space</kbd> 投放、<kbd>P</kbd> 暫停。
+                手機：按住拖曳定位，放開投放。
+            </p>
+        </div>
+
+        <aside class="side">
+            <dl class="scoreboard">
+                <div class="stat stat--main">
+                    <dt>分數</dt>
+                    <dd id="stat-score">0</dd>
+                </div>
+                <div class="stat">
+                    <dt>最高分</dt>
+                    <dd id="stat-best">0</dd>
+                </div>
+                <div class="stat">
+                    <dt>合成次數</dt>
+                    <dd id="stat-merges">0</dd>
+                </div>
+                <div class="stat">
+                    <dt>狀態</dt>
+                    <dd id="game-status">進行中</dd>
+                </div>
+            </dl>
+
+            <div class="panel">
+                <h2 class="panel__title">目前這顆</h2>
+                <p class="panel__value" id="current-name">莓果（等級 1）</p>
+            </div>
+
+            <div class="side__row">
+                <div class="panel">
+                    <h2 class="panel__title">下一顆</h2>
+                    <div class="next-row">
+                        <span class="swatch" id="next-swatch" aria-hidden="true">1</span>
+                        <p class="panel__value" id="next-name">莓果（等級 1）</p>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button type="button" class="btn btn--primary" id="btn-pause" aria-pressed="false">暫停</button>
+                    <button type="button" class="btn" id="btn-restart">重新開始</button>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+</div>
+
+<div class="visually-hidden" id="live-region" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<!-- 操作說明 -->
+<dialog id="dlg-help" aria-labelledby="help-title">
+    <div class="dialog__body">
+        <h2 id="help-title">操作說明</h2>
+        <ul>
+            <li>把果實投進容器，<strong>兩顆相同等級的果實相碰就會合成下一級</strong>，並得到分數。</li>
+            <li>投放的果實隨機從前 5 級中挑選，右側可以看到下一顆是什麼。</li>
+            <li>合成可以連鎖：新產生的果實如果又碰到同級，會繼續往上合成。</li>
+            <li><strong>兩顆最高級的大西瓜相碰時，兩顆會一起消除並額外得分，不會再產生更高等級。</strong></li>
+            <li>每次投放後有短暫冷卻，冷卻中、暫停中、對話框開啟時都不會投放。</li>
+            <li>已經落下的果實，頂端持續超過警戒線 2 秒就會結束遊戲；剛投放的果實有短暫寬限時間。</li>
+            <li>切換到其他分頁會自動暫停，回來後需要自己按「繼續」。</li>
+        </ul>
+        <h3 class="dialog__sub">控制方式</h3>
+        <ul>
+            <li>滑鼠：移動定位、點擊投放。</li>
+            <li>鍵盤：<kbd>←</kbd><kbd>→</kbd> 移動（按住 <kbd>Shift</kbd> 加速）、<kbd>Space</kbd> 或 <kbd>Enter</kbd> 投放、<kbd>P</kbd> 暫停、<kbd>Esc</kbd> 關閉對話框。</li>
+            <li>觸控：按住拖曳定位，放開投放；手勢被取消或多指觸控時不會重複投放。</li>
+        </ul>
+
+        <fieldset class="settings">
+            <legend class="dialog__sub">顯示設定</legend>
+            <p>減少動畫會關掉合成特效與粒子，物理移動不受影響。</p>
+            <div class="radio-row">
+                <label><input type="radio" name="motion" value="system" checked> 跟隨系統</label>
+                <label><input type="radio" name="motion" value="full"> 完整動畫</label>
+                <label><input type="radio" name="motion" value="reduced"> 減少動畫</label>
+            </div>
+        </fieldset>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn btn--primary" data-close-dialog>知道了</button>
+    </div>
+</dialog>
+
+<!-- 合成圖鑑 -->
+<dialog id="dlg-index" aria-labelledby="index-title">
+    <div class="dialog__body">
+        <h2 id="index-title">合成圖鑑</h2>
+        <p>由小到大共 11 級。每一級都標示等級數字，不只靠顏色分辨。</p>
+        <ol class="index-list" id="index-list"></ol>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn btn--primary" data-close-dialog>關閉</button>
+    </div>
+</dialog>
+
+<!-- 確認 -->
+<dialog id="dlg-confirm" aria-labelledby="confirm-title">
+    <div class="dialog__body">
+        <h2 id="confirm-title">確認</h2>
+        <p id="confirm-text"></p>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn" data-close-dialog>取消</button>
+        <button type="button" class="btn btn--primary" id="confirm-ok">確定</button>
+    </div>
+</dialog>
+
+<script src="vendor/matter-js/matter.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/images.js"></script>
+<script src="js/world.js"></script>
+<script src="js/render.js"></script>
+<script src="js/input.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

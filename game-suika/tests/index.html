@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>果實合成 測試 | DevToolbox</title>
+    <style>
+        :root { color-scheme: light dark; }
+        body {
+            font-family: "Segoe UI", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+            margin: 0; padding: 24px 16px; line-height: 1.6;
+            background: #fdf7ee; color: #3b2f22;
+        }
+        main { max-width: 780px; margin: 0 auto; }
+        h1 { font-size: 1.5rem; margin: 0 0 4px; }
+        .back { color: #c2631c; font-weight: 700; text-decoration: none; }
+        .back:hover { text-decoration: underline; }
+        #summary { margin: 16px 0; padding: 12px 14px; border-radius: 10px; font-weight: 700; background: #eee3d2; }
+        #summary.pass { background: #dcf3d8; color: #1d4a1d; }
+        #summary.fail { background: #fbdcd8; color: #7a1d14; }
+        ol { padding-left: 1.4em; margin: 0; }
+        li { padding: 3px 0; }
+        li.pass::marker { color: #2e7d32; }
+        li.fail { color: #b3261e; }
+        li pre {
+            margin: 4px 0 8px; padding: 8px 10px; background: #fff1ef;
+            border-left: 3px solid #b3261e; overflow-x: auto; font-size: .82rem;
+        }
+        .note { color: #7a6a56; font-size: .88rem; }
+        @media (prefers-color-scheme: dark) {
+            body { background: #17140f; color: #f1e7d8; }
+            #summary { background: #241f18; }
+            #summary.pass { background: #1e3d1e; color: #d8f0d4; }
+            #summary.fail { background: #4a1a14; color: #ffd9d4; }
+            li pre { background: #2e1714; }
+            .note { color: #b4a68f; }
+        }
+    </style>
+</head>
+<body>
+<main>
+    <a class="back" href="../index.html">← 返回遊戲</a>
+    <h1>果實合成 規則測試</h1>
+    <p class="note">與 <code>node tests/run-node.js</code> 執行同一份測試案例，直接驅動真實的 Matter.js 物理世界。</p>
+    <div id="summary">執行中…</div>
+    <ol id="results"></ol>
+</main>
+
+<script src="../vendor/matter-js/matter.min.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/storage.js"></script>
+<script src="../js/images.js"></script>
+<script src="../js/world.js"></script>
+<script src="suite.js"></script>
+<script>
+    (function () {
+        'use strict';
+        var list = document.getElementById('results');
+        var summary = document.getElementById('summary');
+        var passed = 0;
+        var failed = 0;
+
+        function runOne(item) {
+            var li = document.createElement('li');
+            li.textContent = item.name;
+            list.appendChild(li);
+            return Promise.resolve()
+                .then(function () { return item.fn(); })
+                .then(function () {
+                    passed++;
+                    li.className = 'pass';
+                })
+                .catch(function (error) {
+                    failed++;
+                    li.className = 'fail';
+                    var pre = document.createElement('pre');
+                    pre.textContent = (error && error.message) || String(error);
+                    li.appendChild(pre);
+                });
+        }
+
+        window.SuikaSuite.tests.reduce(function (chain, item) {
+            return chain.then(function () { return runOne(item); });
+        }, Promise.resolve()).then(function () {
+            summary.className = failed === 0 ? 'pass' : 'fail';
+            summary.textContent = '共 ' + (passed + failed) + ' 項：通過 ' + passed + '，失敗 ' + failed;
+            window.__testResult = { passed: passed, failed: failed };
+        });
+    })();
+</script>
+</body>
+</html>
