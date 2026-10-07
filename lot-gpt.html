@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>🎉 2000萬超級紅包刮刮樂 🎉</title>
+<style>
+body { font-family:sans-serif; background:#222; color:#fff; display:flex; flex-direction:column; align-items:center; }
+h1 { margin:20px 0; }
+.card { position: relative; margin: 10px; width: 420px; }
+canvas { border:2px solid #444; display:block; margin-bottom:10px; }
+.battle-row { opacity:0; transform:translateY(10px); transition:all 0.4s; padding:5px; margin:2px 0; border:1px solid #555; text-align:center; }
+.battle-row.show { opacity:1; transform:translateY(0); }
+.battle-row.win { background:rgba(255,215,0,0.2); }
+#total { font-size:32px; margin-top:20px; opacity:0; transition:all 0.6s; text-align:center; }
+.almost { animation:pulseGlow 0.8s ease; }
+@keyframes pulseGlow { 0% { box-shadow:0 0 0px gold;} 50% { box-shadow:0 0 20px gold;} 100% { box-shadow:0 0 0px gold;} }
+.jackpot { animation:jackpotFlash 0.5s infinite alternate; }
+@keyframes jackpotFlash { from { box-shadow:0 0 20px red;} to { box-shadow:0 0 40px gold;} }
+.shake { animation:shake 0.4s; }
+@keyframes shake { 0%{transform:translate(0,0);} 25%{transform:translate(-5px,5px);} 50%{transform:translate(5px,-5px);} 75%{transform:translate(-5px,-5px);} 100%{transform:translate(0,0);} }
+</style>
+</head>
+<body>
+<h1>🎉 2000萬超級紅包刮刮樂 🎉</h1>
+
+<div class="card">
+  <!-- 區域 1~3：普通刮刮區 -->
+  <canvas id="area1" width="400" height="80"></canvas> <!-- 區域 1：三個相同金額 -->
+  <canvas id="area2" width="400" height="80"></canvas> <!-- 區域 2：任一號碼對中幸運號碼 -->
+  <canvas id="area3" width="400" height="80"></canvas> <!-- 區域 3：刮出一個金額 -->
+
+  <!-- 區域 4~7：更多玩法 -->
+  <canvas id="area4" width="400" height="80"></canvas> <!-- 區域 4：三個相同金額 -->
+  <canvas id="area5" width="400" height="160"></canvas> <!-- 區域 5：比大小區，每列一局 -->
+  <canvas id="area6" width="400" height="80"></canvas> <!-- 區域 6：刮出兩個相同金額 -->
+  <canvas id="area7" width="400" height="80"></canvas> <!-- 區域 7：符號對中幸運符號 -->
+  <canvas id="area8" width="400" height="80"></canvas> <!-- 區域 8：刮出一個金額 -->
+
+  <!-- battle 區（比大小逐行 reveal） -->
+  <div id="battle">
+    <div class="battle-row" data-row="0">第1局</div>
+    <div class="battle-row" data-row="1">第2局</div>
+    <div class="battle-row" data-row="2">第3局</div>
+    <div class="battle-row" data-row="3">第4局</div>
+  </div>
+</div>
+
+<div id="total">總獎金: $0</div>
+
+<script>
+/* ===========================
+  遊戲狀態管理
+=========================== */
+const GameSession = {
+  jackpotGiven: false, // 當晚必爆
+  total: 0,
+};
+
+/* ===========================
+  ScratchArea 類別：格子追蹤法 + 差一點動畫
+=========================== */
+class ScratchArea {
+  constructor(canvas, threshold=0.75) {
+    this.canvas=canvas;
+    this.ctx=canvas.getContext("2d");
+    this.threshold=threshold; this.revealed=false;
+    this.almostTriggered=false; this.almostThreshold=0.4;
+    this.GRID_SIZE=20; this.grid=[]; this.totalCells=0; this.clearedCells=0;
+    this.init(); this.bindEvents();
+  }
+  init(){
+    const cols=Math.ceil(this.canvas.width/this.GRID_SIZE);
+    const rows=Math.ceil(this.canvas.height/this.GRID_SIZE);
+    this.grid=new Array(rows).fill(null).map(()=>new Array(cols).fill(false));
+    this.totalCells=rows*cols; this.clearedCells=0;
+    this.ctx.fillStyle="#C9A227"; this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
+  }
+  bindEvents(){
+    let isDrawing=false;
+    this.canvas.addEventListener("mousedown",()=>isDrawing=true);
+    this.canvas.addEventListener("mouseup",()=>isDrawing=false);
+    this.canvas.addEventListener("mousemove",(e)=>{if(isDrawing) this.scratch(e);});
+  }
+  scratch(e){
+    const rect=this.canvas.getBoundingClientRect();
+    const x=e.clientX-rect.left;
+    const y=e.clientY-rect.top;
+    this.ctx.globalCompositeOperation="destination-out";
+    this.ctx.beginPath(); this.ctx.arc(x,y,25,0,Math.PI*2); this.ctx.fill();
+    this.markGridCircle(x,y,25);
+    this.checkReveal();
+  }
+  markGridCircle(x,y,r){
+    const startCol=Math.floor((x-r)/this.GRID_SIZE);
+    const endCol=Math.floor((x+r)/this.GRID_SIZE);
+    const startRow=Math.floor((y-r)/this.GRID_SIZE);
+    const endRow=Math.floor((y+r)/this.GRID_SIZE);
+    for(let row=startRow;row<=endRow;row++){
+      for(let col=startCol;col<=endCol;col++){
+        if(row>=0&&col>=0&&row<this.grid.length&&col<this.grid[0].length&&!this.grid[row][col]){
+          this.grid[row][col]=true; this.clearedCells++;
+        }
+      }
+    }
+  }
+  checkReveal(){
+    const percent=this.clearedCells/this.totalCells;
+    if(percent>=this.almostThreshold&&!this.almostTriggered){
+      this.almostTriggered=true; this.playAlmostAnimation();
+    }
+    if(percent>=this.threshold&&!this.revealed){
+      this.revealed=true;
+      setTimeout(()=>this.reveal(),300);
+    }
+  }
+  playAlmostAnimation(){
+    const el=this.canvas.parentElement; el.classList.add("almost");
+    setTimeout(()=>el.classList.remove("almost"),800);
+  }
+  reveal(){
+    this.canvas.style.transition="opacity 0.4s"; this.canvas.style.opacity=0;
+    GameController.notifyAreaRevealed();
+  }
+}
+
+/* ===========================
+  BattleArea 類別：比大小區逐行 reveal
+=========================== */
+class BattleArea {
+  constructor(rows){
+    this.rows=rows;
+  }
+  reveal(){
+    let i=0;
+    const revealNext=()=>{
+      if(i>=this.rows.length){ GameController.notifyAreaRevealed(); return; }
+      this.revealRow(i); i++;
+      setTimeout(revealNext,400);
+    };
+    revealNext();
+  }
+  revealRow(index){
+    const rowEl=document.querySelector(`.battle-row[data-row="${index}"]`);
+    rowEl.classList.add("show");
+    const result={win:Math.random()>0.5}; // 隨機勝負示意
+    if(result.win) rowEl.classList.add("win");
+  }
+}
+
+/* ===========================
+  GameController 管理多區 reveal
+=========================== */
+const GameController = {
+  areas:[], revealedCount:0,
+  register(area){this.areas.push(area);},
+  notifyAreaRevealed(){
+    this.revealedCount++;
+    if(this.revealedCount===this.areas.length) revealTotal();
+  }
+};
+
+/* ===========================
+  最後總獎金 reveal + 爆獎效果
+=========================== */
+function revealTotal(){
+  const totalEl=document.getElementById("total");
+  GameSession.total=100000; // 當晚必爆
+  totalEl.textContent=`總獎金: $${GameSession.total}`;
+  totalEl.style.opacity=1;
+  document.body.classList.add("jackpot");
+  screenShake(800);
+  setTimeout(()=>document.body.classList.remove("jackpot"),3000);
+}
+
+/* ===========================
+  畫面震動
+=========================== */
+function screenShake(duration=800){
+  const el=document.body; el.classList.add("shake");
+  setTimeout(()=>el.classList.remove("shake"),duration);
+}
+
+/* ===========================
+  初始化遊戲區域
+=========================== */
+const area1=new ScratchArea(document.getElementById("area1"),0.75);
+const area2=new ScratchArea(document.getElementById("area2"),0.75);
+const area3=new ScratchArea(document.getElementById("area3"),0.75);
+const area4=new ScratchArea(document.getElementById("area4"),0.75);
+const area5=new ScratchArea(document.getElementById("area5"),0.75);
+const area6=new ScratchArea(document.getElementById("area6"),0.75);
+const area7=new ScratchArea(document.getElementById("area7"),0.75);
+const area8=new ScratchArea(document.getElementById("area8"),0.75);
+
+// 註冊到 GameController
+[area1,area2,area3,area4,area5,area6,area7,area8].forEach(a=>GameController.register(a));
+
+// Battle 區
+const battle=new BattleArea([0,1,2,3]);
+GameController.register(battle);
+</script>
+</body>
+</html>

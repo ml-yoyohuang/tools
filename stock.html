@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台股資產管理 & 定期定額試算</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-50 min-h-screen pb-12">
+    <div id="app" class="max-w-7xl mx-auto px-4 py-8">
+        
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-black text-slate-800 tracking-tight">Investment <span class="text-blue-600">Pro</span></h1>
+                <p class="text-slate-500 text-sm">庫存資產 + 定期定額複利模型</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <span v-if="loading" class="text-xs bg-amber-100 text-amber-600 px-3 py-1 rounded-full animate-pulse font-bold">API 同步中...</span>
+                <button @click="resetData" class="text-xs text-slate-400 hover:text-red-500 underline">重置所有設定</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-6">
+            
+            <div class="col-span-12 xl:col-span-8">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden text-sm">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-800 text-white text-[10px] uppercase tracking-wider">
+                                <th class="p-4">標的/現價</th>
+                                <th class="p-4 text-center">目前庫存(張)</th>
+                                <th class="p-4 text-center">每月扣款(千)</th>
+                                <th class="p-4 text-center">每月次數</th>
+                                <th class="p-4 text-center">預期報酬</th>
+                                <th class="p-4 text-right">月投小計</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr v-for="stock in stocks" :key="stock.id" class="hover:bg-slate-50 transition-colors">
+                                <td class="p-4">
+                                    <div class="font-bold text-slate-700">{{ stock.id }}</div>
+                                    <div class="text-[11px] text-blue-500 font-mono tracking-tighter">
+                                        {{ stock.price ? `$${stock.price}` : '...' }}
+                                    </div>
+                                </td>
+                                <td class="p-4 text-center">
+                                    <input type="number" v-model.number="stock.holdings" step="0.1" class="w-16 border rounded px-1 text-center py-1 focus:ring-2 focus:ring-blue-500 outline-none bg-blue-50/50">
+                                </td>
+                                <td class="p-4 text-center">
+                                    <input type="number" v-model.number="stock.amount" class="w-14 border rounded px-1 text-center py-1 focus:ring-2 focus:ring-blue-500 outline-none">
+                                </td>
+                                <td class="p-4 text-center">
+                                    <input type="number" v-model.number="stock.frequency" min="0" class="w-10 border rounded px-1 text-center py-1 outline-none">
+                                </td>
+                                <td class="p-4 text-center">
+                                    <input type="number" v-model.number="stock.rate" step="0.5" class="w-10 text-center text-emerald-600 font-bold bg-transparent tracking-tighter">%
+                                </td>
+                                <td class="p-4 text-right font-mono font-bold text-slate-600 italic">
+                                    {{ (stock.amount * stock.frequency).toLocaleString() }}k
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-span-12 xl:col-span-4 space-y-6">
+                <div class="bg-slate-800 p-6 rounded-3xl text-white shadow-xl shadow-slate-200 relative overflow-hidden">
+                    <div class="relative z-10">
+                        <p class="text-slate-400 text-xs font-medium">預估 10 年後總價值 (含現有庫存)</p>
+                        <h2 class="text-4xl font-black mt-2 tracking-tight text-blue-400">
+                            NT$ {{ (calculateFutureValue(10)/10000).toFixed(0) }} <span class="text-lg">萬</span>
+                        </h2>
+                        <div class="mt-4 flex gap-4 text-xs">
+                            <div class="bg-slate-700 px-3 py-2 rounded-lg">
+                                <span class="block text-slate-400">目前庫存市值</span>
+                                <span class="font-bold text-white">{{ (currentInventoryValue/10000).toFixed(1) }} 萬</span>
+                            </div>
+                            <div class="bg-slate-700 px-3 py-2 rounded-lg">
+                                <span class="block text-slate-400">月投入總額</span>
+                                <span class="font-bold text-white">{{ (totalMonthlyAmount/1000).toFixed(1) }} K</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="text-xs font-bold text-slate-500 mb-4 uppercase">資產增長曲線 (複利效應)</h3>
+                    <div class="h-[220px]">
+                        <canvas id="growthChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="text-xs font-bold text-slate-500 mb-4 uppercase">年度預計領息清單</h3>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div v-for="m in 12" :key="m" 
+                             :class="['p-3 rounded-xl border transition-all min-h-[70px]', 
+                             getDividendStocks(m).length > 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-transparent opacity-40']">
+                            <div class="text-xs font-black text-slate-400 mb-1 border-b border-slate-200 pb-1">{{ m }}月</div>
+                            <div class="flex flex-wrap gap-1">
+                                <span v-for="code in getDividendStocks(m)" :key="code" 
+                                      class="text-[9px] font-bold bg-emerald-600 text-white px-1 rounded shadow-sm">
+                                    {{ code }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted, watch } = Vue;
+
+        createApp({
+            setup() {
+                const defaultStocks = [
+                    { id: '0050', desc: '元大台灣50', holdings: 0, amount: 0, frequency: 1, rate: 8.5, months: [1, 7], price: null },
+                    { id: '0056', desc: '元大高股息', holdings: 0, amount: 0, frequency: 1, rate: 6.0, months: [1, 4, 7, 10], price: null },
+                    { id: '006208', desc: '富邦台50', holdings: 0, amount: 0, frequency: 1, rate: 8.5, months: [1, 7], price: null },
+                    { id: '00713', desc: '元大低波高息', holdings: 0, amount: 0, frequency: 1, rate: 7.5, months: [3, 6, 9, 12], price: null },
+                    { id: '00830', desc: '國泰費半', holdings: 0, amount: 0, frequency: 1, rate: 12.0, months: [1], price: null },
+                    { id: '00850', desc: '元大臺灣ESG', holdings: 0, amount: 0, frequency: 1, rate: 8.5, months: [2, 5, 8, 11], price: null },
+                    { id: '00878', desc: '國泰永續高股息', holdings: 0, amount: 0, frequency: 1, rate: 6.0, months: [2, 5, 8, 11], price: null },
+                    { id: '00881', desc: '國泰台灣5G+', holdings: 0, amount: 0, frequency: 1, rate: 9.0, months: [2, 8], price: null },
+                    { id: '00895', desc: '富邦未來車', holdings: 0, amount: 0, frequency: 1, rate: 11.0, months: [], price: null },
+                    { id: '2330', desc: '台積電', holdings: 0, amount: 0, frequency: 1, rate: 12.0, months: [3, 6, 9, 12], price: null }
+                ];
+
+                const savedData = localStorage.getItem('tw_stock_pro_calc');
+                const stocks = ref(savedData ? JSON.parse(savedData) : defaultStocks);
+                const loading = ref(false);
+                let chart = null;
+
+                const fetchPrices = async () => {
+                    loading.value = true;
+                    try {
+                        const tasks = stocks.value.map(s => {
+                            const params = new URLSearchParams({
+                                dataset: "TaiwanStockPrice",
+                                data_id: s.id,
+                                start_date: new Date(Date.now() - 345600000).toISOString().split('T')[0]
+                            });
+                            return fetch(`https://api.finmindtrade.com/api/v4/data?${params}`).then(r => r.json());
+                        });
+                        const results = await Promise.all(tasks);
+                        results.forEach((res, i) => {
+                            if (res.data && res.data.length > 0) {
+                                stocks.value[i].price = res.data[res.data.length - 1].close;
+                            }
+                        });
+                    } catch (e) { console.error(e); } finally { loading.value = false; }
+                };
+
+                const currentInventoryValue = computed(() => {
+                    return stocks.value.reduce((sum, s) => sum + (s.holdings * 1000 * (s.price || 0)), 0);
+                });
+
+                const totalMonthlyAmount = computed(() => {
+                    return stocks.value.reduce((sum, s) => sum + (s.amount * s.frequency * 1000), 0);
+                });
+
+                const calculateFutureValue = (years) => {
+                    let total = 0;
+                    stocks.value.forEach(s => {
+                        // 現有資產複利
+                        const startVal = s.holdings * 1000 * (s.price || 0);
+                        const r_annual = s.rate / 100;
+                        const futureInventory = startVal * Math.pow(1 + r_annual, years);
+                        
+                        // 定期定額複利
+                        const p = s.amount * s.frequency * 1000;
+                        let futureSIP = 0;
+                        if (p > 0) {
+                            const r_monthly = r_annual / 12;
+                            const n_months = years * 12;
+                            futureSIP = p * (Math.pow(1 + r_monthly, n_months) - 1) / r_monthly;
+                        }
+                        total += (futureInventory + futureSIP);
+                    });
+                    return Math.round(total);
+                };
+
+                // 優化：取得該月份有配息的股票代號清單
+                const getDividendStocks = (month) => {
+                    return stocks.value
+                        .filter(s => (s.amount > 0 || s.holdings > 0) && s.months.includes(month))
+                        .map(s => s.id);
+                };
+
+                const initChart = () => {
+                    const ctx = document.getElementById('growthChart').getContext('2d');
+                    chart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: Array.from({length: 20}, (_, i) => `${i+1}Y`),
+                            datasets: [{
+                                label: '資產預估',
+                                data: [],
+                                borderColor: '#3b82f6',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                fill: true, tension: 0.4, pointRadius: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: { 
+                                y: { display: false },
+                                x: { ticks: { font: { size: 10 } }, grid: { display: false } } 
+                            }
+                        }
+                    });
+                    updateChart();
+                };
+
+                const updateChart = () => {
+                    if (chart) {
+                        chart.data.datasets[0].data = Array.from({length: 20}, (_, i) => calculateFutureValue(i+1));
+                        chart.update();
+                    }
+                };
+
+                watch(stocks, (newVal) => {
+                    localStorage.setItem('tw_stock_pro_calc', JSON.stringify(newVal));
+                    updateChart();
+                }, { deep: true });
+
+                const resetData = () => {
+                    if(confirm("重置所有數據？")) {
+                        stocks.value = JSON.parse(JSON.stringify(defaultStocks));
+                        fetchPrices();
+                    }
+                };
+
+                onMounted(() => { fetchPrices(); initChart(); });
+
+                return { stocks, totalMonthlyAmount, currentInventoryValue, calculateFutureValue, getDividendStocks, loading, resetData };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

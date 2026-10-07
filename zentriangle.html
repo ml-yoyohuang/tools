@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>ZenTriangle - 均勻格點版</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background: #fff; cursor: crosshair; }
+    </style>
+</head>
+<body>
+<script>
+    let points = [];
+    let spacing = 50; // 基本間距
+    let shouldDecorate = false;
+
+    function setup() {
+        createCanvas(windowWidth, windowHeight);
+        background(255);
+        generateGrid();
+    }
+
+    function generateGrid() {
+        points = [];
+        // 1. 建立預設格點，並加上隨機偏移
+        for (let x = 0; x <= width + spacing; x += spacing) {
+            for (let y = 0; y <= height + spacing; y += spacing) {
+                // 加上隨機偏移，讓格點看起來像手繪
+                let offX = random(-spacing * 0.4, spacing * 0.4);
+                let offY = random(-spacing * 0.4, spacing * 0.4);
+                points.push({
+                    pos: createVector(x + offX, y + offY),
+                    activated: false // 紀錄這個點是否被滑鼠「掃過」
+                });
+            }
+        }
+    }
+
+    function mousePressed() {
+        shouldDecorate = true;
+        return false;
+    }
+
+    function mouseMoved() {
+        let mousePos = createVector(mouseX, mouseY);
+        
+        // 2. 找出距離滑鼠最近的點
+        let nearest = null;
+        let minDist = spacing; // 只感應附近的點
+
+        for (let p of points) {
+            let d = dist(mousePos.x, mousePos.y, p.pos.x, p.pos.y);
+            if (d < minDist) {
+                minDist = d;
+                nearest = p;
+            }
+        }
+
+        // 3. 如果找到了夠近的點，且這個點還沒被啟動
+        if (nearest && !nearest.activated) {
+            nearest.activated = true;
+            
+            // 找出這個點周圍已經被啟動的點來連線，形成三角形
+            let neighbors = points
+                .filter(p => p.activated && p !== nearest)
+                .map(p => ({ p, d: dist(nearest.pos.x, nearest.pos.y, p.pos.x, p.pos.y) }))
+                .sort((a, b) => a.d - b.d)
+                .slice(0, 2); // 取最近的兩個已啟動點
+
+            if (neighbors.length >= 2) {
+                drawZenTriangle(nearest.pos, neighbors[0].p.pos, neighbors[1].p.pos);
+            }
+        }
+        return false;
+    }
+
+// ... 前方的 grid 產生邏輯保持不變 ...
+
+function drawZenTriangle(p1, p2, p3) {
+    // 預設不填色
+    noFill();
+    
+    // 判斷是否處於「點擊裝飾模式」
+    if (shouldDecorate) {
+        // 方案 A：經典禪繞畫灰色系 (視覺上較有質感)
+        let gray = random(180, 240); // 淺灰色
+        // fill(gray, 200); // 200 是透明度，讓底下的線條隱約可見
+        fill(random(255), random(255), random(255), 150); 
+        /* 方案 B：如果想要彩色，請取消下面這行的註解：
+           fill(random(255), random(255), random(255), 150); 
+        */
+        
+        shouldDecorate = false; // 畫完這個三角形就重設
+    }
+
+    // 繪製主結構線
+    stroke(0, 100);
+    strokeWeight(1.1);
+    
+    beginShape();
+    vertex(p1.x, p1.y);
+    vertex(p2.x, p2.y);
+    vertex(p3.x, p3.y);
+    endShape(CLOSE);
+}
+
+// 已經不需要 drawOrganicHatch 了，可以直接刪除該函式
+
+    function windowResized() {
+        resizeCanvas(windowWidth, windowHeight);
+        background(255);
+        generateGrid();
+    }
+</script>
+</body>
+</html>

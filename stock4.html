@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台股投資規畫工具 - 加上分享圖片試做版</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        /* 隱藏的報表樣板，不會顯示在畫面上，但會用於截圖 */
+        #report-template {
+            position: absolute;
+            left: -9999px; /* 移到螢幕外 */
+            top: -9999px;
+            width: 450px; /* 固定報表寬度，方便分享 */
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            box-sizing: border-box; /* 確保 padding 不會影響寬度 */
+
+            /* 將 SVG 轉為編碼後的 URL */
+            background-image: url("data:image/svg+xml,%3Csvg width='120' height='120' opacity='0.15' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform='translate(12, 12) scale(1)'%3E%3Cpath d='M10,25 L25,5 L40,22' fill='none' stroke='%234a4a4a' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M60,25 L45,5 L30,22' fill='none' stroke='%234a4a4a' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cellipse cx='35' cy='45' rx='35' ry='30' fill='white' stroke='%234a4a4a' stroke-width='5'/%3E%3Cpath d='M18,45 Q23,40 28,45' fill='none' stroke='%234a4a4a' stroke-width='4' stroke-linecap='round'/%3E%3Cpath d='M42,45 Q47,40 52,45' fill='none' stroke='%234a4a4a' stroke-width='4' stroke-linecap='round'/%3E%3Cpath d='M30,55 Q35,60 40,55' fill='none' stroke='%234a4a4a' stroke-width='3' stroke-linecap='round'/%3E%3C/g%3E%3Cg transform='translate(135, 35)'%3E%3Ccircle cx='15' cy='15' r='18' fill='%23fff9c4' stroke='%23fbc02d' stroke-width='4'/%3E%3Ctext x='15' y='22' font-family='Arial' font-size='20' font-weight='bold' text-anchor='middle' fill='%23fbc02d'%3E$%3C/text%3E%3C/g%3E%3Cg transform='translate(25, 135)'%3E%3Cpath d='M10,25 L20,15 L30,20 L45,5' fill='none' stroke='%23ef5350' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M35,5 H45 V15' fill='none' stroke='%23ef5350' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3Cg transform='translate(112, 112) scale(1)'%3E%3Cpath d='M10,25 L25,5 L40,22' fill='none' stroke='%234a4a4a' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M60,25 L45,5 L30,22' fill='none' stroke='%234a4a4a' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cellipse cx='35' cy='45' rx='35' ry='30' fill='white' stroke='%234a4a4a' stroke-width='5'/%3E%3Cpath d='M18,45 Q23,40 28,45' fill='none' stroke='%234a4a4a' stroke-width='4' stroke-linecap='round'/%3E%3Cpath d='M42,45 Q47,40 52,45' fill='none' stroke='%234a4a4a' stroke-width='4' stroke-linecap='round'/%3E%3Cpath d='M30,55 Q35,60 40,55' fill='none' stroke='%234a4a4a' stroke-width='3' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E");
+            background-position: top 0 left 0;
+            background-repeat: repeat;
+            background-size: 90px 90px; /* 調整這個數值可以改變圖案的大小 */
+            background-color: #bfdbfe22; /* 基底顏色 */
+        }
+        #report-template h2 {
+            font-size: 24px;
+            font-weight: bold;
+            color: #3b82f6; /* 藍色 */
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        #report-template .report-section {
+            background-color: #e0f2fe; /* 淺藍色 */
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #bfdbfe; /* 淺藍邊框 */
+        }
+        #report-template .report-section-dark {
+            background-color: #1f2937; /* 深灰 */
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        #report-template .report-label {
+            font-size: 12px;
+            color: #60a5fa; /* 較深的藍 */
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        #report-template .report-label-dark {
+            font-size: 12px;
+            color: #9ca3af; /* 淺灰 */
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        #report-template .report-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1d4ed8; /* 更深的藍 */
+        }
+        #report-template .report-value-light {
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff;
+        }
+        #report-template .report-footer {
+            text-align: center;
+            font-size: 10px;
+            color: #9ca3af;
+            margin-top: 20px;
+        }
+        /* Chart.js 相關設定 */
+        #report-template #reportChart {
+            background-color: #fff; /* 圖表背景色 */
+            border-radius: 8px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <div id="app" class="max-w-7xl mx-auto px-4 py-12">
+
+        <div v-if="currentStep === 1" class="max-w-2xl mx-auto bg-white rounded-3xl shadow-xl p-8 border border-slate-200">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-black text-slate-800 tracking-tight">開始投資規畫</h1>
+                <p class="text-slate-500 mt-2">請選取或手動輸入股票代號（已自動由小到大排序）</p>
+            </div>
+            
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-3">熱門推薦</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button v-for="id in sortedHotList" :key="id" 
+                                @click="toggleStock(id)"
+                                :class="['px-4 py-2 rounded-xl border-2 font-bold transition-all', 
+                                selectedIds.includes(id) ? 'bg-blue-600 border-blue-600 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-500 hover:border-blue-300']">
+                            {{ id }}
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-3">自定義加入</label>
+                    <div class="flex gap-2">
+                        <input type="text" inputmode="decimal" v-model="customInput" placeholder="例如: 00713" @keyup.enter="addCustomStock"
+                               class="text-base flex-1 border-2 border-slate-100 rounded-xl px-4 py-2 outline-none focus:border-blue-500 font-mono">
+                        <button @click="addCustomStock" class="bg-slate-800 text-white px-6 py-2 rounded-xl font-bold hover:bg-slate-700 transition-colors">加入</button>
+                    </div>
+                </div>
+
+                <div v-if="selectedIds.length > 0" class="pt-6 border-t border-slate-100">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">您的投資組合清單</label>
+                    <div class="flex flex-wrap gap-2">
+                        <div v-for="id in sortedSelectedIds" :key="id" class="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full text-sm font-bold text-blue-600 border border-blue-100">
+                            {{ id }}
+                            <button @click="toggleStock(id)" class="text-blue-300 hover:text-red-500 font-black">×</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button @click="goToDashboard" :disabled="selectedIds.length === 0"
+                        class="w-full py-4 rounded-2xl font-black text-lg shadow-xl transition-all"
+                        :class="selectedIds.length > 0 ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-slate-200 text-slate-400 cursor-not-allowed'">
+                    下一步：進入試算儀表板
+                </button>
+            </div>
+        </div>
+
+        <div v-if="currentStep === 2">
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                <div class="flex items-center gap-4">
+                    <button @click="currentStep = 1" class="bg-white border border-slate-200 p-2 rounded-xl hover:bg-slate-50 shadow-sm">⬅ 返回</button>
+                    <div>
+                        <h1 class="text-3xl font-black text-slate-800">投資規畫儀表板</h1>
+                        <p class="text-slate-500 text-sm">數據每小時自動快取，保護 API 額度</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span v-if="loading" class="text-xs bg-amber-100 text-amber-600 px-3 py-1 rounded-full animate-pulse font-bold">同步 API 中...</span>
+                    <button @click="generateReportImage" class="bg-blue-500 text-white text-sm px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-blue-600 transition-colors shadow-sm">
+                        📸 下載報表
+                    </button>
+                    <button @click="resetData" class="text-xs text-slate-400 hover:text-red-500 underline">重置所有資料</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-6">
+                <div class="col-span-12 xl:col-span-8">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-auto text-sm">
+                        <table class="w-full text-left border-collapse min-w-[600px]">
+                            <thead>
+                                <tr class="bg-slate-800 text-white text-[10px] uppercase tracking-wider">
+                                    <th class="p-4">股票代號/現價/<br>近一年股價漲跌幅&配息</th>
+                                    <th class="p-4 text-center">庫存(張)</th>
+                                    <th class="p-4 text-center">每月扣款(千)</th>
+                                    <th class="p-4 text-center">每月次數</th>
+                                    <th class="p-4 text-center">預估報酬 %</th>
+                                    <th class="p-4 text-right">月投小計</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr v-for="stock in sortedStocks" :key="stock.id" class="hover:bg-slate-50">
+                                    
+                                    <td class="p-4">
+                                        <div class="font-bold text-slate-700 leading-tight text-base">{{ stock.id }}</div>
+                                        
+                                        <div class="flex flex-col gap-1 mt-1">
+                                            <span class="text-[11px] text-blue-500 font-mono font-bold">
+                                                {{ stock.price ? `$${stock.price}` : '載入中...' }}
+                                            </span>
+                                            
+                                            <div class="flex flex-wrap gap-1">
+                                                <span v-if="stock.yearlyReturn" 
+                                                    :class="['text-[9px] font-black px-1.5 py-0.5 rounded leading-none', 
+                                                            stock.yearlyReturn >= 0 ? 'text-red-600 bg-red-50' : 'text-emerald-600 bg-emerald-50']">
+                                                    {{ stock.yearlyReturn >= 0 ? '▲' : '▼' }}{{ Math.abs(stock.yearlyReturn) }}%
+                                                </span>
+
+                                                <span v-if="stock.yieldRate" 
+                                                    class="text-[9px] font-black px-1.5 py-0.5 rounded leading-none text-indigo-600 bg-indigo-50">
+                                                    息 {{ stock.yieldRate }}%
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="p-4 text-center"><input type="number" inputmode="decimal" v-model.number="stock.holdings" class="text-base w-16 border rounded text-center py-1 bg-blue-50/50 outline-none focus:border-blue-400"></td>
+                                    <td class="p-4 text-center"><input type="number" inputmode="decimal" v-model.number="stock.amount" class="text-base w-14 border rounded text-center py-1 outline-none"></td>
+                                    <td class="p-4 text-center"><input type="number" inputmode="decimal" v-model.number="stock.frequency" class="text-base w-10 border rounded text-center py-1 outline-none"></td>
+                                    <td class="p-4 text-center"><input type="number" inputmode="decimal" v-model.number="stock.rate" step="0.5" class="text-base w-12 text-center text-emerald-600 font-bold bg-transparent">%</td>
+                                    <td class="p-4 text-right font-mono font-bold text-slate-600 italic">{{ (stock.amount * stock.frequency).toLocaleString() }}k</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="col-span-12 xl:col-span-4 space-y-6">
+                    <div class="bg-slate-800 p-6 rounded-3xl text-white shadow-xl">
+                        <div class="flex justify-between items-center mb-4">
+                            <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">預估 {{ targetYears }} 年後總價值</p>
+                            <span class="text-[10px] bg-blue-600 px-2 py-1 rounded font-bold">{{ targetYears }}Y</span>
+                        </div>
+                        <h2 class="text-4xl font-black tracking-tight text-blue-400 mb-6">
+                            NT$ {{ (calculateFutureValue(targetYears)/10000).toFixed(0) }} <span class="text-lg text-white">萬</span>
+                        </h2>
+                        <div class="grid grid-cols-2 gap-4 mb-6 pt-6 border-t border-slate-700">
+                            <div>
+                                <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">目前庫存市值</p>
+                                <p class="text-lg font-bold text-white">{{ (currentInventoryValue/10000).toFixed(1) }} <span class="text-xs">萬</span></p>
+                            </div>
+                            <div>
+                                <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">月投入總額</p>
+                                <p class="text-lg font-bold text-white">{{ (totalMonthlyAmount/1000).toFixed(1) }} <span class="text-xs">K</span></p>
+                            </div>
+                        </div>
+                        <input type="range" v-model.number="targetYears" min="1" max="40" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 class="text-xs font-bold text-slate-500 mb-4 uppercase tracking-wider">資產增長曲線</h3>
+                        <div class="h-[250px]"><canvas id="growthChart"></canvas></div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 class="text-xs font-bold text-slate-500 mb-4 uppercase tracking-wider">年度預計領息月份 (近12個月分析)</h3>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div v-for="m in 12" :key="m" 
+                                 :class="['p-3 rounded-xl border transition-all min-h-[85px]', 
+                                 getDividendStocks(m).length > 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 opacity-40']">
+                                <div class="text-[10px] font-black text-slate-400 mb-1 border-b pb-1 flex justify-between items-center">
+                                    <span>{{ m }}月</span>
+                                    <span v-if="getMonthlyDividendAmount(m) > 0" class="text-emerald-700 font-bold bg-emerald-200/50 px-1 rounded">
+                                        ${{ getMonthlyDividendAmount(m).toLocaleString() }}
+                                    </span>
+                                </div>
+                                <div class="flex flex-wrap gap-1 mt-1">
+                                    <span v-for="code in getDividendStocks(m)" :key="code" class="text-[9px] font-bold bg-emerald-600 text-white px-1 rounded">
+                                        {{ code }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="report-template">
+        <h2>💰 您的投資規畫報告 📈</h2>
+        <div class="report-section">
+            <div class="report-label">目前庫存市值</div>
+            <div class="report-value" id="rep-current-val">NT$ 0 萬</div>
+        </div>
+        <div class="report-section">
+            <div class="report-label">每月投入總額</div>
+            <div class="report-value" id="rep-monthly-val">NT$ 0 K</div>
+        </div>
+        <div class="report-section-dark">
+            <div class="report-label-dark" id="rep-target-label">預估 20 年後總價值</div>
+            <div class="report-value-light" id="rep-future-val">NT$ 0 萬 🎉</div>
+        </div>
+        <div class="report-section" style="padding: 10px;">
+            <div class="report-label" style="margin-bottom: 20px;">資產增長曲線</div>
+            <canvas id="reportChart" width="390" height="200"></canvas>
+        </div>
+        <div class="report-footer">
+            報告生成時間: <span id="rep-time"></span> | 資料來源: FinMind API
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
+
+        const apiCache = {}; // 全域 API 快取容器
+
+        createApp({
+            setup() {
+                const currentStep = ref(1);
+                // hotList 的排序已在 sortedHotList 中處理
+                const hotList = ref(['0050', '0056', '006208', '00878', '2330']); 
+                const selectedIds = ref([]);
+                const customInput = ref("");
+                const stocks = ref([]);
+                const loading = ref(false);
+                const targetYears = ref(20);
+                const currentDateTime = ref(''); // 用於報表時間
+                let chart = null; // 主要儀表板圖表
+                let reportChartInstance = null; // 報表專用圖表實例
+                let debounceTimer = null;
+
+                const masterData = {
+                    '0050': { months: [1, 7], rate: 8.5 },
+                    '0056': { months: [1, 4, 7, 10], rate: 6.5 },
+                    '00878': { months: [2, 5, 8, 11], rate: 6.0 },
+                    '006208': { months: [1, 7], rate: 8.5 },
+                    '2330': { months: [3, 6, 9, 12], rate: 12.0 },
+                    '00919': { months: [3, 6, 9, 12], rate: 10.0 }, // 預設值，可能需要實際抓取後調整
+                    '00929': { months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], rate: 8.0 }, // 預設值，可能需要實際抓取後調整
+                    'default': { months: [1, 4, 7, 10], rate: 7.0 }
+                };
+
+                // --- 排序計算屬性 ---
+                const sortedHotList = computed(() => [...hotList.value].sort());
+                const sortedSelectedIds = computed(() => {
+                    // 移除 numeric: true，回歸純字串字典序比較
+                    return [...selectedIds.value].sort();
+                });
+                
+                const sortedStocks = computed(() => {
+                    // 同樣回歸純字串比較
+                    return [...stocks.value].sort((a, b) => a.id.localeCompare(b.id));
+                });
+
+
+                // --- 選取與加入邏輯 ---
+                const toggleStock = (id) => {
+                    const index = selectedIds.value.indexOf(id);
+                    if (index > -1) {
+                        selectedIds.value.splice(index, 1);
+                    } else {
+                        selectedIds.value.push(id);
+                    }
+                };
+
+                const addCustomStock = () => {
+                    const id = customInput.value.trim();
+                    if (id && !selectedIds.value.includes(id)) {
+                        selectedIds.value.push(id);
+                    }
+                    customInput.value = "";
+                };
+
+                // --- 核心運算邏輯 (forEach 版) ---
+                const currentInventoryValue = computed(() => {
+                    let total = 0;
+                    stocks.value.forEach(s => { total += (s.holdings || 0) * 1000 * (s.price || 0); });
+                    return total;
+                });
+
+                const totalMonthlyAmount = computed(() => {
+                    let total = 0;
+                    stocks.value.forEach(s => { total += (s.amount || 0) * (s.frequency || 0) * 1000; });
+                    return total;
+                });
+
+                const calculateFutureValue = (years) => {
+                    let grandTotal = 0;
+                    stocks.value.forEach(s => {
+                        const startVal = (s.holdings || 0) * 1000 * (s.price || 0);
+                        const r_annual = (s.rate || 0) / 100;
+                        const futureInventory = startVal * Math.pow(1 + r_annual, years);
+                        const p = (s.amount || 0) * (s.frequency || 0) * 1000;
+                        let futureSIP = 0;
+                        if (p > 0) {
+                            const r_monthly = r_annual / 12;
+                            const n_months = years * 12;
+                            futureSIP = p * (Math.pow(1 + r_monthly, n_months) - 1) / r_monthly;
+                        }
+                        grandTotal += (futureInventory + futureSIP);
+                    });
+                    return Math.round(grandTotal);
+                };
+
+                const getMonthlyDividendAmount = (month) => {
+                    let total = 0;
+                    stocks.value.forEach(s => {
+                        if (s.months.includes(month) && s.avgDividend > 0) {
+                            const divPerTime = s.avgDividend / s.months.length;
+                            const fromHoldings = (s.holdings || 0) * 1000 * divPerTime;
+                            const monthlyShares = ((s.amount || 0) * 1000) / (s.price || 150);
+                            const fromSIP = (monthlyShares * 6) * divPerTime; // 粗估半年平均持有量
+                            total += (fromHoldings + fromSIP);
+                        }
+                    });
+                    return Math.round(total);
+                };
+
+                // --- API 抓取與快取 ---
+                const fetchPricesAndDividends = async (force = false) => {
+                    if (loading.value && !force) return;
+                    loading.value = true;
+                    try {
+                        const now = new Date();
+                        const oneYearAgo = new Date();
+                        oneYearAgo.setFullYear(now.getFullYear() - 1);
+
+                        const tasks = stocks.value.map(async (s) => {
+                            // 1. 快取機制 (1小時)：若已有快取則直接讀取，減少 API 消耗
+                            if (!force && apiCache[s.id] && (Date.now() - apiCache[s.id].timestamp < 3600000)) {
+                                s.price = apiCache[s.id].price;
+                                s.avgDividend = apiCache[s.id].avgDividend;
+                                s.yearlyReturn = apiCache[s.id].yearlyReturn;
+                                s.yieldRate = apiCache[s.id].yieldRate;
+                                return;
+                            }
+
+                            // 2. 抓取股價 (抓取過去 380 天資料以確保包含一年前的交易日基準)
+                            const startDate = new Date(Date.now() - 380 * 86400000).toISOString().split('T')[0];
+                            const pUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=${s.id}&start_date=${startDate}`;
+                            const pRes = await fetch(pUrl).then(r => r.json());
+                            
+                            let currentPrice = s.price;
+                            let yearlyReturn = null;
+
+                            if (pRes.data?.length > 0) {
+                                const prices = pRes.data;
+                                currentPrice = prices[prices.length - 1].close;
+                                
+                                // 計算近一年漲跌幅：取回溯約 241 個交易日的價格作為一年前基準
+                                const oldIndex = Math.max(0, prices.length - 241);
+                                const oldPrice = prices[oldIndex].close;
+                                
+                                if (oldPrice > 0) {
+                                    yearlyReturn = (((currentPrice - oldPrice) / oldPrice) * 100).toFixed(1);
+                                }
+                            }
+
+                            // 3. 抓取配息資料 (精準篩選近 12 個月內的除息紀錄)
+                            const dUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockDividend&data_id=${s.id}&start_date=${oneYearAgo.toISOString().split('T')[0]}`;
+                            const dRes = await fetch(dUrl).then(r => r.json());
+                            
+                            let totalDiv = 0;
+                            if (dRes.data?.length > 0) {
+                                dRes.data.forEach(item => {
+                                    const cashDate = item.CashExDividendTradingDate ? new Date(item.CashExDividendTradingDate) : null;
+                                    const stockDate = item.StockExDividendTradingDate ? new Date(item.StockExDividendTradingDate) : null;
+                                    // 只統計過去一年內發生的配息
+                                    if ((cashDate && cashDate >= oneYearAgo) || (stockDate && stockDate >= oneYearAgo)) {
+                                        totalDiv += (item.CashEarningsDistribution || 0) + (item.StockEarningsDistribution || 0) + (item.StockStatutorySurplus || 0);
+                                    }
+                                });
+                            }
+
+                            // 4. 計算殖利率：(近12個月總配息 / 目前現價) * 100
+                            let yieldRate = null;
+                            if (totalDiv > 0 && currentPrice > 0) {
+                                yieldRate = ((totalDiv / currentPrice) * 100).toFixed(1);
+                            }
+
+                            // 5. 將結果更新至 Vue 響應式物件
+                            s.price = currentPrice;
+                            s.avgDividend = totalDiv;
+                            s.yearlyReturn = yearlyReturn;
+                            s.yieldRate = yieldRate;
+                            
+                            // 6. 寫入快取
+                            apiCache[s.id] = { 
+                                price: currentPrice, 
+                                avgDividend: totalDiv, 
+                                yearlyReturn: yearlyReturn, 
+                                yieldRate: yieldRate,
+                                timestamp: Date.now() 
+                            };
+                        });
+                        await Promise.all(tasks);
+                    } catch (error) {
+                        console.error("API 抓取失敗:", error);
+                    } finally { 
+                        loading.value = false; 
+                    }
+                };
+
+                // --- 圖表相關功能 ---
+                const initChart = () => {
+                    const ctx = document.getElementById('growthChart').getContext('2d');
+                    if (chart) chart.destroy();
+                    chart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: Array.from({length: targetYears.value}, (_, i) => `${i+1}Y`),
+                            datasets: [{ 
+                                data: Array.from({length: targetYears.value}, (_, i) => calculateFutureValue(i+1)),
+                                borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', 
+                                fill: true, tension: 0.4, pointRadius: 2, pointBackgroundColor: '#3b82f6'
+                            }]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: { 
+                                y: { ticks: { font: { size: 10 }, callback: v => (v/10000).toFixed(0) + '萬' } },
+                                x: { grid: { display: false } } 
+                            }
+                        }
+                    });
+                };
+
+                const updateCharts = () => {
+                    if (chart) {
+                        chart.data.labels = Array.from({length: targetYears.value}, (_, i) => `${i+1}Y`);
+                        chart.data.datasets[0].data = Array.from({length: targetYears.value}, (_, i) => calculateFutureValue(i+1));
+                        chart.update();
+                    }
+                    // 確保 reportChartInstance 在 generateReportImage 時能被正確建立和更新
+                };
+
+                // --- 圖片報表生成功能 ---
+                const generateReportImage = async () => {
+                    const reportElement = document.getElementById('report-template');
+                    if (!reportElement) return;
+
+                    // --- 強制更新報表內的文字 (解決 Vue 語法沒跑出來的問題) ---
+                    document.getElementById('rep-current-val').innerText = `NT$ ${(currentInventoryValue.value/10000).toFixed(1)} 萬`;
+                    document.getElementById('rep-monthly-val').innerText = `NT$ ${(totalMonthlyAmount.value/1000).toFixed(1)} K`;
+                    document.getElementById('rep-target-label').innerText = `預估 ${targetYears.value} 年後總價值`;
+                    document.getElementById('rep-future-val').innerText = `NT$ ${(calculateFutureValue(targetYears.value)/10000).toFixed(0)} 萬 🎉`;
+                    document.getElementById('rep-time').innerText = new Date().toLocaleString();
+
+                    // 更新圖表 (維持原樣)
+                    const reportChartCtx = document.getElementById('reportChart').getContext('2d');
+                    if (reportChartInstance) reportChartInstance.destroy();
+
+                    reportChartInstance = new Chart(reportChartCtx, {
+                        type: 'line',
+                        data: {
+                            labels: Array.from({length: targetYears.value}, (_, i) => `${i+1}Y`),
+                            datasets: [{ 
+                                data: Array.from({length: targetYears.value}, (_, i) => calculateFutureValue(i+1)),
+                                borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', 
+                                fill: true, tension: 0.4, pointRadius: 0
+                            }]
+                        },
+                        options: {
+                            responsive: false, // 報表圖表建議關閉響應式，固定尺寸截圖更準
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: { 
+                                y: { ticks: { font: { size: 10 }, callback: v => (v/10000).toFixed(0) + '萬' } },
+                                x: { grid: { display: false }, ticks: { font: { size: 9 } } } 
+                            }
+                        }
+                    });
+
+                    // 給予一點時間讓圖表與文字渲染完全
+                    await new Promise(resolve => setTimeout(resolve, 300)); 
+
+                    html2canvas(reportElement, {
+                        scale: 2,
+                        logging: false,
+                        backgroundColor: "#f8fafc"
+                    }).then(canvas => {
+                        const imgData = canvas.toDataURL('image/png');
+                        
+                        // --- 判斷是否為 iOS 裝置 ---
+                        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+                        if (isIOS) {
+                            // iOS: 另開視窗，方便使用者長按儲存
+                            const newWindow = window.open();
+                            if (newWindow) {
+                                newWindow.document.write(`
+                                    <html>
+                                        <head><title>您的投資報告 (長按圖片儲存)</title></head>
+                                        <body style="margin:0; display:flex; flex-direction:column; align-items:center; background:#f0f2f5; font-family:sans-serif;">
+                                            <p style="margin-top:20px; color:#64748b; font-size:14px;">↑ 長按圖片即可儲存或分享 ↑</p>
+                                            <img src="${imgData}" style="max-width:95%; height:auto; box-shadow:0 10px 25px rgba(0,0,0,0.1); border-radius:8px;" />
+                                        </body>
+                                    </html>
+                                `);
+                            } else {
+                                alert("請允許開啟彈出視窗以查看報告");
+                            }
+                        } else {
+                            // 非 iOS (Android/PC): 維持原本的自動下載
+                            const link = document.createElement('a');
+                            const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+                            link.download = `台股投資規畫報告_${date}.png`;
+                            link.href = imgData;
+                            link.click();
+                        }
+                    });
+                };
+
+                // --- UI 流程控制 ---
+                const goToDashboard = async () => {
+                    stocks.value = selectedIds.value.map(id => {
+                        const meta = masterData[id] || masterData['default'];
+                        return { id, holdings: 0, amount: 0, frequency: 1, rate: meta.rate, months: meta.months, price: null, avgDividend: 0 };
+                    });
+                    currentStep.value = 2;
+                    await fetchPricesAndDividends(true);
+                    await nextTick();
+                    initChart();
+                };
+
+                const resetData = () => { 
+                    if(confirm("確定重置？這會清除所有設定。")) { 
+                        localStorage.removeItem('tw_stock_v12_share_image'); 
+                        location.reload(); 
+                    } 
+                };
+
+                const getDividendStocks = (month) => {
+                    const codes = [];
+                    stocks.value.forEach(s => { 
+                        if (((s.amount || 0) > 0 || (s.holdings || 0) > 0) && s.months.includes(month)) {
+                            codes.push(s.id); 
+                        }
+                    });
+                    return codes;
+                };
+
+                // --- 監聽與持久化 ---
+                watch([stocks, targetYears], () => {
+                    if (currentStep.value === 2) {
+                        localStorage.setItem('tw_stock_v12_share_image', JSON.stringify({
+                            step: 2, selectedIds: selectedIds.value, stocks: stocks.value, targetYears: targetYears.value
+                        }));
+                        updateCharts(); // 更新兩個圖表
+                        if (debounceTimer) clearTimeout(debounceTimer);
+                        debounceTimer = setTimeout(() => fetchPricesAndDividends(), 1500);
+                    }
+                }, { deep: true });
+
+                onMounted(() => {
+                    const saved = localStorage.getItem('tw_stock_v12_share_image');
+
+                    if (saved) {
+                        const p = JSON.parse(saved);
+                        selectedIds.value = p.selectedIds || [];
+                        stocks.value = p.stocks || [];
+                        targetYears.value = p.targetYears || 20;
+                        currentStep.value = p.step || 1;
+                        
+                        if (currentStep.value === 2) {
+                            setTimeout(() => { 
+                                fetchPricesAndDividends(true); 
+                                initChart(); 
+                            }, 200);
+                        }
+                    }
+                });
+
+                return { 
+                    currentStep, sortedHotList, selectedIds, sortedSelectedIds, sortedStocks, 
+                    customInput, stocks, loading, targetYears, currentInventoryValue, 
+                    totalMonthlyAmount, toggleStock, addCustomStock, goToDashboard, 
+                    calculateFutureValue, getDividendStocks, getMonthlyDividendAmount, 
+                    resetData, generateReportImage, currentDateTime 
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
