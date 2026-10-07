@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="純前端 2048 遊戲，支援鍵盤、觸控與方向按鈕，可悔棋、自動保存，並提供深色模式與減少動畫設定。">
+    <meta name="color-scheme" content="light dark">
+    <title>2048 | DevToolbox</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script>
+        // 在樣式套用前先決定主題，避免重新整理時閃爍
+        (function () {
+            try {
+                var raw = localStorage.getItem('tools.2048.settings.v1');
+                var settings = raw ? JSON.parse(raw) : null;
+                var theme = settings && settings.theme ? settings.theme : 'system';
+                if (theme === 'system') {
+                    theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
+                var motion = settings && settings.motion ? settings.motion : 'system';
+                var reduced = motion === 'reduced' || (motion === 'system' &&
+                    window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+                if (reduced) document.documentElement.classList.add('reduce-motion');
+            } catch (err) {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
+</head>
+<body>
+
+<div class="app">
+
+    <div class="topbar">
+        <a href="../index.html" class="nav-back">← 返回首頁</a>
+        <div class="topbar__actions">
+            <button type="button" class="btn btn--ghost" id="btn-help">操作說明</button>
+            <button type="button" class="btn btn--ghost" id="btn-settings">設定</button>
+        </div>
+    </div>
+
+    <header class="title-row">
+        <h1 class="title">2048</h1>
+        <p class="tagline">滑動合併相同數字，湊出 2048</p>
+    </header>
+
+    <dl class="scoreboard">
+        <div class="stat stat--score">
+            <dt>分數</dt>
+            <dd id="stat-score">0</dd>
+            <span class="delta" id="score-delta" aria-hidden="true"></span>
+        </div>
+        <div class="stat">
+            <dt>最高分</dt>
+            <dd id="stat-best">0</dd>
+        </div>
+        <div class="stat">
+            <dt>步數</dt>
+            <dd id="stat-moves">0</dd>
+        </div>
+        <div class="stat">
+            <dt>最大方塊</dt>
+            <dd id="stat-max">0</dd>
+        </div>
+    </dl>
+
+    <div class="toolbar">
+        <button type="button" class="btn btn--primary" id="btn-new">新遊戲</button>
+        <button type="button" class="btn" id="btn-undo" disabled>悔棋一步</button>
+    </div>
+
+    <div class="board-wrap">
+        <div class="board" id="board" role="group" aria-label="2048 棋盤，使用方向鍵、WASD、滑動或下方方向按鈕移動">
+            <div class="board__grid" id="board-grid" aria-hidden="true"></div>
+            <div class="board__tiles" id="board-tiles" aria-hidden="true"></div>
+            <div class="board__overlay" id="board-overlay" role="group" aria-labelledby="overlay-title" hidden>
+                <h2 id="overlay-title">遊戲結束</h2>
+                <p id="overlay-text"></p>
+                <div class="overlay-actions" id="overlay-actions"></div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="dpad" aria-label="方向控制">
+        <button type="button" class="dpad-up" data-dir="up" aria-label="向上移動">↑</button>
+        <button type="button" class="dpad-left" data-dir="left" aria-label="向左移動">←</button>
+        <button type="button" class="dpad-down" data-dir="down" aria-label="向下移動">↓</button>
+        <button type="button" class="dpad-right" data-dir="right" aria-label="向右移動">→</button>
+    </nav>
+
+    <p class="hint">電腦：方向鍵或 WASD 移動、<kbd>U</kbd> 悔棋；手機：在棋盤上滑動。</p>
+
+</div>
+
+<div class="visually-hidden" id="live-region" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<!-- 操作說明 -->
+<dialog id="dlg-help" aria-labelledby="help-title">
+    <div class="dialog__body">
+        <h2 id="help-title">操作說明</h2>
+        <ul>
+            <li>每次移動，所有方塊會往該方向靠攏；相同數字的兩個方塊相撞會合併成兩倍。</li>
+            <li>同一個方塊每回合最多只合併一次，剛合併出的方塊不會在同一回合再被合併。</li>
+            <li>只有盤面真的改變才算有效移動，才會生成新方塊（90% 是 2、10% 是 4）。</li>
+            <li>合併時獲得與新方塊相同的分數；湊出 2048 即達成目標，可以選擇繼續挑戰。</li>
+            <li>盤面填滿且上下左右都沒有可合併的相鄰方塊時，遊戲結束。</li>
+            <li>控制方式：方向鍵、<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>、手機滑動，或畫面上的方向按鈕；<kbd>U</kbd> 可悔棋一步。</li>
+            <li>悔棋只能回復最近一次有效移動，不能連續悔棋，最高分也不會因此降低。</li>
+        </ul>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn btn--primary" data-close-dialog>知道了</button>
+    </div>
+</dialog>
+
+<!-- 設定 -->
+<dialog id="dlg-settings" aria-labelledby="settings-title">
+    <div class="dialog__body">
+        <h2 id="settings-title">設定</h2>
+
+        <fieldset>
+            <legend>外觀</legend>
+            <div class="radio-row">
+                <label><input type="radio" name="theme" value="system" checked> 跟隨系統</label>
+                <label><input type="radio" name="theme" value="light"> 淺色</label>
+                <label><input type="radio" name="theme" value="dark"> 深色</label>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>動畫</legend>
+            <div class="radio-row">
+                <label><input type="radio" name="motion" value="system" checked> 跟隨系統</label>
+                <label><input type="radio" name="motion" value="full"> 完整動畫</label>
+                <label><input type="radio" name="motion" value="reduced"> 減少動畫</label>
+            </div>
+            <p>「跟隨系統」會尊重作業系統的「減少動態效果」設定。</p>
+        </fieldset>
+
+        <fieldset>
+            <legend>資料</legend>
+            <p>本局進度、最高分與偏好設定會自動保存在這台裝置的瀏覽器中。</p>
+            <div>
+                <button type="button" class="btn btn--danger" id="btn-clear-data">清除所有紀錄…</button>
+            </div>
+        </fieldset>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn btn--primary" data-close-dialog>關閉</button>
+    </div>
+</dialog>
+
+<!-- 確認 -->
+<dialog id="dlg-confirm" aria-labelledby="confirm-title">
+    <div class="dialog__body">
+        <h2 id="confirm-title">確認</h2>
+        <p id="confirm-text"></p>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn" data-close-dialog>取消</button>
+        <button type="button" class="btn btn--primary" id="confirm-ok">確定</button>
+    </div>
+</dialog>
+
+<script src="js/engine.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/session.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/render.js"></script>
+<script src="js/input.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

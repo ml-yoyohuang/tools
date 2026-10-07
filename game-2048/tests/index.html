@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2048 測試 | DevToolbox</title>
+    <style>
+        :root { color-scheme: light dark; }
+        body {
+            font-family: "Segoe UI", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+            margin: 0; padding: 24px 16px; line-height: 1.6;
+            background: #f8fafc; color: #1e293b;
+        }
+        main { max-width: 760px; margin: 0 auto; }
+        h1 { font-size: 1.5rem; margin: 0 0 4px; }
+        .back { color: #4f46e5; font-weight: 700; text-decoration: none; }
+        .back:hover { text-decoration: underline; }
+        #summary {
+            margin: 16px 0; padding: 12px 14px; border-radius: 10px;
+            font-weight: 700; background: #e2e8f0;
+        }
+        #summary.pass { background: #dcfce7; color: #14532d; }
+        #summary.fail { background: #fee2e2; color: #7f1d1d; }
+        ol { padding-left: 1.4em; margin: 0; }
+        li { padding: 3px 0; }
+        li.pass::marker { color: #16a34a; }
+        li.fail { color: #b91c1c; }
+        li pre {
+            margin: 4px 0 8px; padding: 8px 10px; background: #fff1f2;
+            border-left: 3px solid #b91c1c; overflow-x: auto; font-size: .82rem;
+        }
+        .note { color: #64748b; font-size: .88rem; }
+        @media (prefers-color-scheme: dark) {
+            body { background: #0f172a; color: #e2e8f0; }
+            #summary { background: #1e293b; }
+            #summary.pass { background: #14532d; color: #dcfce7; }
+            #summary.fail { background: #7f1d1d; color: #fee2e2; }
+            li pre { background: #2a1416; }
+            .note { color: #94a3b8; }
+        }
+    </style>
+</head>
+<body>
+<main>
+    <a class="back" href="../index.html">← 返回 2048</a>
+    <h1>2048 規則測試</h1>
+    <p class="note">
+        與 <code>node tests/run-node.js</code> 執行同一份測試案例。
+        配色對比度檢查需要讀取 CSS 檔案，僅在 Node 版執行。
+    </p>
+    <div id="summary">執行中…</div>
+    <ol id="results"></ol>
+</main>
+
+<script src="../js/engine.js"></script>
+<script src="../js/storage.js"></script>
+<script src="../js/session.js"></script>
+<script src="suite.js"></script>
+<script>
+    (function () {
+        'use strict';
+        var list = document.getElementById('results');
+        var summary = document.getElementById('summary');
+        var passed = 0;
+        var failed = 0;
+
+        window.Game2048Suite.tests.forEach(function (item) {
+            var li = document.createElement('li');
+            try {
+                item.fn();
+                passed++;
+                li.className = 'pass';
+                li.textContent = item.name;
+            } catch (error) {
+                failed++;
+                li.className = 'fail';
+                li.textContent = item.name;
+                var pre = document.createElement('pre');
+                pre.textContent = (error && error.message) || String(error);
+                li.appendChild(pre);
+            }
+            list.appendChild(li);
+        });
+
+        summary.className = failed === 0 ? 'pass' : 'fail';
+        summary.textContent = '共 ' + (passed + failed) + ' 項：通過 ' + passed + '，失敗 ' + failed;
+        window.__testResult = { passed: passed, failed: failed };
+    })();
+</script>
+</body>
+</html>
