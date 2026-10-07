@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="核桃堅果菇">
+  <title>核桃堅果菇</title>
+  <defs><linearGradient id="msh_walnut" x1="25%" y1="10%" x2="75%" y2="90%">
+    <stop offset="0" stop-color="#b3947a"/><stop offset="0.6" stop-color="#8a5a33"/>
+    <stop offset="1" stop-color="#634125"/></linearGradient></defs>
+  <rect x="41" y="52" width="18" height="34" rx="8" fill="#f3ece0" stroke="#3e2817" stroke-width="2.5"/>
+  <path d="M12 54 C12 28 30 14 50 14 C70 14 88 28 88 54 Z" fill="url(#msh_walnut)" stroke="#3e2817" stroke-width="3"/>
+  <path d="M30 44 H70 M34 52 H66 M38 36 H62" stroke="#3e2817" stroke-width="3" opacity=".45" fill="none"/>
+</svg>

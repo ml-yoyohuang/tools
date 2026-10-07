@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="純前端放置／點擊遊戲：招募成精廚具討伐高湯菇，三個地區、三隻菇王、八種設備與二十五個永久升級。">
+    <meta name="color-scheme" content="light dark">
+    <title>無限高湯討伐隊 | DevToolbox</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script>
+        // 在樣式套用前先決定主題，避免重新整理時閃爍
+        (function () {
+            try {
+                var raw = localStorage.getItem('tools.mushroom.settings');
+                var s = raw ? JSON.parse(raw) : null;
+                var theme = s && s.theme ? s.theme : 'system';
+                if (theme === 'system') {
+                    theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
+                var motion = s && s.motion ? s.motion : 'system';
+                var reduced = motion === 'reduced' || (motion === 'system' &&
+                    window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+                if (reduced) document.documentElement.classList.add('reduce-motion');
+            } catch (err) {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
+</head>
+<body>
+
+<div class="app">
+
+    <div class="topbar">
+        <a href="../ura.html" class="nav-back">← 返回 Ura</a>
+        <h1 class="title">無限高湯討伐隊</h1>
+        <div class="topbar__actions">
+            <button type="button" class="btn btn--ghost" id="btn-help">說明</button>
+            <button type="button" class="btn btn--ghost" id="btn-settings">設定</button>
+        </div>
+    </div>
+
+    <p class="readonly-banner" id="readonly-banner" hidden>
+        偵測到另一個分頁正在進行遊戲，這個分頁只顯示畫面、不會計算收益或寫入存檔。
+        <button type="button" class="link-btn" id="btn-takeover">改由這個分頁接管</button>
+    </p>
+
+    <dl class="resources">
+        <div class="res">
+            <dt>菇幣</dt>
+            <dd><button type="button" class="res__value" id="res-coins" title="點一下切換完整數值">0</button></dd>
+        </div>
+        <div class="res">
+            <dt>金湯滴</dt>
+            <dd id="res-broth">0</dd>
+        </div>
+        <div class="res">
+            <dt>點擊傷害</dt>
+            <dd id="res-click">1</dd>
+        </div>
+        <div class="res">
+            <dt>自動火力</dt>
+            <dd id="res-dps">0</dd>
+        </div>
+    </dl>
+
+    <div class="layout">
+
+        <!-- 戰場 -->
+        <section class="field" aria-label="採集戰場">
+            <header class="field__head">
+                <div class="zone-tabs" id="zone-tabs" role="group" aria-label="地區切換"></div>
+                <p class="field__meta"><span id="zone-depth">採集深度 1</span>　<span id="zone-desc"></span></p>
+            </header>
+
+            <ul class="buff-bar" id="buff-bar" aria-label="生效中的效果"></ul>
+
+            <div class="stage" id="stage">
+                <ul class="targets" id="targets"></ul>
+                <div class="floaters" id="floaters" aria-hidden="true"></div>
+                <button type="button" class="courier" id="courier" hidden>
+                    <span class="courier__art" id="courier-art" aria-hidden="true"></span>
+                    <span class="visually-hidden">點擊迷路的外送員，取得一個隨機道具</span>
+                </button>
+            </div>
+
+            <div class="boss-panel" id="boss-panel" hidden>
+                <p class="boss-help" id="boss-help"></p>
+                <div class="boss-actions">
+                    <button type="button" class="btn btn--primary" id="btn-hold" hidden>長按破盾</button>
+                    <button type="button" class="btn" id="btn-exit-boss">退出採集</button>
+                </div>
+                <div class="hold-bar" id="hold-bar" hidden><div class="hold-bar__fill" id="hold-fill"></div></div>
+                <ul class="frozen-list" id="frozen-list" aria-label="結冰的設備"></ul>
+            </div>
+
+            <div class="field-actions" id="field-actions">
+                <button type="button" class="btn btn--primary" id="btn-boss">挑戰菇王</button>
+            </div>
+        </section>
+
+        <!-- 右側面板 -->
+        <section class="panels" aria-label="管理面板">
+            <div class="tabs" role="tablist" aria-label="面板分頁">
+                <button type="button" class="tab" role="tab" id="tab-devices" aria-controls="panel-devices" aria-selected="true">設備</button>
+                <button type="button" class="tab" role="tab" id="tab-upgrades" aria-controls="panel-upgrades" aria-selected="false">升級<span class="badge" id="badge-upgrades" hidden>0</span></button>
+                <button type="button" class="tab" role="tab" id="tab-items" aria-controls="panel-items" aria-selected="false">道具<span class="badge" id="badge-items" hidden>0</span></button>
+                <button type="button" class="tab" role="tab" id="tab-equipment" aria-controls="panel-equipment" aria-selected="false">裝備</button>
+                <button type="button" class="tab" role="tab" id="tab-dex" aria-controls="panel-dex" aria-selected="false">圖鑑</button>
+                <button type="button" class="tab" role="tab" id="tab-achievements" aria-controls="panel-achievements" aria-selected="false">成就</button>
+            </div>
+
+            <div class="panel" role="tabpanel" id="panel-devices" aria-labelledby="tab-devices">
+                <div class="buy-mode" role="group" aria-label="購買數量">
+                    <span class="buy-mode__label">購買數量</span>
+                    <button type="button" class="chip" data-buy-mode="1" aria-pressed="true">1</button>
+                    <button type="button" class="chip" data-buy-mode="10" aria-pressed="false">10</button>
+                    <button type="button" class="chip" data-buy-mode="max" aria-pressed="false">最大</button>
+                </div>
+                <ul class="shop-list" id="device-list"></ul>
+            </div>
+
+            <div class="panel" role="tabpanel" id="panel-upgrades" aria-labelledby="tab-upgrades" hidden>
+                <p class="panel__note">升級只能購買一次，效果永久。里程碑升級會在擊敗菇王時自動取得，不另外收費。</p>
+                <ul class="shop-list" id="upgrade-list"></ul>
+                <h3 class="panel__sub">已取得</h3>
+                <ul class="owned-list" id="upgrade-owned"></ul>
+            </div>
+
+            <div class="panel" role="tabpanel" id="panel-items" aria-labelledby="tab-items" hidden>
+                <p class="panel__note" id="item-note">道具商店會在擊敗第二區菇王後開放。</p>
+                <ul class="shop-list" id="item-list"></ul>
+            </div>
+
+            <div class="panel" role="tabpanel" id="panel-equipment" aria-labelledby="tab-equipment" hidden>
+                <p class="panel__note" id="equip-note">裝備系統會在擊敗第三區菇王後開放。只有一個欄位，效果僅在裝備時生效。</p>
+                <ul class="shop-list" id="equipment-list"></ul>
+            </div>
+
+            <div class="panel" role="tabpanel" id="panel-dex" aria-labelledby="tab-dex" hidden>
+                <p class="panel__note">遭遇過的蘑菇會永久點亮。擊敗菇王後可取得對應收藏品。</p>
+                <ul class="dex-list" id="dex-list"></ul>
+                <h3 class="panel__sub">收藏品</h3>
+                <ul class="dex-list" id="collection-list"></ul>
+            </div>
+
+            <div class="panel" role="tabpanel" id="panel-achievements" aria-labelledby="tab-achievements" hidden>
+                <p class="panel__note"><span id="ach-count">0</span> / <span id="ach-total">0</span> 已達成。</p>
+                <ul class="ach-list" id="ach-list"></ul>
+            </div>
+        </section>
+    </div>
+</div>
+
+<div class="visually-hidden" id="live-region" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<!-- 說明 -->
+<dialog id="dlg-help" aria-labelledby="help-title">
+    <div class="dialog__body">
+        <h2 id="help-title">玩法說明</h2>
+        <ul>
+            <li>點擊畫面上的蘑菇造成傷害；設備會依各自的冷卻自動攻擊。</li>
+            <li>造成<strong>有效傷害</strong>與<strong>擊敗</strong>都會掉菇幣。過量傷害不會額外給錢。</li>
+            <li>每個地區有「採集深度」，擊敗一定數量後深度 +1，血量與獎勵同步提升。</li>
+            <li>金湯滴來自菇王、純金大香菇與黃金孢子升級，用於解鎖高階內容。</li>
+            <li>菇王沒有倒數失敗機制，隨時可以退出；<strong>退出或重新挑戰時菇王血量會重置</strong>，已取得的資源保留。</li>
+        </ul>
+        <h3 class="dialog__sub">機制定義</h3>
+        <ul>
+            <li><strong>岩殼</strong>：單次傷害低於該地區門檻時，該次傷害強制變成 1。靠重擊設備或高點擊傷害突破。</li>
+            <li><strong>真實傷害</strong>（魔鬼椒爆彈）：穿透岩殼，但<strong>不</strong>穿透菇王護盾。</li>
+            <li><strong>軟化</strong>：肉槌造成，手動點擊傷害獲得一個獨立乘區 ×2。</li>
+            <li><strong>速度倍率</strong>：冷卻時間 = 基礎冷卻 ÷ 速度倍率。「攻速 +10%」即速度倍率 ×1.1。</li>
+            <li><strong>連擊</strong>：每次點擊 +1 層，3 秒未點擊歸零；滿層約需每秒 3 下維持 3 秒。</li>
+        </ul>
+        <h3 class="dialog__sub">離線採集</h3>
+        <p id="help-offline">—</p>
+        <p>離線只採集「目前所在地區」的普通蘑菇，不會推進菇王、不開新地區、不發稀有掉落，擊敗數為估算值。</p>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn btn--primary" data-close-dialog>知道了</button>
+    </div>
+</dialog>
+
+<!-- 設定 -->
+<dialog id="dlg-settings" aria-labelledby="settings-title">
+    <div class="dialog__body">
+        <h2 id="settings-title">設定</h2>
+        <fieldset>
+            <legend>外觀</legend>
+            <div class="radio-row">
+                <label><input type="radio" name="theme" value="system" checked> 跟隨系統</label>
+                <label><input type="radio" name="theme" value="light"> 淺色</label>
+                <label><input type="radio" name="theme" value="dark"> 深色</label>
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>動畫</legend>
+            <div class="radio-row">
+                <label><input type="radio" name="motion" value="system" checked> 跟隨系統</label>
+                <label><input type="radio" name="motion" value="full"> 完整</label>
+                <label><input type="radio" name="motion" value="reduced"> 減少</label>
+            </div>
+            <p class="hint">減少動畫會關閉浮動數字與閃爍效果。</p>
+        </fieldset>
+        <fieldset>
+            <legend>數字顯示</legend>
+            <div class="radio-row">
+                <label><input type="radio" name="numberStyle" value="short" checked> 縮寫</label>
+                <label><input type="radio" name="numberStyle" value="full"> 完整</label>
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>存檔</legend>
+            <p class="hint" id="save-status">—</p>
+            <div class="button-row">
+                <button type="button" class="btn" id="btn-save">立即存檔</button>
+                <button type="button" class="btn" id="btn-backup">建立備份</button>
+                <button type="button" class="btn" id="btn-restore">還原備份</button>
+            </div>
+            <div class="button-row">
+                <button type="button" class="btn" id="btn-export">匯出</button>
+                <button type="button" class="btn" id="btn-import">匯入</button>
+                <button type="button" class="btn btn--danger" id="btn-clear">清除紀錄…</button>
+            </div>
+        </fieldset>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn btn--primary" data-close-dialog>關閉</button>
+    </div>
+</dialog>
+
+<dialog id="dlg-export" aria-labelledby="export-title">
+    <div class="dialog__body">
+        <h2 id="export-title">匯出存檔</h2>
+        <p>複製下面這串文字保存，之後貼回「匯入」就能還原。</p>
+        <textarea id="export-text" rows="6" readonly aria-label="存檔字串"></textarea>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn" id="btn-copy-export">複製</button>
+        <button type="button" class="btn btn--primary" data-close-dialog>關閉</button>
+    </div>
+</dialog>
+
+<dialog id="dlg-import" aria-labelledby="import-title">
+    <div class="dialog__body">
+        <h2 id="import-title">匯入存檔</h2>
+        <p>貼上先前匯出的字串。資料會先驗證，失敗不會動到目前的存檔。</p>
+        <textarea id="import-text" rows="6" aria-label="要匯入的存檔字串" placeholder="MUSH1:..."></textarea>
+        <p class="error-text" id="import-error" hidden></p>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn" data-close-dialog>取消</button>
+        <button type="button" class="btn btn--primary" id="btn-import-confirm">匯入並覆寫</button>
+    </div>
+</dialog>
+
+<dialog id="dlg-confirm" aria-labelledby="confirm-title">
+    <div class="dialog__body">
+        <h2 id="confirm-title">確認</h2>
+        <p id="confirm-text"></p>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn" data-close-dialog>取消</button>
+        <button type="button" class="btn btn--primary" id="confirm-ok">確定</button>
+    </div>
+</dialog>
+
+<dialog id="dlg-offline" aria-labelledby="offline-title">
+    <div class="dialog__body">
+        <h2 id="offline-title">離線討伐報告</h2>
+        <p id="offline-text"></p>
+        <p class="hint" id="offline-note"></p>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn btn--primary" data-close-dialog>收下</button>
+    </div>
+</dialog>
+
+<script src="js/format.js"></script>
+<script src="js/config.js"></script>
+<script src="js/content.js"></script>
+<script src="js/combat.js"></script>
+<script src="js/game.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/images.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

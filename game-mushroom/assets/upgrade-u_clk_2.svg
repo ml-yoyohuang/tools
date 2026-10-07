@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="人體工學滑">
+  <title>人體工學滑</title>
+  <defs><linearGradient id="uu_clk_2" x1="20%" y1="8%" x2="80%" y2="96%">
+    <stop offset="0" stop-color="#d69565"/><stop offset="0.55" stop-color="#c2631c"/>
+    <stop offset="1" stop-color="#904915"/></linearGradient></defs>
+  <rect x="6" y="6" width="108" height="108" rx="22" fill="url(#uu_clk_2)" stroke="#4e280b" stroke-width="3"/>
+  <text x="60" y="58" text-anchor="middle" font-family="'Segoe UI','PingFang TC','Microsoft JhengHei',system-ui,sans-serif" font-size="38" font-weight="700" fill="#ffffff" opacity=".95">✋</text>
+  <rect x="12" y="80" width="96" height="24" rx="12" fill="#ffffff" opacity=".9"/>
+  <text x="60" y="96.5" text-anchor="middle" font-family="'Segoe UI','PingFang TC','Microsoft JhengHei',system-ui,sans-serif" font-size="13" font-weight="700" fill="#4e280b">人體工學滑</text>
+</svg>

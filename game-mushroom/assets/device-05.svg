@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="辣油灑水器">
+  <title>辣油灑水器</title>
+  <defs><linearGradient id="dspicy_sprinkler" x1="20%" y1="8%" x2="80%" y2="96%">
+    <stop offset="0" stop-color="#e28172"/><stop offset="0.55" stop-color="#d4452f"/>
+    <stop offset="1" stop-color="#9d3323"/></linearGradient></defs>
+  <rect x="6" y="6" width="108" height="108" rx="22" fill="url(#dspicy_sprinkler)" stroke="#551c13" stroke-width="3"/>
+  <text x="60" y="58" text-anchor="middle" font-family="'Segoe UI','PingFang TC','Microsoft JhengHei',system-ui,sans-serif" font-size="38" font-weight="700" fill="#ffffff" opacity=".95">5</text>
+  <rect x="12" y="80" width="96" height="24" rx="12" fill="#ffffff" opacity=".9"/>
+  <text x="60" y="96.5" text-anchor="middle" font-family="'Segoe UI','PingFang TC','Microsoft JhengHei',system-ui,sans-serif" font-size="13" font-weight="700" fill="#551c13">辣油灑水器</text>
+</svg>

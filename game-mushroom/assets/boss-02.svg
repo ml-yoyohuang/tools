@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="絕對防禦百葉豆腐菇">
+  <title>絕對防禦百葉豆腐菇</title>
+  <defs><linearGradient id="kboss_tofu" x1="25%" y1="8%" x2="75%" y2="92%">
+    <stop offset="0" stop-color="#f8f5ec"/><stop offset="0.6" stop-color="#f4f0e2"/>
+    <stop offset="1" stop-color="#aba89e"/></linearGradient></defs>
+  <rect x="46" y="62" width="28" height="46" rx="10" fill="#f3ece0" stroke="#6e6c66" stroke-width="3"/>
+  <path d="M8 66 C8 32 30 14 60 14 C90 14 112 32 112 66 Z" fill="url(#kboss_tofu)" stroke="#6e6c66" stroke-width="3.5"/>
+  <path d="M38 22 L46 8 L54 20 L60 4 L66 20 L74 8 L82 22 Z" fill="#b9b094" stroke="#6e6c66" stroke-width="2.5" stroke-linejoin="round"/>
+</svg>

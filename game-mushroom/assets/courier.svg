@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="迷路的外送員">
+  <title>迷路的外送員</title>
+  <rect x="26" y="20" width="48" height="36" rx="6" fill="#2f7dd1" stroke="#143a63" stroke-width="3"/>
+  <text x="50" y="45" text-anchor="middle" font-family="'Segoe UI','PingFang TC','Microsoft JhengHei',system-ui,sans-serif" font-size="20" font-weight="700" fill="#ffffff">外送</text>
+  <path d="M12 58 C12 42 24 32 36 32 C48 32 58 42 58 58 Z" fill="#e8d4b0" stroke="#6b5231" stroke-width="3"/>
+  <rect x="28" y="56" width="14" height="30" rx="6" fill="#f3ece0" stroke="#6b5231" stroke-width="2.5"/>
+</svg>

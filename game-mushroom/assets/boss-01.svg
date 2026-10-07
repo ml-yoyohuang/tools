@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="巨無霸杏鮑菇">
+  <title>巨無霸杏鮑菇</title>
+  <defs><linearGradient id="kboss_king" x1="25%" y1="8%" x2="75%" y2="92%">
+    <stop offset="0" stop-color="#e6d9bd"/><stop offset="0.6" stop-color="#d8c49a"/>
+    <stop offset="1" stop-color="#97896c"/></linearGradient></defs>
+  <rect x="46" y="62" width="28" height="46" rx="10" fill="#f3ece0" stroke="#615845" stroke-width="3"/>
+  <path d="M8 66 C8 32 30 14 60 14 C90 14 112 32 112 66 Z" fill="url(#kboss_king)" stroke="#615845" stroke-width="3.5"/>
+  <path d="M38 22 L46 8 L54 20 L60 4 L66 20 L74 8 L82 22 Z" fill="#8a7446" stroke="#615845" stroke-width="2.5" stroke-linejoin="round"/>
+</svg>
