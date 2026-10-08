@@ -152,5 +152,12 @@ WebGL2 的 context 同樣接受 ES 1.00 的 shader，所以一份原始碼就能
 **驗證產物：** Playwright、驗證腳本、原尺寸截圖與產生這些頁面的組版器都放在 repo 之外的暫存目錄，
 沒有進入版控。只有 `thumbs/` 下的 16 張壓縮縮圖（合計 254 KB，最大一張 57 KB，全部遠低於 150 KB 上限）隨頁面提交。
 
-**分支與 commit：** 推送到 `main`，commit 訊息 `feat: add 16 shader demo pages and shader-demo-list index`。
-commit hash 記錄於本檔案最後一次更新。
+**分支與 commit：** 已在本地 `main` 上提交，commit hash `7309ccd`，
+訊息為 `feat: add 16 shader demo pages and shader-demo-list index`。
+
+**尚未推送。** 執行 `git push origin main` 時被這個執行環境的權限管制擋下
+（判定為 out-of-place publication），不是遠端拒絕、不是衝突、也不是分支保護。
+由於這是環境層級的授權問題而非 git 層級的失敗，推到備案分支 `feat/shader-demos`
+同樣是對外發布、會落在同一道管制裡，所以沒有改推備案分支，也沒有嘗試任何繞道。
+commit 完整保留在本地，等待授權後直接 `git push origin main` 即可快轉推送
+（推送前已確認 `origin/main` 沒有本地沒有的提交）。
