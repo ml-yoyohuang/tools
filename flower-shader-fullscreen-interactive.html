@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>花朵變色濾鏡 · 全螢幕互動版</title>
+<style>
+:root{--accent:#e9826d;box-sizing:border-box}
+@media (prefers-color-scheme:dark){:root{--accent:#f2917d}}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-behavior:auto}
+body{margin:0;background:#ded9e4;overflow-x:hidden;
+  font:14px/1.4 system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif}
+
+/* 捲動空間：撐出 500vh 讓頁面可以往下捲，畫布在裡面 sticky 住 */
+.scroll-space{height:500vh}
+.stage{position:sticky;top:0;height:100vh;height:100svh;width:100%;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+
+/* 唯一保留的介面：低調的返回鍵，滑過或鍵盤聚焦才完全顯現 */
+.nav-back{position:fixed;left:max(14px,env(safe-area-inset-left,0px));
+  top:max(14px,env(safe-area-inset-top,0px));z-index:2;
+  padding:6px 10px;border-radius:999px;
+  background:rgba(255,255,255,.72);color:#2c2a30;
+  text-decoration:none;font-weight:600;opacity:.28;
+  transition:opacity .25s ease,background-color .25s ease}
+.nav-back:hover,.nav-back:focus-visible{opacity:1;background:rgba(255,255,255,.95)}
+.nav-back:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.nav-back{transition:none;opacity:.7}}
+</style>
+</head>
+<body>
+<a href="index.html" class="nav-back">← 返回首頁</a>
+<div class="scroll-space">
+  <div class="stage"><canvas id="c"></canvas></div>
+</div>
+<script>
+/* ===== Shader 沿用原版 flower-shader.html，唯一差異：uZoom 改成每個方框各一個 ===== */
+const VS=`attribute vec2 p;varying vec2 vUv;void main(){vUv=p*.5+.5;gl_Position=vec4(p,0.,1.);}`;
+const FS=`precision highp float;
+varying vec2 vUv;
+uniform sampler2D uTex;uniform vec2 uRes,uTexScale;
+uniform float uTime,uShift,uContrast,uBgBlur,uPBlur,uGrain;uniform float uZoom[3];
+uniform vec4 uRect[3];uniform vec3 uDark[3],uLight[3];
+
+vec2 coverUV(vec2 uv){return (uv-.5)*uTexScale+.5;}
+vec3 tex(vec2 uv){return texture2D(uTex,clamp(coverUV(uv),0.,1.)).rgb;}
+// 黃金角螺旋取樣的圓盤模糊
+vec3 blurTex(vec2 uv,float r){
+  if(r<=0.)return tex(uv);
+  vec3 acc=vec3(0.);
+  for(int i=0;i<32;i++){float f=float(i);float a=f*2.39996;float rr=sqrt((f+.5)/32.)*r;
+    acc+=tex(uv+vec2(cos(a),sin(a))*rr*vec2(uRes.y/uRes.x,1.));}
+  return acc/32.;
+}
+float luma(vec3 c){return dot(c,vec3(.299,.587,.114));}
+// 漸層映射：暗灰 → 珊瑚 → 淡粉 → 薰衣草 → 近白
+vec3 gradMap(float t){
+  vec3 c0=vec3(.24,.24,.26),c1=vec3(.949,.569,.490),c2=vec3(.957,.675,.608),c3=vec3(.867,.769,.937),c4=vec3(.906,.863,.933);
+  if(t<.30)return mix(c0,c1,smoothstep(0.,.30,t));
+  if(t<.50)return mix(c1,c2,smoothstep(.30,.50,t));
+  if(t<.72)return mix(c2,c3,smoothstep(.50,.72,t));
+  return mix(c3,c4,smoothstep(.72,1.,t));
+}
+float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+
+void main(){
+  vec2 uv=vUv; vec2 tl=vec2(uv.x,1.-uv.y);
+  float L=luma(blurTex(uv,uBgBlur));
+  L=clamp(pow(L,uContrast)+uShift,0.,1.);
+  vec3 col=gradMap(L);
+  for(int i=0;i<3;i++){
+    vec4 r=uRect[i];
+    vec2 local=(tl-r.xy)/r.zw;
+    if(all(greaterThanEqual(local,vec2(0.)))&&all(lessThanEqual(local,vec2(1.)))){
+      vec2 center=r.xy+r.zw*.5;
+      vec2 src=center+(tl-center)/uZoom[i]; src.y=1.-src.y;
+      float l=luma(blurTex(src,uPBlur));
+      l=smoothstep(.15,.85,l);
+      col=mix(uDark[i],uLight[i],l);
+      if(i==1){vec2 px=r.zw*uRes;vec2 d=min(local,1.-local)*px;if(min(d.x,d.y)<1.5)col=vec3(.93);}
+    }
+  }
+  float n=hash(gl_FragCoord.xy+fract(uTime)*97.)-.5;
+  col+=n*uGrain;
+  gl_FragColor=vec4(col,1.);
+}`;
+const cv=document.getElementById('c'),gl=cv.getContext('webgl');
+function sh(t,s){const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))console.error(gl.getShaderInfoLog(o));return o;}
+const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(pr);gl.useProgram(pr);
+gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+const loc=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+const U=n=>gl.getUniformLocation(pr,n);
+gl.uniform4fv(U('uRect'),[0.060,0.297,0.202,0.703, 0.354,0.023,0.130,0.388, 0.567,0.217,0.291,0.783]);
+gl.uniform3fv(U('uDark'),[0.37,0.52,0.48, 0.38,0.38,0.38, 0.40,0.40,0.41]);
+gl.uniform3fv(U('uLight'),[0.91,0.93,0.92, 0.95,0.95,0.95, 0.95,0.95,0.95]);
+const tx=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tx);
+[gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T].forEach(k=>gl.texParameteri(gl.TEXTURE_2D,k,gl.CLAMP_TO_EDGE));
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+let texAspect=1;
+function upload(src,w,h){gl.bindTexture(gl.TEXTURE_2D,tx);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,src);texAspect=w/h;}
+// 程式生成的示範花朵（這一版沒有讀圖介面，固定使用它）
+(function(){const s=1024,c=document.createElement('canvas');c.width=c.height=s;const x=c.getContext('2d');
+  x.fillStyle='#e9e6ec';x.fillRect(0,0,s,s);x.filter='blur(5px)';
+  const layers=[[11,470,170,0],[9,360,150,.3],[7,240,120,.6],[6,140,80,.2]];
+  layers.forEach(([n,len,wid,off])=>{for(let i=0;i<n;i++){const a=i/n*Math.PI*2+off;x.save();x.translate(s/2,s/2);x.rotate(a);
+    const g=x.createLinearGradient(0,0,len,0);g.addColorStop(0,'#2a2a2a');g.addColorStop(.35,'#7a7a7a');g.addColorStop(.75,'#bdbdbd');g.addColorStop(1,'#f6f6f6');
+    x.fillStyle=g;x.beginPath();x.ellipse(len*.5,0,len*.55,wid*.5,0,0,Math.PI*2);x.fill();x.restore();}});
+  x.filter='none';upload(c,s,s);})();
+
+/* ===== 這一版的互動：原本六個滑桿改由捲動、游標與時間驅動 ===== */
+
+// 各參數的範圍，與原版滑桿的 min / max 完全相同。
+// 下面一律以「拖拉百分比」（0 = min，1 = max）描述，再換算成實際數值。
+const RANGE={
+  shift:   {min:-0.4, max:0.4 },   // 色階偏移
+  contrast:{min: 0.5, max:2.5 },   // 對比曲線
+  bgBlur:  {min: 0,   max:0.02},   // 背景柔化
+  pBlur:   {min: 0,   max:0.08},   // 方框模糊
+  zoom:    {min: 1,   max:4   },   // 方框放大倍率
+  grain:   {min: 0,   max:0.2 }    // 顆粒強度
+};
+const clamp01=v=>v<0?0:(v>1?1:v);
+const valueAt=(key,pct)=>RANGE[key].min+(RANGE[key].max-RANGE[key].min)*clamp01(pct);
+
+// 呼吸：兩個週期刻意不一致，避免背景柔化與顆粒同步脈動
+const BREATH={ bgSeconds:13.0, grainSeconds:8.2 };
+const BG_BASE=0.2;                // 背景柔化的基準（原本游標 Y 0%～40% 的中點）
+const BG_BREATH_AMOUNT=0.12;      // 背景柔化的呼吸幅度（百分比點）
+const GRAIN_MIN=0.15, GRAIN_MAX=0.55;   // 顆粒在 15%～55% 之間起伏
+
+// 固定值：這一版沒有對應的互動，沿用原版預設
+const FIXED_PBLUR=0.035;
+
+// 三個方框（左→中→右）的放大倍率各自延遲，讓漸變有時間差
+const ZOOM_DELAY=[0, 0.18, 0.36];   // 秒
+const zoomHistory=[];               // [{t, pct}]，只保留最長延遲所需的長度
+function zoomPctAt(t){
+  for(let i=zoomHistory.length-1;i>=0;i--)if(zoomHistory[i].t<=t)return zoomHistory[i].pct;
+  return zoomHistory.length?zoomHistory[0].pct:0;
+}
+
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
+
+// 游標預設在畫面中央，讓沒有滑鼠的裝置也有合理的起始畫面
+const target={x:0.5,y:0.5,scroll:0};
+const smooth={x:0.5,y:0.5,scroll:0};
+
+addEventListener('pointermove',e=>{
+  target.x=clamp01(e.clientX/innerWidth);
+  target.y=clamp01(e.clientY/innerHeight);
+},{passive:true});
+
+function readScroll(){
+  const max=document.documentElement.scrollHeight-innerHeight;
+  target.scroll=max>0?clamp01(scrollY/max):0;
+}
+addEventListener('scroll',readScroll,{passive:true});
+
+function resize(){
+  const d=Math.min(devicePixelRatio||1,2),r=cv.getBoundingClientRect();
+  cv.width=r.width*d|0;cv.height=r.height*d|0;
+  gl.viewport(0,0,cv.width,cv.height);
+  readScroll();
+}
+addEventListener('resize',resize);
+resize();
+readScroll();
+
+let last=0;
+function frame(ms){
+  const t=ms*0.001;
+  const dt=last?Math.min((ms-last)*0.001,0.1):0.016;
+  last=ms;
+
+  // 平滑跟隨，避免游標與捲動的抖動直接打到畫面上
+  const k=1-Math.pow(0.0015,dt);
+  smooth.x+=(target.x-smooth.x)*k;
+  smooth.y+=(target.y-smooth.y)*k;
+  smooth.scroll+=(target.scroll-smooth.scroll)*k;
+
+  // 呼吸值 0～1；減少動畫時固定在中間，不再起伏
+  const still=reduceMotion.matches;
+  const breathBg   =still?0.5:0.5+0.5*Math.sin(t/BREATH.bgSeconds*Math.PI*2);
+  const breathGrain=still?0.5:0.5+0.5*Math.sin(t/BREATH.grainSeconds*Math.PI*2+1.7);
+
+  // 捲動由上往下：對比曲線 50% → 0%
+  const contrastPct=0.5*(1-smooth.scroll);
+  // 游標 X 由左至右：色階偏移 20% → 80%
+  const shiftPct=0.2+0.6*smooth.x;
+  // 游標 Y 由上至下：方框放大倍率 5% → 50%
+  zoomHistory.push({t,pct:0.05+0.45*smooth.y});
+  while(zoomHistory.length>2&&zoomHistory[1].t<t-ZOOM_DELAY[2])zoomHistory.shift();
+  // 背景柔化固定在基準值，再疊上呼吸
+  const bgPct=clamp01(BG_BASE+BG_BREATH_AMOUNT*breathBg);
+  // 顆粒強度純粹由時間呼吸
+  const grainPct=GRAIN_MIN+(GRAIN_MAX-GRAIN_MIN)*breathGrain;
+
+  const ca=cv.width/cv.height;
+  gl.uniform2f(U('uTexScale'),ca>texAspect?1:ca/texAspect,ca>texAspect?texAspect/ca:1);
+  gl.uniform2f(U('uRes'),cv.width,cv.height);
+  gl.uniform1f(U('uTime'),t);
+  gl.uniform1f(U('uShift'),valueAt('shift',shiftPct));
+  gl.uniform1f(U('uContrast'),valueAt('contrast',contrastPct));
+  gl.uniform1f(U('uBgBlur'),valueAt('bgBlur',bgPct));
+  gl.uniform1f(U('uPBlur'),FIXED_PBLUR);
+  gl.uniform1fv(U('uZoom'),ZOOM_DELAY.map(d=>valueAt('zoom',zoomPctAt(t-d))));
+  gl.uniform1f(U('uGrain'),valueAt('grain',grainPct));
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
