@@ -485,6 +485,73 @@
         equal(result.ok, true, result.reason);
     });
 
+    test('匯出與匯入可以往返（本局進度、最高分、偏好設定）', function () {
+        var storage = new StorageAPI.Storage({ backend: memoryBackend() });
+        var session = new SessionAPI.Session({ rng: lastCellRng(), best: 4096 });
+        session.game.setGrid([[2, 4, 8, 16], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]);
+        session.game.score = 512;
+        session.game.moves = 33;
+
+        var text = storage.exportText({
+            game: session.game.toJSON(), best: session.best, settings: { theme: 'dark', motion: 'reduced' }
+        });
+        ok(text.indexOf('T2048-1:') === 0, '應有前綴');
+
+        var parsed = storage.parseImport(text);
+        equal(parsed.ok, true);
+        equal(parsed.data.game.score, 512);
+        equal(parsed.data.game.moves, 33);
+        equal(parsed.data.best, 4096);
+        equal(parsed.data.settings.theme, 'dark');
+        deepEqual(parsed.data.game.grid[0], [2, 4, 8, 16], '盤面應完整保留');
+    });
+
+    test('匯入失敗不會動到現有紀錄', function () {
+        var backend = memoryBackend();
+        var storage = new StorageAPI.Storage({ backend: backend });
+        var game = new Engine.Game();
+        game.setup();
+        storage.saveGame(game.toJSON());
+        storage.saveBest(777);
+        var beforeGame = backend.getItem(StorageAPI.KEYS.game);
+        var beforeBest = backend.getItem(StorageAPI.KEYS.best);
+
+        ['', '亂七八糟', 'T2048-1:###', JSON.stringify({ v: 99 })].forEach(function (bad) {
+            equal(storage.parseImport(bad).ok, false, '應拒絕：' + bad);
+        });
+        // 盤面資料不合理也要擋下
+        var badGame = storage.exportText({ game: { v: 1, size: 4, score: 0, moves: 0, won: false, keepPlaying: false, grid: [[3, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]] }, best: 0 });
+        var result = storage.parseImport(badGame);
+        equal(result.ok, false, '非 2 的次方應被拒絕');
+        ok(result.reason.indexOf('game:') === 0, '原因應指出是盤面的問題：' + result.reason);
+
+        equal(backend.getItem(StorageAPI.KEYS.game), beforeGame, '原本的盤面不應被動到');
+        equal(backend.getItem(StorageAPI.KEYS.best), beforeBest, '原本的最高分不應被動到');
+    });
+
+    test('匯入時最高分不會低於本局分數', function () {
+        var storage = new StorageAPI.Storage({ backend: memoryBackend() });
+        var game = new Engine.Game();
+        game.setGrid([[2, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]);
+        game.score = 9999;
+        var text = storage.exportText({ game: game.toJSON(), best: 10 });
+        var parsed = storage.parseImport(text);
+        equal(parsed.data.best, 9999, '最高分應被提升到本局分數');
+    });
+
+    test('套用匯入會寫進儲存，空盤面則清掉本局進度', function () {
+        var backend = memoryBackend();
+        var storage = new StorageAPI.Storage({ backend: backend });
+        var game = new Engine.Game();
+        game.setup();
+        storage.saveGame(game.toJSON());
+
+        storage.applyImport({ game: null, best: 321, settings: { theme: 'light', motion: 'full' } });
+        equal(backend.getItem(StorageAPI.KEYS.game), null, '沒有本局進度時應清掉');
+        equal(storage.loadBest(), 321);
+        equal(storage.loadSettings().theme, 'light');
+    });
+
     test('localStorage 不可用時遊戲仍能運作', function () {
         var throwing = {
             getItem: function () { throw new Error('blocked'); },

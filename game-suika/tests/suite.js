@@ -663,6 +663,50 @@
         equal(storage.loadBest(), 0, '負數應視為無效');
     });
 
+    test('匯出與匯入可以往返（最高分與偏好設定）', function () {
+        var storage = new StorageAPI.Storage({ backend: memoryBackend() });
+        var text = storage.exportText({ best: 54321, settings: { motion: 'reduced' } });
+        ok(text.indexOf('SUIKA1:') === 0, '應有前綴');
+
+        var parsed = storage.parseImport(text);
+        equal(parsed.ok, true);
+        equal(parsed.data.best, 54321);
+        equal(parsed.data.settings.motion, 'reduced');
+
+        storage.applyImport(parsed.data);
+        equal(storage.loadBest(), 54321);
+        equal(storage.loadSettings().motion, 'reduced');
+    });
+
+    test('匯入失敗不會動到現有紀錄', function () {
+        var backend = memoryBackend();
+        var storage = new StorageAPI.Storage({ backend: backend });
+        storage.saveBest(888);
+        storage.saveSettings({ motion: 'full' });
+        var before = backend.getItem(StorageAPI.KEYS.best);
+
+        var cases = [['', 'empty'], ['亂七八糟', 'json'], ['SUIKA1:###', 'json'],
+            [JSON.stringify({ v: 9, best: 1 }), 'version-too-new'],
+            [JSON.stringify({ best: -5 }), 'best'],
+            [JSON.stringify({ best: 1.5 }), 'best'],
+            [JSON.stringify([1, 2, 3]), 'shape']];
+        cases.forEach(function (pair) {
+            var result = storage.parseImport(pair[0]);
+            equal(result.ok, false, '應拒絕：' + pair[0]);
+            equal(result.reason, pair[1], '拒絕原因');
+        });
+
+        equal(backend.getItem(StorageAPI.KEYS.best), before, '原本的最高分不應被動到');
+        equal(storage.loadSettings().motion, 'full', '原本的設定不應被動到');
+    });
+
+    test('匯入的偏好設定會被驗證，非法值回到預設', function () {
+        var storage = new StorageAPI.Storage({ backend: memoryBackend() });
+        var parsed = storage.parseImport(JSON.stringify({ best: 10, settings: { motion: '<script>' } }));
+        equal(parsed.ok, true);
+        equal(parsed.data.settings.motion, 'system', '非法值應回到預設');
+    });
+
     test('偏好設定損壞或含非法值時回到預設', function () {
         var backend = memoryBackend();
         backend.setItem(StorageAPI.KEYS.settings, '{壞掉的 JSON');

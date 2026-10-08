@@ -121,6 +121,16 @@
                 <label><input type="radio" name="motion" value="reduced"> 減少動畫</label>
             </div>
         </fieldset>
+
+        <fieldset class="settings">
+            <legend class="dialog__sub">紀錄</legend>
+            <p>最高分與偏好設定保存在這台裝置的瀏覽器中（這個遊戲不保存進行中的盤面）。
+               清除瀏覽器資料會一併消失，可以先匯出備份。</p>
+            <div class="button-row">
+                <button type="button" class="btn" id="btn-export">匯出</button>
+                <button type="button" class="btn" id="btn-import">匯入</button>
+            </div>
+        </fieldset>
     </div>
     <div class="dialog__foot">
         <button type="button" class="btn btn--primary" data-close-dialog>知道了</button>
@@ -136,6 +146,33 @@
     </div>
     <div class="dialog__foot">
         <button type="button" class="btn btn--primary" data-close-dialog>關閉</button>
+    </div>
+</dialog>
+
+<!-- 匯出 -->
+<dialog id="dlg-export" aria-labelledby="export-title">
+    <div class="dialog__body">
+        <h2 id="export-title">匯出紀錄</h2>
+        <p>複製下面這串文字保存。之後貼回「匯入」就能還原最高分與偏好設定。</p>
+        <textarea id="export-text" rows="4" readonly aria-label="存檔字串"></textarea>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn" id="btn-copy-export">複製</button>
+        <button type="button" class="btn btn--primary" data-close-dialog>關閉</button>
+    </div>
+</dialog>
+
+<!-- 匯入 -->
+<dialog id="dlg-import" aria-labelledby="import-title">
+    <div class="dialog__body">
+        <h2 id="import-title">匯入紀錄</h2>
+        <p>貼上先前匯出的字串。資料會先驗證，失敗不會動到目前的紀錄。</p>
+        <textarea id="import-text" rows="4" aria-label="要匯入的存檔字串" placeholder="SUIKA1:..."></textarea>
+        <p class="error-text" id="import-error" hidden></p>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn" data-close-dialog>取消</button>
+        <button type="button" class="btn btn--primary" id="btn-import-confirm">匯入並覆寫</button>
     </div>
 </dialog>
 

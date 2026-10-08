@@ -353,6 +353,23 @@ dialog::backdrop { background: rgba(10, 8, 6, .5); }
 .index-name { font-weight: 700; font-size: .9rem; }
 .index-meta { font-size: .78rem; color: var(--text-sub); text-align: right; }
 
+.button-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+
+textarea {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-s);
+    padding: 8px;
+    background: var(--bg-soft);
+    color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .78rem;
+    resize: vertical;
+}
+
+.error-text { color: var(--danger); font-size: .82rem; font-weight: 700; }
+.error-text[hidden] { display: none; }
+
 kbd {
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     font-size: .8em;

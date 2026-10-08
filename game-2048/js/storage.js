@@ -103,6 +103,22 @@
         return settings;
     }
 
+    /* ---------- base64（瀏覽器與 Node 都能用） ---------- */
+
+    function encodeText(text) {
+        if (root && typeof root.btoa === 'function') {
+            return root.btoa(unescape(encodeURIComponent(text)));
+        }
+        return Buffer.from(text, 'utf8').toString('base64');
+    }
+
+    function decodeText(code) {
+        if (root && typeof root.atob === 'function') {
+            return decodeURIComponent(escape(root.atob(code)));
+        }
+        return Buffer.from(code, 'base64').toString('utf8');
+    }
+
     /**
      * Storage 物件：對外只暴露語意化方法，內部吞掉所有例外並記錄最後的錯誤原因。
      */
@@ -217,9 +233,84 @@
         return ok;
     };
 
+    /* ---------- 匯出與匯入 ---------- */
+
+    /** 把本局進度、最高分與偏好設定打包成一串文字。 */
+    Storage.prototype.exportText = function (payload) {
+        var body = {
+            v: SAVE_VERSION,
+            savedAt: Date.now(),
+            game: (payload && payload.game) || null,
+            best: (payload && isInt(payload.best) && payload.best >= 0) ? payload.best : 0,
+            settings: validateSettings(payload && payload.settings)
+        };
+        return 'T2048-1:' + encodeText(JSON.stringify(body));
+    };
+
+    /**
+     * 解析匯入字串。只回傳解析結果，不寫入任何東西，
+     * 由呼叫端確認成功後才套用，因此失敗不可能覆寫原存檔。
+     * 回傳 { ok, data, reason }
+     */
+    Storage.prototype.parseImport = function (text) {
+        if (typeof text !== 'string' || !text.trim()) return { ok: false, reason: 'empty' };
+        var body = text.trim();
+        if (body.indexOf('T2048-1:') === 0) body = body.slice('T2048-1:'.length);
+
+        var json;
+        try {
+            // 以 { 或 [ 開頭視為直接貼上的明文 JSON，其餘當 base64
+            var head = body.charAt(0);
+            json = (head === '{' || head === '[') ? body : decodeText(body);
+        } catch (err) {
+            return { ok: false, reason: 'decode' };
+        }
+
+        var payload;
+        try {
+            payload = JSON.parse(json);
+        } catch (err) {
+            return { ok: false, reason: 'json' };
+        }
+        if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+            return { ok: false, reason: 'shape' };
+        }
+        if (isInt(payload.v) && payload.v > SAVE_VERSION) {
+            return { ok: false, reason: 'version-too-new' };
+        }
+
+        // 本局進度可以是空的（例如剛開新局就匯出），但有值就必須通過驗證
+        var game = null;
+        if (payload.game !== null && payload.game !== undefined) {
+            var checked = validateGame(payload.game);
+            if (!checked.ok) return { ok: false, reason: 'game:' + checked.reason };
+            game = checked.data;
+        }
+
+        var best = (isInt(payload.best) && payload.best >= 0) ? payload.best : 0;
+        if (game && game.score > best) best = game.score;   // 最高分不該低於本局分數
+
+        return {
+            ok: true,
+            data: { game: game, best: best, settings: validateSettings(payload.settings) }
+        };
+    };
+
+    /** 套用已驗證的匯入資料。 */
+    Storage.prototype.applyImport = function (data) {
+        if (!data) return false;
+        if (data.game) this.saveGame(data.game);
+        else this.clearGame();
+        this.saveBest(data.best);
+        this.saveSettings(data.settings);
+        return true;
+    };
+
     return {
         Storage: Storage,
         validateGame: validateGame,
+        encodeText: encodeText,
+        decodeText: decodeText,
         validateSettings: validateSettings,
         isPowerOfTwoTile: isPowerOfTwoTile,
         DEFAULT_SETTINGS: DEFAULT_SETTINGS,

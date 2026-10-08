@@ -482,6 +482,23 @@ legend { font-weight: 800; font-size: .92rem; padding: 0; margin-bottom: 2px; }
 .radio-row input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .radio-row label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
 
+.button-row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+textarea {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-s);
+    padding: 8px;
+    background: var(--bg-soft);
+    color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .78rem;
+    resize: vertical;
+}
+
+.error-text { color: var(--danger); font-size: .82rem; font-weight: 700; }
+.error-text[hidden] { display: none; }
+
 kbd {
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     font-size: .8em;

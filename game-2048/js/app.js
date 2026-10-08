@@ -44,6 +44,15 @@
             confirmText: $('confirm-text'),
             confirmOk: $('confirm-ok'),
             btnClearData: $('btn-clear-data'),
+            btnExport: $('btn-export'),
+            btnImport: $('btn-import'),
+            dlgExport: $('dlg-export'),
+            dlgImport: $('dlg-import'),
+            exportText: $('export-text'),
+            importText: $('import-text'),
+            importError: $('import-error'),
+            btnCopyExport: $('btn-copy-export'),
+            btnImportConfirm: $('btn-import-confirm'),
             live: $('live-region'),
             toast: $('toast')
         };
@@ -372,6 +381,55 @@
             });
         });
 
+        this.el.btnExport.addEventListener('click', function () {
+            self.el.exportText.value = self.storage.exportText({
+                game: self.game.toJSON(),
+                best: self.session.best,
+                settings: self.settings.values
+            });
+            self.openDialog(self.el.dlgExport);
+        });
+
+        this.el.btnCopyExport.addEventListener('click', function () {
+            var area = self.el.exportText;
+            area.select();
+            var ok = false;
+            try { ok = document.execCommand('copy'); } catch (err) { ok = false; }
+            if (!ok && navigator.clipboard) {
+                navigator.clipboard.writeText(area.value).then(function () { self.toast('已複製存檔字串。'); });
+                return;
+            }
+            self.toast(ok ? '已複製存檔字串。' : '複製失敗，請手動選取複製。');
+        });
+
+        this.el.btnImport.addEventListener('click', function () {
+            self.el.importText.value = '';
+            self.el.importError.hidden = true;
+            self.openDialog(self.el.dlgImport);
+        });
+
+        this.el.btnImportConfirm.addEventListener('click', function () {
+            var parsed = self.storage.parseImport(self.el.importText.value);
+            if (!parsed.ok) {
+                self.el.importError.textContent =
+                    '無法匯入：' + self.importErrorText(parsed.reason) + '。目前的紀錄沒有被改動。';
+                self.el.importError.hidden = false;
+                return;
+            }
+            self.pendingImport = parsed.data;
+            self.closeDialog(self.el.dlgImport);
+            self.confirm('確定要覆寫目前的紀錄嗎？', '匯入會取代本局進度、最高分與偏好設定，這個動作無法復原。', '覆寫並匯入', function () {
+                var data = self.pendingImport;
+                self.pendingImport = null;
+                self.storage.applyImport(data);
+                if (data.game) self.session.restore(data.game, data.best);
+                else { self.session.newGame(); self.session.best = data.best; }
+                self.settings.apply(data.settings);
+                self.afterReset({ announce: '已匯入紀錄。' });
+                self.toast('已匯入紀錄。');
+            });
+        });
+
         this.el.confirmOk.addEventListener('click', function () {
             var action = self.confirmAction;
             self.confirmAction = null;
@@ -416,6 +474,18 @@
         });
 
         window.addEventListener('pagehide', function () { self.save(); });
+    };
+
+    App.prototype.importErrorText = function (reason) {
+        var map = {
+            empty: '沒有輸入內容',
+            decode: '字串格式不正確',
+            json: '資料不是有效的 JSON',
+            shape: '資料結構不正確',
+            'version-too-new': '這個紀錄來自更新版本的遊戲'
+        };
+        if (reason && reason.indexOf('game:') === 0) return '本局進度的資料有問題（' + reason.slice(5) + '）';
+        return map[reason] || ('資料有問題（' + reason + '）');
     };
 
     App.prototype.applySettingsFromForm = function () {
