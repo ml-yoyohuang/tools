@@ -61,10 +61,10 @@
     }
 
     App.prototype._imageSources = function () {
-        var sources = [
-            { key: 'cookie', src: Config.MAIN_COOKIE_IMAGE },
-            { key: 'golden', src: Config.GOLDEN_COOKIE_IMAGE }
-        ];
+        var sources = [{ key: 'golden', src: Config.GOLDEN_COOKIE_IMAGE }];
+        Config.COOKIE_FRAMES.forEach(function (src, index) {
+            sources.push({ key: 'cookie:' + index, src: src });
+        });
         Config.BUILDINGS.forEach(function (b) { sources.push({ key: 'b:' + b.id, src: b.image }); });
         Config.ITEMS.forEach(function (i) { sources.push({ key: 'i:' + i.id, src: i.image }); });
         Content.UPGRADES.forEach(function (u) { sources.push({ key: 'u:' + u.id, src: u.image }); });

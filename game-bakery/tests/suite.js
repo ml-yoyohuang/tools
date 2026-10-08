@@ -860,6 +860,24 @@
 
     /* ---------------- 12. 內容一致性 ---------------- */
 
+    test('主餅乾影格設定正確，且每點一次換下一張、循環播放', function () {
+        var frames = Config.COOKIE_FRAMES;
+        ok(Array.isArray(frames) && frames.length === 5, '應有 5 張影格，實際 ' + (frames && frames.length));
+        frames.forEach(function (src, index) {
+            ok(typeof src === 'string' && src.indexOf('assets/') === 0, '第 ' + index + ' 張路徑不正確：' + src);
+        });
+        equal(new Set(frames).size, frames.length, '影格路徑不應重複');
+
+        // 影格索引 = 點擊次數對影格數取餘數
+        function frameAt(clicks) { return Math.max(0, Math.floor(clicks)) % frames.length; }
+        equal(frameAt(0), 0, '第 0 次點擊用第 1 張');
+        equal(frameAt(1), 1);
+        equal(frameAt(4), 4, '第 4 次點擊用第 5 張');
+        equal(frameAt(5), 0, '第 5 次點擊回到第 1 張');
+        equal(frameAt(6), 1);
+        equal(frameAt(123), 123 % 5);
+    });
+
     test('內容表數量符合需求', function () {
         equal(Config.BUILDINGS.length, 8, '八種設備');
         ok(Content.UPGRADES.length >= 25, '至少 25 個升級，實際 ' + Content.UPGRADES.length);

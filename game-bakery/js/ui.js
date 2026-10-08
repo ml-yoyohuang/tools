@@ -111,9 +111,29 @@
         return fallback;
     };
 
-    UI.prototype.refreshArt = function () {
+    /** 目前該顯示第幾張餅乾影格：每點一次換下一張，循環播放。 */
+    UI.prototype.cookieFrameIndex = function () {
+        var clicks = this.game && this.game.state ? this.game.state.clicks : 0;
+        var total = Config.COOKIE_FRAMES.length;
+        if (!(total > 0)) return 0;
+        var n = Math.max(0, Math.floor(clicks));
+        return n % total;
+    };
+
+    /** 只有在影格真的換掉時才動 DOM，連點時不會每次都重建節點。 */
+    UI.prototype.renderCookieFrame = function () {
+        var index = this.cookieFrameIndex();
+        if (index === this._cookieFrame) return;
+        this._cookieFrame = index;
         this.el.cookieArt.textContent = '';
-        this.el.cookieArt.appendChild(this.icon('cookie', Config.MAIN_COOKIE_IMAGE, '餅乾'));
+        this.el.cookieArt.appendChild(
+            this.icon('cookie:' + index, Config.COOKIE_FRAMES[index], '餅乾')
+        );
+    };
+
+    UI.prototype.refreshArt = function () {
+        this._cookieFrame = null;
+        this.renderCookieFrame();
         this.el.goldenArt.textContent = '';
         this.el.goldenArt.appendChild(this.icon('golden', Config.GOLDEN_COOKIE_IMAGE, '黃金'));
 
@@ -286,6 +306,7 @@
         }
         setText(this.el.clickValue, clickText);
 
+        this.renderCookieFrame();
         this._renderBuffs(stats, now);
         this._renderGolden(state, now);
     };

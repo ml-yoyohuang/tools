@@ -222,7 +222,18 @@
         ITEMS: ITEMS,
         BUILDING_BY_ID: byId(BUILDINGS),
         ITEM_BY_ID: byId(ITEMS),
-        MAIN_COOKIE_IMAGE: 'assets/cookie-main.svg',
+        /**
+         * 主餅乾的點擊序列影格：每點一次換下一張，循環播放。
+         * 影格由 tools/prepare-cookie-frames.py 從去背原圖整理而成
+         * （統一對位與尺寸、修掉透明區滲色、壓成 WebP）。
+         */
+        COOKIE_FRAMES: [
+            'assets/cookie-01.webp',
+            'assets/cookie-02.webp',
+            'assets/cookie-03.webp',
+            'assets/cookie-04.webp',
+            'assets/cookie-05.webp'
+        ],
         GOLDEN_COOKIE_IMAGE: 'assets/cookie-golden.svg'
     };
 });

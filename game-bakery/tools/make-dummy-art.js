@@ -4,6 +4,9 @@
  * 用法：node tools/make-dummy-art.js
  *
  * 內容直接從設定表讀取，之後新增設備／升級／道具再跑一次就會補上占位圖。
+ *
+ * 注意：主餅乾已改用真實照片序列（assets/cookie-01.webp ～ cookie-05.webp），
+ * 由 tools/prepare-cookie-frames.py 產生，不在這個腳本的範圍內。
  * 要換成正式插畫時，直接覆蓋同名檔案即可，不需要改任何程式。
  */
 'use strict';
@@ -63,29 +66,6 @@ function tile(color, label, glyph, id) {
 `;
 }
 
-/** 主餅乾：圓形 + 巧克力豆，透明背景。 */
-function mainCookie() {
-    const base = '#c98b45';
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="大餅乾">
-  <title>大餅乾</title>
-  <defs>
-    <radialGradient id="ck" cx="36%" cy="30%" r="78%">
-      <stop offset="0" stop-color="${shade(base, 0.35)}"/>
-      <stop offset="0.6" stop-color="${base}"/>
-      <stop offset="1" stop-color="${shade(base, -0.3)}"/>
-    </radialGradient>
-  </defs>
-  <circle cx="100" cy="100" r="92" fill="url(#ck)" stroke="${shade(base, -0.5)}" stroke-width="5"/>
-  <g fill="${shade(base, -0.62)}">
-    <circle cx="68" cy="66" r="13"/><circle cx="131" cy="78" r="11"/>
-    <circle cx="96" cy="112" r="14"/><circle cx="58" cy="128" r="10"/>
-    <circle cx="137" cy="134" r="12"/><circle cx="104" cy="44" r="8"/>
-  </g>
-  <ellipse cx="68" cy="52" rx="26" ry="16" fill="#ffffff" opacity=".18" transform="rotate(-28 68 52)"/>
-</svg>
-`;
-}
-
 function goldenCookie() {
     const base = '#e8b320';
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="黃金餅乾">
@@ -114,7 +94,6 @@ function write(name, content) {
     count++;
 }
 
-write('cookie-main.svg', mainCookie());
 write('cookie-golden.svg', goldenCookie());
 
 Config.BUILDINGS.forEach((building) => {

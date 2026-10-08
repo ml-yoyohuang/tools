@@ -10,3 +10,5 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+### 素材收件匣（原始大圖，不進版控也不部署）
+_incoming-images/

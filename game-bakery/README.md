@@ -36,10 +36,11 @@ game-bakery/
 │   ├── images.js     圖片載入與降級
 │   ├── ui.js         畫面繪製（節點重用，不每幀重建）
 │   └── main.js       組裝：單一 setInterval 迴圈
-├── assets/           46 張本地 SVG 占位圖
+├── assets/           45 張 SVG 占位圖 + 5 張主餅乾照片影格
 ├── tools/
-│   ├── make-dummy-art.js   從設定表產生占位圖
-│   └── simulate.js         數值模擬
+│   ├── make-dummy-art.js         從設定表產生占位圖
+│   ├── prepare-cookie-frames.py  整理主餅乾序列（需 Pillow，非執行時依賴）
+│   └── simulate.js               數值模擬
 ├── tests/            suite.js（Node 與瀏覽器共用）+ 兩個執行器
 └── README.md
 ```
@@ -131,8 +132,9 @@ game-bakery/
 
 ## 換圖指南
 
-1. 占位圖都在 `assets/`，檔名對應設定表：
-   - 主餅乾 `cookie-main.svg`、黃金餅乾 `cookie-golden.svg`
+1. 圖片都在 `assets/`，檔名對應設定表：
+   - **主餅乾序列** `cookie-01.webp` ～ `cookie-05.webp`（真實照片，見下方）
+   - 黃金餅乾 `cookie-golden.svg`
    - 設備 `building-01.svg` ～ `building-08.svg`
    - 道具 `item-01.svg` ～ `item-04.svg`
    - 升級 `upgrade-<升級ID>.svg`
@@ -140,7 +142,31 @@ game-bakery/
 3. 要換路徑或檔名，改 `js/config.js` 的 `image` 欄位（設備／道具）或 `js/content.js`（升級）。
 4. 圖片以 `object-fit: contain` 呈現，會自動保持長寬比並置中。
 5. 任何一張載入失敗，該項目自動改用色塊與名稱縮寫，遊戲照常運作，畫面上會出現提示。
-6. 新增內容後重新產生占位圖：`node tools/make-dummy-art.js`。
+6. 新增內容後重新產生占位圖：`node tools/make-dummy-art.js`（這個腳本不再產生主餅乾）。
+
+### 主餅乾序列
+
+主餅乾是 5 張真實照片影格，**每點擊一次換下一張，循環播放**（第 0 次用 01、第 4 次用 05、第 5 次回到 01）。
+影格數量不是寫死的，`js/config.js` 的 `COOKIE_FRAMES` 放幾張就循環幾張。
+
+要換成另一組序列，把去背原圖放進一個資料夾後執行：
+
+```bash
+pip install pillow numpy          # 只有準備美術資源時需要，遊戲本身零依賴
+python tools/prepare-cookie-frames.py <原圖資料夾>
+```
+
+這個腳本會：
+
+- **修掉透明區滲色**：把透明與半透明像素的 RGB 填成鄰近的餅乾色。
+  去背輸出的透明區常殘留白色或深色雜訊，縮圖取樣時會在邊緣滲出白邊或黑點，深色主題下特別明顯。
+- **統一對位**：以「實心像素重心」與「涵蓋 95% 質量的半徑」為基準，把每張縮放平移到同一個正方畫布，
+  播放時才不會上下跳或忽大忽小。
+- **縮圖壓縮**：輸出 384×384 WebP，每張約 40KB（原圖每張 2.3MB）。
+
+可調參數在腳本頂端：`OUT_SIZE`（輸出邊長）、`TARGET_RADIUS`（餅乾在畫布中的等效半徑，留邊給碎屑）、
+`WEBP_QUALITY`。檔名會依排序編號成 `cookie-01` 起跳，`__` 開頭的檔案會被忽略（方便放備份）。
+改完檔案數量記得同步更新 `COOKIE_FRAMES`。
 
 > SVG 是嚴格的 XML，同一元素出現重複屬性會整張解析失敗。
 
@@ -218,6 +244,7 @@ node tests/run-node.js
 
 ## 第三方與授權
 
-- **沒有使用任何第三方程式庫、框架、字型或圖片**，全部原生實作，字型使用系統字型堆疊。大數運算直接使用 JavaScript 原生 `number`，所有計算都有有限性檢查與上限夾制。
+- **遊戲本身沒有使用任何第三方程式庫、框架、字型或遠端圖片**，全部原生實作
+  （`tools/prepare-cookie-frames.py` 需要 Pillow，但那只在準備美術資源時用，不是執行時依賴），字型使用系統字型堆疊。大數運算直接使用 JavaScript 原生 `number`，所有計算都有有限性檢查與上限夾制。
 - 玩法概念受 Gabriele Cirulli 之外的 Orteil 所作 Cookie Clicker 啟發，但名稱、文案、數值、程式與圖片皆為本專案原創，未複製其程式或素材。
 - 本資料夾的程式碼隨 DevToolbox 專案一同授權使用。
