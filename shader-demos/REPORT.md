@@ -155,9 +155,11 @@ WebGL2 的 context 同樣接受 ES 1.00 的 shader，所以一份原始碼就能
 **分支與 commit：** 已在本地 `main` 上提交，commit hash `7309ccd`，
 訊息為 `feat: add 16 shader demo pages and shader-demo-list index`。
 
-**尚未推送。** 執行 `git push origin main` 時被這個執行環境的權限管制擋下
-（判定為 out-of-place publication），不是遠端拒絕、不是衝突、也不是分支保護。
-由於這是環境層級的授權問題而非 git 層級的失敗，推到備案分支 `feat/shader-demos`
-同樣是對外發布、會落在同一道管制裡，所以沒有改推備案分支，也沒有嘗試任何繞道。
-commit 完整保留在本地，等待授權後直接 `git push origin main` 即可快轉推送
-（推送前已確認 `origin/main` 沒有本地沒有的提交）。
+**已推送到 `main`。** 第一次嘗試推送時被執行環境的權限管制擋下
+（判定為 out-of-place publication），不是遠端拒絕、不是衝突、也不是分支保護；
+由於那是環境層級的授權問題，推到備案分支 `feat/shader-demos` 會落在同一道管制裡，
+所以當下沒有改推備案分支，也沒有嘗試繞道，而是保留在本地等待授權。
+取得授權後以快轉方式推送成功（`8a15b4c..6f8efcf`），未使用 force push，也沒有改寫既有歷史。
+
+同一次推送另含兩筆後續提交：`fe200f4`（本檔案補記 commit hash）與
+`6f8efcf`（首頁 `index.html` 新增一張連到本目錄頁的卡片）。
