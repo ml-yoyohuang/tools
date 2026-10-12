@@ -28,6 +28,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .file input{position:absolute;opacity:0;width:1px;height:1px}
 .nav-back{display:inline-block;margin-bottom:16px;text-decoration:none;color:var(--accent);font-weight:600}
 .nav-back:hover{text-decoration:underline}
+.nav-alt{display:inline-block;margin:-8px 0 16px;color:var(--accent);font-weight:600;text-decoration:none}
+.nav-alt:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -35,6 +37,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 <a href="index.html" class="nav-back">← 返回首頁</a>
 <h1>花朵變色濾鏡 · WebGL Shader 還原</h1>
 <p class="lead">預設使用程式生成的花朵當示範。載入你的原始花朵照片後，背景會走「漸層映射」，三個方框走「放大＋模糊＋雙色調」，全畫面再疊一層底片顆粒。</p>
+<a href="flower-shader-fullscreen-interactive.html" class="nav-alt">全螢幕互動版 →</a>
 <div class="stage"><canvas id="c"></canvas><span class="tag">FOUNDER</span></div>
 <label class="file">載入花朵照片<input type="file" id="file" accept="image/*"></label>
 <div class="controls">

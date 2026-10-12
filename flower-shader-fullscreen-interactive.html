@@ -91,7 +91,16 @@ const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attac
 gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
 const loc=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
 const U=n=>gl.getUniformLocation(pr,n);
-gl.uniform4fv(U('uRect'),[0.060,0.297,0.202,0.703, 0.354,0.023,0.130,0.388, 0.567,0.217,0.291,0.783]);
+// 三個方框的原始位置（左, 上, 寬, 高，皆為畫面比例）；實際送進 shader 前由 fitRects() 調整
+const RECT_BASE=[[0.060,0.297,0.202,0.703],[0.354,0.023,0.130,0.388],[0.567,0.217,0.291,0.783]];
+// 方框最高只到正方形：以像素計算，高度不超過寬度，並維持原本的垂直中心
+function fitRects(){
+  const W=cv.width,H=cv.height;
+  gl.uniform4fv(U('uRect'),RECT_BASE.flatMap(([x,y,w,h])=>{
+    const nh=Math.min(h,w*W/H);
+    return [x,y+(h-nh)/2,w,nh];
+  }));
+}
 gl.uniform3fv(U('uDark'),[0.37,0.52,0.48, 0.38,0.38,0.38, 0.40,0.40,0.41]);
 gl.uniform3fv(U('uLight'),[0.91,0.93,0.92, 0.95,0.95,0.95, 0.95,0.95,0.95]);
 const tx=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tx);
@@ -161,6 +170,7 @@ function resize(){
   const d=Math.min(devicePixelRatio||1,2),r=cv.getBoundingClientRect();
   cv.width=r.width*d|0;cv.height=r.height*d|0;
   gl.viewport(0,0,cv.width,cv.height);
+  fitRects();
   readScroll();
 }
 addEventListener('resize',resize);
