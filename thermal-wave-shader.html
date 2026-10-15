@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>熱像波形濾鏡 Shader</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f1f6;--fg:#2c2a30;--muted:#6d6874;--line:#d9d2e0;--accent:#9b3fe8;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1a1f;--fg:#ece8f0;--muted:#a59fad;--line:#3a3540;--accent:#c6f23a}}
+:root[data-theme="dark"]{--bg:#1b1a1f;--fg:#ece8f0;--muted:#a59fad;--line:#3a3540;--accent:#c6f23a}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.6 "Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif}
+main{max-width:1100px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:1.35rem;font-weight:600;margin:0 0 4px}
+p.lead{margin:0 0 20px;color:var(--muted);max-width:68ch}
+.layout{display:grid;grid-template-columns:minmax(0,640px) minmax(220px,1fr);gap:24px;align-items:start}
+@media (max-width:820px){.layout{grid-template-columns:1fr}}
+.stage{position:relative;width:100%;aspect-ratio:1/1;border-radius:4px;overflow:hidden;background:#ddd}
+canvas{display:block;width:100%;height:100%}
+.controls{display:flex;flex-direction:column;gap:14px}
+label{display:flex;flex-direction:column;gap:4px;font-size:.88rem;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.val{color:var(--fg);font-variant-numeric:tabular-nums;font-weight:600}
+.row{display:flex;flex-wrap:wrap;gap:10px}
+.btn{display:inline-block;padding:8px 14px;border:1px solid var(--line);border-radius:6px;cursor:pointer;color:var(--fg);background:none;font:inherit}
+.btn:focus-within,.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn input{position:absolute;opacity:0;width:1px;height:1px}
+.nav-back{display:inline-block;margin-bottom:16px;text-decoration:none;color:var(--accent);font-weight:600}
+.nav-back:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<main>
+<a href="index.html" class="nav-back">← 返回首頁</a>
+<h1>熱像波形濾鏡 · WebGL Shader</h1>
+<p class="lead">一張重度模糊的人群剪影，經過「先加雜訊、再做漸層映射」：黑 → 螢光綠 → 藍 → 紫 → 白。預設是程式生成的波形人群，也可以載入自己的照片（人像、團體照效果最好）。</p>
+<div class="layout">
+  <div class="stage"><canvas id="c"></canvas></div>
+  <div class="controls">
+    <div class="row">
+      <label class="btn">載入照片<input type="file" id="file" accept="image/*"></label>
+      <button class="btn" id="proc" type="button">改回程式生成</button>
+    </div>
+    <label>色階偏移<input type="range" id="shift" min="-0.4" max="0.4" step="0.01" value="0"></label>
+    <label>對比曲線<input type="range" id="contrast" min="0.4" max="2.5" step="0.01" value="1"></label>
+    <label>模糊半徑（照片模式）<input type="range" id="blur" min="0" max="0.08" step="0.001" value="0.035"></label>
+    <label>液態扭曲<input type="range" id="warp" min="0" max="0.3" step="0.005" value="0.12"></label>
+    <label>垂直拖曳<input type="range" id="smear" min="0" max="0.4" step="0.005" value="0.14"></label>
+    <label>映射前雜訊（邊緣顆粒）<input type="range" id="grain" min="0" max="0.4" step="0.005" value="0.12"></label>
+    <label>流動速度<input type="range" id="speed" min="0" max="1" step="0.01" value="0.25"></label>
+  </div>
+</div>
+</main>
+<script>
+const VS=`attribute vec2 p;varying vec2 vUv;void main(){vUv=p*.5+.5;gl_Position=vec4(p,0.,1.);}`;
+const FS=`precision highp float;
+varying vec2 vUv;
+uniform sampler2D uTex;uniform vec2 uRes,uTexScale;
+uniform float uTime,uFlow,uMode,uShift,uContrast,uBlur,uWarp,uSmear,uGrain;
+
+float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
+  return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);}
+float fbm(vec2 p){float s=0.,a=.5;for(int i=0;i<5;i++){s+=a*noise(p);p=p*2.03+17.1;a*=.5;}return s;}
+
+vec2 coverUV(vec2 uv){return (uv-.5)*uTexScale+.5;}
+vec3 tex(vec2 uv){return texture2D(uTex,clamp(coverUV(uv),0.,1.)).rgb;}
+float luma(vec3 c){return dot(c,vec3(.299,.587,.114));}
+// 黃金角螺旋取樣的圓盤模糊（樣本不足的斑駁會被後面的雜訊吃掉）
+float blurL(vec2 uv,float r){
+  if(r<=0.)return luma(tex(uv));
+  float acc=0.;
+  for(int i=0;i<48;i++){float f=float(i);float a=f*2.39996;float rr=sqrt((f+.5)/48.)*r;
+    acc+=luma(tex(uv+vec2(cos(a),sin(a))*rr*vec2(uRes.y/uRes.x,1.)));}
+  return acc/48.;
+}
+
+float smin(float a,float b,float k){float h=clamp(.5+.5*(b-a)/k,0.,1.);return mix(b,a,h)-k*h*(1.-h);}
+// 垂直膠囊的距離（人形：頭在上、身體往下拉長）
+float capsule(vec2 p,vec2 a,vec2 b){vec2 pa=p-a,ba=b-a;float t=clamp(dot(pa,ba)/dot(ba,ba),0.,1.);return length(pa-ba*t);}
+
+// 程式生成的「波形人群」：一排高低不一的人形，左側高大、往右縮小並收成尖點，
+// 整體輪廓像一段音訊波形。回傳亮度（人 = 暗，距離越遠越亮）。
+float crowd(vec2 p){
+  const float TIP=.95,CELL=.09;
+  float ci=floor(p.x/CELL);
+  float r=99.;
+  for(int k=-2;k<=2;k++){
+    float i=ci+float(k);
+    float h1=hash(vec2(i,1.3)),h2=hash(vec2(i,7.1)),h3=hash(vec2(i,3.7));
+    float xi=(i+.5+(h1-.5)*.8)*CELL;
+    float taper=clamp((TIP-xi)/TIP,0.,1.);
+    float cy=.36+.08*taper;
+    float top=cy+taper*(.22+.42*h2)+.025*sin(uFlow*.9+i*1.7);
+    float bot=cy-taper*(.16+.14*h3);
+    float wi=CELL*(.30+.35*h1)*(.35+.65*taper)+.003;
+    r=smin(r,capsule(p,vec2(xi,bot),vec2(xi,top))/wi,.5);
+  }
+  // 連接所有人的「波形主幹」，往右收成尖點
+  float t=clamp((TIP-p.x)/TIP,0.,1.);
+  float spine=abs(p.y-(.36+.08*t))/(t*.10+.004);
+  r=smin(r,spine,.5);
+  // pow < 1：黑色只留在核心，綠色光暈拉寬
+  float L=pow(clamp(r/4.5,0.,1.),.7);
+  // 背景：低頻起伏，上方偏白、右下偏紫
+  float bg=.62+.42*fbm(p*1.3+vec2(uFlow*.15,0.))+.20*smoothstep(.35,.95,p.y);
+  return min(L,bg);
+}
+
+// 漸層映射：黑 → 螢光綠 → 藍（細帶）→ 紫 → 粉白
+vec3 gradMap(float t){
+  vec3 k0=vec3(.05,.05,.06),k1=vec3(.776,.949,.227),k2=vec3(.24,.33,.96),k3=vec3(.63,.25,.94),k4=vec3(.97,.93,.98);
+  if(t<.20)return k0;
+  if(t<.38)return mix(k0,k1,smoothstep(.20,.38,t));
+  if(t<.52)return k1;
+  if(t<.60)return mix(k1,k2,smoothstep(.52,.60,t));
+  if(t<.68)return mix(k2,k3,smoothstep(.60,.68,t));
+  if(t<.80)return k3;
+  return mix(k3,k4,smoothstep(.80,.96,t));
+}
+
+void main(){
+  vec2 p=vUv;
+  // 垂直拖曳：每一欄往上下偏移不同距離，邊緣變成滴落狀的長條
+  p.y+=uSmear*(fbm(vec2(p.x*9.,uFlow*.15))-.5);
+  // 液態扭曲：兩層 fbm 做 domain warp
+  vec2 w=vec2(fbm(p*3.+vec2(0.,uFlow*.3)),fbm(p*3.+vec2(5.2,-uFlow*.3)))-.5;
+  p+=uWarp*w;
+  float L=uMode>.5?blurL(p,uBlur):crowd(p);
+  L=clamp(pow(L,uContrast)+uShift,0.,1.);
+  // 關鍵：雜訊加在「映射前」的亮度上，色帶交界才會變成顆粒狀的噴點
+  vec2 g=gl_FragCoord.xy+fract(uTime*7.)*131.;
+  L+=(hash(g)-.5)*uGrain;
+  vec3 col=gradMap(clamp(L,0.,1.));
+  col+=(hash(g+7.7)-.5)*.05;                          // 映射後再一層很淡的顆粒
+  gl_FragColor=vec4(col,1.);
+}`;
+const cv=document.getElementById('c'),gl=cv.getContext('webgl');
+function sh(t,s){const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))console.error(gl.getShaderInfoLog(o));return o;}
+const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(pr);gl.useProgram(pr);
+gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+const loc=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+const U=n=>gl.getUniformLocation(pr,n);
+const tx=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tx);
+[gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T].forEach(k=>gl.texParameteri(gl.TEXTURE_2D,k,gl.CLAMP_TO_EDGE));
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([255,255,255,255]));
+let texAspect=1,mode=0;
+function upload(src,w,h){gl.bindTexture(gl.TEXTURE_2D,tx);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,src);texAspect=w/h;}
+document.getElementById('file').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const im=new Image();
+  im.onload=()=>{const m=1600,k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k|0;c.height=im.height*k|0;
+    c.getContext('2d').drawImage(im,0,0,c.width,c.height);upload(c,c.width,c.height);URL.revokeObjectURL(im.src);mode=1;};im.src=URL.createObjectURL(f);});
+document.getElementById('proc').addEventListener('click',()=>{mode=0;});
+
+const ids=['shift','contrast','blur','warp','smear','grain'],names={shift:'uShift',contrast:'uContrast',blur:'uBlur',warp:'uWarp',smear:'uSmear',grain:'uGrain'};
+// 每個滑桿旁顯示目前數值，以及對應的拖拉百分比
+[...ids,'speed'].forEach(i=>{const el=document.getElementById(i),out=document.createElement('output');out.className='val';out.htmlFor=i;
+  const dec=Math.max(0,(el.step.split('.')[1]||'').length);
+  const show=()=>{const v=parseFloat(el.value),pct=(v-el.min)/(el.max-el.min)*100;out.textContent=`${v.toFixed(dec)}（${Math.round(pct)}%）`;};
+  el.before(out);el.addEventListener('input',show);show();});
+
+function resize(){const d=Math.min(devicePixelRatio||1,2),r=cv.getBoundingClientRect();cv.width=r.width*d|0;cv.height=r.height*d|0;gl.viewport(0,0,cv.width,cv.height);}
+addEventListener('resize',resize);resize();
+
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
+let flow=0,last=0;
+function frame(ms){const dt=last?Math.min((ms-last)*.001,.1):0;last=ms;
+  if(!reduceMotion.matches)flow+=dt*parseFloat(document.getElementById('speed').value);
+  const ca=cv.width/cv.height;
+  gl.uniform2f(U('uTexScale'),ca>texAspect?1:ca/texAspect,ca>texAspect?texAspect/ca:1);
+  gl.uniform2f(U('uRes'),cv.width,cv.height);
+  gl.uniform1f(U('uTime'),reduceMotion.matches?0:ms*.001);
+  gl.uniform1f(U('uFlow'),flow);
+  gl.uniform1f(U('uMode'),mode);
+  ids.forEach(i=>gl.uniform1f(U(names[i]),parseFloat(document.getElementById(i).value)));
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);requestAnimationFrame(frame);}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
