@@ -1,0 +1,92 @@
+/* Motion Studies Vol. 01 — shared presentation chrome.
+ * The interface is a quiet caption around the work, never a frame on top of it.
+ * Each page sets --bg, --ui and --ui-dim to sit inside its own palette.
+ */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg, #111);
+  color: var(--ui, #eee);
+  font-family: "Inter Tight", "Helvetica Neue", Arial, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+.stage { position: fixed; inset: 0; overflow: hidden; }
+.mp-canvas { position: absolute; left: 0; top: 0; display: block; }
+body.is-idle, body.is-idle * { cursor: none; }
+
+.mp-ui { transition: opacity .9s cubic-bezier(.3,.0,.2,1); }
+body.is-idle .mp-ui { opacity: 0; }
+body:not(.is-ready) .mp-ui { opacity: 0; }
+
+/* ---------- header: number, title, way home ---------- */
+.mp-head {
+  position: fixed; left: 0; top: 0; z-index: 10;
+  padding: max(18px, env(safe-area-inset-top)) 22px 0 max(22px, env(safe-area-inset-left));
+  pointer-events: none;
+  font-size: 10.5px; letter-spacing: .06em; line-height: 1.45;
+}
+.mp-head a, .mp-head button { pointer-events: auto; }
+.mp-back { color: var(--ui-dim, rgba(255,255,255,.55)); text-decoration: none; text-transform: uppercase; letter-spacing: .14em; font-size: 9.5px; }
+.mp-back::before { content: "←"; display: inline-block; margin-right: .7em; transition: transform .3s; }
+.mp-back:hover::before, .mp-back:focus-visible::before { transform: translateX(-3px); }
+.mp-back:hover, .mp-back:focus-visible { color: var(--ui); }
+.mp-title { margin-top: 10px; display: grid; grid-template-columns: auto 1fr; column-gap: 12px; }
+.mp-no { font-variant-numeric: tabular-nums; color: var(--ui-dim); grid-row: span 2; }
+.mp-title h1 { margin: 0; font: inherit; font-weight: 600; text-transform: uppercase; letter-spacing: .14em; }
+.mp-title p { margin: 0; color: var(--ui-dim); }
+
+/* ---------- bottom bar ---------- */
+.mp-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  display: flex; align-items: center; gap: 2px;
+  padding: 0 max(14px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+  font-size: 9.5px; text-transform: uppercase; letter-spacing: .14em;
+}
+.mp-bar button {
+  appearance: none; background: none; border: 0; color: var(--ui); font: inherit; letter-spacing: inherit;
+  padding: 10px 8px; cursor: pointer; text-transform: uppercase; opacity: .78;
+}
+.mp-bar button:hover { opacity: 1; }
+.mp-bar button[aria-pressed="false"] { opacity: .45; }
+.mp-bar button[data-act="play"] { min-width: 5.4em; text-align: left; opacity: 1; font-weight: 600; }
+:focus-visible { outline: 1px solid var(--ui); outline-offset: 2px; }
+
+.mp-time { font-variant-numeric: tabular-nums; color: var(--ui-dim); padding: 0 10px; white-space: nowrap; letter-spacing: .06em; }
+.mp-scrub {
+  flex: 1; min-width: 60px; margin: 0 10px; height: 24px; background: transparent;
+  -webkit-appearance: none; appearance: none; cursor: pointer;
+}
+.mp-scrub::-webkit-slider-runnable-track { height: 1px; background: var(--ui-dim); }
+.mp-scrub::-moz-range-track { height: 1px; background: var(--ui-dim); }
+.mp-scrub::-webkit-slider-thumb { -webkit-appearance: none; width: 9px; height: 9px; margin-top: -4px; border-radius: 50%; background: var(--ui); border: 0; }
+.mp-scrub::-moz-range-thumb { width: 9px; height: 9px; border-radius: 50%; background: var(--ui); border: 0; }
+
+/* ---------- info + notes ---------- */
+.mp-info {
+  position: fixed; z-index: 11; right: max(22px, env(safe-area-inset-right)); top: max(18px, env(safe-area-inset-top));
+  width: min(360px, calc(100vw - 44px)); max-height: calc(100vh - 110px); overflow: auto;
+  padding: 18px 20px 16px; background: var(--panel, rgba(10,10,10,.86)); color: var(--panel-fg, #eee);
+  font-size: 12.5px; line-height: 1.6; letter-spacing: .01em;
+}
+.mp-info p { margin: 0 0 .8em; }
+.mp-info-k { text-transform: uppercase; letter-spacing: .16em; font-size: 9.5px; opacity: .6; }
+.mp-keys { font-size: 10px; opacity: .55; margin-top: 1.2em !important; letter-spacing: .04em; }
+.mp-note {
+  position: fixed; z-index: 10; left: 50%; bottom: 58px; transform: translateX(-50%);
+  margin: 0; padding: 8px 14px; max-width: calc(100vw - 32px);
+  background: var(--panel, rgba(10,10,10,.86)); color: var(--panel-fg, #eee);
+  font-size: 11px; letter-spacing: .02em; text-align: center;
+}
+.mp-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media (max-width: 600px) {
+  .mp-bar { flex-wrap: wrap; row-gap: 0; }
+  .mp-scrub { order: -1; flex-basis: 100%; margin: 0 6px; }
+  .mp-time { margin-left: auto; }
+  .mp-bar button { padding: 10px 6px; }
+  .mp-head { padding-right: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mp-ui { transition: none; }
+}

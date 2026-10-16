@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>11 Light Through Glass — Motion Studies Vol. 02</title>
+<meta name="description" content="A rod, a prism and a lens of glass cross a printed poster; what they refract, split and focus becomes a second composition.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Noto+Serif+TC:wght@500&display=swap">
+<link rel="stylesheet" href="../shared/player.css">
+<style>
+  :root { --bg: #e7e3db; --ui: #171717; --ui-dim: rgba(23,23,23,.55); --panel: rgba(23,23,23,.94); --panel-fg: #e7e3db; }
+  .fallback { position: fixed; inset: 0; display: grid; place-items: center; font: 13px "Inter Tight", sans-serif; }
+  .fallback[hidden] { display: none; }
+</style>
+</head>
+<body>
+<main class="stage" id="stage" role="img" aria-label="A pale printed poster with the words Light bends here, a block of ruled lines, a black disc and a blue rectangle. A glass rod, a prism and a round lens slide across it, bending and splitting the print, and for a moment the room darkens so only the focused light remains."></main>
+<p class="fallback" id="fallback" hidden>This piece needs WebGL, which is not available in this browser.</p>
+<script src="../shared/motion.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

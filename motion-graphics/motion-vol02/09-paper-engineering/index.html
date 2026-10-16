@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>09 Paper Engineering — Motion Studies Vol. 02</title>
+<meta name="description" content="A letter that was never sent folds itself: a gate fold, a standing accordion, and on its back four characters that say why.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Noto+Serif+TC:wght@400;700;900&family=Inter+Tight:wght@500;600&display=swap">
+<link rel="stylesheet" href="../shared/player.css">
+<style>
+  :root { --bg: #c9c0b0; --ui: #23201c; --ui-dim: rgba(35,32,28,.55); --panel: rgba(35,32,28,.94); --panel-fg: #efe9dd;
+          --paper: #f2ede3; --ink: #23201c; --indigo: #34406b; }
+  .scene { position: absolute; inset: 0; perspective: 1500px; perspective-origin: 50% 30%; overflow: hidden; background: var(--bg); }
+  .world { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-style: preserve-3d; }
+  .table { position: absolute; transform-origin: 0 0; }
+  .table canvas { display: block; width: 100%; height: 100%; }
+  .panel { position: absolute; left: 0; top: 0; transform-origin: 0 0; transform-style: preserve-3d; }
+  .face { position: absolute; inset: 0; overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+          background-color: var(--paper); background-size: 340px 340px; }
+  .face.back { transform: rotateY(180deg); }
+  .tall .face.back { transform: rotateX(180deg); }
+  .shade { position: absolute; inset: 0; pointer-events: none; background: #1a140c; opacity: 0; }
+  .crease { position: absolute; inset: 0; pointer-events: none; opacity: 0; }
+  .art { position: absolute; left: 0; top: 0; color: var(--ink); }
+  .art > * { position: absolute; margin: 0; }
+
+  /* ---------- the front: the letter ---------- */
+  .title { font: 700 3.3em/1.06 "Noto Serif TC", serif; writing-mode: vertical-rl; letter-spacing: .12em; }
+  .title-en { font: 600 .62em/1.4 "Inter Tight", sans-serif; letter-spacing: .24em; text-transform: uppercase; }
+  .mark { font: 400 .9em/1 "Noto Serif TC", serif; }
+  .date { font: italic 400 1.05em/1.3 "EB Garamond", serif; }
+  .body { font: 400 1.04em/1.52 "EB Garamond", Georgia, serif; text-align: justify; hyphens: auto; }
+  .body p { margin: 0 0 .7em; }
+  .sign { font: italic 400 1.4em/1 "EB Garamond", serif; }
+  .moon { border: .11em solid var(--ink); border-radius: 50%; }
+  .moon-cap { font: italic 400 .8em/1.3 "EB Garamond", serif; text-align: center; }
+  .folio { font: 500 .55em/1 "Inter Tight", sans-serif; letter-spacing: .2em; text-transform: uppercase; }
+  /* ---------- the back: what the letter could not say ---------- */
+  .big { font: 900 15em/1 "Noto Serif TC", serif; width: 1.06em; text-align: center; }
+  .post { border: .16em solid var(--indigo); border-radius: 50%; }
+  .post::after { content: ""; position: absolute; inset: 1.1em; border: .08em solid var(--indigo); border-radius: 50%; }
+  .post-t { font: 600 .66em/1.3 "Inter Tight", sans-serif; letter-spacing: .3em; color: var(--indigo); text-align: center; text-transform: uppercase; }
+  .stamp { border: .1em solid var(--indigo); outline: .1em dashed var(--indigo); outline-offset: .32em; }
+  .addr { font: italic 400 1.02em/1.55 "EB Garamond", serif; }
+  .addr b { font: 600 .55em/1 "Inter Tight", sans-serif; font-style: normal; letter-spacing: .2em; text-transform: uppercase; display: block; margin-bottom: .5em; }
+</style>
+</head>
+<body>
+<main class="stage" id="stage" role="img" aria-label="A letter on cream paper lies on a table. Its outer panels fold over like gates, the sheet stands up as a zigzag screen, turns around to show four large characters meaning could not be sent, and lies flat again.">
+  <div class="scene" id="scene"><div class="world" id="world"><div class="table" id="table"><canvas id="shadow"></canvas></div></div></div>
+</main>
+
+<template id="front">
+  <div class="art front-art">
+    <p class="title" data-l="2.4,3.6" data-t="5,4">尚未寄出的信</p>
+    <p class="title-en" data-l="2.6,31.5" data-t="5,64">A letter not yet sent</p>
+    <p class="mark" data-l="22.4,2.4" data-t="45,2.6">一</p>
+    <p class="date" data-l="29,4.2" data-t="8,77">the sixteenth of October, clear</p>
+    <div class="body" data-l="29,8,19" data-t="8,82,80">
+      <p>Dear N., — I have written this letter three times. The first was too long, and the second too careful. This is the third, and I have decided to keep it, even if I never fold it into an envelope.</p>
+    </div>
+    <div class="body" data-l="52,8,19" data-t="8,102,80">
+      <p>Today the wind came through the window and turned the pages of everything on my desk except this one. I took it as a sign that it wanted to stay where it was.</p>
+      <p class="sign">— Y.</p>
+    </div>
+    <div class="moon" data-l="66,5.5,24,24" data-t="20,29,60,60"></div>
+    <p class="moon-cap" data-l="70,31,16" data-t="24,38.5,52">the moon, the night I did not send it</p>
+    <p class="folio" data-l="88.6,33" data-t="64,151">No. 09 — paper</p>
+  </div>
+</template>
+<template id="back">
+  <div class="art back-art">
+    <p class="big" data-l="4.6,10" data-t="12,6">寄</p>
+    <p class="big" data-l="29.6,10" data-t="12,46">不</p>
+    <p class="big" data-l="54.6,10" data-t="12,86">出</p>
+    <p class="big" data-l="79.6,10" data-t="12,126">去</p>
+    <div class="post" data-l="10,5.5,24,24" data-t="20,93,60,60"></div>
+    <p class="post-t" data-l="11,16.2,22" data-t="21,121.2,58">Not sent · 16 · X · 2026</p>
+    <div class="stamp" data-l="90.2,2.6,6.6,8" data-t="80,3,13,15"></div>
+    <p class="addr" data-l="54.5,28.4" data-t="6,154"><b>To</b>the person I was in the spring</p>
+    <p class="folio" data-l="3,33" data-t="6,151">寄不出去 — could not be sent</p>
+  </div>
+</template>
+<script src="../shared/motion.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

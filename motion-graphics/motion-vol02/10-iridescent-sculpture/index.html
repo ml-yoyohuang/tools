@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>10 Iridescent Sculpture — Motion Studies Vol. 02</title>
+<meta name="description" content="A thin twisted ribbon ring whose colour comes only from thin-film interference: it changes with the light, the angle and the thickness of the film over time.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../shared/player.css">
+<style>
+  :root { --bg: #cfcbc4; --ui: #1d1c1a; --ui-dim: rgba(29,28,26,.55); --panel: rgba(29,28,26,.94); --panel-fg: #e8e5df; }
+  .plate { position: fixed; z-index: 4; pointer-events: none; color: #1d1c1a; font: 400 10.5px/1.55 "Inter Tight", sans-serif; letter-spacing: .02em; width: 15em; }
+  .plate b { display: block; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; font-size: 9.5px; margin-bottom: 6px; }
+  .plate span { display: block; color: rgba(29,28,26,.6); }
+  .fallback { position: fixed; inset: 0; display: grid; place-items: center; font: 13px "Inter Tight", sans-serif; }
+  .fallback[hidden] { display: none; }
+</style>
+</head>
+<body>
+<main class="stage" id="stage" role="img" aria-label="A thin ribbon bent into a ring with one full twist floats in a pale grey studio. Its surface is a soft neutral grey; thin-film colour — gold, magenta, green, blue — slides across it as the light moves and the ribbon turns."></main>
+<div class="plate" id="plate" aria-hidden="true"><b>Film</b><span id="pl1"></span><span id="pl2"></span></div>
+<p class="fallback" id="fallback" hidden>This piece needs WebGL, which is not available in this browser.</p>
+<script src="../shared/motion.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

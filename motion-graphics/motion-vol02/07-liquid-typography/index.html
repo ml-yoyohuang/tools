@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>07 Liquid Typography — Motion Studies Vol. 02</title>
+<meta name="description" content="The word solid softens, drips, fuses with itself and re-solidifies as the word liquid, standing on end.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,900;1,9..144,400&family=Inter+Tight:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../shared/player.css">
+<style>
+  :root { --bg: #f1ece2; --ui: #2b1a12; --ui-dim: rgba(43,26,18,.5); --panel: rgba(43,26,18,.94); --panel-fg: #f1ece2; }
+  .defs { position: fixed; z-index: 4; pointer-events: none; color: #2b1a12; font: italic 400 15px/1.35 Fraunces, Georgia, serif; }
+  .defs p { margin: 0; position: absolute; left: 0; top: 0; width: 20em; will-change: clip-path; }
+  .defs b { font: 600 9.5px/1 "Inter Tight", sans-serif; font-style: normal; letter-spacing: .16em; text-transform: uppercase; display: block; margin-bottom: 6px; }
+  .fallback { position: fixed; inset: 0; display: grid; place-items: center; font: 13px "Inter Tight", sans-serif; color: #2b1a12; }
+  .fallback[hidden] { display: none; }
+</style>
+</head>
+<body>
+<main class="stage" id="stage" role="img" aria-label="The word solid, in heavy dark brown type on milk-white paper, turns glossy, drips and melts into one body, then re-forms as the word liquid standing on end."></main>
+<div class="defs" aria-hidden="true">
+  <p id="defA"><b>solid</b>adj. — keeping its own shape.</p>
+  <p id="defB"><b>liquid</b>adj. — taking the shape of whatever holds it.</p>
+</div>
+<p class="fallback" id="fallback" hidden>This piece needs WebGL, which is not available in this browser.</p>
+<script src="../shared/motion.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

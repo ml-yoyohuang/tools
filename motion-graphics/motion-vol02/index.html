@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Motion Studies Vol. 02 — The Materiality of Motion</title>
+<meta name="description" content="Six motion posters in perception, texture and time: liquid type, elastic letterforms, folded paper, iridescent film, refracting glass and accumulated time.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;1,9..144,300&family=Noto+Serif+TC:wght@500;900&family=Inter+Tight:wght@400;500;600&display=swap">
+<style>
+  :root { --paper: #e6e1d8; --ink: #191714; --dim: #6e685f; --rule: rgba(25,23,20,.18); --rule-strong: rgba(25,23,20,.55); }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 400 14px/1.55 "Inter Tight", "Helvetica Neue", Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; }
+  .wrap { max-width: 1360px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 56px); }
+
+  .top { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 22px 0 18px; border-bottom: 1px solid var(--rule); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; }
+  .top a { text-decoration: none; color: var(--dim); }
+  .top a:hover, .top a[aria-current] { color: var(--ink); }
+  .top nav { display: flex; gap: 22px; }
+
+  /* masthead: a title page, with the series name set vertically like a book spine */
+  .mast { display: grid; grid-template-columns: repeat(12, 1fr); column-gap: 24px; padding: clamp(48px, 9vw, 130px) 0 clamp(40px, 6vw, 80px); border-bottom: 1px solid var(--rule-strong); position: relative; }
+  .mast .no { grid-column: 1 / span 2; font: 500 10.5px/1.5 "Inter Tight", sans-serif; letter-spacing: .16em; text-transform: uppercase; align-self: start; padding-top: 1.2em; }
+  .mast .no b { display: block; font: 300 clamp(64px, 9vw, 132px)/.8 Fraunces, Georgia, serif; letter-spacing: -.03em; text-transform: none; margin-top: 12px; }
+  .mast h1 { grid-column: 3 / span 8; margin: 0; font: 300 clamp(52px, 8.6vw, 128px)/.88 Fraunces, Georgia, serif; letter-spacing: -.02em; }
+  .mast h1 em { font-style: italic; display: block; padding-left: 1.1em; }
+  .spine { grid-column: 12; grid-row: 1 / span 2; justify-self: end; margin: 0; writing-mode: vertical-rl; font: 500 15px/1 "Noto Serif TC", serif; letter-spacing: .4em; }
+  .mast .intro { grid-column: 3 / span 5; margin: 44px 0 0; font-size: 14px; line-height: 1.65; max-width: 36em; }
+  .mast .meta { grid-column: 9 / span 3; margin: 44px 0 0; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); line-height: 1.8; }
+
+  /* the materials: a two-column plate list, hairlines only */
+  .works { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; column-gap: clamp(24px, 4vw, 64px); }
+  .work { border-bottom: 1px solid var(--rule); }
+  .work a { display: grid; grid-template-columns: 64px 1fr; column-gap: 18px; row-gap: 16px; padding: clamp(28px, 3.6vw, 48px) 0; text-decoration: none; }
+  .work figure { grid-column: 1 / -1; margin: 0; overflow: hidden; aspect-ratio: 16 / 10; background: #d6d0c5; }
+  .work img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s cubic-bezier(.2,.7,.1,1); }
+  .work a:hover img, .work a:focus-visible img { transform: scale(1.02); }
+  .work .mat { grid-row: 2 / span 2; font: 900 46px/1 "Noto Serif TC", serif; text-align: center; padding-top: 2px; }
+  .work .mat small { display: block; margin-top: 10px; font: 500 9.5px/1 "Inter Tight", sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+  .work h2 { margin: 0; display: flex; gap: 14px; align-items: baseline; font: 300 clamp(26px, 2.6vw, 36px)/1.02 Fraunces, Georgia, serif; letter-spacing: -.01em; }
+  .work h2 span { font: 500 11px/1 "Inter Tight", sans-serif; letter-spacing: .1em; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .work .body { grid-column: 2; }
+  .work .q { margin: 10px 0 0; font: italic 300 17px/1.35 Fraunces, Georgia, serif; max-width: 30em; }
+  .work .tech { margin: 14px 0 0; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+  .work a:hover h2, .work a:focus-visible h2 { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .14em; }
+  .work a:focus-visible { outline: 1px solid var(--ink); outline-offset: 6px; }
+  .work:nth-child(even) a { padding-top: clamp(28px, 3.6vw, 48px); }
+  @media (min-width: 861px) { .work:nth-child(even) { margin-top: clamp(60px, 9vw, 140px); } }
+
+  .colo { display: grid; grid-template-columns: repeat(12, 1fr); column-gap: 24px; padding: 64px 0 80px; font-size: 12px; line-height: 1.65; color: var(--dim); }
+  .colo h3 { grid-column: 1 / span 3; margin: 0; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink); font-weight: 600; }
+  .colo p { grid-column: 4 / span 4; margin: 0 0 1em; }
+  .colo p + p { grid-column: 8 / span 5; }
+
+  @media (max-width: 600px) { .top .full { display: none; } }
+  @media (max-width: 860px) {
+    .works { grid-template-columns: 1fr; }
+    .mast .no, .mast h1, .mast .intro, .mast .meta { grid-column: 1 / span 11; }
+    .mast .no { margin-bottom: 28px; }
+    .mast .intro { margin-top: 30px; }
+    .mast .meta { margin-top: 18px; }
+    .spine { grid-row: 1 / span 3; }
+    .colo h3, .colo p, .colo p + p { grid-column: 1 / -1; }
+    .colo h3 { margin-bottom: 12px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .js .mast > *, .js .work { opacity: 0; transform: translateY(12px); }
+    .js.in .mast > *, .js.in .work { opacity: 1; transform: none; transition: opacity 1s cubic-bezier(.2,.7,.1,1), transform 1.2s cubic-bezier(.2,.7,.1,1); }
+    .js.in .work:nth-child(2) { transition-delay: .12s; } .js.in .work:nth-child(n+3) { transition-delay: .22s; }
+  }
+</style>
+</head>
+<body>
+<script>document.documentElement.classList.add('js');</script>
+<div class="wrap">
+  <header class="top">
+    <a href="../../index.html">← Tools</a>
+    <nav aria-label="Series">
+      <a href="../motion-vol01/index.html">Vol. 01<span class="full"> — The Poetry of Moving Forms</span></a>
+      <a href="index.html" aria-current="page">Vol. 02<span class="full"> — The Materiality of Motion</span></a>
+    </nav>
+  </header>
+
+  <section class="mast">
+    <p class="no">Motion Studies<b>02</b></p>
+    <h1>The Materiality <em>of Motion</em></h1>
+    <p class="spine" lang="zh-Hant">動態研究　第二集　物質性</p>
+    <p class="intro">Six motion posters about what things are made of. Ink that changes state, a word with mass and spring, a sheet of paper with a back, a film thinner than a wavelength, glass that re-sets a page, and time itself, kept on a plate. The materials are not simulated for their own sake: each one is a way of making graphic design that could not exist without duration.</p>
+    <p class="meta">Six works, 07–12 · 2026<br>WebGL, Canvas 2D, CSS 3D<br>No libraries · deterministic timelines</p>
+  </section>
+
+  <ol class="works">
+    <li class="work"><a href="07-liquid-typography/index.html">
+      <figure><img src="thumbs/07.jpg" width="1200" height="750" loading="lazy" alt="The word solid in dark brown ink, glossy and dripping, its letters fusing."></figure>
+      <span class="mat" aria-hidden="true">液<small>Liquid</small></span>
+      <div class="body"><h2><span>07</span>Liquid Typography</h2>
+        <p class="q">“solid” turns wet, drips, fuses with itself and stands up again as “liquid”.</p>
+        <p class="tech">16 s · WebGL · distance field of set type</p></div>
+    </a></li>
+    <li class="work"><a href="08-elastic-letterforms/index.html">
+      <figure><img src="thumbs/08.jpg" width="1200" height="750" loading="lazy" alt="The word tension in black Bodoni on yellow, every letter stretched upward at once, the dot of the i above."></figure>
+      <span class="mat" aria-hidden="true">彈<small>Elastic</small></span>
+      <div class="body"><h2><span>08</span>Elastic Letterforms</h2>
+        <p class="q">The dot of the i leaves its letter and strikes every other one; the word rings.</p>
+        <p class="tech">14 s · Canvas 2D · traced outlines, damped oscillators</p></div>
+    </a></li>
+    <li class="work"><a href="09-paper-engineering/index.html">
+      <figure><img src="thumbs/09.jpg" width="1200" height="750" loading="lazy" alt="A folded paper screen standing on a table, its four faces reading 寄不出去."></figure>
+      <span class="mat" aria-hidden="true">紙<small>Paper</small></span>
+      <div class="body"><h2><span>09</span>Paper Engineering</h2>
+        <p class="q">A letter not yet sent folds into a screen; on its back, the reason: 寄不出去.</p>
+        <p class="tech">20 s · CSS 3D · hinged panels, projected shadow</p></div>
+    </a></li>
+    <li class="work"><a href="10-iridescent-sculpture/index.html">
+      <figure><img src="thumbs/10.jpg" width="1200" height="750" loading="lazy" alt="A twisted ribbon ring in neutral grey with thin-film colours sliding across it."></figure>
+      <span class="mat" aria-hidden="true">虹<small>Film</small></span>
+      <div class="body"><h2><span>10</span>Iridescent Sculpture</h2>
+        <p class="q">A ribbon whose colour exists only in reflection, set by film thickness and angle.</p>
+        <p class="tech">20 s · WebGL ray marching · thin-film interference, 7 wavelengths</p></div>
+    </a></li>
+    <li class="work"><a href="11-light-through-glass/index.html">
+      <figure><img src="thumbs/11.jpg" width="1200" height="750" loading="lazy" alt="A darkened poster where only the light focused by a glass rod, a lens and a prism remains."></figure>
+      <span class="mat" aria-hidden="true">玻<small>Glass</small></span>
+      <div class="body"><h2><span>11</span>Light Through Glass</h2>
+        <p class="q">A rod, a prism and a lens re-design a printed page, then the room goes dark.</p>
+        <p class="tech">18 s · WebGL · refraction, dispersion, caustics from thickness</p></div>
+    </a></li>
+    <li class="work"><a href="12-time-as-material/index.html">
+      <figure><img src="thumbs/12.jpg" width="1200" height="750" loading="lazy" alt="Fine pale lines on a dark plate forming a curved ruled surface: the record of a moving bar."></figure>
+      <span class="mat" aria-hidden="true">時<small>Time</small></span>
+      <div class="body"><h2><span>12</span>Time as Material</h2>
+        <p class="q">One bar of light; its past stays on the plate, builds a structure, and is forgotten.</p>
+        <p class="tech">20 s · Canvas 2D · deterministic temporal sampling</p></div>
+    </a></li>
+  </ol>
+
+  <footer class="colo">
+    <h3>Colophon</h3>
+    <p>Set in Fraunces, Bodoni Moda, EB Garamond, Cormorant Garamond, Inter Tight and Noto Serif TC (SIL Open Font License, via Google Fonts). Every image is computed at load time or per frame; nothing is a video or a photograph.</p>
+    <p>Each work runs on a deterministic timeline that can be scrubbed, paused, looped or played once. Space plays or pauses, ← → step, R restarts, L loops, F goes fullscreen, I opens the notes. With reduced motion enabled, each opens on a still composition.</p>
+  </footer>
+</div>
+<script>requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.add('in')));</script>
+</body>
+</html>
