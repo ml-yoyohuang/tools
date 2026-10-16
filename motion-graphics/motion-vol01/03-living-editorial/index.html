@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>03 Living Editorial — Motion Studies Vol. 01</title>
+<meta name="description" content="A magazine spread about collecting the light of one window keeps re-editing itself, through three complete layouts.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&family=Noto+Serif+TC:wght@500&display=swap">
+<link rel="stylesheet" href="../shared/player.css">
+<style>
+  :root { --bg: #2b2825; --ui: #e9e3d6; --ui-dim: rgba(233,227,214,.5); --panel: rgba(22,20,18,.94); --panel-fg: #e9e3d6;
+          --paper: #f3efe6; --ink: #1d1b18; --sienna: #9a4b2c; }
+  .spread { position: absolute; left: 0; top: 0; transform-origin: 0 0; background: var(--paper); color: var(--ink);
+            box-shadow: 0 30px 80px -30px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.18); overflow: hidden; }
+  .fold { position: absolute; top: 0; bottom: 0; width: 120px; left: 740px; pointer-events: none; z-index: 30;
+          background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(40,30,20,.07) 45%, rgba(40,30,20,.13) 50%, rgba(40,30,20,.05) 56%, rgba(0,0,0,0) 100%); }
+  .is-portrait .fold { display: none; }
+  .img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; will-change: clip-path; }
+  .img canvas { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+  .t { position: absolute; left: 0; top: 0; margin: 0; transform-origin: 0 0; will-change: transform, clip-path; }
+
+  .word { font-family: "Instrument Serif", "Times New Roman", serif; font-size: 168px; line-height: .86; letter-spacing: -.012em; white-space: nowrap; }
+  .light-w { font-style: italic; }
+  .numeral { font-family: "Instrument Serif", serif; font-size: 460px; line-height: .8; letter-spacing: -.04em; white-space: nowrap; font-variant-numeric: lining-nums; }
+  .kicker { font: 600 11px/1.4 "Inter Tight", sans-serif; letter-spacing: .22em; text-transform: uppercase; white-space: nowrap; }
+  .kicker b { color: var(--sienna); font-weight: 600; }
+  .kicker span { font-family: "Noto Serif TC", serif; letter-spacing: .3em; font-weight: 500; }
+  .deck { font: italic 400 25px/1.28 "Newsreader", Georgia, serif; width: 400px; letter-spacing: -.005em; }
+  .body { font: 400 15px/1.55 "Newsreader", Georgia, serif; width: 300px; hyphens: auto; text-align: justify; }
+  .body p { margin: 0; }
+  .body .drop { float: left; font-family: "Instrument Serif", serif; font-size: 58px; line-height: .78; margin: 6px 7px 0 0; color: var(--sienna); }
+  .cjk { font: 500 21px/1.9 "Noto Serif TC", "Songti TC", serif; writing-mode: vertical-rl; letter-spacing: .14em; height: 560px; }
+  .cap { font: 400 11px/1.5 "Inter Tight", sans-serif; letter-spacing: .02em; width: 230px; color: #4a4540; }
+  .cap b { font-weight: 600; color: var(--ink); }
+  .quote { font: italic 400 46px/1.08 "Instrument Serif", serif; width: 600px; letter-spacing: -.01em; }
+  .quote::before { content: "“"; position: absolute; margin-left: -.42em; color: var(--sienna); }
+  .folio { font: 500 10px/1 "Inter Tight", sans-serif; letter-spacing: .18em; text-transform: uppercase; white-space: nowrap; }
+  .folio.on-image { color: #f3efe6; }
+  .guides { position: absolute; inset: 0; pointer-events: none; z-index: 25; }
+  .guides i { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--sienna); opacity: .5; }
+
+  .is-portrait .word { font-size: 196px; }
+  .is-portrait .deck { font-size: 36px; width: 560px; }
+  .is-portrait .body { font-size: 24px; width: 410px; }
+  .is-portrait .body .drop { font-size: 92px; }
+  .is-portrait .cjk { font-size: 30px; height: 760px; }
+  .is-portrait .cap { font-size: 18px; width: 380px; }
+  .is-portrait .quote { font-size: 70px; width: 820px; }
+  .is-portrait .kicker { font-size: 17px; }
+  .is-portrait .folio { font-size: 15px; }
+  .is-portrait .numeral { font-size: 520px; }
+</style>
+</head>
+<body>
+<main class="stage" id="stage" aria-label="An animated magazine spread titled Gathering Light that re-edits its own layout.">
+  <article class="spread" id="spread">
+    <div class="img" id="img1" role="img" aria-label="Figure 1: a patch of afternoon window light with leaf shadows on a plaster wall."></div>
+    <div class="img" id="img2" role="img" aria-label="Figure 2: a pale horizon over the sea after rain."></div>
+    <div class="img" id="img3" role="img" aria-label="Figure 3: a glass of water on a table, its shadow holding a bright crescent of focused light."></div>
+
+    <p class="t kicker" id="kicker"><b>Feature</b> &nbsp;—&nbsp; <span>光的採集</span></p>
+    <h2 class="t word" id="gathering">Gathering</h2>
+    <h2 class="t word light-w" id="light">Light</h2>
+    <p class="t numeral" id="numeral" aria-hidden="true">4:12</p>
+    <p class="t deck" id="deck">A year spent collecting the light that falls through one window, at one hour of the afternoon.</p>
+    <div class="t body" id="bodyA"><p><span class="drop">F</span>or a year I sat at the same table at the same hour and waited for the light to arrive. It came through the north window at 4:12 in the afternoon — a little earlier in winter, a little later in June — and it never came the same way twice.</p></div>
+    <div class="t body" id="bodyB"><p>I began to keep it the way other people keep leaves or stones: a photograph, a note, the length of a shadow on the wall. By December I understood that I was not collecting light at all, only the places where it had briefly agreed to rest.</p></div>
+    <p class="t cjk" id="cjk" lang="zh-Hant">四點十二分，光從同一扇窗走進來。</p>
+    <p class="t quote" id="quote">Light is the only guest<br>that arrives on time.</p>
+    <p class="t cap" id="cap1"><b>Fig. 1</b> — North wall, January. The light stays for sixteen minutes.</p>
+    <p class="t cap" id="cap2"><b>Fig. 2</b> — Horizon after rain, from the same window in March.</p>
+    <p class="t cap" id="cap3"><b>Fig. 3</b> — A glass of water on the kitchen table, late May, 4:12 pm.</p>
+    <p class="t folio" id="folioL">34 &nbsp;&nbsp; Hours — A Journal of Ordinary Light — No. 07</p>
+    <p class="t folio" id="folioR">Autumn 2026 &nbsp;&nbsp; 35</p>
+    <div class="guides" id="guides" aria-hidden="true"></div>
+    <div class="fold" aria-hidden="true"></div>
+  </article>
+</main>
+<script src="../shared/motion.js"></script>
+<script src="images.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

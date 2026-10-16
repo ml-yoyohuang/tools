@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>04 Moiré Kinetics — Motion Studies Vol. 01</title>
+<meta name="description" content="Two fine gratings of light, one over the other. Their slow relative motion produces three different families of optical interference.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../shared/player.css">
+<style>
+  :root { --bg: #0d0e10; --ui: #e8e2d2; --ui-dim: rgba(232,226,210,.5); --panel: rgba(8,8,9,.92); --panel-fg: #e8e2d2; }
+  .overlay { position: absolute; inset: 0; pointer-events: none; }
+  .readout { position: fixed; z-index: 5; pointer-events: none; color: var(--ui); width: 290px;
+             font: 400 10.5px/1.55 "Inter Tight", sans-serif; letter-spacing: .03em; font-variant-numeric: tabular-nums; }
+  .readout .k { margin: 0 0 14px; text-transform: uppercase; letter-spacing: .16em; font-size: 9.5px; font-weight: 600; }
+  .readout ol { list-style: none; margin: 0 0 16px; padding: 0; border-top: 1px solid rgba(232,226,210,.25); }
+  .readout li { display: grid; grid-template-columns: 34px 1fr; padding: 6px 0 7px; border-bottom: 1px solid rgba(232,226,210,.25); color: var(--ui-dim); }
+  .readout li b { font-weight: 600; grid-row: span 2; }
+  .readout li em { font-style: normal; grid-column: 2; opacity: .75; }
+  .readout li.on { color: var(--ui); }
+  .readout dl { display: grid; grid-template-columns: 34px 1fr; margin: 0; row-gap: 1px; }
+  .readout dt { color: var(--ui-dim); }
+  .readout dd { margin: 0; }
+  .readout .k i { font-style: normal; text-transform: none; }
+  .readout.below { font-size: 10px; }
+  .readout.below li { grid-template-columns: 26px auto 1fr; padding: 5px 0; }
+  .readout.below li b { grid-row: auto; }
+  .readout.below li em { grid-column: 3; text-align: right; }
+  .readout.below dl { grid-template-columns: repeat(4, auto 1fr); column-gap: 8px; }
+  .fallback { position: fixed; inset: 0; display: grid; place-items: center; color: var(--ui); font: 13px/1.6 "Inter Tight", sans-serif; padding: 24px; text-align: center; }
+  .fallback[hidden] { display: none; }
+</style>
+</head>
+<body>
+<main class="stage" id="stage" role="img" aria-label="Two fine gratings of light lines overlap and drift; their interference produces broad moving bands, then curved fringes between two sets of concentric rings, then straight fringes between two zone plates."></main>
+<div class="readout" id="readout" aria-hidden="true"></div>
+<p class="fallback" id="fallback" hidden>This piece needs WebGL, which is not available in this browser.</p>
+<script src="../shared/motion.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
