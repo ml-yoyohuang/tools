@@ -1,0 +1,1 @@
+{"name":"motion-studies-astra","private":true,"type":"module","scripts":{"dev":"node scripts/serve.mjs","build":"node scripts/check.mjs","lint":"node scripts/check.mjs"}}

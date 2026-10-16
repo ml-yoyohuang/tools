@@ -1,0 +1,99 @@
+{
+  "date": "2026-10-16T09:18:54.771Z",
+  "browser": "141.0.7390.37",
+  "errors": [],
+  "results": [
+    {
+      "work": "Interval",
+      "http": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "loopMeanDelta": 0,
+      "renderMs": {
+        "median": 0.20000001788139343,
+        "p95": 3.2000000178813934
+      }
+    },
+    {
+      "work": "The weight of a pause",
+      "http": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "loopMeanDelta": 0,
+      "renderMs": {
+        "median": 0.09999999403953552,
+        "p95": 0.4000000059604645
+      }
+    },
+    {
+      "work": "An herbarium of hours",
+      "http": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "loopMeanDelta": 0,
+      "renderMs": {
+        "median": 0,
+        "p95": 0.10000002384185791
+      }
+    },
+    {
+      "work": "Almost, aligned",
+      "http": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "loopMeanDelta": 0,
+      "renderMs": {
+        "median": 0.10000002384185791,
+        "p95": 0.30000001192092896
+      }
+    },
+    {
+      "work": "A tender disorder",
+      "http": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "loopMeanDelta": 0,
+      "renderMs": {
+        "median": 0.5,
+        "p95": 1
+      }
+    },
+    {
+      "work": "Matter / after matter",
+      "http": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "loopMeanDelta": 0,
+      "renderMs": {
+        "median": 0.6000000238418579,
+        "p95": 63
+      }
+    }
+  ],
+  "reducedMotion": "all six paused on representative composition; explicit play works",
+  "catalogue": "six links and decoded local previews; no mobile overflow"
+}

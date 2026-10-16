@@ -1,0 +1,381 @@
+{
+  "date": "2026-10-16T09:18:11.214Z",
+  "browser": "141.0.7390.37",
+  "results": [
+    {
+      "work": "Interval",
+      "fullLoop": true,
+      "observed": [
+        {
+          "time": 0.40009999999999996,
+          "playing": true,
+          "wallMs": 408.19999998807907
+        },
+        {
+          "time": 2.399999999999996,
+          "playing": true,
+          "wallMs": 2408.199999988079
+        },
+        {
+          "time": 4.399899999999998,
+          "playing": true,
+          "wallMs": 4407
+        },
+        {
+          "time": 6.39980000000002,
+          "playing": true,
+          "wallMs": 6408.0999999940395
+        },
+        {
+          "time": 8.399700000000033,
+          "playing": true,
+          "wallMs": 8410
+        },
+        {
+          "time": 10.399699999999998,
+          "playing": true,
+          "wallMs": 10408.199999988079
+        },
+        {
+          "time": 12.399599999999976,
+          "playing": true,
+          "wallMs": 12406.5
+        },
+        {
+          "time": 14.39949999999995,
+          "playing": true,
+          "wallMs": 14408.399999976158
+        },
+        {
+          "time": 0.39939999999992976,
+          "playing": true,
+          "wallMs": 16406.5
+        }
+      ],
+      "cadence": {
+        "frames": 180,
+        "medianMs": 16.69999999999709,
+        "p95Ms": 16.799999999999272,
+        "maxMs": 16.80000000000291,
+        "over50ms": 0
+      }
+    },
+    {
+      "work": "The weight of a pause",
+      "fullLoop": true,
+      "observed": [
+        {
+          "time": 0.3666999999999999,
+          "playing": true,
+          "wallMs": 367.90000000596046
+        },
+        {
+          "time": 2.116499999999997,
+          "playing": true,
+          "wallMs": 2117.5
+        },
+        {
+          "time": 3.8497999999999952,
+          "playing": true,
+          "wallMs": 3858.7999999821186
+        },
+        {
+          "time": 5.616400000000015,
+          "playing": true,
+          "wallMs": 5618.5999999940395
+        },
+        {
+          "time": 7.366300000000035,
+          "playing": true,
+          "wallMs": 7366.299999982119
+        },
+        {
+          "time": 9.116300000000026,
+          "playing": true,
+          "wallMs": 9117.09999999404
+        },
+        {
+          "time": 10.866199999999997,
+          "playing": true,
+          "wallMs": 10867.5
+        },
+        {
+          "time": 12.616099999999964,
+          "playing": true,
+          "wallMs": 12617
+        },
+        {
+          "time": 0.36609999999993936,
+          "playing": true,
+          "wallMs": 14366.799999982119
+        }
+      ],
+      "cadence": {
+        "frames": 180,
+        "medianMs": 16.69999999999891,
+        "p95Ms": 16.799999999999272,
+        "maxMs": 16.80000000000291,
+        "over50ms": 0
+      }
+    },
+    {
+      "work": "An herbarium of hours",
+      "fullLoop": true,
+      "observed": [
+        {
+          "time": 0.46659999999999996,
+          "playing": true,
+          "wallMs": 467
+        },
+        {
+          "time": 2.7164999999999973,
+          "playing": true,
+          "wallMs": 2717
+        },
+        {
+          "time": 4.966500000000004,
+          "playing": true,
+          "wallMs": 4977.0999999940395
+        },
+        {
+          "time": 7.216300000000025,
+          "playing": true,
+          "wallMs": 7217.300000011921
+        },
+        {
+          "time": 9.466200000000008,
+          "playing": true,
+          "wallMs": 9468.09999999404
+        },
+        {
+          "time": 11.716199999999978,
+          "playing": true,
+          "wallMs": 11725.59999999404
+        },
+        {
+          "time": 13.966099999999944,
+          "playing": true,
+          "wallMs": 13967.40000000596
+        },
+        {
+          "time": 16.216099999999912,
+          "playing": true,
+          "wallMs": 16235.5
+        },
+        {
+          "time": 0.46589999999989296,
+          "playing": true,
+          "wallMs": 18466.80000001192
+        }
+      ],
+      "cadence": {
+        "frames": 180,
+        "medianMs": 16.69999999999709,
+        "p95Ms": 16.799999999999272,
+        "maxMs": 16.80000000000291,
+        "over50ms": 0
+      }
+    },
+    {
+      "work": "Almost, aligned",
+      "fullLoop": true,
+      "observed": [
+        {
+          "time": 0.5165000000000001,
+          "playing": true,
+          "wallMs": 522.5
+        },
+        {
+          "time": 3.0164999999999957,
+          "playing": true,
+          "wallMs": 3028.4000000059605
+        },
+        {
+          "time": 5.5164000000000115,
+          "playing": true,
+          "wallMs": 5528.5999999940395
+        },
+        {
+          "time": 8.016300000000042,
+          "playing": true,
+          "wallMs": 8028
+        },
+        {
+          "time": 10.499500000000008,
+          "playing": true,
+          "wallMs": 10509.40000000596
+        },
+        {
+          "time": 12.999399999999978,
+          "playing": true,
+          "wallMs": 13010.300000011921
+        },
+        {
+          "time": 15.515999999999934,
+          "playing": true,
+          "wallMs": 15527.59999999404
+        },
+        {
+          "time": 18.01589999999989,
+          "playing": true,
+          "wallMs": 18030.80000001192
+        },
+        {
+          "time": 0.5157999999998495,
+          "playing": true,
+          "wallMs": 20521
+        }
+      ],
+      "cadence": {
+        "frames": 180,
+        "medianMs": 16.700000000000728,
+        "p95Ms": 16.799999999999272,
+        "maxMs": 33.39999999999782,
+        "over50ms": 0
+      }
+    },
+    {
+      "work": "A tender disorder",
+      "fullLoop": true,
+      "observed": [
+        {
+          "time": 0.3999,
+          "playing": true,
+          "wallMs": 413.2000000178814
+        },
+        {
+          "time": 2.3998999999999966,
+          "playing": true,
+          "wallMs": 2414.100000023842
+        },
+        {
+          "time": 4.399899999999997,
+          "playing": true,
+          "wallMs": 4417.200000017881
+        },
+        {
+          "time": 6.39980000000002,
+          "playing": true,
+          "wallMs": 6416.300000011921
+        },
+        {
+          "time": 8.399700000000031,
+          "playing": true,
+          "wallMs": 8415.100000023842
+        },
+        {
+          "time": 10.399600000000001,
+          "playing": true,
+          "wallMs": 10415.90000000596
+        },
+        {
+          "time": 12.399499999999971,
+          "playing": true,
+          "wallMs": 12416
+        },
+        {
+          "time": 14.399499999999945,
+          "playing": true,
+          "wallMs": 14415.90000000596
+        },
+        {
+          "time": 0.39929999999992116,
+          "playing": true,
+          "wallMs": 16414
+        }
+      ],
+      "cadence": {
+        "frames": 180,
+        "medianMs": 16.700000000000728,
+        "p95Ms": 16.700000000000728,
+        "maxMs": 16.799999999999272,
+        "over50ms": 0
+      }
+    },
+    {
+      "work": "Matter / after matter",
+      "fullLoop": true,
+      "observed": [
+        {
+          "time": 0.44999999999999996,
+          "playing": true,
+          "wallMs": 460.59999999403954
+        },
+        {
+          "time": 2.6998999999999964,
+          "playing": true,
+          "wallMs": 2716.5999999940395
+        },
+        {
+          "time": 4.9499000000000075,
+          "playing": true,
+          "wallMs": 4959
+        },
+        {
+          "time": 7.199700000000033,
+          "playing": true,
+          "wallMs": 7206.399999976158
+        },
+        {
+          "time": 9.449600000000018,
+          "playing": true,
+          "wallMs": 9455.399999976158
+        },
+        {
+          "time": 11.699499999999976,
+          "playing": true,
+          "wallMs": 11705.399999976158
+        },
+        {
+          "time": 13.949399999999939,
+          "playing": true,
+          "wallMs": 13977.09999999404
+        },
+        {
+          "time": 16.199399999999905,
+          "playing": true,
+          "wallMs": 16224.699999988079
+        },
+        {
+          "time": 0.4491999999998709,
+          "playing": true,
+          "wallMs": 18461.19999998808
+        }
+      ],
+      "cadence": {
+        "frames": 180,
+        "medianMs": 16.69999999999709,
+        "p95Ms": 16.799999999999272,
+        "maxMs": 16.799999999999272,
+        "over50ms": 0
+      }
+    }
+  ],
+  "landscape": [
+    {
+      "work": "Interval",
+      "overflow": false
+    },
+    {
+      "work": "The weight of a pause",
+      "overflow": false
+    },
+    {
+      "work": "An herbarium of hours",
+      "overflow": false
+    },
+    {
+      "work": "Almost, aligned",
+      "overflow": false
+    },
+    {
+      "work": "A tender disorder",
+      "overflow": false
+    },
+    {
+      "work": "Matter / after matter",
+      "overflow": false
+    }
+  ],
+  "notes": "Full real-time loops recorded as nine sampled screenshots per artwork. Cadence measured separately over 180 animation frames without screenshots; headless local test, not a hardware-independent guarantee."
+}
