@@ -1,0 +1,110 @@
+{
+  "date": "2026-10-16T09:41:53.912Z",
+  "browser": "141.0.7390.37",
+  "errors": [],
+  "results": [
+    {
+      "work": "Nothing keeps its edges",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 33.30000000000018,
+        "p95": 50,
+        "max": 99.89999999999964
+      },
+      "audio": null
+    },
+    {
+      "work": "Held, then released",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 16.699999999999818,
+        "p95": 16.799999999999727,
+        "max": 16.800000000000182
+      },
+      "audio": null
+    },
+    {
+      "work": "A letter to the wind",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 16.699999999999818,
+        "p95": 16.800000000000182,
+        "max": 50
+      },
+      "audio": null
+    },
+    {
+      "work": "The angle of a colour",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0.0000025360161848552917,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 16.699999999999818,
+        "p95": 16.799999999999727,
+        "max": 33.30000000000018
+      },
+      "audio": null
+    },
+    {
+      "work": "Light edits the page",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 16.700000000000273,
+        "p95": 33.40000000000009,
+        "max": 49.935999999999694
+      },
+      "audio": null
+    },
+    {
+      "work": "The shape of an afterimage",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 16.699999999999818,
+        "p95": 16.700000000000273,
+        "max": 16.800000000000182
+      },
+      "audio": null
+    }
+  ],
+  "reducedMotion": true
+}

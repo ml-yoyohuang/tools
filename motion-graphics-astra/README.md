@@ -1,10 +1,12 @@
 # Motion Studies — Astra
 
-An independent implementation of **MOTION STUDIES — VOL. 01 / The Poetry of Moving Forms**.
+An independent implementation of **MOTION STUDIES**.
 
 - [Open the collection](motion-vol01/index.html)
 - [Art direction, artwork documentation and operating instructions](motion-vol01/README.md)
 - [Review and verification report](motion-vol01/review/REPORT.md)
+- [Vol. 02 — The Materiality of Motion](motion-vol02/index.html)
+- [Vol. 02 documentation](motion-vol02/README.md) · [Critical review](motion-vol02/ART-DIRECTION-REVIEW.md)
 
 Run from this directory:
 
@@ -25,4 +27,6 @@ Browser QA is reproducible with `node scripts/qa.cjs` and `node scripts/playback
 
 `scripts/generate.mjs` generates the seven HTML pages and original botanical SVGs. Artwork rendering lives in `motion-vol01/shared/`; this is the source to edit for visual changes. The QA script regenerates the six local WebP catalogue previews from the real artwork.
 
-The work is isolated here. Existing `motion-graphics/` work and untracked changes are not modified. No remote publication or push is performed.
+The work is isolated here. Existing `motion-graphics/` work and unrelated changes are not modified. Vol. 02 and Vol. 03 are delivered as separate commits and pushes to the feature branch at the user's request; this does not deploy a public website.
+
+Volumes 02/03 share `common/player.js` for deterministic controls, lifecycle and accessibility, and retain independent artwork renderers. `node scripts/generate-volume.mjs 2` regenerates Vol. 02 HTML and art briefs; `node scripts/qa-volume.cjs 2 --live` runs browser checks and regenerates previews/review images. Substitute 3 for Vol. 03 when present.

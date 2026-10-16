@@ -1,0 +1,14 @@
+export const fullscreenVertex=`attribute vec2 aPosition;varying vec2 vUV;void main(){vUV=aPosition*.5+.5;gl_Position=vec4(aPosition,0.,1.);}`;
+export function gpu(stage,vertex,fragment,{mesh=false}={}){
+ const canvas=document.createElement('canvas');canvas.className='gpu-canvas';canvas.setAttribute('aria-hidden','true');stage.prepend(canvas);
+ const gl=canvas.getContext('webgl',{alpha:false,antialias:true,preserveDrawingBuffer:true});if(!gl)throw Error('WebGL unavailable');
+ function shader(type,source){const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s;}
+ const vs=shader(gl.VERTEX_SHADER,vertex),fs=shader(gl.FRAGMENT_SHADER,fragment),program=gl.createProgram();gl.attachShader(program,vs);gl.attachShader(program,fs);gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));gl.useProgram(program);
+ const buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);let count=6;
+ if(!mesh)gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+ const attribute=gl.getAttribLocation(program,mesh?'aUV':'aPosition');gl.enableVertexAttribArray(attribute);gl.vertexAttribPointer(attribute,2,gl.FLOAT,false,0,0);
+ const locations=new Map(),textures=[];
+ function uniform(name,...values){let loc=locations.get(name);if(!locations.has(name)){loc=gl.getUniformLocation(program,name);locations.set(name,loc);}if(values.length===1)gl.uniform1f(loc,values[0]);if(values.length===2)gl.uniform2f(loc,...values);if(values.length===3)gl.uniform3f(loc,...values);}
+ function texture(source){let tex=textures[0];if(!tex){tex=gl.createTexture();textures.push(tex);gl.bindTexture(gl.TEXTURE_2D,tex);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);}gl.bindTexture(gl.TEXTURE_2D,tex);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,source);gl.uniform1i(gl.getUniformLocation(program,'uTexture'),0);}
+ return {gl,canvas,uniform,texture,vertices(data){count=data.length/2;gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(data),gl.STATIC_DRAW);},resize(width,height){canvas.width=Math.round(width);canvas.height=Math.round(height);gl.viewport(0,0,canvas.width,canvas.height);uniform('uRes',canvas.width,canvas.height);},draw(){gl.drawArrays(gl.TRIANGLES,0,count);},dispose(){textures.forEach(t=>gl.deleteTexture(t));gl.deleteBuffer(buffer);gl.deleteProgram(program);gl.deleteShader(vs);gl.deleteShader(fs);canvas.remove();}};
+}

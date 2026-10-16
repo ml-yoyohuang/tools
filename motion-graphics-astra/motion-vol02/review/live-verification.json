@@ -1,0 +1,308 @@
+{
+  "date": "2026-10-16T09:40:41.205Z",
+  "browser": "141.0.7390.37",
+  "errors": [],
+  "results": [
+    {
+      "work": "Nothing keeps its edges",
+      "fullLoopSamples": [
+        {
+          "time": 0.2666700000000001,
+          "wallMs": 295.2999999821186
+        },
+        {
+          "time": 2.949869999999997,
+          "wallMs": 2976.9000000059605
+        },
+        {
+          "time": 5.616370000000005,
+          "wallMs": 5636.799999982119
+        },
+        {
+          "time": 8.282970000000015,
+          "wallMs": 8300.59999999404
+        },
+        {
+          "time": 10.949570000000008,
+          "wallMs": 10974.40000000596
+        },
+        {
+          "time": 13.616070000000002,
+          "wallMs": 13642.09999999404
+        },
+        {
+          "time": 0.28267000000000714,
+          "wallMs": 16300.90000000596
+        }
+      ]
+    },
+    {
+      "work": "Nothing keeps its edges",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 33.29999999999927,
+        "p95": 33.400000000001455,
+        "max": 50
+      },
+      "audio": null
+    },
+    {
+      "work": "Held, then released",
+      "fullLoopSamples": [
+        {
+          "time": 0.24990200000000007,
+          "wallMs": 243.90000000596046
+        },
+        {
+          "time": 2.583201999999999,
+          "wallMs": 2576
+        },
+        {
+          "time": 4.916402000000005,
+          "wallMs": 4907.5999999940395
+        },
+        {
+          "time": 7.249702000000036,
+          "wallMs": 7241
+        },
+        {
+          "time": 9.582902000000017,
+          "wallMs": 9574.199999988079
+        },
+        {
+          "time": 11.916201999999979,
+          "wallMs": 11906.5
+        },
+        {
+          "time": 0.24940199999994955,
+          "wallMs": 14241.199999988079
+        }
+      ]
+    },
+    {
+      "work": "Held, then released",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 16.69999999999709,
+        "p95": 16.799999999999272,
+        "max": 16.80000000000109
+      },
+      "audio": null
+    },
+    {
+      "work": "A letter to the wind",
+      "fullLoopSamples": [
+        {
+          "time": 0.34983400000000003,
+          "wallMs": 348
+        },
+        {
+          "time": 3.6830339999999966,
+          "wallMs": 3681.699999988079
+        },
+        {
+          "time": 7.016234000000026,
+          "wallMs": 7013.299999982119
+        },
+        {
+          "time": 10.349433999999999,
+          "wallMs": 10346.899999976158
+        },
+        {
+          "time": 13.682633999999945,
+          "wallMs": 13679.399999976158
+        },
+        {
+          "time": 17.01593399999987,
+          "wallMs": 17012.5
+        },
+        {
+          "time": 0.34913399999984707,
+          "wallMs": 20349.79999998212
+        }
+      ]
+    },
+    {
+      "work": "A letter to the wind",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 16.700000000000728,
+        "p95": 16.700000000000728,
+        "max": 33.400000000001455
+      },
+      "audio": null
+    },
+    {
+      "work": "The angle of a colour",
+      "fullLoopSamples": [
+        {
+          "time": 0.3166700000000001,
+          "wallMs": 346.2000000178814
+        },
+        {
+          "time": 3.299869999999997,
+          "wallMs": 3332.4000000059605
+        },
+        {
+          "time": 6.299670000000017,
+          "wallMs": 6328.800000011921
+        },
+        {
+          "time": 9.299570000000026,
+          "wallMs": 9334.800000011921
+        },
+        {
+          "time": 12.299469999999996,
+          "wallMs": 12321.5
+        },
+        {
+          "time": 15.299269999999966,
+          "wallMs": 15322.100000023842
+        },
+        {
+          "time": 0.2825699999999506,
+          "wallMs": 18318.600000023842
+        }
+      ]
+    },
+    {
+      "work": "The angle of a colour",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0.0000025360161848552917,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 16.700000000000728,
+        "p95": 33.39999999999782,
+        "max": 66.70000000000073
+      },
+      "audio": null
+    },
+    {
+      "work": "Light edits the page",
+      "fullLoopSamples": [
+        {
+          "time": 0.26660600000000023,
+          "wallMs": 302.40000000596046
+        },
+        {
+          "time": 2.949805999999997,
+          "wallMs": 2989.5999999940395
+        },
+        {
+          "time": 5.583006000000005,
+          "wallMs": 5629.5
+        },
+        {
+          "time": 8.282906000000024,
+          "wallMs": 8308.300000011921
+        },
+        {
+          "time": 10.949506000000007,
+          "wallMs": 10976.09999999404
+        },
+        {
+          "time": 13.616105999999993,
+          "wallMs": 13659.800000011921
+        },
+        {
+          "time": 0.2659059999999916,
+          "wallMs": 16298.800000011921
+        }
+      ]
+    },
+    {
+      "work": "Light edits the page",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 16.700000000000728,
+        "p95": 33.400000000001455,
+        "max": 50
+      },
+      "audio": null
+    },
+    {
+      "work": "The shape of an afterimage",
+      "fullLoopSamples": [
+        {
+          "time": 0.33330200000000015,
+          "wallMs": 340.5
+        },
+        {
+          "time": 3.666501999999996,
+          "wallMs": 3675
+        },
+        {
+          "time": 6.999702000000028,
+          "wallMs": 7018.700000017881
+        },
+        {
+          "time": 10.332902000000002,
+          "wallMs": 10352.40000000596
+        },
+        {
+          "time": 13.682701999999958,
+          "wallMs": 13708.200000017881
+        },
+        {
+          "time": 16.99930199999989,
+          "wallMs": 17016.90000000596
+        },
+        {
+          "time": 0.3325019999998167,
+          "wallMs": 20342.80000001192
+        }
+      ]
+    },
+    {
+      "work": "The shape of an afterimage",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 16.700000000000728,
+        "p95": 16.799999999999272,
+        "max": 50
+      },
+      "audio": null
+    }
+  ],
+  "reducedMotion": true
+}
