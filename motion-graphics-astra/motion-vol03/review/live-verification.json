@@ -1,0 +1,316 @@
+{
+  "date": "2026-10-16T10:04:19.755Z",
+  "browser": "141.0.7390.37",
+  "errors": [],
+  "results": [
+    {
+      "work": "Please remain in the picture",
+      "fullLoopSamples": [
+        {
+          "time": 0.28333799999999976,
+          "wallMs": 303
+        },
+        {
+          "time": 2.9331379999999974,
+          "wallMs": 2950.5999999940395
+        },
+        {
+          "time": 5.59973800000001,
+          "wallMs": 5620.200000017881
+        },
+        {
+          "time": 8.26623800000003,
+          "wallMs": 8287.09999999404
+        },
+        {
+          "time": 10.932837999999995,
+          "wallMs": 10954.300000011921
+        },
+        {
+          "time": 13.599437999999953,
+          "wallMs": 13617.59999999404
+        },
+        {
+          "time": 0.26593799999991435,
+          "wallMs": 16284.90000000596
+        }
+      ]
+    },
+    {
+      "work": "Please remain in the picture",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 16.700000000000728,
+        "p95": 16.799999999999272,
+        "max": 33.29999999999927
+      },
+      "audio": null
+    },
+    {
+      "work": "An address that cannot exist",
+      "fullLoopSamples": [
+        {
+          "time": 0.28323599999999993,
+          "wallMs": 275.40000000596046
+        },
+        {
+          "time": 2.949835999999999,
+          "wallMs": 2941.2999999821186
+        },
+        {
+          "time": 5.616336000000017,
+          "wallMs": 5607.5
+        },
+        {
+          "time": 8.282936000000035,
+          "wallMs": 8276
+        },
+        {
+          "time": 10.949535999999995,
+          "wallMs": 10942
+        },
+        {
+          "time": 13.616035999999948,
+          "wallMs": 13610.699999988079
+        },
+        {
+          "time": 0.2826359999999154,
+          "wallMs": 16275.59999999404
+        }
+      ]
+    },
+    {
+      "work": "An address that cannot exist",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 16.700000000000728,
+        "p95": 33.39999999999782,
+        "max": 83.29999999999927
+      },
+      "audio": null
+    },
+    {
+      "work": "Two inks, a third voice",
+      "fullLoopSamples": [
+        {
+          "time": 0.3166060000000002,
+          "wallMs": 330.59999999403954
+        },
+        {
+          "time": 3.316505999999997,
+          "wallMs": 3325.5
+        },
+        {
+          "time": 6.299706000000016,
+          "wallMs": 6321.4000000059605
+        },
+        {
+          "time": 9.316206000000017,
+          "wallMs": 9326.800000011921
+        },
+        {
+          "time": 12.299406000000012,
+          "wallMs": 12352.199999988079
+        },
+        {
+          "time": 15.299306000000014,
+          "wallMs": 15342.09999999404
+        },
+        {
+          "time": 0.31590600000002594,
+          "wallMs": 18323.09999999404
+        }
+      ]
+    },
+    {
+      "work": "Two inks, a third voice",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 16.69999999999709,
+        "p95": 16.700000000000728,
+        "max": 16.700000000000728
+      },
+      "audio": null
+    },
+    {
+      "work": "Rooms for a small ensemble",
+      "fullLoopSamples": [
+        {
+          "time": 0.26659999999999995,
+          "wallMs": 280.09999999403954
+        },
+        {
+          "time": 2.933199999999997,
+          "wallMs": 2947.300000011921
+        },
+        {
+          "time": 5.599700000000012,
+          "wallMs": 5614.800000011921
+        },
+        {
+          "time": 8.266200000000037,
+          "wallMs": 8279.699999988079
+        },
+        {
+          "time": 10.932799999999993,
+          "wallMs": 10947.800000011921
+        },
+        {
+          "time": 13.599399999999951,
+          "wallMs": 13612.5
+        },
+        {
+          "time": 0.2658999999999132,
+          "wallMs": 16281.699999988079
+        }
+      ]
+    },
+    {
+      "work": "Rooms for a small ensemble",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 16.700000000000728,
+        "p95": 16.700000000000728,
+        "max": 16.799999999999272
+      },
+      "audio": {
+        "enabled": true,
+        "running": true,
+        "scheduled": 54,
+        "active": 53,
+        "peak": 0.034661490470170975,
+        "contextState": "running",
+        "clock": 0.752
+      }
+    },
+    {
+      "work": "The colour between us",
+      "fullLoopSamples": [
+        {
+          "time": 0.28323800000000005,
+          "wallMs": 285.69999998807907
+        },
+        {
+          "time": 2.9497379999999978,
+          "wallMs": 2951
+        },
+        {
+          "time": 5.616338000000011,
+          "wallMs": 5620.0999999940395
+        },
+        {
+          "time": 8.282938000000037,
+          "wallMs": 8284
+        },
+        {
+          "time": 10.949437999999995,
+          "wallMs": 10949.90000000596
+        },
+        {
+          "time": 13.616037999999952,
+          "wallMs": 13615.90000000596
+        },
+        {
+          "time": 0.28263799999991746,
+          "wallMs": 16283.59999999404
+        }
+      ]
+    },
+    {
+      "work": "The colour between us",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 16.700000000000728,
+        "p95": 16.700000000000728,
+        "max": 16.80000000000291
+      },
+      "audio": null
+    },
+    {
+      "work": "The guest is the gap",
+      "fullLoopSamples": [
+        {
+          "time": 0.23329999999999998,
+          "wallMs": 250.40000000596046
+        },
+        {
+          "time": 2.5664999999999987,
+          "wallMs": 2584.0999999940395
+        },
+        {
+          "time": 4.899700000000004,
+          "wallMs": 4917.300000011921
+        },
+        {
+          "time": 7.233000000000027,
+          "wallMs": 7251.300000011921
+        },
+        {
+          "time": 9.566200000000014,
+          "wallMs": 9583.800000011921
+        },
+        {
+          "time": 11.899499999999978,
+          "wallMs": 11917.5
+        },
+        {
+          "time": 0.23269999999994923,
+          "wallMs": 14251.09999999404
+        }
+      ]
+    },
+    {
+      "work": "The guest is the gap",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 16.700000000000728,
+        "p95": 16.799999999999272,
+        "max": 50
+      },
+      "audio": null
+    }
+  ],
+  "reducedMotion": true
+}

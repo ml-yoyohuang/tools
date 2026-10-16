@@ -7,6 +7,8 @@ An independent implementation of **MOTION STUDIES**.
 - [Review and verification report](motion-vol01/review/REPORT.md)
 - [Vol. 02 — The Materiality of Motion](motion-vol02/index.html)
 - [Vol. 02 documentation](motion-vol02/README.md) · [Critical review](motion-vol02/ART-DIRECTION-REVIEW.md)
+- [Vol. 03 — The Illusion of Perception](motion-vol03/index.html)
+- [Vol. 03 documentation](motion-vol03/README.md) · [Critical review](motion-vol03/ART-DIRECTION-REVIEW.md)
 
 Run from this directory:
 

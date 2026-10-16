@@ -1,0 +1,118 @@
+{
+  "date": "2026-10-16T10:05:38.234Z",
+  "browser": "141.0.7390.37",
+  "errors": [],
+  "results": [
+    {
+      "work": "Please remain in the picture",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 16.699999999999818,
+        "p95": 16.800000000000182,
+        "max": 49.86999999999989
+      },
+      "audio": null
+    },
+    {
+      "work": "An address that cannot exist",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 16.699999999999818,
+        "p95": 16.700000000000273,
+        "max": 16.800000000000182
+      },
+      "audio": null
+    },
+    {
+      "work": "Two inks, a third voice",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 16.699999999999818,
+        "p95": 16.799999999999727,
+        "max": 33.40000000000009
+      },
+      "audio": null
+    },
+    {
+      "work": "Rooms for a small ensemble",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 16.699999999999818,
+        "p95": 16.800000000000182,
+        "max": 16.800000000000182
+      },
+      "audio": {
+        "enabled": true,
+        "running": true,
+        "scheduled": 54,
+        "active": 53,
+        "peak": 0.03470362350344658,
+        "contextState": "running",
+        "clock": 0.7306666666666666
+      }
+    },
+    {
+      "work": "The colour between us",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 16.699999999999818,
+        "p95": 16.700000000000273,
+        "max": 16.800000000000182
+      },
+      "audio": null
+    },
+    {
+      "work": "The guest is the gap",
+      "route": 200,
+      "deterministic": true,
+      "controls": true,
+      "keyboard": true,
+      "fullscreen": true,
+      "loopMeanDelta": 0,
+      "mobileOverflow": false,
+      "tabletOverflow": false,
+      "cadence": {
+        "median": 16.699999999999818,
+        "p95": 16.700000000000273,
+        "max": 16.800000000000182
+      },
+      "audio": null
+    }
+  ],
+  "reducedMotion": true
+}
