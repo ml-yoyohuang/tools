@@ -1,0 +1,5 @@
+node_modules/
+snapshots/
+test-results/
+playwright-report/
+*.tsbuildinfo
