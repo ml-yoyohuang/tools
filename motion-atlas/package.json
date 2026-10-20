@@ -1,0 +1,33 @@
+{
+  "name": "motion-atlas",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "MOTION ATLAS 動效圖鑑 — searchable, tweakable, exportable motion effect library.",
+  "scripts": {
+    "dev": "vite --port 5288 --strictPort",
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc -b --pretty",
+    "preview": "vite preview --port 5289 --strictPort",
+    "test": "node scripts/unit.mjs",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@fontsource-variable/noto-sans-tc": "^5.3.1",
+    "@fontsource-variable/noto-serif-tc": "^5.3.1",
+    "@fontsource-variable/oswald": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "gsap": "^3.15.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^20.19.0",
+    "@types/react": "^18.3.23",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.4"
+  }
+}
