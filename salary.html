@@ -4,7 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#f5f3eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="薪水跳動器">
 <meta name="description" content="輸入月薪，看時間一秒一秒變成收入。依當月實際天數，每秒更新本月累積薪水。">
+<link rel="manifest" href="salary-manifest.json">
 <link rel="icon" type="image/svg+xml" href="salary-icon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="salary-icon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="salary-apple-touch-icon.png">
@@ -96,7 +100,6 @@ body,.earning,.appearance-panel{transition:background-color .25s,color .25s}.las
 :root[data-theme="orbit"] .amount{font-size:clamp(30px,5.8vw,61px)}
 :root[data-theme="orbit"] .amount.long-amount{font-size:clamp(20px,4vw,40px)}
 :root[data-theme="orbit"] .rate{font-size:11px;margin-top:18px}
-:root[data-theme="orbit"] .progress-track{position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden}
 :root[data-theme="orbit"] .equivalents{margin-top:12px}
 :root[data-theme="bold"] .earning{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr auto auto 4px auto}
 :root[data-theme="bold"] .earning::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(125deg,transparent 35%,color-mix(in srgb,var(--green) 5%,transparent))}
@@ -782,6 +785,11 @@ $('share').addEventListener('click', async () => {
 window.addEventListener('popstate', loadQuery);
 document.addEventListener('visibilitychange', () => { syncAmbient(); if (!document.hidden) tick(); });
 window.addEventListener('pageshow', () => { syncAmbient(); tick(); });
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  navigator.serviceWorker.register('./sw-salary.js', { scope: './salary.html' }).catch(error => {
+    console.error('Unable to register the salary service worker:', error);
+  });
+}
 loadAppearance();
 loadConversions();
 loadQuery();
