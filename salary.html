@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f5f3eb">
+<meta name="description" content="輸入月薪，看時間一秒一秒變成收入。依當月實際天數，每秒更新本月累積薪水。">
+<title>薪水跳動器｜每一秒，都算數</title>
+<style>
+:root{color-scheme:light;--paper:#f5f3eb;--ink:#243a30;--muted:#69736a;--green:#c7e58b;--line:#d9ddd0}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}button,input{font:inherit}button{cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid #739844;outline-offset:4px}.shell{max-width:1120px;margin:auto;padding:30px 40px 24px}header{display:flex;align-items:center;justify-content:space-between;padding-bottom:25px;border-bottom:1px solid var(--line)}.brand{font-weight:750;display:flex;align-items:center;gap:10px;letter-spacing:.05em}.brand-mark{width:32px;height:32px;border-radius:50%;background:var(--ink);color:var(--green);display:grid;place-items:center;font:20px Georgia,serif}.edition{font-size:10px;letter-spacing:.18em;color:var(--muted)}.intro{display:flex;justify-content:space-between;align-items:end;margin:44px 0 26px}.eyebrow{font-size:11px;letter-spacing:.2em;font-weight:600;color:var(--muted);margin:0 0 12px}h1{font-size:34px;letter-spacing:-.04em;line-height:1.3;margin:0}.intro p:last-child{font-size:14px;color:var(--muted);margin:12px 0 0}.date-block{text-align:right;font-size:13px;line-height:1.8}.date-block time{font-variant-numeric:tabular-nums;font-size:18px;font-weight:550}.zone{font-size:11px;color:var(--muted)}.dashboard{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px}.earning{background:var(--ink);border-radius:20px;color:#f8faef;padding:32px;position:relative;overflow:hidden;min-height:344px;display:flex;flex-direction:column}.earning:after{content:"";position:absolute;right:-55px;top:-110px;width:260px;height:260px;border:1px solid #ffffff12;border-radius:50%;box-shadow:0 0 0 35px #ffffff04,0 0 0 70px #ffffff03;pointer-events:none}.panel-top{display:flex;justify-content:space-between;align-items:center;gap:10px;position:relative;z-index:1}.panel-top h2{font-size:14px;font-weight:450;margin:0;color:#e1e8dc}.live{font-size:10px;letter-spacing:.13em;color:var(--green);display:flex;align-items:center;gap:6px;white-space:nowrap}.dot{height:6px;width:6px;border-radius:50%;background:var(--green);animation:breathe 1s ease-in-out infinite}.money{margin:34px 0 10px;white-space:nowrap;position:relative;z-index:1}.currency{display:block;font-size:12px;letter-spacing:.15em;color:#c1cdbb;margin-bottom:6px}.amount{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:clamp(30px,5.2vw,61px);font-weight:500;letter-spacing:-.07em;font-variant-numeric:tabular-nums}.fraction{font-size:.55em;color:var(--green);letter-spacing:-.04em}.rate{color:var(--green);font-size:12px;margin:0 0 30px;display:flex;align-items:center;gap:7px}.rate svg{width:15px;height:15px}.progress-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#c6d0c1;margin-top:auto;margin-bottom:11px}.progress-track{height:5px;background:#ffffff1c;overflow:hidden;border-radius:10px}.progress-fill{height:100%;background:var(--green);width:0;border-radius:10px;transition:width .4s}.month-ends{display:flex;justify-content:space-between;font-size:10px;color:#abbba5;margin-top:10px}.settings{border:1px solid var(--line);border-radius:20px;padding:28px 24px;background:#fbfaf5}.settings h2{font-size:16px;margin:0 0 22px}.settings label{font-size:12px;display:block;margin-bottom:9px;color:var(--muted)}.input-wrap{display:flex;align-items:center;gap:8px;background:white;border:1px solid #bec8b4;border-radius:9px;padding:12px}.input-wrap:focus-within{outline:2px solid #739844;outline-offset:2px}.input-wrap span{font-size:12px;color:var(--muted)}input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:var(--ink);font-size:24px;font-weight:550;font-variant-numeric:tabular-nums}input::placeholder{color:#a4aba0;font-size:21px}.presets{display:flex;gap:6px;margin-top:11px}.presets button{border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--muted);padding:7px 0;font-size:11px;flex:1}.presets button:hover{background:#eaf1dc;border-color:#9bb57b}.error{font-size:11px;line-height:1.6;color:#a13f31;min-height:18px;margin:9px 0}.share{background:var(--ink);color:white;border:0;border-radius:8px;padding:12px;width:100%;font-size:12px;display:flex;align-items:center;justify-content:center;gap:10px}.share:hover{background:#395342}.share:disabled{opacity:.5;cursor:default}.share svg{width:14px;height:14px}.hint{font-size:11px;line-height:1.8;color:var(--muted);margin:12px 0 0}.share-status{font-size:11px;min-height:18px;line-height:1.6;margin:8px 0 0}.stats{display:grid;grid-template-columns:repeat(3,1fr);margin-top:20px;border:1px solid var(--line);border-radius:16px;padding:24px 0}.stat{padding:0 28px}.stat+.stat{border-left:1px solid var(--line)}.stat-label{font-size:11px;color:var(--muted);margin:0 0 12px}.stat-value{font-size:25px;font-variant-numeric:tabular-nums;letter-spacing:-.04em;margin:0}.stat-value small{font-size:11px;margin-left:4px;color:var(--muted);letter-spacing:0}.stat-note{font-size:10px;color:var(--muted);margin:8px 0 0}.notes{display:flex;justify-content:space-between;align-items:start;gap:24px;margin-top:28px;padding-bottom:28px;border-bottom:1px solid var(--line)}.notes p{font-size:11px;line-height:1.9;color:var(--muted);margin:0}.notes strong{font-weight:550;color:var(--ink)}.tagline{font-family:Georgia,serif;font-style:italic;font-size:19px!important;color:var(--ink)!important;white-space:nowrap}footer{display:flex;justify-content:space-between;gap:15px;padding-top:18px;font-size:10px;color:var(--muted)}code{font-family:ui-monospace,monospace}footer a{color:inherit;text-decoration:underline;text-underline-offset:3px}.fallback{margin-top:10px}.fallback input{font-size:12px;border:1px solid var(--line);padding:9px;border-radius:6px}.fallback label{font-size:11px} [hidden]{display:none!important}
+@keyframes breathe{50%{opacity:.35;transform:scale(.8)}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}@media(max-width:850px){.dashboard{grid-template-columns:minmax(0,1fr) 260px}.shell{padding:24px}.earning{padding:26px}.settings{padding:26px 20px}.amount{font-size:clamp(26px,5.7vw,48px)}}@media(max-width:650px){.shell{padding:20px}.edition{font-size:9px}.intro{margin:30px 0 22px;align-items:start}h1{font-size:28px}.intro p:last-child{font-size:12px}.date-block time{font-size:14px}.date-block{font-size:11px}.zone{font-size:9px;max-width:130px;overflow-wrap:anywhere}.dashboard{grid-template-columns:1fr;gap:16px}.earning{min-height:312px;padding:26px}.amount{font-size:clamp(26px,8.5vw,54px)}.money{margin-top:30px}.settings{padding:24px}.settings h2{margin-bottom:18px}.stats{margin-top:16px;padding:20px 0}.stat{padding:0 12px}.stat-value{font-size:20px}.stat-label{font-size:10px}.stat-note{font-size:9px;line-height:1.6}.notes{display:block;margin-top:24px}.tagline{margin-top:16px!important}footer{flex-direction:column;gap:9px}.share-status:empty{display:none}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header><div class="brand"><span class="brand-mark" aria-hidden="true">$</span>薪水跳動器</div><span class="edition">THE SALARY TICKER</span></header>
+<main>
+<div class="intro"><div><p class="eyebrow">MAKE EVERY SECOND COUNT</p><h1>每一秒，都算數。</h1><p>讓時間，變成看得見的收入。</p></div><div class="date-block"><div id="today">今天</div><time id="clock">--:--:--</time><div class="zone" id="timezone"></div></div></div>
+<div class="dashboard">
+<section class="earning" aria-labelledby="earned-heading"><div class="panel-top"><h2 id="earned-heading">你這個月已經賺了</h2><span class="live"><span class="dot"></span>LIVE · 每秒更新</span></div><div class="money"><span class="currency">TWD / 新台幣</span><div class="amount" role="timer" aria-label="本月累積收入"><span id="whole">0</span><span class="fraction" id="fraction">.000</span></div></div><p class="rate"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m3 14 5-5 4 3 5-7M12 5h5v5"/></svg><span id="rate">輸入月薪，開始看見每一秒的價值</span></p><div class="progress-row"><span>本月時間進度</span><span id="progress-label">0%</span></div><div class="progress-track" id="progress" role="progressbar" aria-label="本月時間進度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-fill" id="progress-fill"></div></div><div class="month-ends"><span id="month-start">月初</span><span id="month-end">月底</span></div></section>
+<section class="settings" aria-labelledby="settings-heading"><h2 id="settings-heading">你的每月薪水</h2><label for="salary">月薪金額</label><div class="input-wrap"><span>NT$</span><input id="salary" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="輸入月薪" maxlength="20" aria-describedby="salary-error salary-hint"></div><div class="presets" aria-label="快速設定月薪"><button type="button" data-salary="30000">30,000</button><button type="button" data-salary="50000">50,000</button><button type="button" data-salary="80000">80,000</button></div><p class="error" id="salary-error" role="status"></p><button type="button" class="share" id="share" disabled><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M12 4V3H3v9h1"/></svg>複製含月薪的網址</button><p class="hint" id="salary-hint">輸入後立即套用。也可在網址加上<br><code>?salary=50000</code> 直接開始。</p><p class="share-status" id="share-status" role="status"></p><div class="fallback" id="fallback" hidden><label for="share-url">選取並複製網址</label><input id="share-url" type="text" readonly></div></section>
+</div>
+<section class="stats" aria-label="收入換算"><div class="stat"><p class="stat-label">平均每天賺</p><p class="stat-value"><span id="per-day">—</span><small>元</small></p><p class="stat-note" id="days-note">依當月實際天數計算</p></div><div class="stat"><p class="stat-label">平均每小時賺</p><p class="stat-value"><span id="per-hour">—</span><small>元</small></p><p class="stat-note">含休息時間，持續累積</p></div><div class="stat"><p class="stat-label">今天已經賺了</p><p class="stat-value"><span id="today-earned">—</span><small>元</small></p><p class="stat-note">從今天 00:00 開始計算</p></div></section>
+<div class="notes"><p><strong>這個數字怎麼來的？</strong><br>月薪 × 本月已過時間 ÷ 本月總時間。依裝置當地時間計算，跨月自動歸零。<br>以整月連續時間平均分攤，包含週末；顯示至小數三位，為時間比例估算，非實際薪資結算。</p><p class="tagline">A little more, every second.</p></div>
+</main>
+<footer><span>在瀏覽器內計算 · 分享網址會包含你輸入的月薪</span><span>YOUR TIME IS ADDING UP ↗</span></footer>
+<noscript><p>請啟用 JavaScript，才能使用每秒更新的薪水計算器。</p></noscript>
+</div>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const numberFormat = new Intl.NumberFormat('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const totalFormat = new Intl.NumberFormat('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+let monthlySalary = null;
+let timer;
+function parseSalary(raw) {
+  const value = raw.trim();
+  if (!value) return null;
+  if (!/^(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d{1,2})?$/.test(value)) return null;
+  const salary = Number(value.replaceAll(',', ''));
+  return Number.isFinite(salary) && salary >= 0 && salary <= 999999999 ? salary : null;
+}
+function calculate(salary, now) {
+  const year = now.getFullYear(), month = now.getMonth();
+  const start = new Date(year, month, 1);
+  const end = new Date(year, month + 1, 1);
+  const todayStart = new Date(year, month, now.getDate());
+  const days = new Date(year, month + 1, 0).getDate();
+  const duration = end - start;
+  const progress = Math.max(0, Math.min(1, (now - start) / duration));
+  const perSecond = salary / (duration / 1000);
+  return { days, progress, earned: salary * progress, perSecond, perDay: salary / days, perHour: perSecond * 3600, todayEarned: (now - todayStart) / 1000 * perSecond };
+}
+function render() {
+  const now = new Date();
+  const data = calculate(monthlySalary ?? 0, now);
+  $('today').textContent = `${now.getFullYear()} 年 ${now.getMonth() + 1} 月 ${now.getDate()} 日`;
+  $('clock').textContent = now.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  $('clock').dateTime = now.toISOString();
+  $('timezone').textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const [whole, fraction] = totalFormat.format(data.earned).split('.');
+  $('whole').textContent = whole;
+  $('fraction').textContent = `.${fraction}`;
+  // Keep the longest supported amounts inside the card on narrow screens.
+  $('whole').parentElement.style.fontSize = whole.length > 9 ? 'clamp(23px, 4.2vw, 42px)' : '';
+  $('rate').textContent = monthlySalary === null ? '輸入月薪，開始看見每一秒的價值' : `每秒 + NT$ ${data.perSecond.toFixed(5)}`;
+  const percent = (data.progress * 100).toFixed(2);
+  $('progress-label').textContent = `${percent}%`;
+  $('progress-fill').style.width = `${percent}%`;
+  $('progress').setAttribute('aria-valuenow', percent);
+  $('month-start').textContent = `${now.getMonth() + 1} 月 1 日`;
+  $('month-end').textContent = `${now.getMonth() + 1} 月 ${data.days} 日`;
+  $('days-note').textContent = `本月共 ${data.days} 天`;
+  for (const [id, amount] of [['per-day', data.perDay], ['per-hour', data.perHour], ['today-earned', data.todayEarned]]) {
+    $(id).textContent = monthlySalary === null ? '—' : numberFormat.format(amount);
+  }
+}
+function applySalary(updateUrl = true) {
+  monthlySalary = parseSalary($('salary').value);
+  const invalid = $('salary').value.trim() !== '' && monthlySalary === null;
+  $('salary-error').textContent = invalid ? '請輸入 0～999,999,999 的金額，最多兩位小數。' : '';
+  $('salary').setAttribute('aria-invalid', String(invalid));
+  $('share').disabled = monthlySalary === null;
+  $('share-status').textContent = '';
+  $('fallback').hidden = true;
+  if (updateUrl) {
+    const url = new URL(location.href);
+    if (monthlySalary === null) url.searchParams.delete('salary');
+    else url.searchParams.set('salary', String(monthlySalary));
+    try { history.replaceState(null, '', url); } catch { /* file:// can restrict history; calculation still works. */ }
+  }
+  render();
+}
+function loadQuery() {
+  $('salary').value = new URL(location.href).searchParams.get('salary') ?? '';
+  applySalary(false);
+}
+function tick() {
+  clearTimeout(timer);
+  render();
+  timer = setTimeout(tick, 1000 - Date.now() % 1000);
+}
+$('salary').addEventListener('input', () => applySalary());
+document.querySelectorAll('[data-salary]').forEach(button => button.addEventListener('click', () => {
+  $('salary').value = button.dataset.salary;
+  applySalary();
+}));
+$('share').addEventListener('click', async () => {
+  if (monthlySalary === null) return;
+  const url = new URL(location.href);
+  url.searchParams.set('salary', String(monthlySalary));
+  try {
+    await navigator.clipboard.writeText(url.href);
+    $('share-status').textContent = '已複製！網址包含目前設定的月薪。';
+  } catch {
+    $('fallback').hidden = false;
+    $('share-url').value = url.href;
+    $('share-url').focus();
+    $('share-url').select();
+    $('share-status').textContent = '請手動複製下方網址。';
+  }
+});
+window.addEventListener('popstate', loadQuery);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+window.addEventListener('pageshow', tick);
+loadQuery();
+tick();
+</script>
+</body>
+</html>
