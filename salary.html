@@ -46,6 +46,9 @@ button,input{font:inherit}button{cursor:pointer}button:focus-visible,a:focus-vis
 .presets{display:flex;gap:6px;margin-top:11px}.presets button{border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--muted);padding:10px 0;font-size:12px;flex:1}.presets button:hover{background:#eaf1dc;border-color:#9bb57b}.error{font-size:11px;line-height:1.6;color:#a13f31;min-height:18px;margin:9px 0}.share{background:var(--ink);color:white;border:0;border-radius:8px;padding:12px;width:100%;font-size:12px;display:flex;align-items:center;justify-content:center;gap:10px}.share:hover{background:#395342}.share:disabled{opacity:.5;cursor:default}.share .mdi{width:16px;height:16px}.hint{font-size:11px;line-height:1.8;color:var(--muted);margin:12px 0 0}.share-status{font-size:11px;line-height:1.6;margin:8px 0 0}.share-status:empty{display:none}
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:10px 0 24px}.stat{padding:0 24px}.stat:first-child{padding-left:0}.stat+.stat{border-left:1px solid var(--line)}.stat-label{font-size:11px;color:var(--muted);margin:0 0 12px}.stat-value{font-size:clamp(18px,3vw,25px);font-variant-numeric:tabular-nums;letter-spacing:-.04em;margin:0;overflow-wrap:anywhere}.stat-value small{font-size:11px;margin-left:4px;color:var(--muted);letter-spacing:0}.stat-note{font-size:10px;color:var(--muted);margin:8px 0 0;line-height:1.8}
 .notes{border-top:1px solid var(--line);padding-top:20px}.notes p{font-size:12px;line-height:1.9;color:var(--muted);margin:0}.notes strong{font-weight:550;color:var(--ink)}.privacy{font-size:11px;color:var(--muted);margin:18px 0 0}code{font-family:ui-monospace,monospace}.fallback{margin-top:10px}.fallback input{font-size:12px;border:1px solid var(--line);padding:9px;border-radius:6px}.fallback label{font-size:11px}
+
+.equivalents{display:grid;gap:5px;margin:16px auto 0;max-width:620px;color:#d5dfcd;font-size:12px;line-height:1.8;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.equivalents p{margin:0}
+.conversion-settings{border-top:1px solid var(--line);margin-top:24px;padding-top:22px}.conversion-settings h3{font-size:14px;margin:0}.conversion-settings .hint{margin:8px 0 14px}.conversion-list{display:grid;gap:12px}.conversion-row{min-width:0;margin:0;padding:14px;border:1px solid var(--line);border-radius:12px}.conversion-row legend{font-size:11px;color:var(--muted);padding:0 5px}.conversion-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.conversion-fields label{min-width:0;margin:0;font-size:11px}.conversion-fields input{display:block;margin-top:6px;border:1px solid #bec8b4;background:white;border-radius:6px;padding:10px;font-size:14px;font-weight:400}.conversion-fields input::placeholder{font-size:12px}.conversion-fields input:focus-visible{outline:2px solid #739844;outline-offset:2px}.conversion-fields input[aria-invalid="true"]{border-color:#a13f31}.conversion-row-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px}.conversion-error{font-size:11px;line-height:1.6;color:#a13f31;margin:0}.conversion-remove{display:inline-flex;align-items:center;gap:4px;flex-shrink:0;background:transparent;border:0;color:var(--muted);font-size:11px;min-height:36px;padding:6px}.conversion-remove .mdi{width:16px;height:16px}.conversion-add{width:100%;border:1px dashed #9aa98e;border-radius:8px;background:transparent;color:var(--ink);padding:11px;font-size:12px;margin-top:12px}.conversion-add:hover:not(:disabled){background:#eaf1dc}.conversion-add:disabled{cursor:default;opacity:.55}
 @keyframes breathe{50%{opacity:.35;transform:scale(.8)}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
 @media(max-width:650px){.shell{padding:12px}.earning{border-radius:20px;padding:22px;min-height:calc(100svh - 24px)}.panel-top{gap:12px}.date-block{font-size:11px}.date-block time{font-size:18px}.zone{font-size:9px}.panel-actions{gap:6px}.icon-button{width:44px;height:44px}.income-content{padding:42px 0}.income-heading{font-size:14px;margin-bottom:26px}.amount{font-size:clamp(35px,10vw,65px)}.amount.long-amount{font-size:clamp(23px,7vw,44px)}.rate{font-size:11px}.settings,.details-panel{padding:20px;scroll-margin-top:12px}.stats{gap:18px;grid-template-columns:1fr}.stat,.stat:first-child{padding:0}.stat+.stat{border-left:0;border-top:1px solid var(--line);padding-top:18px}.stat-value{font-size:24px}}
@@ -68,13 +71,22 @@ button,input{font:inherit}button{cursor:pointer}button:focus-visible,a:focus-vis
     <h1 class="income-heading" id="earned-heading">你這個月已經賺了</h1>
     <div class="money"><span class="currency">TWD / 新台幣</span><div class="amount" role="timer" aria-label="本月累積收入"><span id="whole">0</span><span class="fraction" id="fraction">.000</span></div></div>
     <p class="rate"><svg class="mdi mdi-trending-up" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M16,6L18.29,8.29L13.41,13.17L9.41,9.17L2,16.59L3.41,18L9.41,12L13.41,16L19.71,9.71L22,12V6H16Z"/></svg><span id="rate">點右上角齒輪，設定你的月薪</span></p>
+    <div class="equivalents" id="equivalents" aria-label="趣味換算" hidden></div>
     <span class="live"><span class="dot"></span>LIVE · 每秒更新</span>
   </div>
   <div class="progress-row"><span>本月時間進度</span><span id="progress-label">0%</span></div>
   <div class="progress-track" id="progress" role="progressbar" aria-label="本月時間進度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-fill" id="progress-fill"></div></div>
   <div class="month-ends"><span id="month-start">月初</span><span id="month-end">月底</span></div>
 </section>
-<section class="settings" id="settings-panel" aria-labelledby="settings-heading" hidden><div class="section-heading"><h2 id="settings-heading">你的每月薪水</h2><button type="button" class="icon-button" data-close="settings" aria-label="收合月薪設定" title="收合月薪設定"><svg class="mdi mdi-close" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></button></div><label for="salary">月薪金額</label><div class="input-wrap"><span>NT$</span><input id="salary" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="輸入月薪" maxlength="20" aria-describedby="salary-error salary-hint"></div><div class="presets" aria-label="快速設定月薪"><button type="button" data-salary="30000">30,000</button><button type="button" data-salary="50000">50,000</button><button type="button" data-salary="80000">80,000</button></div><p class="error" id="salary-error" role="status"></p><button type="button" class="share" id="share" disabled><svg class="mdi mdi-content-copy" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/></svg>複製含月薪的網址</button><p class="hint" id="salary-hint">輸入後立即套用。也可在網址加上<br><code>?salary=50000</code> 直接開始。</p><p class="share-status" id="share-status" role="status"></p><div class="fallback" id="fallback" hidden><label for="share-url">選取並複製網址</label><input id="share-url" type="text" readonly></div></section>
+<section class="settings" id="settings-panel" aria-labelledby="settings-heading" hidden><div class="section-heading"><h2 id="settings-heading">你的每月薪水</h2><button type="button" class="icon-button" data-close="settings" aria-label="收合月薪設定" title="收合月薪設定"><svg class="mdi mdi-close" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></button></div><label for="salary">月薪金額</label><div class="input-wrap"><span>NT$</span><input id="salary" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="輸入月薪" maxlength="20" aria-describedby="salary-error salary-hint"></div><div class="presets" aria-label="快速設定月薪"><button type="button" data-salary="30000">30,000</button><button type="button" data-salary="50000">50,000</button><button type="button" data-salary="80000">80,000</button></div><p class="error" id="salary-error" role="status"></p><button type="button" class="share" id="share" disabled><svg class="mdi mdi-content-copy" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/></svg>複製含月薪的網址</button><p class="hint" id="salary-hint">未設定時預設 22,000 元，輸入後立即套用。也可在網址加上<br><code>?salary=50000</code> 直接開始。</p><p class="share-status" id="share-status" role="status"></p><div class="fallback" id="fallback" hidden><label for="share-url">選取並複製網址</label><input id="share-url" type="text" readonly></div>
+<div class="conversion-settings" aria-labelledby="conversion-heading">
+  <h3 id="conversion-heading">換成喜歡的東西</h3>
+  <p class="hint">例如：1 台 任天堂switch2 ＝ NT$ 15,880。<br>最多三組，填完四欄後即時換算；金額是這個數量的總價。</p>
+  <div class="conversion-list" id="conversion-list"></div>
+  <button class="conversion-add" id="conversion-add" type="button">新增換算（0 / 3）</button>
+  <p class="hint" id="conversion-storage-note">換算設定自動儲存在此瀏覽器，不包含在分享網址中。數量與總價可填至小數兩位，換算結果最多顯示四位小數。</p>
+</div>
+</section>
 <section class="details-panel" id="details-panel" aria-labelledby="details-heading" tabindex="-1" hidden><div class="section-heading"><h2 id="details-heading">統計與計算說明</h2><button type="button" class="icon-button" data-close="details" aria-label="收合統計與計算說明" title="收合統計與計算說明"><svg class="mdi mdi-close" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></button></div>
 <section class="stats" aria-label="收入換算"><div class="stat"><p class="stat-label">平均每天賺</p><p class="stat-value"><span id="per-day">—</span><small>元</small></p><p class="stat-note" id="days-note">依當月實際天數計算</p></div><div class="stat"><p class="stat-label">平均每小時賺</p><p class="stat-value"><span id="per-hour">—</span><small>元</small></p><p class="stat-note">含休息時間，持續累積</p></div><div class="stat"><p class="stat-label">今天已經賺了</p><p class="stat-value"><span id="today-earned">—</span><small>元</small></p><p class="stat-note">從今天 00:00 開始計算</p></div></section>
 <div class="notes"><p><strong>這個數字怎麼來的？</strong><br>月薪 × 本月已過時間 ÷ 本月總時間。依裝置當地時間計算，跨月自動歸零。<br>以整月連續時間平均分攤，包含週末；顯示至小數三位，為時間比例估算，非實際薪資結算。</p></div>
@@ -84,6 +96,18 @@ button,input{font:inherit}button{cursor:pointer}button:focus-visible,a:focus-vis
 </main>
 <noscript><p>請啟用 JavaScript，才能使用每秒更新的薪水計算器。</p></noscript>
 </div>
+<template id="conversion-template">
+  <fieldset class="conversion-row">
+    <legend>換算項目</legend>
+    <div class="conversion-fields">
+      <label>數量<input data-field="quantity" type="text" inputmode="decimal" maxlength="20" autocomplete="off" placeholder="1"></label>
+      <label>單位<input data-field="unit" type="text" maxlength="12" autocomplete="off" placeholder="台"></label>
+      <label>品名<input data-field="name" type="text" maxlength="80" autocomplete="off" placeholder="任天堂switch2"></label>
+      <label>總價（NT$）<input data-field="price" type="text" inputmode="decimal" maxlength="20" autocomplete="off" placeholder="15,880"></label>
+    </div>
+    <div class="conversion-row-footer"><p class="conversion-error" role="status"></p><button class="conversion-remove" type="button" aria-label="移除此換算項目"><svg class="mdi mdi-close" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg>移除</button></div>
+  </fieldset>
+</template>
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
@@ -91,6 +115,15 @@ const numberFormat = new Intl.NumberFormat('zh-TW', { minimumFractionDigits: 2, 
 const totalFormat = new Intl.NumberFormat('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
 let monthlySalary = null;
 let timer;
+const conversionStorageKey = 'salary-ticker.conversions.v1';
+const conversionFormat = new Intl.NumberFormat('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+let conversions = [];
+let conversionSequence = 0;
+const conversionExamples = [
+  { quantity: '1', unit: '台', name: '任天堂switch2', price: '15880' },
+  { quantity: '1', unit: '台', name: 'ps5 pro', price: '27478' },
+  { quantity: '1', unit: '盤', name: '壽司郎金盤', price: '80' }
+];
 function parseSalary(raw) {
   const value = raw.trim();
   if (!value) return null;
@@ -109,9 +142,107 @@ function calculate(salary, now) {
   const perSecond = salary / (duration / 1000);
   return { days, progress, earned: salary * progress, perSecond, perDay: salary / days, perHour: perSecond * 3600, todayEarned: (now - todayStart) / 1000 * perSecond };
 }
+// Each price buys the specified quantity, e.g. 6 cups for $300.
+function validateConversion(item) {
+  const quantity = parseSalary(item.quantity);
+  const price = parseSalary(item.price);
+  const invalidFields = ['quantity', 'price'].filter(key => item[key].trim() !== '' && (parseSalary(item[key]) ?? 0) <= 0);
+  if (invalidFields.length) return { value: null, invalidFields, error: '數量與總價須大於 0、最多 999,999,999，且不超過兩位小數。' };
+  if (quantity === null || price === null || !item.unit.trim() || !item.name.trim()) return { value: null, invalidFields: [], error: '' };
+  return { value: { quantity, price, unit: item.unit.trim(), name: item.name.trim() }, invalidFields: [], error: '' };
+}
+function equivalentQuantity(earned, item) {
+  return earned / item.price * item.quantity;
+}
+function renderConversions(earned) {
+  let visible = false;
+  for (const item of conversions) {
+    const { value } = validateConversion(item);
+    item.output.hidden = monthlySalary === null || value === null;
+    if (!item.output.hidden) {
+      item.output.textContent = `等同 ${conversionFormat.format(equivalentQuantity(earned, value))} ${value.unit}${value.name}`;
+      visible = true;
+    }
+  }
+  $('equivalents').hidden = !visible;
+}
+function saveConversions() {
+  try {
+    localStorage.setItem(conversionStorageKey, JSON.stringify(conversions.map(({ quantity, unit, name, price }) => ({ quantity, unit, name, price }))));
+  } catch {
+    $('conversion-storage-note').textContent = '此瀏覽器無法儲存設定，換算仍可使用，但重新整理後需重新輸入。';
+  }
+}
+function updateConversionControls() {
+  $('conversion-add').disabled = conversions.length >= 3;
+  $('conversion-add').textContent = conversions.length >= 3 ? '已達上限（3 / 3）' : `新增換算（${conversions.length} / 3）`;
+  conversions.forEach((item, index) => {
+    item.row.querySelector('legend').textContent = `換算 ${index + 1}`;
+    item.row.querySelectorAll('[data-field]').forEach(input => {
+      input.placeholder = conversionExamples[index][input.dataset.field];
+    });
+    item.row.querySelector('.conversion-remove').setAttribute('aria-label', `移除換算 ${index + 1}`);
+  });
+}
+function updateConversionValidation(item) {
+  const result = validateConversion(item);
+  item.row.querySelector('.conversion-error').textContent = result.error;
+  item.row.querySelectorAll('[data-field]').forEach(input => input.setAttribute('aria-invalid', String(result.invalidFields.includes(input.dataset.field))));
+}
+function addConversion(values = { quantity: '1', unit: '', name: '', price: '' }, focus = false) {
+  if (conversions.length >= 3) return;
+  const row = $('conversion-template').content.firstElementChild.cloneNode(true);
+  const output = document.createElement('p');
+  const item = { ...values, row, output };
+  const errorId = `conversion-error-${++conversionSequence}`;
+  row.querySelector('.conversion-error').id = errorId;
+  row.querySelectorAll('[data-field]').forEach(input => {
+    input.value = item[input.dataset.field];
+    input.setAttribute('aria-describedby', errorId);
+    input.addEventListener('input', () => {
+      item[input.dataset.field] = input.value;
+      updateConversionValidation(item);
+      saveConversions();
+      render();
+    });
+  });
+  row.querySelector('.conversion-remove').addEventListener('click', () => {
+    conversions = conversions.filter(candidate => candidate !== item);
+    row.remove();
+    output.remove();
+    updateConversionControls();
+    saveConversions();
+    render();
+    $('conversion-add').focus({ preventScroll: true });
+  });
+  conversions.push(item);
+  $('conversion-list').append(row);
+  $('equivalents').append(output);
+  updateConversionValidation(item);
+  updateConversionControls();
+  if (focus) {
+    row.querySelector('[data-field="quantity"]').focus();
+    saveConversions();
+    render();
+  }
+}
+function loadConversions() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(conversionStorageKey) ?? '[]');
+    if (!Array.isArray(saved)) return;
+    for (const item of saved.slice(0, 3)) {
+      if (!item || !['quantity', 'unit', 'name', 'price'].every(key => typeof item[key] === 'string')) continue;
+      addConversion({ quantity: item.quantity.slice(0, 20), unit: item.unit.slice(0, 12), name: item.name.slice(0, 80), price: item.price.slice(0, 20) });
+    }
+  } catch {
+    // A malformed value or unavailable storage must not stop the salary timer.
+    $('conversion-storage-note').textContent = '無法讀取之前的換算設定，可重新新增換算。';
+  }
+}
 function render() {
   const now = new Date();
   const data = calculate(monthlySalary ?? 0, now);
+  renderConversions(data.earned);
   $('today').textContent = `${now.getFullYear()} 年 ${now.getMonth() + 1} 月 ${now.getDate()} 日`;
   $('clock').textContent = now.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
   $('clock').dateTime = now.toISOString();
@@ -150,7 +281,8 @@ function applySalary(updateUrl = true) {
   render();
 }
 function loadQuery() {
-  $('salary').value = new URL(location.href).searchParams.get('salary') ?? '';
+  const querySalary = new URL(location.href).searchParams.get('salary');
+  $('salary').value = querySalary === null || querySalary.trim() === '' ? '22000' : querySalary;
   applySalary(false);
 }
 function tick() {
@@ -186,6 +318,7 @@ document.addEventListener('keydown', event => {
     if (!$(name + '-panel').hidden) { setPanel(name, false); break; }
   }
 });
+$('conversion-add').addEventListener('click', () => addConversion(undefined, true));
 $('salary').addEventListener('input', () => applySalary());
 document.querySelectorAll('[data-salary]').forEach(button => button.addEventListener('click', () => {
   $('salary').value = button.dataset.salary;
@@ -209,6 +342,7 @@ $('share').addEventListener('click', async () => {
 window.addEventListener('popstate', loadQuery);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
 window.addEventListener('pageshow', tick);
+loadConversions();
 loadQuery();
 tick();
 </script>
