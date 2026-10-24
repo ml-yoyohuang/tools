@@ -5,26 +5,83 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#f5f3eb">
 <meta name="description" content="輸入月薪，看時間一秒一秒變成收入。依當月實際天數，每秒更新本月累積薪水。">
+<link rel="icon" type="image/svg+xml" href="salary-icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="salary-icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="salary-apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:title" content="薪水跳動器｜每一秒，都算數">
+<meta property="og:description" content="輸入月薪，看時間一秒一秒變成收入。每秒更新本月累積薪水，讓每一秒的價值都看得見。">
+<meta property="og:url" content="https://ml-yoyohuang.github.io/tools/salary.html">
+<meta property="og:image" content="https://ml-yoyohuang.github.io/tools/salary-og.png">
+<meta property="og:image:width" content="1732">
+<meta property="og:image:height" content="908">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:alt" content="薪水跳動器：每一秒，都算數。深綠背景搭配淺綠時鐘圖案。">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="薪水跳動器｜每一秒，都算數">
+<meta name="twitter:description" content="輸入月薪，每秒查看本月已累積的收入。">
+<meta name="twitter:image" content="https://ml-yoyohuang.github.io/tools/salary-og.png">
+<meta name="twitter:image:alt" content="薪水跳動器：每一秒，都算數。">
 <title>薪水跳動器｜每一秒，都算數</title>
 <style>
 :root{color-scheme:light;--paper:#f5f3eb;--ink:#243a30;--muted:#69736a;--green:#c7e58b;--line:#d9ddd0}
-*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}button,input{font:inherit}button{cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid #739844;outline-offset:4px}.shell{max-width:1120px;margin:auto;padding:30px 40px 24px}header{display:flex;align-items:center;justify-content:space-between;padding-bottom:25px;border-bottom:1px solid var(--line)}.brand{font-weight:750;display:flex;align-items:center;gap:10px;letter-spacing:.05em}.brand-mark{width:32px;height:32px;border-radius:50%;background:var(--ink);color:var(--green);display:grid;place-items:center;font:20px Georgia,serif}.edition{font-size:10px;letter-spacing:.18em;color:var(--muted)}.intro{display:flex;justify-content:space-between;align-items:end;margin:44px 0 26px}.eyebrow{font-size:11px;letter-spacing:.2em;font-weight:600;color:var(--muted);margin:0 0 12px}h1{font-size:34px;letter-spacing:-.04em;line-height:1.3;margin:0}.intro p:last-child{font-size:14px;color:var(--muted);margin:12px 0 0}.date-block{text-align:right;font-size:13px;line-height:1.8}.date-block time{font-variant-numeric:tabular-nums;font-size:18px;font-weight:550}.zone{font-size:11px;color:var(--muted)}.dashboard{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px}.earning{background:var(--ink);border-radius:20px;color:#f8faef;padding:32px;position:relative;overflow:hidden;min-height:344px;display:flex;flex-direction:column}.earning:after{content:"";position:absolute;right:-55px;top:-110px;width:260px;height:260px;border:1px solid #ffffff12;border-radius:50%;box-shadow:0 0 0 35px #ffffff04,0 0 0 70px #ffffff03;pointer-events:none}.panel-top{display:flex;justify-content:space-between;align-items:center;gap:10px;position:relative;z-index:1}.panel-top h2{font-size:14px;font-weight:450;margin:0;color:#e1e8dc}.live{font-size:10px;letter-spacing:.13em;color:var(--green);display:flex;align-items:center;gap:6px;white-space:nowrap}.dot{height:6px;width:6px;border-radius:50%;background:var(--green);animation:breathe 1s ease-in-out infinite}.money{margin:34px 0 10px;white-space:nowrap;position:relative;z-index:1}.currency{display:block;font-size:12px;letter-spacing:.15em;color:#c1cdbb;margin-bottom:6px}.amount{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:clamp(30px,5.2vw,61px);font-weight:500;letter-spacing:-.07em;font-variant-numeric:tabular-nums}.fraction{font-size:.55em;color:var(--green);letter-spacing:-.04em}.rate{color:var(--green);font-size:12px;margin:0 0 30px;display:flex;align-items:center;gap:7px}.rate svg{width:15px;height:15px}.progress-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#c6d0c1;margin-top:auto;margin-bottom:11px}.progress-track{height:5px;background:#ffffff1c;overflow:hidden;border-radius:10px}.progress-fill{height:100%;background:var(--green);width:0;border-radius:10px;transition:width .4s}.month-ends{display:flex;justify-content:space-between;font-size:10px;color:#abbba5;margin-top:10px}.settings{border:1px solid var(--line);border-radius:20px;padding:28px 24px;background:#fbfaf5}.settings h2{font-size:16px;margin:0 0 22px}.settings label{font-size:12px;display:block;margin-bottom:9px;color:var(--muted)}.input-wrap{display:flex;align-items:center;gap:8px;background:white;border:1px solid #bec8b4;border-radius:9px;padding:12px}.input-wrap:focus-within{outline:2px solid #739844;outline-offset:2px}.input-wrap span{font-size:12px;color:var(--muted)}input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:var(--ink);font-size:24px;font-weight:550;font-variant-numeric:tabular-nums}input::placeholder{color:#a4aba0;font-size:21px}.presets{display:flex;gap:6px;margin-top:11px}.presets button{border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--muted);padding:7px 0;font-size:11px;flex:1}.presets button:hover{background:#eaf1dc;border-color:#9bb57b}.error{font-size:11px;line-height:1.6;color:#a13f31;min-height:18px;margin:9px 0}.share{background:var(--ink);color:white;border:0;border-radius:8px;padding:12px;width:100%;font-size:12px;display:flex;align-items:center;justify-content:center;gap:10px}.share:hover{background:#395342}.share:disabled{opacity:.5;cursor:default}.share svg{width:14px;height:14px}.hint{font-size:11px;line-height:1.8;color:var(--muted);margin:12px 0 0}.share-status{font-size:11px;min-height:18px;line-height:1.6;margin:8px 0 0}.stats{display:grid;grid-template-columns:repeat(3,1fr);margin-top:20px;border:1px solid var(--line);border-radius:16px;padding:24px 0}.stat{padding:0 28px}.stat+.stat{border-left:1px solid var(--line)}.stat-label{font-size:11px;color:var(--muted);margin:0 0 12px}.stat-value{font-size:25px;font-variant-numeric:tabular-nums;letter-spacing:-.04em;margin:0}.stat-value small{font-size:11px;margin-left:4px;color:var(--muted);letter-spacing:0}.stat-note{font-size:10px;color:var(--muted);margin:8px 0 0}.notes{display:flex;justify-content:space-between;align-items:start;gap:24px;margin-top:28px;padding-bottom:28px;border-bottom:1px solid var(--line)}.notes p{font-size:11px;line-height:1.9;color:var(--muted);margin:0}.notes strong{font-weight:550;color:var(--ink)}.tagline{font-family:Georgia,serif;font-style:italic;font-size:19px!important;color:var(--ink)!important;white-space:nowrap}footer{display:flex;justify-content:space-between;gap:15px;padding-top:18px;font-size:10px;color:var(--muted)}code{font-family:ui-monospace,monospace}footer a{color:inherit;text-decoration:underline;text-underline-offset:3px}.fallback{margin-top:10px}.fallback input{font-size:12px;border:1px solid var(--line);padding:9px;border-radius:6px}.fallback label{font-size:11px} [hidden]{display:none!important}
-@keyframes breathe{50%{opacity:.35;transform:scale(.8)}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}@media(max-width:850px){.dashboard{grid-template-columns:minmax(0,1fr) 260px}.shell{padding:24px}.earning{padding:26px}.settings{padding:26px 20px}.amount{font-size:clamp(26px,5.7vw,48px)}}@media(max-width:650px){.shell{padding:20px}.edition{font-size:9px}.intro{margin:30px 0 22px;align-items:start}h1{font-size:28px}.intro p:last-child{font-size:12px}.date-block time{font-size:14px}.date-block{font-size:11px}.zone{font-size:9px;max-width:130px;overflow-wrap:anywhere}.dashboard{grid-template-columns:1fr;gap:16px}.earning{min-height:312px;padding:26px}.amount{font-size:clamp(26px,8.5vw,54px)}.money{margin-top:30px}.settings{padding:24px}.settings h2{margin-bottom:18px}.stats{margin-top:16px;padding:20px 0}.stat{padding:0 12px}.stat-value{font-size:20px}.stat-label{font-size:10px}.stat-note{font-size:9px;line-height:1.6}.notes{display:block;margin-top:24px}.tagline{margin-top:16px!important}footer{flex-direction:column;gap:9px}.share-status:empty{display:none}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
+button,input{font:inherit}button{cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid #739844;outline-offset:4px}
+[hidden]{display:none!important}.mdi{width:22px;height:22px;fill:currentColor;flex-shrink:0}
+.shell{max-width:1160px;margin:auto;padding:24px}.dashboard{display:grid;gap:20px}
+.earning{position:relative;isolation:isolate;overflow:hidden;background:var(--ink);border-radius:24px;color:#f8faef;padding:32px 40px;min-height:calc(100svh - 48px);display:flex;flex-direction:column}
+.earning::after{content:"";position:absolute;z-index:-1;right:-55px;top:-110px;width:260px;height:260px;border:1px solid #ffffff12;border-radius:50%;box-shadow:0 0 0 35px #ffffff04,0 0 0 70px #ffffff03;pointer-events:none}
+.panel-top{display:flex;justify-content:space-between;align-items:center;gap:20px}
+.date-block{font-size:12px;line-height:1.8;color:#c6d0c1}.date-block time{font-variant-numeric:tabular-nums;font-size:20px;font-weight:500;letter-spacing:.04em;color:#f8faef}.zone{font-size:10px;color:#abbba5}
+.panel-actions{display:flex;gap:8px}.icon-button{width:44px;height:44px;border:1px solid #ffffff24;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:transparent;color:#dfe7da;flex-shrink:0}
+.icon-button:hover,.icon-button[aria-expanded="true"]{background:var(--green);border-color:var(--green);color:var(--ink)}.icon-button:focus-visible{outline-color:var(--green)}
+.income-content{margin:auto 0;padding:54px 0;text-align:center}.income-heading{font-size:16px;font-weight:450;color:#e1e8dc;margin:0 0 28px}.live{font-size:10px;letter-spacing:.13em;color:var(--green);display:flex;align-items:center;justify-content:center;gap:6px;margin-top:18px}.dot{height:6px;width:6px;border-radius:50%;background:var(--green);animation:breathe 1s ease-in-out infinite}
+.money{white-space:nowrap}.currency{display:block;font-size:11px;letter-spacing:.15em;color:#abbba5;margin-bottom:10px}.amount{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:clamp(40px,10vw,112px);font-weight:500;letter-spacing:-.07em;font-variant-numeric:tabular-nums}.amount.long-amount{font-size:clamp(25px,6.8vw,76px)}.fraction{font-size:.5em;color:var(--green);letter-spacing:-.04em}
+.rate{color:var(--green);font-size:12px;line-height:1.8;margin:20px 0 0;display:flex;align-items:center;justify-content:center;gap:7px}.rate .mdi{width:16px;height:16px}
+.progress-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#c6d0c1;margin-bottom:11px}.progress-track{height:4px;background:#ffffff1c;overflow:hidden;border-radius:10px}.progress-fill{height:100%;background:var(--green);width:0;border-radius:10px;transition:width .4s}.month-ends{display:flex;justify-content:space-between;font-size:10px;color:#abbba5;margin-top:10px}
+.settings,.details-panel{border:1px solid var(--line);border-radius:20px;padding:28px;background:#fbfaf5;scroll-margin-top:24px}.settings{width:100%;max-width:520px;justify-self:center}.section-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}.section-heading h2{font-size:16px;margin:0}.section-heading .icon-button{border-color:var(--line);color:var(--muted)}.section-heading .icon-button:focus-visible{outline-color:#739844}
+.settings label{font-size:12px;display:block;margin-bottom:9px;color:var(--muted)}.input-wrap{display:flex;align-items:center;gap:8px;background:white;border:1px solid #bec8b4;border-radius:9px;padding:12px}.input-wrap:focus-within{outline:2px solid #739844;outline-offset:2px}.input-wrap span{font-size:12px;color:var(--muted)}input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:var(--ink);font-size:24px;font-weight:550;font-variant-numeric:tabular-nums}input::placeholder{color:#a4aba0;font-size:21px}
+.presets{display:flex;gap:6px;margin-top:11px}.presets button{border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--muted);padding:10px 0;font-size:12px;flex:1}.presets button:hover{background:#eaf1dc;border-color:#9bb57b}.error{font-size:11px;line-height:1.6;color:#a13f31;min-height:18px;margin:9px 0}.share{background:var(--ink);color:white;border:0;border-radius:8px;padding:12px;width:100%;font-size:12px;display:flex;align-items:center;justify-content:center;gap:10px}.share:hover{background:#395342}.share:disabled{opacity:.5;cursor:default}.share .mdi{width:16px;height:16px}.hint{font-size:11px;line-height:1.8;color:var(--muted);margin:12px 0 0}.share-status{font-size:11px;line-height:1.6;margin:8px 0 0}.share-status:empty{display:none}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:10px 0 24px}.stat{padding:0 24px}.stat:first-child{padding-left:0}.stat+.stat{border-left:1px solid var(--line)}.stat-label{font-size:11px;color:var(--muted);margin:0 0 12px}.stat-value{font-size:clamp(18px,3vw,25px);font-variant-numeric:tabular-nums;letter-spacing:-.04em;margin:0;overflow-wrap:anywhere}.stat-value small{font-size:11px;margin-left:4px;color:var(--muted);letter-spacing:0}.stat-note{font-size:10px;color:var(--muted);margin:8px 0 0;line-height:1.8}
+.notes{border-top:1px solid var(--line);padding-top:20px}.notes p{font-size:12px;line-height:1.9;color:var(--muted);margin:0}.notes strong{font-weight:550;color:var(--ink)}.privacy{font-size:11px;color:var(--muted);margin:18px 0 0}code{font-family:ui-monospace,monospace}.fallback{margin-top:10px}.fallback input{font-size:12px;border:1px solid var(--line);padding:9px;border-radius:6px}.fallback label{font-size:11px}
+@keyframes breathe{50%{opacity:.35;transform:scale(.8)}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+@media(max-width:650px){.shell{padding:12px}.earning{border-radius:20px;padding:22px;min-height:calc(100svh - 24px)}.panel-top{gap:12px}.date-block{font-size:11px}.date-block time{font-size:18px}.zone{font-size:9px}.panel-actions{gap:6px}.icon-button{width:44px;height:44px}.income-content{padding:42px 0}.income-heading{font-size:14px;margin-bottom:26px}.amount{font-size:clamp(35px,10vw,65px)}.amount.long-amount{font-size:clamp(23px,7vw,44px)}.rate{font-size:11px}.settings,.details-panel{padding:20px;scroll-margin-top:12px}.stats{gap:18px;grid-template-columns:1fr}.stat,.stat:first-child{padding:0}.stat+.stat{border-left:0;border-top:1px solid var(--line);padding-top:18px}.stat-value{font-size:24px}}
 </style>
 </head>
 <body>
 <div class="shell">
-<header><div class="brand"><span class="brand-mark" aria-hidden="true">$</span>薪水跳動器</div><span class="edition">THE SALARY TICKER</span></header>
 <main>
-<div class="intro"><div><p class="eyebrow">MAKE EVERY SECOND COUNT</p><h1>每一秒，都算數。</h1><p>讓時間，變成看得見的收入。</p></div><div class="date-block"><div id="today">今天</div><time id="clock">--:--:--</time><div class="zone" id="timezone"></div></div></div>
 <div class="dashboard">
-<section class="earning" aria-labelledby="earned-heading"><div class="panel-top"><h2 id="earned-heading">你這個月已經賺了</h2><span class="live"><span class="dot"></span>LIVE · 每秒更新</span></div><div class="money"><span class="currency">TWD / 新台幣</span><div class="amount" role="timer" aria-label="本月累積收入"><span id="whole">0</span><span class="fraction" id="fraction">.000</span></div></div><p class="rate"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m3 14 5-5 4 3 5-7M12 5h5v5"/></svg><span id="rate">輸入月薪，開始看見每一秒的價值</span></p><div class="progress-row"><span>本月時間進度</span><span id="progress-label">0%</span></div><div class="progress-track" id="progress" role="progressbar" aria-label="本月時間進度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-fill" id="progress-fill"></div></div><div class="month-ends"><span id="month-start">月初</span><span id="month-end">月底</span></div></section>
-<section class="settings" aria-labelledby="settings-heading"><h2 id="settings-heading">你的每月薪水</h2><label for="salary">月薪金額</label><div class="input-wrap"><span>NT$</span><input id="salary" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="輸入月薪" maxlength="20" aria-describedby="salary-error salary-hint"></div><div class="presets" aria-label="快速設定月薪"><button type="button" data-salary="30000">30,000</button><button type="button" data-salary="50000">50,000</button><button type="button" data-salary="80000">80,000</button></div><p class="error" id="salary-error" role="status"></p><button type="button" class="share" id="share" disabled><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M12 4V3H3v9h1"/></svg>複製含月薪的網址</button><p class="hint" id="salary-hint">輸入後立即套用。也可在網址加上<br><code>?salary=50000</code> 直接開始。</p><p class="share-status" id="share-status" role="status"></p><div class="fallback" id="fallback" hidden><label for="share-url">選取並複製網址</label><input id="share-url" type="text" readonly></div></section>
-</div>
+<!-- Icons: Material Design Icons (Templarian/MaterialDesign), Apache-2.0. Inline SVG keeps this page usable offline. -->
+<section class="earning" aria-labelledby="earned-heading">
+  <div class="panel-top">
+    <div class="date-block"><div id="today">今天</div><time id="clock">--:--:--</time><div class="zone" id="timezone"></div></div>
+    <div class="panel-actions">
+      <button type="button" class="icon-button" id="settings-toggle" aria-label="月薪設定" title="月薪設定" aria-expanded="false" aria-controls="settings-panel"><svg class="mdi mdi-cog-outline" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8M12,10A2,2 0 0,0 10,12A2,2 0 0,0 12,14A2,2 0 0,0 14,12A2,2 0 0,0 12,10M10,22C9.75,22 9.54,21.82 9.5,21.58L9.13,18.93C8.5,18.68 7.96,18.34 7.44,17.94L4.95,18.95C4.73,19.03 4.46,18.95 4.34,18.73L2.34,15.27C2.21,15.05 2.27,14.78 2.46,14.63L4.57,12.97L4.5,12L4.57,11L2.46,9.37C2.27,9.22 2.21,8.95 2.34,8.73L4.34,5.27C4.46,5.05 4.73,4.96 4.95,5.05L7.44,6.05C7.96,5.66 8.5,5.32 9.13,5.07L9.5,2.42C9.54,2.18 9.75,2 10,2H14C14.25,2 14.46,2.18 14.5,2.42L14.87,5.07C15.5,5.32 16.04,5.66 16.56,6.05L19.05,5.05C19.27,4.96 19.54,5.05 19.66,5.27L21.66,8.73C21.79,8.95 21.73,9.22 21.54,9.37L19.43,11L19.5,12L19.43,13L21.54,14.63C21.73,14.78 21.79,15.05 21.66,15.27L19.66,18.73C19.54,18.95 19.27,19.04 19.05,18.95L16.56,17.95C16.04,18.34 15.5,18.68 14.87,18.93L14.5,21.58C14.46,21.82 14.25,22 14,22H10M11.25,4L10.88,6.61C9.68,6.86 8.62,7.5 7.85,8.39L5.44,7.35L4.69,8.65L6.8,10.2C6.4,11.37 6.4,12.64 6.8,13.8L4.68,15.36L5.43,16.66L7.86,15.62C8.63,16.5 9.68,17.14 10.87,17.38L11.24,20H12.76L13.13,17.39C14.32,17.14 15.37,16.5 16.14,15.62L18.57,16.66L19.32,15.36L17.2,13.81C17.6,12.64 17.6,11.37 17.2,10.2L19.31,8.65L18.56,7.35L16.15,8.39C15.38,7.5 14.32,6.86 13.12,6.62L12.75,4H11.25Z"/></svg></button>
+      <button type="button" class="icon-button" id="details-toggle" aria-label="統計與計算說明" title="統計與計算說明" aria-expanded="false" aria-controls="details-panel"><svg class="mdi mdi-information-outline" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"/></svg></button>
+    </div>
+  </div>
+  <div class="income-content">
+    <h1 class="income-heading" id="earned-heading">你這個月已經賺了</h1>
+    <div class="money"><span class="currency">TWD / 新台幣</span><div class="amount" role="timer" aria-label="本月累積收入"><span id="whole">0</span><span class="fraction" id="fraction">.000</span></div></div>
+    <p class="rate"><svg class="mdi mdi-trending-up" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M16,6L18.29,8.29L13.41,13.17L9.41,9.17L2,16.59L3.41,18L9.41,12L13.41,16L19.71,9.71L22,12V6H16Z"/></svg><span id="rate">點右上角齒輪，設定你的月薪</span></p>
+    <span class="live"><span class="dot"></span>LIVE · 每秒更新</span>
+  </div>
+  <div class="progress-row"><span>本月時間進度</span><span id="progress-label">0%</span></div>
+  <div class="progress-track" id="progress" role="progressbar" aria-label="本月時間進度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-fill" id="progress-fill"></div></div>
+  <div class="month-ends"><span id="month-start">月初</span><span id="month-end">月底</span></div>
+</section>
+<section class="settings" id="settings-panel" aria-labelledby="settings-heading" hidden><div class="section-heading"><h2 id="settings-heading">你的每月薪水</h2><button type="button" class="icon-button" data-close="settings" aria-label="收合月薪設定" title="收合月薪設定"><svg class="mdi mdi-close" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></button></div><label for="salary">月薪金額</label><div class="input-wrap"><span>NT$</span><input id="salary" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="輸入月薪" maxlength="20" aria-describedby="salary-error salary-hint"></div><div class="presets" aria-label="快速設定月薪"><button type="button" data-salary="30000">30,000</button><button type="button" data-salary="50000">50,000</button><button type="button" data-salary="80000">80,000</button></div><p class="error" id="salary-error" role="status"></p><button type="button" class="share" id="share" disabled><svg class="mdi mdi-content-copy" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/></svg>複製含月薪的網址</button><p class="hint" id="salary-hint">輸入後立即套用。也可在網址加上<br><code>?salary=50000</code> 直接開始。</p><p class="share-status" id="share-status" role="status"></p><div class="fallback" id="fallback" hidden><label for="share-url">選取並複製網址</label><input id="share-url" type="text" readonly></div></section>
+<section class="details-panel" id="details-panel" aria-labelledby="details-heading" tabindex="-1" hidden><div class="section-heading"><h2 id="details-heading">統計與計算說明</h2><button type="button" class="icon-button" data-close="details" aria-label="收合統計與計算說明" title="收合統計與計算說明"><svg class="mdi mdi-close" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></button></div>
 <section class="stats" aria-label="收入換算"><div class="stat"><p class="stat-label">平均每天賺</p><p class="stat-value"><span id="per-day">—</span><small>元</small></p><p class="stat-note" id="days-note">依當月實際天數計算</p></div><div class="stat"><p class="stat-label">平均每小時賺</p><p class="stat-value"><span id="per-hour">—</span><small>元</small></p><p class="stat-note">含休息時間，持續累積</p></div><div class="stat"><p class="stat-label">今天已經賺了</p><p class="stat-value"><span id="today-earned">—</span><small>元</small></p><p class="stat-note">從今天 00:00 開始計算</p></div></section>
-<div class="notes"><p><strong>這個數字怎麼來的？</strong><br>月薪 × 本月已過時間 ÷ 本月總時間。依裝置當地時間計算，跨月自動歸零。<br>以整月連續時間平均分攤，包含週末；顯示至小數三位，為時間比例估算，非實際薪資結算。</p><p class="tagline">A little more, every second.</p></div>
+<div class="notes"><p><strong>這個數字怎麼來的？</strong><br>月薪 × 本月已過時間 ÷ 本月總時間。依裝置當地時間計算，跨月自動歸零。<br>以整月連續時間平均分攤，包含週末；顯示至小數三位，為時間比例估算，非實際薪資結算。</p></div>
+<p class="privacy">在瀏覽器內計算 · 分享網址會包含你輸入的月薪</p>
+</section>
+</div>
 </main>
-<footer><span>在瀏覽器內計算 · 分享網址會包含你輸入的月薪</span><span>YOUR TIME IS ADDING UP ↗</span></footer>
 <noscript><p>請啟用 JavaScript，才能使用每秒更新的薪水計算器。</p></noscript>
 </div>
 <script>
@@ -63,8 +120,8 @@ function render() {
   $('whole').textContent = whole;
   $('fraction').textContent = `.${fraction}`;
   // Keep the longest supported amounts inside the card on narrow screens.
-  $('whole').parentElement.style.fontSize = whole.length > 9 ? 'clamp(23px, 4.2vw, 42px)' : '';
-  $('rate').textContent = monthlySalary === null ? '輸入月薪，開始看見每一秒的價值' : `每秒 + NT$ ${data.perSecond.toFixed(5)}`;
+  $('whole').parentElement.classList.toggle('long-amount', whole.length > 9);
+  $('rate').textContent = monthlySalary === null ? '點右上角齒輪，設定你的月薪' : `每秒 + NT$ ${data.perSecond.toFixed(5)}`;
   const percent = (data.progress * 100).toFixed(2);
   $('progress-label').textContent = `${percent}%`;
   $('progress-fill').style.width = `${percent}%`;
@@ -101,6 +158,34 @@ function tick() {
   render();
   timer = setTimeout(tick, 1000 - Date.now() % 1000);
 }
+// Both panels start collapsed, including when a salary is supplied in the URL.
+function setPanel(name, open) {
+  const panel = $(name + '-panel');
+  const toggle = $(name + '-toggle');
+  panel.hidden = !open;
+  toggle.setAttribute('aria-expanded', String(open));
+  if (open) {
+    const other = name === 'settings' ? 'details' : 'settings';
+    $(other + '-panel').hidden = true;
+    $(other + '-toggle').setAttribute('aria-expanded', 'false');
+    const target = name === 'settings' ? $('salary') : panel;
+    target.focus({ preventScroll: true });
+    panel.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
+  } else {
+    toggle.focus({ preventScroll: true });
+    toggle.scrollIntoView({ block: 'nearest' });
+  }
+}
+for (const name of ['settings', 'details']) {
+  $(name + '-toggle').addEventListener('click', () => setPanel(name, $(name + '-panel').hidden));
+}
+document.querySelectorAll('[data-close]').forEach(button => button.addEventListener('click', () => setPanel(button.dataset.close, false)));
+document.addEventListener('keydown', event => {
+  if (event.key !== 'Escape') return;
+  for (const name of ['settings', 'details']) {
+    if (!$(name + '-panel').hidden) { setPanel(name, false); break; }
+  }
+});
 $('salary').addEventListener('input', () => applySalary());
 document.querySelectorAll('[data-salary]').forEach(button => button.addEventListener('click', () => {
   $('salary').value = button.dataset.salary;
