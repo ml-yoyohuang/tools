@@ -18,7 +18,7 @@
 })(typeof self !== 'undefined' ? self : this, function () {
     'use strict';
 
-    var SAVE_VERSION = 4;
+    var SAVE_VERSION = 5;
 
     var BALANCE = {
         clickBaseDamage: 1,
@@ -45,11 +45,11 @@
 
         /**
          * 採集深度（企劃未定義，為解決「單一目標」造成的吞吐上限而加入）。
-         * 每擊敗一定數量的蘑菇，該地區的深度 +1，血量與獎勵同步提升，
+         * 每清完一定輪數的普通蘑菇（同一波／群組算一輪），該地區的深度 +1，血量與獎勵同步提升，
          * 使收入與 DPS 成正比，而不是被「一秒一隻」鎖死。
          * 菇王血量固定，不受深度影響。
          */
-        depth: { killsPerStep: 8, hpScale: 1.16, rewardScale: 1.16, maxSteps: 25 },
+        depth: { roundsPerStep: 8, hpScale: 1.16, rewardScale: 1.16, maxSteps: 99 },
 
         /** 離線結算 */
         offline: {

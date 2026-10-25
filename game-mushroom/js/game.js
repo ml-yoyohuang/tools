@@ -84,7 +84,7 @@
                 return progress;
             }, {}),
             depths: {},          // 每個地區的採集深度
-            depthKills: {},      // 目前深度已擊敗數
+            depthRounds: {},     // 目前深度已完成輪數
             bosses: {},
             collections: {},
             kills: {},
@@ -275,7 +275,10 @@
 
         this.state.kills[target.typeId] = finite(this.state.kills[target.typeId], 0) + 1;
         this.state.killsTotal++;
-        this._advanceDepth(zone.id);
+        var completedRound = this.targets.length > 0 && this.targets.every(function (fieldTarget) {
+            return fieldTarget.settled;
+        });
+        if (completedRound) this._advanceDepth(zone.id);
 
         if (byClick) this.state.lazyStreak = 0;
         else this.state.lazyStreak++;
@@ -289,12 +292,12 @@
         return { bounty: totalBounty, baseBounty: bounty, bonusBounty: bonusBounty, broth: brothGained };
     };
 
-    /** 累積擊敗數推進採集深度。 */
+    /** 累積完成的普通蘑菇輪數推進採集深度；同一波群組只算一輪。 */
     Game.prototype._advanceDepth = function (zoneId) {
         var state = this.state;
-        state.depthKills[zoneId] = finite(state.depthKills[zoneId], 0) + 1;
-        if (state.depthKills[zoneId] >= BALANCE.depth.killsPerStep) {
-            state.depthKills[zoneId] = 0;
+        state.depthRounds[zoneId] = finite(state.depthRounds[zoneId], 0) + 1;
+        if (state.depthRounds[zoneId] >= BALANCE.depth.roundsPerStep) {
+            state.depthRounds[zoneId] = 0;
             if (this.depthOf(zoneId) >= BALANCE.depth.maxSteps) return;   // 深度有上限，不會無限成長
             state.depths[zoneId] = this.depthOf(zoneId) + 1;
             this.emitter.emit('depth', { zoneId: zoneId, depth: state.depths[zoneId] });
@@ -1315,7 +1318,7 @@
         s.courier = null;
         s.burstWindow = [];
         s.depths = s.depths || {};
-        s.depthKills = s.depthKills || {};
+        s.depthRounds = s.depthRounds || {};
         s.unlockedZones = s.unlockedZones || { zone_01: true };
         s.unlockedZones.zone_01 = true;
         if (!s.unlockedZones[s.zoneId]) s.zoneId = 'zone_01';

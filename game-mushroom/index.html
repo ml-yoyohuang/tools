@@ -5,7 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="純前端放置／英打練習遊戲：逐字輸入攻擊高湯菇，招募成精廚具，挑戰三個地區與三隻菇王。">
     <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#24352d">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="無限高湯討伐隊｜英打練習遊戲">
+    <meta property="og:description" content="每敲一個正確字元就發動攻擊，收集菇幣、強化設備，挑戰三個地區的菇王。">
+    <meta property="og:image" content="https://github.com/ml-yoyohuang/tools/raw/refs/heads/main/game-mushroom/assets/og-image.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="無限高湯討伐隊：打字集火，討伐菇王">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="無限高湯討伐隊｜英打練習遊戲">
+    <meta name="twitter:description" content="每敲一個正確字元就發動攻擊，收集菇幣、強化設備，挑戰三個地區的菇王。">
+    <meta name="twitter:image" content="https://github.com/ml-yoyohuang/tools/raw/refs/heads/main/game-mushroom/assets/og-image.png">
     <title>無限高湯討伐隊 | DevToolbox</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="alternate icon" type="image/png" sizes="48x48" href="assets/favicon.png">
     <link rel="stylesheet" href="css/style.css">
     <script>
         // 在樣式套用前先決定主題，避免重新整理時閃爍
@@ -224,16 +239,16 @@
     <div class="dialog__body">
         <h2 id="help-title">玩法說明</h2>
         <ul>
-            <li><strong>選擇題庫與英打：</strong>在設定中選擇全民英檢初級、中級單字或 500 題句子題庫；單字題會附中文翻譯。輸入題目中下一個正確字元，每個字母、空格或符號都會造成一次英打攻擊。</li>
-            <li><strong>跳過與瘋狂連打：</strong>卡住時可跳過目前題目。偶爾會出現「瘋狂連打」超簡單題，每個字元仍會各自攻擊；新玩家完成 9 題後必定遇到第一次（約第 10 題），之後完成一般題目或按下跳過，皆有 2% 機率再次觸發。</li>
-            <li><strong>幸運加成與設備：</strong>幸運加成觸發時，該次英打傷害 ×2；一般觸發機率為每個正確字元 4%。設備會提供自動火力或支援效果；商店會標示攻擊設備每台與持有合計的每秒傷害。</li>
-            <li>首次擊敗每一隻菇王，英打每字傷害永久 ×2；擊敗不同菇王的加成會累乘，同一隻菇王重戰不會再次增加倍率。</li>
-            <li>每種設備第一次入手會啟用永久英打加成；階級越高，加成越大，並與菇王加成相乘。同種設備多買不會重複增加這項加成。</li>
-            <li>普通蘑菇受到<strong>有效傷害</strong>時會按傷害量掉落菇幣，擊敗目標還會另發懸賞；菇王則在擊敗時發放懸賞。超過剩餘血量的傷害不會增加傷害掉落。</li>
-            <li><strong>外送員</strong>約每 15–25 分鐘出現在戰場，停留 12 秒。點擊攔截可取得一件隨機消耗道具；錯過就等下一次出現，上方會累計成功攔截數。</li>
-            <li>每個地區的普通蘑菇每擊敗 8 隻，採集深度就提升 1 級，血量與獎勵同步增加；菇王血量不受深度影響。</li>
-            <li>金湯滴由菇王與純金大香菇掉落；取得「黃金孢子」升級後，擊敗普通蘑菇也有機率掉落。金湯滴可用來解鎖高階內容。</li>
-            <li>菇王沒有倒數失敗機制，隨時可以退出；<strong>退出或重新挑戰時菇王血量會重置</strong>，退出會保留英打進度與已取得資源。三個地區首次挑戰都要先在該地區累積 100 次英打攻擊；首次擊敗後，每次再挑戰前木砧板／鐵鍋／冰箱分別要累積 100／200／500 次英打攻擊。</li>
+            <li><strong>選擇題庫與英打：</strong>在設定中選擇全民英檢初級、中級單字或 500 題句子題庫；單字題會附中文翻譯。輸入題目中下一個正確字元，每個字母、空格或符號都會造成<strong>一次英打攻擊</strong>。</li>
+            <li><strong>跳過與瘋狂連打：</strong>卡住時可<strong>跳過目前題目</strong>。偶爾會出現<strong>「瘋狂連打」</strong>超簡單題，每個字元仍會各自攻擊；新玩家完成 9 題後必定遇到第一次（約第 10 題），之後完成一般題目或按下跳過，皆有 2% 機率再次觸發。</li>
+            <li><strong>幸運加成與設備：</strong>幸運加成觸發時，該次英打傷害 <strong>×2</strong>；一般觸發機率為每個正確字元 4%。設備會提供自動火力或支援效果；商店會標示攻擊設備每台與持有合計的每秒傷害。</li>
+            <li><strong>菇王獎勵：</strong>首次擊敗每一隻菇王，英打每字傷害<strong>永久 ×2</strong>；擊敗不同菇王的加成會累乘，同一隻菇王重戰不會再次增加倍率。</li>
+            <li><strong>設備加成：</strong>每種設備第一次入手會啟用<strong>永久英打加成</strong>；階級越高，加成越大，並與菇王加成相乘。同種設備多買不會重複增加這項加成。</li>
+            <li><strong>菇幣獎勵：</strong>普通蘑菇受到<strong>有效傷害</strong>時會按傷害量掉落菇幣，擊敗目標還會另發懸賞；菇王則在擊敗時發放懸賞。超過剩餘血量的傷害不會增加傷害掉落。</li>
+            <li><strong>外送員：</strong>約每 15–25 分鐘出現在戰場，停留 12 秒。點擊攔截可取得一件<strong>隨機消耗道具</strong>；錯過就等下一次出現，上方會累計成功攔截數。</li>
+            <li><strong>採集深度：</strong>每個地區清完 8 輪普通蘑菇，採集深度就提升 1 級，最高可達 99 級；深度越高，普通蘑菇的血量與獎勵同步增加，菇王血量不受深度影響。同一波出現的群組蘑菇全部擊敗後算 1 輪。</li>
+            <li><strong>金湯滴：</strong>由菇王與純金大香菇掉落；取得<strong>「黃金孢子」</strong>升級後，擊敗普通蘑菇也有機率掉落。金湯滴可用來解鎖高階內容。</li>
+            <li><strong>菇王挑戰：</strong>沒有倒數失敗機制，隨時可以退出；<strong>退出或重新挑戰時菇王血量會重置</strong>，退出會保留英打進度與已取得資源。三個地區<strong>首次挑戰</strong>都要先在該地區累積 100 次英打攻擊；首次擊敗後，每次再挑戰前木砧板／鐵鍋／冰箱分別要累積 100／200／500 次英打攻擊。</li>
         </ul>
         <h3 class="dialog__sub">機制定義</h3>
         <ul>
@@ -248,7 +263,7 @@
         </ul>
         <h3 class="dialog__sub">離線採集</h3>
         <p id="help-offline">—</p>
-        <p>離線只採集「目前所在地區」的普通蘑菇，不會推進菇王、不開新地區、不發稀有掉落，擊敗數為估算值。</p>
+        <p><strong>離線只採集目前所在地區的普通蘑菇</strong>，不會推進菇王、不開新地區、不發稀有掉落，擊敗數為估算值。</p>
     </div>
     <div class="dialog__foot">
         <button type="button" class="btn btn--primary" data-close-dialog>知道了</button>

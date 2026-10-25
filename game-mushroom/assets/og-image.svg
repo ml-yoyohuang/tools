@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">無限高湯討伐隊</title>
+  <desc id="desc">逐字英打、收集菇幣、強化設備，挑戰菇王。</desc>
+  <defs>
+    <linearGradient id="back" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#182b26"/><stop offset=".58" stop-color="#34513d"/><stop offset="1" stop-color="#71563c"/>
+    </linearGradient>
+    <linearGradient id="board" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#e5c48f"/><stop offset="1" stop-color="#b27b4c"/>
+    </linearGradient>
+    <linearGradient id="cap" x1="0" y1="0" x2=".85" y2="1">
+      <stop stop-color="#fff5da"/><stop offset=".55" stop-color="#e5d4b1"/><stop offset="1" stop-color="#bca27a"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ffe7a5"/><stop offset="1" stop-color="#e5a84d"/>
+    </linearGradient>
+    <pattern id="grain" width="180" height="80" patternUnits="userSpaceOnUse">
+      <path d="M-20 20c46-15 72 12 115-2s58-11 100 1M-15 58c50 12 73-15 120-4s55 8 98-4" fill="none" stroke="#77502f" stroke-opacity=".18" stroke-width="3"/>
+    </pattern>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#back)"/>
+  <circle cx="930" cy="287" r="246" fill="#d69c56" opacity=".09"/>
+  <circle cx="930" cy="287" r="196" fill="none" stroke="#e9c982" stroke-opacity=".2" stroke-width="2" stroke-dasharray="5 13"/>
+  <ellipse cx="894" cy="518" rx="263" ry="37" fill="#101a16" opacity=".42" filter="url(#shadow)"/>
+
+  <g transform="translate(80 72)">
+    <rect width="156" height="38" rx="19" fill="#e9c982"/>
+    <text x="78" y="25" text-anchor="middle" fill="#26392d" font-family="-apple-system,BlinkMacSystemFont,'Noto Sans TC','PingFang TC',sans-serif" font-size="17" font-weight="800" letter-spacing="2">英打練習遊戲</text>
+  </g>
+  <text x="78" y="220" fill="#fff4dc" font-family="-apple-system,BlinkMacSystemFont,'Noto Sans TC','PingFang TC',sans-serif" font-size="63" font-weight="900" letter-spacing="2">無限高湯</text>
+  <text x="78" y="302" fill="#fff4dc" font-family="-apple-system,BlinkMacSystemFont,'Noto Sans TC','PingFang TC',sans-serif" font-size="63" font-weight="900" letter-spacing="2">討伐隊</text>
+  <path d="M82 333h312" stroke="#e9c982" stroke-width="5" stroke-linecap="round"/>
+  <text x="82" y="383" fill="#e9c982" font-family="-apple-system,BlinkMacSystemFont,'Noto Sans TC','PingFang TC',sans-serif" font-size="29" font-weight="800" letter-spacing="1">敲字集火・爽快討菇</text>
+  <text x="82" y="431" fill="#e8ebdf" font-family="-apple-system,BlinkMacSystemFont,'Noto Sans TC','PingFang TC',sans-serif" font-size="21" font-weight="500">打出每一個正確字元，累積火力討伐菇王。</text>
+  <g transform="translate(82 477)">
+    <rect width="131" height="47" rx="23.5" fill="#41634d" stroke="#719070" stroke-width="1.5"/>
+    <text x="65.5" y="30" text-anchor="middle" fill="#f7efd9" font-family="-apple-system,BlinkMacSystemFont,'Noto Sans TC','PingFang TC',sans-serif" font-size="18" font-weight="750">逐字攻擊</text>
+    <rect x="145" width="131" height="47" rx="23.5" fill="#41634d" stroke="#719070" stroke-width="1.5"/>
+    <text x="210.5" y="30" text-anchor="middle" fill="#f7efd9" font-family="-apple-system,BlinkMacSystemFont,'Noto Sans TC','PingFang TC',sans-serif" font-size="18" font-weight="750">收集強化</text>
+    <rect x="290" width="131" height="47" rx="23.5" fill="#41634d" stroke="#719070" stroke-width="1.5"/>
+    <text x="355.5" y="30" text-anchor="middle" fill="#f7efd9" font-family="-apple-system,BlinkMacSystemFont,'Noto Sans TC','PingFang TC',sans-serif" font-size="18" font-weight="750">挑戰菇王</text>
+  </g>
+
+  <g transform="translate(617 165)">
+    <rect x="0" y="280" width="520" height="72" rx="29" fill="#795132" opacity=".6"/>
+    <rect x="12" y="263" width="496" height="73" rx="25" fill="url(#board)" stroke="#8b623d" stroke-width="5"/>
+    <rect x="22" y="272" width="476" height="54" rx="17" fill="url(#grain)"/>
+    <path d="M66 306c34-13 73 9 105-1m191 12c34-11 68 8 105-4" fill="none" stroke="#f5d8a7" stroke-opacity=".38" stroke-width="4" stroke-linecap="round"/>
+    <g transform="translate(42 0)">
+      <rect x="119" y="155" width="84" height="134" rx="38" fill="#f1e5cf" stroke="#54483c" stroke-width="6"/>
+      <path d="M31 162c0-94 57-145 130-145s130 51 130 145H31Z" fill="url(#cap)" stroke="#54483c" stroke-width="7" stroke-linejoin="round"/>
+      <path d="M48 139c18-59 62-88 114-88 40 0 75 14 99 42" fill="none" stroke="#fffbed" stroke-opacity=".58" stroke-width="12" stroke-linecap="round"/>
+      <circle cx="114" cy="145" r="7" fill="#4b4037"/><circle cx="178" cy="145" r="7" fill="#4b4037"/>
+      <path d="M124 172q23 19 46 0" fill="none" stroke="#4b4037" stroke-width="6" stroke-linecap="round"/>
+      <ellipse cx="99" cy="166" rx="9" ry="5" fill="#e59b8a" opacity=".7"/><ellipse cx="193" cy="166" rx="9" ry="5" fill="#e59b8a" opacity=".7"/>
+      <circle cx="80" cy="81" r="13" fill="#cb9870" opacity=".55"/><circle cx="228" cy="111" r="10" fill="#cb9870" opacity=".45"/>
+    </g>
+    <g transform="translate(324 47)">
+      <path d="M28 84c0-51 31-78 69-78s69 27 69 78H28Z" fill="#deaa6a" stroke="#584a36" stroke-width="5"/>
+      <rect x="69" y="78" width="56" height="74" rx="22" fill="#f3e7ce" stroke="#584a36" stroke-width="5"/>
+      <path d="m65 28 10-19 13 16 11-23 12 23 13-16 10 19" fill="#957846" stroke="#584a36" stroke-width="4" stroke-linejoin="round"/>
+      <circle cx="91" cy="94" r="5" fill="#453a30"/><circle cx="111" cy="94" r="5" fill="#453a30"/>
+      <path d="M92 112q9-8 18 0" fill="none" stroke="#453a30" stroke-width="4" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(0 0)">
+      <rect x="380" y="2" width="91" height="54" rx="17" fill="#fff4dd" stroke="#6c5940" stroke-width="3" transform="rotate(8 425 29)"/>
+      <text x="425" y="37" text-anchor="middle" fill="#355140" font-family="-apple-system,BlinkMacSystemFont,'Noto Sans',sans-serif" font-size="27" font-weight="900" transform="rotate(8 425 29)">Aa!</text>
+      <path d="m287 113 13-19 13 19 22-2-12 18 8 20-22-6-17 14-1-22-19-12Z" fill="url(#gold)" stroke="#795a35" stroke-width="3"/>
+      <text x="300" y="133" text-anchor="middle" fill="#714c21" font-family="Arial,sans-serif" font-size="16" font-weight="900">×2</text>
+    </g>
+  </g>
+  <g fill="#f7dda0">
+    <path d="m815 104 7 17 18 1-14 11 5 17-16-10-15 10 5-17-14-11 18-1Z" opacity=".82"/>
+    <circle cx="1081" cy="145" r="5"/><circle cx="1125" cy="229" r="4"/><circle cx="721" cy="171" r="4"/>
+    <circle cx="1120" cy="390" r="5"/><circle cx="674" cy="407" r="3"/>
+  </g>
+  <text x="1118" y="584" text-anchor="end" fill="#e7d7b5" opacity=".74" font-family="-apple-system,BlinkMacSystemFont,'Noto Sans TC','PingFang TC',sans-serif" font-size="15" letter-spacing="2">無限高湯討伐隊</text>
+</svg>

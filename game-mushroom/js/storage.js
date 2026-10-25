@@ -151,8 +151,8 @@
             zoneId: zones[raw.zoneId] ? raw.zoneId : 'zone_01',
             unlockedZones: zones,
             zoneTypingAttacks: zoneTypingAttacks,
-            depths: pickZoneNumbers(raw.depths, 1, 100000),
-            depthKills: pickZoneNumbers(raw.depthKills, 0, 100000),
+            depths: pickZoneNumbers(raw.depths, 1, Config.BALANCE.depth.maxSteps),
+            depthRounds: pickZoneNumbers(raw.depthRounds, 0, Config.BALANCE.depth.roundsPerStep - 1),
             bosses: pickFlags(raw.bosses, Config.BOSSES),
             collections: pickFlags(raw.collections, Config.BOSSES),
             kills: pickCounts(raw.kills, Config.MUSHROOMS),
@@ -215,6 +215,11 @@
             if (!nonNeg(data.couriersCaught)) data.couriersCaught = 0;
             migrated = true;
             version = 4;
+        }
+        if (version < 5) {
+            data.depthRounds = {};
+            migrated = true;
+            version = 5;
         }
         if (version > Config.SAVE_VERSION) return { data: null, migrated: false, from: version, tooNew: true };
         return { data: data, migrated: migrated, from: isNum(payload.v) ? payload.v : 1 };
