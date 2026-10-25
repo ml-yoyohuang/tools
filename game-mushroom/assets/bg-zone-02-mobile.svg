@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" preserveAspectRatio="none" fill="none">
+  <defs>
+    <linearGradient id="iron" x2="0" y2="1"><stop stop-color="#4a4140"/><stop offset=".5" stop-color="#28272b"/><stop offset="1" stop-color="#17191d"/></linearGradient>
+    <radialGradient id="soup"><stop stop-color="#f1a442"/><stop offset=".55" stop-color="#d45625"/><stop offset="1" stop-color="#762b1d"/></radialGradient>
+    <linearGradient id="heat" x2="0" y2="1"><stop stop-color="#ffe08a" stop-opacity=".7"/><stop offset="1" stop-color="#ff7138" stop-opacity="0"/></linearGradient>
+    <filter id="blur"><feGaussianBlur stdDeviation="13"/></filter>
+  </defs>
+  <rect width="1200" height="600" fill="#352923"/>
+  <ellipse cx="600" cy="319" rx="545" ry="270" fill="#160f0d" opacity=".5" filter="url(#blur)"/>
+  <path d="M126 177c-78 4-104 51-83 105 16 40 62 50 132 39m802-144c78 4 104 51 83 105-16 40-62 50-132 39" stroke="#28272b" stroke-width="42"/>
+  <ellipse cx="600" cy="300" rx="536" ry="251" fill="url(#iron)" stroke="#81716b" stroke-width="18"/>
+  <ellipse cx="600" cy="292" rx="478" ry="202" fill="#160f10" stroke="#aa7156" stroke-opacity=".8" stroke-width="12"/>
+  <ellipse cx="600" cy="290" rx="448" ry="174" fill="url(#soup)"/>
+  <path d="M190 273c94-72 173 39 263-13s127-39 202 5 134 45 235-9" stroke="#ffca65" stroke-opacity=".5" stroke-width="13" stroke-linecap="round"/>
+  <g fill="#ffe7a0" opacity=".74"><circle cx="310" cy="313" r="14"/><circle cx="314" cy="310" r="5" fill="#fff8d9"/><circle cx="506" cy="222" r="10"/><circle cx="505" cy="220" r="4" fill="#fff8d9"/><circle cx="710" cy="344" r="17"/><circle cx="709" cy="340" r="6" fill="#fff8d9"/><circle cx="879" cy="264" r="11"/><circle cx="877" cy="261" r="4" fill="#fff8d9"/></g>
+  <g fill="#b84625" opacity=".7"><ellipse cx="416" cy="368" rx="31" ry="12" transform="rotate(-22 416 368)"/><ellipse cx="802" cy="226" rx="27" ry="11" transform="rotate(18 802 226)"/><ellipse cx="610" cy="304" rx="20" ry="9" transform="rotate(-10 610 304)"/></g>
+  <path d="M330 111c-25-38 32-43 8-81m261 95c-25-38 32-43 8-81m258 78c-25-38 32-43 8-81" stroke="url(#heat)" stroke-width="30" stroke-linecap="round" opacity=".8"/>
+  <path d="M131 475c190 43 330 39 469 20s284-18 469 8" stroke="#f1bd71" stroke-opacity=".24" stroke-width="8" stroke-linecap="round"/>
+</svg>

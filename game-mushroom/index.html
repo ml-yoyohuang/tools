@@ -117,6 +117,7 @@
             <ul class="buff-bar" id="buff-bar" aria-label="生效中的效果"></ul>
 
             <div class="stage" id="stage">
+                <img class="stage__image" alt="" aria-hidden="true">
                 <ul class="targets" id="targets"></ul>
                 <div class="floaters" id="floaters" aria-hidden="true"></div>
                 <button type="button" class="courier" id="courier" hidden>
@@ -130,6 +131,7 @@
                 <div class="typing__head">
                     <span class="typing__label">英打攻擊</span>
                     <div class="typing__tools">
+                        <span class="typing__rate is-steady" id="typing-rate" title="最近 10 秒平均；維持每秒 3.5 字元 3 秒顯示火焰">0.0 字/秒</span>
                         <button type="button" class="btn btn--ghost typing__skip" id="btn-skip-prompt">跳過此題</button>
                     </div>
                 </div>

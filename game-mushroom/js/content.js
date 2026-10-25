@@ -280,7 +280,7 @@
         { id: 'ach_fail_chest', name: '這不是自助餐', desc: '眼睜睜看著一隻寶箱松露成功逃進地底。', req: { flag: 'chestEscaped' } },
         { id: 'ach_lazy', name: '自動化流水線', desc: '完全不進行英打攻擊，連續擊敗 50 隻蘑菇。', req: { lazyStreak: 50 } },
         { id: 'ach_combo', name: '停不下來', desc: '維持最高階連擊加成超過 30 秒。', req: { comboHoldSeconds: 30 } },
-        { id: 'ach_speed', name: '鍵盤都在冒煙', desc: '10 秒內完成超過 100 次英打攻擊（可選挑戰，不影響主線）。', optional: true, req: { burstClicks: 100 } }
+        { id: 'ach_speed', name: '鍵盤都在冒煙', desc: '10 秒內完成 50 次英打攻擊（平均每秒 5 次；可選挑戰，不影響主線）。', optional: true, req: { burstClicks: 50 } }
     ];
 
     function byId(list) {

@@ -280,7 +280,8 @@
     App.prototype.typingKey = function (key) {
         if (!this.requirePrimary()) return;
         var prompt = this.currentTypingPrompts()[this.typingPromptIndex].text;
-        if (key !== prompt.charAt(this.typingIndex)) {
+        var expected = prompt.charAt(this.typingIndex);
+        if (key.toLowerCase() !== expected.toLowerCase()) {
             this.renderTyping('再試一次：注意空格與標點。', true);
             return;
         }
@@ -329,10 +330,11 @@
                 this.typingPromptIndex = this.crazyTypingActive ? 0 : this.nextTypingPromptIndex();
             }
             this.typingIndex = 0;
-            this.renderTyping('題目完成！繼續輸入下一題。', false);
+            this.renderTyping('題目完成！繼續輸入下一題。', false, true);
         } else {
             this.renderTyping('輸入中：每個正確字元都會攻擊。', false);
         }
+        this.ui.pulseTypingCharacter();
     };
 
     App.prototype.skipTypingPrompt = function () {
@@ -345,7 +347,7 @@
             ? Math.floor(this.game.random() * this.currentTypingPrompts().length)
             : this.nextTypingPromptIndex());
         this.typingIndex = 0;
-        this.renderTyping('已跳過，換一題試試。', false);
+        this.renderTyping('已跳過，換一題試試。', false, true);
         this.ui.focusTypingInput();
     };
 
@@ -374,9 +376,9 @@
         return (this.typingPromptIndex + 1 + Math.floor(this.game.random() * (length - 1))) % length;
     };
 
-    App.prototype.renderTyping = function (status, error) {
+    App.prototype.renderTyping = function (status, error, forceStatusAnimation) {
         var prompt = this.currentTypingPrompts()[this.typingPromptIndex];
-        this.ui.renderTyping(prompt.text, this.typingIndex, status, error, prompt.translation, this.crazyTypingActive);
+        this.ui.renderTyping(prompt.text, this.typingIndex, status, error, prompt.translation, this.crazyTypingActive, forceStatusAnimation);
     };
 
     App.prototype.buyDevice = function (deviceId) {

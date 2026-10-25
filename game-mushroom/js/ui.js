@@ -61,6 +61,10 @@
         this.numberStyle = 'short';
         this.buyMode = 1;
         this.showFullCoins = false;
+        this.previousBurstCount = null;
+        this.burstTrend = 'is-steady';
+        this.lastBurstTrendAt = null;
+        this.highTypingSince = 0;
         this.floaterCount = 0;
         this.toastTimer = null;
         this.pending = {};        // 傷害數字合併緩衝：uid -> {amount, crit, auto, until}
@@ -78,8 +82,9 @@
             couriersCaught: $('res-couriers-caught'),
             zoneTabs: $('zone-tabs'), zoneDepth: $('zone-depth'), zoneDesc: $('zone-desc'),
             deviceFreezeNote: $('device-freeze-note'),
-            buffBar: $('buff-bar'), stage: $('stage'), targets: $('targets'), floaters: $('floaters'),
+            buffBar: $('buff-bar'), stage: $('stage'), stageImage: document.querySelector('.stage__image'), targets: $('targets'), floaters: $('floaters'),
             typingPrompt: $('typing-prompt'), typingTranslation: $('typing-translation'), typingInput: $('typing-input'), typingStatus: $('typing-status'),
+            typingRate: $('typing-rate'),
             typingSection: document.querySelector('.typing'),
             typingAlert: $('typing-alert'),
             btnSkipPrompt: $('btn-skip-prompt'),
@@ -470,20 +475,99 @@
 
     UI.prototype._bindTyping = function () {
         var self = this;
+        var composing = false;
+        var compositionHandled = false;
+        var ignoreCompositionInput = false;
+
+        function physicalTypingKey(event) {
+            if (event.key && event.key.length === 1) return event.key;
+            var code = event.code || '';
+            if (/^Key[A-Z]$/.test(code)) {
+                var caps = event.getModifierState && event.getModifierState('CapsLock');
+                var upper = !!event.shiftKey !== !!caps;
+                var letter = code.slice(3);
+                return upper ? letter : letter.toLowerCase();
+            }
+            if (code === 'Space') return ' ';
+            var shiftedKeys = {
+                Digit0: [')', '0'], Digit1: ['!', '1'], Digit2: ['@', '2'],
+                Digit3: ['#', '3'], Digit4: ['$', '4'], Digit5: ['%', '5'],
+                Digit6: ['^', '6'], Digit7: ['&', '7'], Digit8: ['*', '8'], Digit9: ['(', '9'],
+                Minus: ['_', '-'], Equal: ['+', '='], BracketLeft: ['{', '['], BracketRight: ['}', ']'],
+                Backslash: ['|', '\\'], Semicolon: [':', ';'], Quote: ['"', "'"],
+                Backquote: ['~', '`'], Comma: ['<', ','], Period: ['>', '.'], Slash: ['?', '/']
+            };
+            var pair = shiftedKeys[code];
+            return pair ? pair[event.shiftKey ? 0 : 1] : '';
+        }
+
+        function sendText(text) {
+            if (!text) return;
+            for (var i = 0; i < text.length; i++) {
+                var character = text.charAt(i);
+                if (/^[\x20-\x7E]$/.test(character)) self.handlers.onTypingKey(character);
+            }
+        }
+
         this.el.btnSkipPrompt.addEventListener('click', function () { self.handlers.onSkipPrompt(); });
         this.el.typingInput.addEventListener('keydown', function (event) {
-            if (event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey) return;
+            if (event.ctrlKey || event.metaKey || event.altKey) return;
+            var isComposing = composing || event.isComposing || event.key === 'Process' || event.keyCode === 229;
+            if (isComposing) {
+                var composingKey = physicalTypingKey(event);
+                if (composingKey) {
+                    event.preventDefault();
+                    compositionHandled = true;
+                    self.handlers.onTypingKey(composingKey);
+                }
+                return;
+            }
+            if (!event.key || event.key.length !== 1) return;
             event.preventDefault();
             self.handlers.onTypingKey(event.key);
         });
-        // 不讓瀏覽器自動填字、拼字修正或貼上內容繞過逐字攻擊。
-        this.el.typingInput.addEventListener('input', function () { this.value = ''; });
+        this.el.typingInput.addEventListener('compositionstart', function () {
+            composing = true;
+            compositionHandled = false;
+        });
+        this.el.typingInput.addEventListener('compositionend', function (event) {
+            composing = false;
+            if (!compositionHandled) sendText(event.data || '');
+            compositionHandled = false;
+            ignoreCompositionInput = true;
+            self.el.typingInput.value = '';
+            setTimeout(function () { ignoreCompositionInput = false; }, 0);
+        });
+        // 保留 IME 組字；一般軟鍵盤輸入則逐字送進英打判定。
+        this.el.typingInput.addEventListener('input', function (event) {
+            if (composing || event.isComposing) return;
+            if (ignoreCompositionInput) {
+                this.value = '';
+                ignoreCompositionInput = false;
+                return;
+            }
+            sendText(event.data || this.value);
+            this.value = '';
+        });
         this.el.typingInput.addEventListener('paste', function (event) { event.preventDefault(); });
     };
 
     UI.prototype.focusTypingInput = function () { this.el.typingInput.focus(); };
-    UI.prototype.renderTyping = function (prompt, index, status, error, translation, crazy) {
-        var done = el('span', 'typing__done', prompt.slice(0, index));
+    UI.prototype.pulseTypingCharacter = function () {
+        var character = this.el.typingPrompt.querySelector('.typing__typed-hit');
+        if (character) {
+            character.classList.remove('is-hit');
+            void character.offsetWidth;
+            character.classList.add('is-hit');
+        }
+    };
+    UI.prototype.renderTyping = function (prompt, index, status, error, translation, crazy, forceStatusAnimation) {
+        var done = el('span', 'typing__done');
+        if (index > 1) done.appendChild(document.createTextNode(prompt.slice(0, index - 1)));
+        if (index > 0) {
+            var lastTyped = prompt.charAt(index - 1);
+            done.appendChild(el('span', 'typing__typed-hit', lastTyped === ' ' ? '\u00a0' : lastTyped));
+        }
         var rest = prompt.slice(index);
         this.el.typingPrompt.textContent = '';
         this.el.typingPrompt.appendChild(done);
@@ -491,7 +575,14 @@
             this.el.typingPrompt.appendChild(el('span', 'typing__next', rest.charAt(0) === ' ' ? '␣' : rest.charAt(0)));
             this.el.typingPrompt.appendChild(document.createTextNode(rest.slice(1)));
         }
-        setText(this.el.typingStatus, status || '');
+        var statusText = status || '';
+        var statusChanged = this.el.typingStatus.textContent !== statusText;
+        setText(this.el.typingStatus, statusText);
+        if (statusChanged || forceStatusAnimation) {
+            this.el.typingStatus.classList.remove('is-hit');
+            void this.el.typingStatus.offsetWidth;
+            this.el.typingStatus.classList.add('is-hit');
+        }
         setText(this.el.typingTranslation, translation || '');
         this.el.typingTranslation.hidden = !translation;
         this.el.typingTranslation.classList.toggle('is-crazy', !!crazy);
@@ -719,6 +810,30 @@
             '　設備 ×' + Format.short(stats.deviceTypingMult));
         setText(this.el.dps, this.num(stats.autoDps) + ' / 每秒');
         setText(this.el.typingCount, Format.full(state.clicks));
+        var burstCount = (state.burstWindow || []).reduce(function (count, attackAt) {
+            return count + (now - attackAt <= 10000 ? 1 : 0);
+        }, 0);
+        if (this.lastBurstTrendAt === null) {
+            this.lastBurstTrendAt = now;
+            this.previousBurstCount = burstCount;
+        } else if (now - this.lastBurstTrendAt >= 3000) {
+            if (burstCount > this.previousBurstCount) this.burstTrend = 'is-rising';
+            else if (burstCount < this.previousBurstCount) this.burstTrend = 'is-falling';
+            else this.burstTrend = 'is-steady';
+            this.previousBurstCount = burstCount;
+            this.lastBurstTrendAt = now;
+        }
+        var typingRate = burstCount / 10;
+        if (typingRate >= 3.5) {
+            if (!this.highTypingSince) this.highTypingSince = now;
+        } else {
+            this.highTypingSince = 0;
+        }
+        var sustainedHigh = this.highTypingSince && now - this.highTypingSince >= 3000;
+        var trend = typingRate === 0 ? '' : sustainedHigh ? '🔥' : (this.burstTrend === 'is-rising' ? '▲' : this.burstTrend === 'is-falling' ? '▼' : '→');
+        setText(this.el.typingRate, (trend ? trend + ' ' : '') + typingRate.toFixed(1) + ' 字/秒');
+        this.el.typingRate.classList.remove('is-rising', 'is-falling', 'is-steady', 'is-fire');
+        this.el.typingRate.classList.add(sustainedHigh ? 'is-fire' : this.burstTrend);
         setText(this.el.lifetimeCoins, Format.full(state.lifetimeCoins));
         setText(this.el.totalDamage, Format.full(state.totalDamage));
         setText(this.el.brothLifetime, Format.full(state.brothLifetime));
@@ -771,6 +886,7 @@
         var targets = game.aliveTargets();
         var self = this;
         var seen = new Set();
+        this.el.stage.classList.toggle('is-crowded', targets.length >= 4);
 
         targets.forEach(function (target) {
             seen.add(target.uid);
@@ -955,6 +1071,10 @@
         var game = this.game;
         var zone = game.zone();
         this.el.stage.dataset.zoneId = zone.id;
+        var mobileBackdrop = window.matchMedia && window.matchMedia('(max-width: 900px)').matches;
+        var stageImage = 'assets/bg-' + zone.id.replace('zone_', 'zone-') +
+            (mobileBackdrop ? '-mobile' : '') + '.svg';
+        if (this.el.stageImage.getAttribute('src') !== stageImage) this.el.stageImage.setAttribute('src', stageImage);
         setText(this.el.zoneDepth, String(game.depthOf(zone.id)));
         setText(this.el.zoneDesc, zone.desc);
 
