@@ -1,0 +1,858 @@
+/*!
+ * 組裝層：把戰鬥、經濟、存檔、輸入與畫面接起來
+ * 只有一個邏輯迴圈（setInterval），依實際經過時間結算，不假設計時器準時。
+ */
+(function () {
+    'use strict';
+
+    var Config = window.MushConfig;
+    var Content = window.MushContent;
+    var Format = window.MushFormat;
+    var GameAPI = window.MushGame;
+    var StorageAPI = window.MushStorage;
+    var ImagesAPI = window.MushImages;
+    var UIAPI = window.MushUI;
+    var TYPING_VOCAB = window.MushTypingVocab;
+
+    var LOOP_MS = 100;
+    var SLOW_EVERY = 4;
+    var TYPING_PROMPTS = window.MushTypingPrompts;
+    var CRAZY_TYPING_PROMPT = { text: 'aaaaaaaaaaaaaaaaaaaa', translation: '瘋狂連打！' };
+    var CRAZY_TYPING_CHANCE = 0.02;
+    var TYPING_LUCKY_CHANCE = 0.04;
+    var TYPING_LUCKY_DAMAGE_MULT = 2;
+    var TYPING_BANK_NAMES = {
+        geptElementary: '全民英檢初級單字',
+        geptIntermediate: '全民英檢中級單字',
+        sentences: '句子'
+    };
+
+    function $(id) { return document.getElementById(id); }
+
+    function App() {
+        this.titleScreenActive = true;
+        this.hasSavedProgress = false;
+        this.game = new GameAPI.Game({});
+        this.storage = new StorageAPI.Storage({});
+        this.settings = this.storage.loadSettings();
+        this.isPrimary = true;
+        this.slowCounter = 0;
+        this.sinceSave = 0;
+        this.lastFocus = null;
+        this.confirmAction = null;
+        this.pendingImport = null;
+        this.typingPromptIndex = 0;
+        this.typingIndex = 0;
+        this.blindWordStarted = false;
+        this.typingSentencesCompleted = 0;
+        this.crazyTypingActive = false;
+        this.firstLuckyGranted = false;
+        this.firstLuckyPending = false;
+
+        this.motionQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+        this.darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+        this.images = new ImagesAPI.ImageStore({ sources: this._imageSources() });
+        this.ui = new UIAPI.UI({
+            game: this.game,
+            images: this.images,
+            typingVocab: TYPING_VOCAB,
+            handlers: {
+                onTypingKey: this.typingKey.bind(this),
+                onSelectTarget: this.selectTarget.bind(this),
+                onSkipPrompt: this.skipTypingPrompt.bind(this),
+                onTypingMaskChange: this.typingMaskChanged.bind(this),
+                onBuyDevice: this.buyDevice.bind(this),
+                onBuyUpgrade: this.buyUpgrade.bind(this),
+                onBuyItem: this.buyItem.bind(this),
+                onUseItem: this.useItem.bind(this),
+                onEquip: this.equip.bind(this),
+                onZone: this.switchZone.bind(this),
+                onBoss: this.startBoss.bind(this),
+                onExitBoss: this.exitBoss.bind(this),
+                onHoldStart: this.holdStart.bind(this),
+                onHoldEnd: this.holdEnd.bind(this),
+                onUnfreeze: this.unfreeze.bind(this),
+                onCourier: this.clickCourier.bind(this),
+                onBuyMode: this.setBuyMode.bind(this)
+            }
+        });
+
+        this.bindGame();
+        this.bindUI();
+        this.applySettings();
+
+        this.loadGame();
+        this.typingSentencesCompleted = this.game.state.typingCompleted || 0;
+        this.firstLuckyGranted = !!this.game.state.flags.firstLuckyGranted;
+        this.firstLuckyPending = !this.firstLuckyGranted && this.typingSentencesCompleted >= 5;
+        this.typingPromptIndex = Math.floor(this.game.random() * this.currentTypingPrompts().length);
+        this.renderTyping('點一下輸入框，開始攻擊蘑菇。', false);
+        this.titleScreen = new window.MushTitleScreen({
+            onStart: this.beginExpedition.bind(this),
+            onReturn: this.showTitleScreen.bind(this),
+            onHelp: function () { this.openDialog($('dlg-help')); }.bind(this),
+            onSettings: function () { this.openDialog($('dlg-settings')); }.bind(this)
+        });
+        this.showTitleScreen();
+    }
+
+    App.prototype._imageSources = function () {
+        var sources = [{ key: 'courier', src: Config.COURIER_IMAGE }];
+        Config.MUSHROOMS.forEach(function (m) { sources.push({ key: 'm:' + m.id, src: m.image }); });
+        Config.BOSSES.forEach(function (b) { sources.push({ key: 'k:' + b.id, src: b.image }); });
+        Config.DEVICES.forEach(function (d) { sources.push({ key: 'd:' + d.id, src: d.image }); });
+        Content.ITEMS.forEach(function (i) { sources.push({ key: 'i:' + i.id, src: i.image }); });
+        Content.EQUIPMENT.forEach(function (e) { sources.push({ key: 'e:' + e.id, src: e.image }); });
+        Content.UPGRADES.forEach(function (u) { sources.push({ key: 'u:' + u.id, src: u.image }); });
+        return sources;
+    };
+
+    /* ---------------- 存檔 ---------------- */
+
+    App.prototype.loadGame = function () {
+        var result = this.storage.load();
+        this.hasSavedProgress = result.status === 'ok';
+        if (result.status === 'ok') {
+            this.game.loadSnapshot(result.state);
+            if (result.migrated) this.ui.toast('存檔已從舊版本（v' + result.from + '）升級。');
+        } else {
+            if (result.status === 'corrupt') {
+                this.ui.toast('存檔無法讀取（' + result.reason + '），已開始新的一局。可以到設定嘗試還原備份。');
+            } else if (!this.storage.available) {
+                this.ui.toast('瀏覽器停用了本機儲存，這一局的進度不會被保存。');
+            }
+        }
+        this.updateSaveStatus();
+    };
+
+    App.prototype.save = function (manual) {
+        if (!this.isPrimary || !this.storage.claimLock()) { this.isPrimary = false; return false; }
+        var ok = this.storage.save(this.game.snapshot());
+        if (manual) this.ui.toast(ok ? '已存檔。' : '存檔失敗（儲存空間不可用或已滿）。');
+        else if (!ok && !this.saveWarned) {
+            this.saveWarned = true;
+            this.ui.toast('無法寫入本機儲存，進度不會被保存。');
+        }
+        if (ok) { this.hasSavedProgress = true; this.updateTitleScreen(); }
+        this.lastSaveAt = Date.now();
+        this.updateSaveStatus();
+        return ok;
+    };
+
+    App.prototype.updateSaveStatus = function () {
+        var node = $('save-status');
+        if (!node) return;
+        if (!this.storage.available) { node.textContent = '本機儲存不可用，這一局不會被保存。'; return; }
+        if (!this.isPrimary) { node.textContent = '另一個分頁正在遊戲中，這個分頁不會寫入存檔。'; return; }
+        node.textContent = this.lastSaveAt
+            ? '每 ' + Config.BALANCE.autoSaveSeconds + ' 秒自動存檔，上次存檔：' +
+              new Date(this.lastSaveAt).toLocaleTimeString('zh-TW')
+            : '每 ' + Config.BALANCE.autoSaveSeconds + ' 秒自動存檔。';
+    };
+
+    /* ---------------- 多分頁 ---------------- */
+
+    App.prototype.claimTab = function (initial) {
+        var was = this.isPrimary;
+        this.isPrimary = this.storage.claimLock();
+        var banner = $('readonly-banner');
+        if (banner) banner.hidden = this.isPrimary;
+        if (!initial && was !== this.isPrimary) {
+            this.ui.toast(this.isPrimary ? '已接管，這個分頁開始計算收益。' : '另一個分頁接管了遊戲。');
+        }
+        this.updateSaveStatus();
+        return this.isPrimary;
+    };
+
+    App.prototype.takeover = function () {
+        this.storage.forceLock();
+        this.isPrimary = true;
+        $('readonly-banner').hidden = true;
+        this.game.state.lastSettle = Date.now();
+        this.ui.toast('這個分頁已接管遊戲。');
+        this.updateSaveStatus();
+    };
+
+    App.prototype.requirePrimary = function (allowTitle) {
+        if (this.titleScreenActive && !allowTitle) return false;
+        if (this.isPrimary && this.storage.claimLock()) return true;
+        this.isPrimary = false;
+        this.ui.toast('這個分頁是唯讀的。要在這裡遊玩，請先點「改由這個分頁接管」。');
+        return false;
+    };
+
+    /* ---------------- Title menu / play lifecycle ---------------- */
+
+    App.prototype.updateTitleScreen = function () {
+        if (!this.titleScreen) return;
+        this.titleScreen.render({ state: this.game.state, hasSave: this.hasSavedProgress, storageAvailable: this.storage.available });
+    };
+
+    App.prototype.showTitleScreen = function () {
+        if (!this.titleScreenActive && this.isPrimary) this.save(false);
+        if (this.timer) { clearInterval(this.timer); this.timer = null; }
+        this.game.cancelHold();
+        if (this.ui.frozenHold) {
+            clearInterval(this.ui.frozenHold.timer);
+            var fill = this.ui.frozenHold.button.querySelector('.frozen-chip__fill');
+            if (fill) fill.style.width = '0%';
+            this.ui.frozenHold = null;
+        }
+        this.storage.releaseLock();
+        this.titleScreenActive = true;
+        this.lastHeartbeat = 0;
+        this.updateTitleScreen();
+        this.titleScreen.show();
+    };
+
+    App.prototype.beginExpedition = function () {
+        if (!this.titleScreenActive) return false;
+        this.titleScreenActive = false;
+        this.titleScreen.hide();
+        this.claimTab(true);
+        if (this.isPrimary) {
+            // A second tab may have played while this menu was open.
+            var latest = this.storage.load();
+            if (latest.status === 'ok' && latest.state.lastSettle > this.game.state.lastSettle) {
+                this.game.loadSnapshot(latest.state);
+                this.hasSavedProgress = true;
+                this.syncTypingProgress();
+            }
+            var now = Date.now();
+            if (!this.hasSavedProgress) {
+                this.game.state.lastSettle = now;
+                this.game._scheduleCourier(now);
+            }
+            // Menu display must not consume a newly spawned truffle's escape time.
+            this.game.targets.forEach(function (target) {
+                target.spawnedAt = now;
+                target.lastManualHitAt = now;
+                target.lastHitAt = now;
+                if (target.fleeAt) target.fleeAt = now + Config.MUSHROOM_BY_ID[target.typeId].fleeSeconds * 1000;
+            });
+        }
+        this.ui.bossSceneTransition('enter');
+        if (this.isPrimary) this.ui.focusTypingInput();
+        else $('btn-takeover').focus();
+        this.sinceSave = 0;
+        this.start();
+        return true;
+    };
+
+    /* ---------------- 主迴圈 ---------------- */
+
+    App.prototype.start = function () {
+        var self = this;
+        if (this.timer) clearInterval(this.timer);
+        this.timer = setInterval(function () { self.loop(); }, LOOP_MS);
+        this.loop();
+    };
+
+    App.prototype.loop = function () {
+        if (this.titleScreenActive) return;
+        var now = Date.now();
+
+        if (!this.lastHeartbeat || now - this.lastHeartbeat > Config.BALANCE.tab.heartbeatMs) {
+            this.lastHeartbeat = now;
+            this.claimTab(false);
+        }
+
+        if (this.isPrimary) {
+            var report = this.game.tick(now);
+            if (report.kind === 'offline' && report.coins > 0) this.showOffline(report);
+            this.sinceSave += LOOP_MS;
+            if (this.sinceSave >= Config.BALANCE.autoSaveSeconds * 1000) {
+                this.sinceSave = 0;
+                this.save(false);
+            }
+        } else {
+            this.game.refreshStats(now);
+        }
+
+        this.ui.tickFast(now);
+        this.slowCounter++;
+        if (this.slowCounter >= SLOW_EVERY) {
+            this.slowCounter = 0;
+            this.ui.tickSlow(now);
+        }
+    };
+
+    /* ---------------- 遊戲事件 ---------------- */
+
+    App.prototype.bindGame = function () {
+        var self = this;
+        this.game.on('damage', function (e) { self.ui.queueDamage(e.uid, e.amount, e); });
+        this.game.on('kill', function (e) {
+            var mushroom = Config.MUSHROOM_BY_ID[e.typeId];
+            self.ui.killReward(mushroom ? mushroom.name : '蘑菇', e);
+        });
+        this.game.on('blocked', function () { self.ui.floater('護盾擋下', 'block'); });
+        this.game.on('shieldBreak', function (event) {
+            self.ui.shieldBreak(event.uid);
+            self.ui.announce(event.left > 0
+                ? '護盾裂開！還有 ' + event.left + ' 層。'
+                : '三層護盾全部破除，可以攻擊菇王了。');
+        });
+        this.game.on('bossStart', function () { self.ui.bossSceneTransition('enter'); });
+        this.game.on('bossExit', function () { self.ui.bossSceneTransition('exit'); });
+        this.game.on('achievement', function (a) {
+            self.ui.toast('達成成就：' + a.name);
+            self.ui.announce('達成成就：' + a.name);
+        });
+        this.game.on('bossDefeated', function (e) {
+            self.ui.bossSceneTransition('exit');
+            var boss = Config.BOSS_BY_ID[e.bossId];
+            var text = e.firstClear
+                ? '擊敗 ' + boss.name + '！' + boss.reward + '，取得收藏品「' + boss.collection + '」。英打傷害永久 ×' +
+                    Format.short(e.typingDamageMult) + '（每擊敗一位菇王翻倍）。'
+                : '再次擊敗 ' + boss.name + '！獲得 +' + Format.short(e.bounty) + ' 菇幣與 ' + e.broth + ' 金湯滴。';
+            self.ui.toast(text);
+            self.ui.announce(text);
+            self.save(false);
+        });
+        this.game.on('milestone', function (u) { self.ui.toast('取得里程碑升級：' + u.name); });
+        this.game.on('flee', function () {
+            self.ui.floater('逃走了！', 'block');
+            self.ui.announce('寶箱松露逃走了，沒有掉落獎勵。');
+        });
+        this.game.on('courier', function () { self.ui.announce('迷路的外送員出現了。'); });
+        this.game.on('freeze', function (e) { self.ui.announce('急凍菇凍結了 ' + e.count + ' 種設備。設備商店已標出紅框，回到菇王挑戰畫面按住結冰設備 2 秒即可解凍。'); });
+        this.game.on('depth', function (e) {
+            if (e.zoneId === self.game.state.zoneId) self.ui.floater('採集深度 ' + e.depth, '');
+        });
+        this.game.on('broth', function (e) { self.ui.floater('+' + e.amount + ' 金湯滴', 'crit'); });
+    };
+
+    /* ---------------- 操作 ---------------- */
+
+    App.prototype.selectTarget = function (uid) {
+        if (!this.requirePrimary() || !this.game._findTarget(uid)) return false;
+        this.game.state.preferredUid = uid;
+        this.ui.tickFast(Date.now());
+        this.ui.focusTypingInput();
+        return true;
+    };
+
+    App.prototype.clickTarget = function (uid, options) {
+        if (!this.requirePrimary()) return;
+        // 快速連點時，上一個目標可能已經被擊敗但畫面還沒重繪；
+        // 這時改打場上第一個存活目標，不要讓這次點擊落空。
+        var target = this.game._findTarget(uid);
+        if (!target) {
+            var alive = this.game.aliveTargets();
+            if (!alive.length) return;
+            uid = alive[0].uid;
+        }
+        var result = this.game.clickTarget(uid, undefined, options);
+        this.game.state.preferredUid = uid;      // 玩家點過的目標成為單體設備的優先目標
+        this.ui.tickFast(Date.now());
+        return result;
+    };
+
+    App.prototype.typingKey = function (key) {
+        if (!this.requirePrimary()) return;
+        var promptData = this.currentTypingPrompts()[this.typingPromptIndex];
+        var prompt = promptData.text;
+        var blindTypingActive = this.isBlindTypingModeActive();
+        var blindTypingWord = blindTypingActive && !this.crazyTypingActive && !!promptData.translation;
+        if (!blindTypingActive && this.game.state.blindCombo) this.game.resetBlindTypingCombo();
+        if (this.typingIndex === 0) this.blindWordStarted = blindTypingWord;
+        var expected = prompt.charAt(this.typingIndex);
+        if (key.toLowerCase() !== expected.toLowerCase()) {
+            if (blindTypingWord) { this.game.resetBlindTypingCombo(); this.blindWordStarted = false; }
+            this.renderTyping('再試一次：注意空格與標點。', true);
+            return;
+        }
+
+        var completesSentence = this.typingIndex === prompt.length - 1;
+        var completesWord = completesSentence || prompt.charAt(this.typingIndex + 1) === ' ';
+        var blindComboBefore = this.game.state.blindCombo || 0;
+        var blindDamageMult = 1;
+        if (blindTypingWord) {
+            this.game.recordBlindTypingCharacter(Date.now());
+            blindDamageMult = this.game.blindTypingDamageMult();
+        }
+        var guaranteedFirstLucky = !this.firstLuckyGranted &&
+            (this.firstLuckyPending || (this.typingSentencesCompleted === 4 && completesSentence));
+        var alive = this.game.aliveTargets();
+        if (!alive.length && this.game.mode === 'field') {
+            this.game.refillField(Date.now());
+            alive = this.game.aliveTargets();
+        }
+        if (alive.length) {
+            var lucky = guaranteedFirstLucky ||
+                (this.firstLuckyGranted && this.game.random() < TYPING_LUCKY_CHANCE);
+            var targetUid = this.game.state.preferredUid || alive[0].uid;
+            var comboBefore = this.game.state.combo;
+            var damageMult = blindDamageMult * (lucky ? TYPING_LUCKY_DAMAGE_MULT : 1);
+            var attackResult = this.clickTarget(targetUid, damageMult > 1 ? { damageMult: damageMult } : null);
+            if (this.game.mode === 'boss' && attackResult && attackResult.combo > comboBefore) {
+                var comboMilestones = [3, 5, Config.BALANCE.combo.maxStacks];
+                for (var comboIndex = 0; comboIndex < comboMilestones.length; comboIndex++) {
+                    var milestone = comboMilestones[comboIndex];
+                    if (comboBefore < milestone && attackResult.combo >= milestone) {
+                        this.ui.comboMilestone(attackResult.combo, this.game.stats.comboMult,
+                            attackResult.combo >= Config.BALANCE.combo.maxStacks);
+                        break;
+                    }
+                }
+            }
+            if (lucky) {
+                this.firstLuckyGranted = true;
+                this.game.state.flags.firstLuckyGranted = true;
+                this.firstLuckyPending = false;
+                this.ui.luckyHit(this.game.state.preferredUid || targetUid, TYPING_LUCKY_DAMAGE_MULT);
+                this.ui.announce('幸運加成！這次英打攻擊傷害 ×' + TYPING_LUCKY_DAMAGE_MULT + '。');
+            }
+        }
+        if (blindTypingWord && Math.floor((this.game.state.blindCombo || 0) / Config.BALANCE.blindCombo.charsPerBonus) >
+            Math.floor(blindComboBefore / Config.BALANCE.blindCombo.charsPerBonus)) {
+            this.ui.blindTypingMilestone(this.game.state.blindCombo, this.game.blindTypingDamageMult());
+        }
+        this.typingIndex++;
+        if (completesWord && this.game.completeBossTypingWord()) this.ui.tickFast(Date.now());
+        if (this.typingIndex >= prompt.length) {
+            if (blindTypingWord && this.blindWordStarted) this.game.completeBlindTypingWord(Date.now());
+            this.blindWordStarted = false;
+            this.typingSentencesCompleted++;
+            this.game.state.typingCompleted = this.typingSentencesCompleted;
+            if (this.typingSentencesCompleted >= 5 && !this.firstLuckyGranted) this.firstLuckyPending = true;
+            var completedCrazyPrompt = this.crazyTypingActive;
+            if (completedCrazyPrompt) {
+                this.crazyTypingActive = false;
+                this.typingPromptIndex = Math.floor(this.game.random() * this.currentTypingPrompts().length);
+            } else {
+                this.scheduleCrazyTyping();
+                this.typingPromptIndex = this.crazyTypingActive ? 0 : this.nextTypingPromptIndex();
+            }
+            this.typingIndex = 0;
+            this.renderTyping('題目完成！繼續輸入下一題。', false, true);
+        } else {
+            this.renderTyping('輸入中：每個正確字元都會攻擊。', false);
+        }
+        this.ui.pulseTypingCharacter();
+    };
+
+    App.prototype.skipTypingPrompt = function () {
+        if (!this.requirePrimary()) return;
+        this.game.resetBlindTypingCombo();
+        this.blindWordStarted = false;
+        this.ui.showPass();
+        var skippedCrazyPrompt = this.crazyTypingActive;
+        this.crazyTypingActive = false;
+        this.scheduleCrazyTyping();
+        this.typingPromptIndex = this.crazyTypingActive ? 0 : (skippedCrazyPrompt
+            ? Math.floor(this.game.random() * this.currentTypingPrompts().length)
+            : this.nextTypingPromptIndex());
+        this.typingIndex = 0;
+        this.renderTyping('已跳過，換一題試試。', false, true);
+        this.ui.focusTypingInput();
+    };
+
+    App.prototype.currentTypingPrompts = function () {
+        if (this.crazyTypingActive) return [CRAZY_TYPING_PROMPT];
+        var bank = this.settings.typingBank || 'sentences';
+        if (bank === 'geptElementary' || bank === 'geptIntermediate') return TYPING_VOCAB[bank];
+        return TYPING_PROMPTS.map(function (text) { return { text: text, translation: '' }; });
+    };
+
+    App.prototype.isBlindTypingModeActive = function () {
+        var bank = this.settings.typingBank || 'sentences';
+        return !!this.ui.maskVocabulary && (bank === 'geptElementary' || bank === 'geptIntermediate');
+    };
+
+    App.prototype.typingMaskChanged = function () {
+        this.game.resetBlindTypingCombo();
+        this.blindWordStarted = false;
+        this.ui.tickFast(Date.now());
+    };
+
+    App.prototype.scheduleCrazyTyping = function () {
+        var flags = this.game.state.flags || (this.game.state.flags = {});
+        if (!flags.crazyTypingSeen) {
+            if (this.typingSentencesCompleted < 9) return;
+            flags.crazyTypingSeen = true;
+            this.crazyTypingActive = true;
+            this.save(false);
+            return;
+        }
+        this.crazyTypingActive = this.game.random() < CRAZY_TYPING_CHANCE;
+    };
+
+    App.prototype.nextTypingPromptIndex = function () {
+        var length = this.currentTypingPrompts().length;
+        if (length < 2) return 0;
+        return (this.typingPromptIndex + 1 + Math.floor(this.game.random() * (length - 1))) % length;
+    };
+
+    App.prototype.renderTyping = function (status, error, forceStatusAnimation) {
+        var prompt = this.currentTypingPrompts()[this.typingPromptIndex];
+        this.ui.renderTyping(prompt.text, this.typingIndex, status, error, prompt.translation, this.crazyTypingActive, forceStatusAnimation);
+    };
+
+    App.prototype.buyDevice = function (deviceId) {
+        if (!this.requirePrimary()) return;
+        var result = this.game.buyDevice(deviceId, this.ui.buyMode);
+        if (!result) return;
+        var device = Config.DEVICE_BY_ID[deviceId];
+        this.ui.announce('購買 ' + device.name + ' ×' + result.count + '，自動火力 ' +
+            Format.rate(this.game.stats.autoDps) + '。');
+        this.ui.tickSlow(Date.now());
+    };
+
+    App.prototype.buyUpgrade = function (upgradeId) {
+        if (!this.requirePrimary()) return;
+        if (!this.game.buyUpgrade(upgradeId)) return;
+        var upgrade = Content.UPGRADE_BY_ID[upgradeId];
+        this.ui.toast('已購買升級：' + upgrade.name);
+        this.ui.announce('已購買升級 ' + upgrade.name);
+        this.ui.tickSlow(Date.now());
+    };
+
+    App.prototype.buyItem = function (itemId) {
+        if (!this.requirePrimary()) return;
+        if (!this.game.buyItem(itemId)) return;
+        this.ui.toast('已購買：' + Content.ITEM_BY_ID[itemId].name);
+        this.ui.tickSlow(Date.now());
+    };
+
+    App.prototype.useItem = function (itemId) {
+        if (!this.requirePrimary()) return;
+        var result = this.game.useItem(itemId);
+        if (!result) return;
+        var item = Content.ITEM_BY_ID[itemId];
+        var text;
+        if (result.kind === 'bomb') text = '引爆 ' + item.name + '，造成 ' + Format.short(result.damage) + ' 真實傷害。';
+        else if (result.kind === 'whistle') {
+            text = '吹響哨子，取得 ' + Format.short(result.coins) + ' 菇幣（估算擊敗 ' +
+                Format.short(result.kills) + ' 隻）。今天還能使用 ' + result.remaining + ' 次。';
+        } else text = '使用 ' + item.name + '，效果開始生效。';
+        this.ui.toast(text);
+        this.ui.announce(text);
+        this.ui.tickSlow(Date.now());
+    };
+
+    App.prototype.equip = function (equipmentId) {
+        if (!this.requirePrimary()) return;
+        var next = this.game.state.equipped === equipmentId ? null : equipmentId;
+        if (!this.game.equip(next)) return;
+        this.ui.toast(next ? ('已裝備：' + Content.EQUIPMENT_BY_ID[next].name) : '已卸下裝備。');
+        this.ui.tickSlow(Date.now());
+    };
+
+    App.prototype.switchZone = function (zoneId) {
+        if (!this.requirePrimary()) return;
+        if (!this.game.switchZone(zoneId)) return;
+        this.ui.announce('切換到 ' + Config.ZONE_BY_ID[zoneId].name);
+        this.ui.tickSlow(Date.now());
+    };
+
+    App.prototype.startBoss = function () {
+        if (!this.requirePrimary()) return;
+        if (!this.game.startBoss()) return;
+        this.ui.announce('開始挑戰 ' + this.game.boss.name);
+        this.ui.tickFast(Date.now());
+    };
+
+    App.prototype.exitBoss = function () {
+        if (!this.requirePrimary()) return;
+        this.game.exitBoss();
+        this.ui.toast('已退出採集，菇王血量已重置，資源保留。');
+        this.ui.tickFast(Date.now());
+    };
+
+    App.prototype.holdStart = function () { if (this.requirePrimary()) this.game.startHold(); };
+    App.prototype.holdEnd = function (release) { if (release && this.requirePrimary()) this.game.releaseHold(); else this.game.cancelHold(); };
+
+    App.prototype.unfreeze = function (deviceId) {
+        if (!this.requirePrimary()) return;
+        if (this.game.unfreezeDevice(deviceId)) {
+            this.ui.announce('已解凍 ' + Config.DEVICE_BY_ID[deviceId].name);
+            this.ui.tickFast(Date.now());
+        }
+    };
+
+    App.prototype.clickCourier = function () {
+        if (!this.requirePrimary()) return;
+        var result = this.game.clickCourier();
+        if (!result) return;
+        var text = '攔截到外送員，取得道具：' + Content.ITEM_BY_ID[result.itemId].name;
+        this.ui.toast(text);
+        this.ui.announce(text);
+        this.ui.tickSlow(Date.now());
+    };
+
+    App.prototype.setBuyMode = function (mode) {
+        this.settings.buyMode = mode;
+        this.storage.saveSettings(this.settings);
+    };
+
+    /* ---------------- 介面事件 ---------------- */
+
+    App.prototype.bindUI = function () {
+        var self = this;
+
+        $('res-coins').addEventListener('click', function () {
+            self.ui.showFullCoins = !self.ui.showFullCoins;
+            self.ui.tickFast(Date.now());
+        });
+        $('btn-takeover').addEventListener('click', function () { self.takeover(); });
+        $('btn-help').addEventListener('click', function () { self.openDialog($('dlg-help')); });
+        $('btn-import-original').addEventListener('click', function () {
+            var raw;
+            try { raw = localStorage.getItem('tools.mushroom.save'); } catch (ignore) {}
+            if (!raw) { self.ui.toast('沒有找到原版進度。也可在原版匯出，再到這裡匯入。'); return; }
+            var result = self.storage.parseImport(raw);
+            if (!result.ok) { self.ui.toast('原版存檔無法承接：' + self.importErrorText(result.reason)); return; }
+            self.confirm('承接原版進度？', '目前 3D 進度會先建立備份，再載入原版進度；原版存檔不會被修改。', '承接進度', function () {
+                if (!self.requirePrimary(true)) return;
+                self.storage.backup(); self.game.loadSnapshot(result.state); self.syncTypingProgress();
+                self.typingSentencesCompleted = result.state.typingCompleted || 0;
+                self.firstLuckyGranted = !!result.state.flags.firstLuckyGranted;
+                self.save(false); self.ui.tickFast(Date.now()); self.ui.tickSlow(Date.now());
+                self.ui.toast('已承接原版進度。');
+            });
+        });
+        $('btn-settings').addEventListener('click', function () { self.openDialog($('dlg-settings')); });
+        $('btn-save').addEventListener('click', function () { self.save(true); });
+
+        $('btn-backup').addEventListener('click', function () {
+            self.save(false);
+            self.ui.toast(self.storage.backup() ? '已建立備份。' : '備份失敗（沒有可備份的存檔）。');
+        });
+
+        $('btn-restore').addEventListener('click', function () {
+            var backup = self.storage.loadBackup();
+            if (backup.status !== 'ok') {
+                self.ui.toast(backup.status === 'none' ? '沒有可還原的備份。' : '備份資料損壞，無法還原。');
+                return;
+            }
+            self.confirm('還原備份？', '會用備份取代目前的進度，這個動作無法復原。', '還原', function () {
+                self.game.loadSnapshot(backup.state);
+                self.syncTypingProgress();
+                self.game.state.lastSettle = Date.now();
+                self.save(false);
+                self.ui.tickFast(Date.now());
+                self.ui.tickSlow(Date.now());
+                self.ui.toast('已還原備份。');
+            });
+        });
+
+        $('btn-export').addEventListener('click', function () {
+            $('export-text').value = self.storage.exportText(self.game.snapshot());
+            self.openDialog($('dlg-export'));
+        });
+
+        $('btn-copy-export').addEventListener('click', function () {
+            var area = $('export-text');
+            area.select();
+            var ok = false;
+            try { ok = document.execCommand('copy'); } catch (err) { ok = false; }
+            if (!ok && navigator.clipboard) {
+                navigator.clipboard.writeText(area.value).then(function () { self.ui.toast('已複製存檔字串。'); });
+                return;
+            }
+            self.ui.toast(ok ? '已複製存檔字串。' : '複製失敗，請手動選取複製。');
+        });
+
+        $('btn-import').addEventListener('click', function () {
+            $('import-text').value = '';
+            $('import-error').hidden = true;
+            self.openDialog($('dlg-import'));
+        });
+
+        $('btn-import-confirm').addEventListener('click', function () {
+            var parsed = self.storage.parseImport($('import-text').value);
+            if (!parsed.ok) {
+                var error = $('import-error');
+                error.textContent = '無法匯入：' + self.importErrorText(parsed.reason) + '。目前的存檔沒有被改動。';
+                error.hidden = false;
+                return;
+            }
+            self.pendingImport = parsed.state;
+            self.closeDialog($('dlg-import'));
+            self.confirm('確定要覆寫目前的進度嗎？', '匯入會用存檔字串取代目前的所有進度，這個動作無法復原。', '覆寫並匯入', function () {
+                self.storage.backup();
+                self.game.loadSnapshot(self.pendingImport);
+                self.syncTypingProgress();
+                self.game.state.lastSettle = Date.now();
+                self.pendingImport = null;
+                self.save(false);
+                self.ui.tickFast(Date.now());
+                self.ui.tickSlow(Date.now());
+                self.ui.toast('已匯入存檔（先前的進度已自動備份）。');
+            });
+        });
+
+        $('btn-clear').addEventListener('click', function () {
+            self.confirm('清除所有紀錄？', '會刪除存檔、備份、成就與偏好設定，且無法復原。', '清除紀錄', function () {
+                self.storage.clearAll();
+                self.hasSavedProgress = false;
+                self.game.loadSnapshot(GameAPI.createState(Date.now()));
+                self.syncTypingProgress();
+                self.ui.maskVocabulary = false;
+                self.ui._renderTypingPrompt();
+                self.settings = self.storage.loadSettings();
+                self.applySettings();
+                self.ui.tickFast(Date.now());
+                self.ui.tickSlow(Date.now());
+                self.ui.toast('已清除所有紀錄。');
+            });
+        });
+
+        $('confirm-ok').addEventListener('click', function () {
+            var action = self.confirmAction;
+            self.confirmAction = null;
+            self.closeDialog($('dlg-confirm'));
+            if (action) action();
+        });
+
+        Array.prototype.forEach.call(document.querySelectorAll('[data-close-dialog]'), function (button) {
+            button.addEventListener('click', function () {
+                var dialog = button.closest('dialog');
+                if (dialog) self.closeDialog(dialog);
+            });
+        });
+
+        Array.prototype.forEach.call(document.querySelectorAll('dialog'), function (dialog) {
+            dialog.addEventListener('close', function () {
+                if (dialog === $('dlg-confirm')) self.confirmAction = null;
+                if (self.lastFocus && document.contains(self.lastFocus)) self.lastFocus.focus();
+                self.lastFocus = null;
+            });
+        });
+
+        ['theme', 'motion', 'numberStyle', 'typingBank'].forEach(function (name) {
+            Array.prototype.forEach.call(document.querySelectorAll('input[name="' + name + '"]'), function (input) {
+                input.addEventListener('change', function () {
+                    self.settings[name] = input.value;
+                    self.storage.saveSettings(self.settings);
+                    self.applySettings();
+                    if (name === 'typingBank') {
+                        self.game.resetBlindTypingCombo();
+                        self.blindWordStarted = false;
+                        self.typingPromptIndex = Math.floor(self.game.random() * self.currentTypingPrompts().length);
+                        self.typingIndex = 0;
+                        self.renderTyping('已切換至「' + TYPING_BANK_NAMES[input.value] + '」。', false);
+                    }
+                });
+            });
+        });
+
+        [this.darkQuery, this.motionQuery].forEach(function (query) {
+            if (!query) return;
+            var handler = function () { self.applySettings(); };
+            if (query.addEventListener) query.addEventListener('change', handler);
+            else if (query.addListener) query.addListener(handler);
+        });
+
+        window.addEventListener('pagehide', function () {
+            if (self.isPrimary && !self.titleScreenActive) self.save(false);
+            self.storage.releaseLock();
+        });
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden && self.isPrimary && !self.titleScreenActive) self.save(false);
+        });
+    };
+
+    App.prototype.syncTypingProgress = function () {
+        this.typingSentencesCompleted = this.game.state.typingCompleted || 0;
+        this.firstLuckyGranted = !!this.game.state.flags.firstLuckyGranted;
+        this.firstLuckyPending = !this.firstLuckyGranted && this.typingSentencesCompleted >= 5;
+        this.crazyTypingActive = false;
+        this.typingPromptIndex = Math.floor(this.game.random() * this.currentTypingPrompts().length);
+        this.typingIndex = 0;
+        this.renderTyping('進度已載入，繼續英打採集。', false);
+        this.updateTitleScreen();
+    };
+
+    App.prototype.importErrorText = function (reason) {
+        var map = {
+            empty: '沒有輸入內容', decode: '字串格式不正確', json: '資料不是有效的 JSON',
+            shape: '資料結構不正確', 'version-too-new': '這個存檔來自更新版本的遊戲'
+        };
+        return map[reason] || ('資料有問題（' + reason + '）');
+    };
+
+    /* ---------------- 設定與對話框 ---------------- */
+
+    App.prototype.applySettings = function () {
+        var theme = this.settings.theme;
+        if (theme === 'system') theme = (this.darkQuery && this.darkQuery.matches) ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+        var themeColor = document.querySelector('meta[name="theme-color"]');
+        if (themeColor) themeColor.setAttribute('content', theme === 'dark' ? '#0d1c24' : '#edf6f4');
+
+        var reduced = this.settings.motion === 'reduced' ||
+            (this.settings.motion === 'system' && this.motionQuery && this.motionQuery.matches);
+        document.documentElement.classList.toggle('reduce-motion', reduced);
+
+        this.ui.setNumberStyle(this.settings.numberStyle);
+        this.ui.setBuyMode(this.settings.buyMode);
+
+        ['theme', 'motion', 'numberStyle', 'typingBank'].forEach(function (name) {
+            var input = document.querySelector('input[name="' + name + '"][value="' + this.settings[name] + '"]');
+            if (input) input.checked = true;
+        }, this);
+
+        var offline = Config.BALANCE.offline;
+        var help = $('help-offline');
+        if (help) {
+            help.textContent = '離開超過 ' + offline.graceSeconds + ' 秒後回來，會以 ' +
+                Math.round(offline.efficiency * 100) + '% 效率結算，最多累積 ' + this.game.offlineCapHours() +
+                ' 小時（買下複合利息後為 ' + Config.BALANCE.offline.extendedHours +
+                ' 小時），且不計入任何限時加成。';
+        }
+    };
+
+    App.prototype.openDialog = function (dialog) {
+        this.lastFocus = document.activeElement;
+        if (typeof dialog.showModal === 'function') dialog.showModal();
+        else dialog.setAttribute('open', '');
+    };
+
+    App.prototype.closeDialog = function (dialog) {
+        if (typeof dialog.close === 'function') dialog.close();
+        else dialog.removeAttribute('open');
+    };
+
+    App.prototype.confirm = function (title, text, okLabel, onConfirm) {
+        $('confirm-title').textContent = title;
+        $('confirm-text').textContent = text;
+        $('confirm-ok').textContent = okLabel;
+        this.confirmAction = onConfirm;
+        this.openDialog($('dlg-confirm'));
+    };
+
+    App.prototype.showOffline = function (report) {
+        var zone = this.game.zone();
+        $('offline-text').textContent = '主廚不在的這 ' + Format.duration(report.seconds) +
+            '，討伐隊在「' + zone.name + '」沒有偷懶，估計解決了 ' + Format.short(report.kills) +
+            ' 朵菇，為公會賺進 ' + Format.short(report.coins) + ' 菇幣。';
+        $('offline-note').textContent = '計入 ' + Format.duration(report.countedSeconds) +
+            '（上限 ' + report.capHours + ' 小時' + (report.capped ? '，這次已達上限' : '') + '），' +
+            '以 ' + Math.round(report.efficiency * 100) + '% 效率估算，不含限時加成與稀有掉落。擊敗數為估算值。';
+        this.openDialog($('dlg-offline'));
+        this.ui.announce('離線期間獲得 ' + Format.short(report.coins) + ' 菇幣。');
+    };
+
+    function syncManagementDrawer() {
+        var drawer = document.querySelector('.management-drawer');
+        if (!drawer) return;
+        var desktopQuery = window.matchMedia ? window.matchMedia('(min-width: 901px)') : null;
+        var sync = function () {
+            drawer.open = desktopQuery ? desktopQuery.matches : window.innerWidth > 900;
+        };
+        sync();
+        if (!desktopQuery) return;
+        if (typeof desktopQuery.addEventListener === 'function') desktopQuery.addEventListener('change', sync);
+        else if (typeof desktopQuery.addListener === 'function') desktopQuery.addListener(sync);
+    }
+
+    window.MushApp = App;
+    document.addEventListener('DOMContentLoaded', function () {
+        syncManagementDrawer();
+        window.mushroomApp = new App();
+    });
+})();

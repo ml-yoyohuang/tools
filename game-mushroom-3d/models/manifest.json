@@ -1,0 +1,72 @@
+[
+  {
+    "id": "sh_basic",
+    "vertices": 12386,
+    "triangles": 11736
+  },
+  {
+    "id": "sh_walnut",
+    "vertices": 14786,
+    "triangles": 14040
+  },
+  {
+    "id": "sh_enoki",
+    "vertices": 6786,
+    "triangles": 6360
+  },
+  {
+    "id": "sh_sponge",
+    "vertices": 12386,
+    "triangles": 11736
+  },
+  {
+    "id": "sh_ice",
+    "vertices": 12500,
+    "triangles": 11848
+  },
+  {
+    "id": "sh_chest",
+    "vertices": 6646,
+    "triangles": 6336
+  },
+  {
+    "id": "sh_gold",
+    "vertices": 12640,
+    "triangles": 11976
+  },
+  {
+    "id": "boss_king",
+    "vertices": 8386,
+    "triangles": 7896
+  },
+  {
+    "id": "boss_tofu",
+    "vertices": 7668,
+    "triangles": 7236
+  },
+  {
+    "id": "boss_frozen",
+    "vertices": 14100,
+    "triangles": 13384
+  },
+  {
+    "id": "zone_01",
+    "vertices": 8190,
+    "triangles": 7000
+  },
+  {
+    "id": "zone_02",
+    "vertices": 33076,
+    "triangles": 31736
+  },
+  {
+    "id": "zone_03",
+    "vertices": 10350,
+    "triangles": 8592
+  },
+  {
+    "id": "courier",
+    "vertices": 7034,
+    "triangles": 6576
+  }
+]

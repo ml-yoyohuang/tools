@@ -1,0 +1,50 @@
+.game-hud{display:contents}
+.title-screen{position:fixed;z-index:30;inset:0;overflow:hidden;color:#edf0d8;isolation:isolate}
+.title-atmosphere{position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg,#0b241fef 0%,#102a23dd 31%,#18372a68 56%,#1630250a 78%),linear-gradient(180deg,#0c231f60,transparent 25%,transparent 70%,#091f1b80)}
+.title-atmosphere:after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 78% 34%,#e1d49a0c,transparent 48%);pointer-events:none}
+.title-masthead{position:absolute;left:7.5vw;top:34px;display:flex;align-items:center;gap:11px;font:9px system-ui;letter-spacing:.2em;color:#cbd8b6}
+.title-emblem{font:30px/1 Georgia;color:#c6d6a0}.title-edition{font-size:7px;letter-spacing:.14em;border:1px solid #c8d8a640;border-radius:4px;padding:2px 4px;margin-left:2px}
+.title-content{position:absolute;left:8vw;top:50%;width:475px;max-width:44vw;transform:translateY(-43%)}
+.title-eyebrow{display:flex;align-items:center;gap:8px;font:7px system-ui;letter-spacing:.19em;color:#b4c49e;margin-bottom:15px}
+.title-eyebrow>span{width:24px;height:1px;background:#c4d39a90}
+#title-name{font:500 clamp(62px,7.2vw,100px)/1.13 Georgia,"PingFang TC","Microsoft JhengHei",serif;letter-spacing:.05em;white-space:nowrap;text-shadow:0 8px 36px #02180b35}
+#title-name>span{display:block;font:400 14px system-ui;letter-spacing:.36em;color:#c8d8ad;margin:15px 0 0 5px}
+.title-tagline{font-size:19px;letter-spacing:.06em;line-height:1.7;font-weight:400;margin-top:28px;color:#e6ebcf}
+.title-mobile-break{display:none}.title-story{font-size:11px;line-height:1.9;margin-top:11px;letter-spacing:.05em;color:#a3b69e}
+.title-features{display:flex;align-items:center;gap:12px;margin:20px 0 27px;font-size:9px;letter-spacing:.08em;color:#c0ceab}
+.title-features>i{font:11px Georgia;color:#dfd399;opacity:.65}
+.title-save{display:flex;gap:12px;align-items:center;border-left:1px solid #b8cc9555;padding:0 0 0 12px;margin-bottom:21px}
+.title-save-glyph{color:#d8d7a1;font:24px Georgia;opacity:.6}.title-save>div{display:flex;flex-direction:column;gap:4px}
+.title-save small{font:7px system-ui;letter-spacing:.15em;color:#adbf9e}.title-save strong{font-size:11px;font-weight:500;letter-spacing:.04em;color:#e3e8cb}.title-save>div>span{font:8px system-ui;color:#98af96;letter-spacing:.02em}
+.title-actions{display:flex;align-items:center;gap:17px}
+#title-start{display:flex;align-items:center;justify-content:space-between;gap:55px;width:252px;min-height:57px;padding:14px 22px;background:#d3dfaa;color:#213b28;border:1px solid #ebebbd75;border-radius:8px;font-size:15px;letter-spacing:.18em;box-shadow:0 8px 35px #071c1840;transition:background .2s,box-shadow .2s,transform .2s}
+#title-start>span:last-child{font:24px Georgia;letter-spacing:0;opacity:.8}#title-start:hover{background:#e4eac1;box-shadow:0 0 25px #dbe3a52e,0 10px 35px #071c1840;transform:translateY(-2px)}#title-start:active{transform:translateY(0)}#title-start:disabled{opacity:.5;cursor:wait;transform:none}
+.title-key-hint{font-size:8px;color:#8fa88d;letter-spacing:.04em;white-space:nowrap}.title-key-hint kbd{font:7px system-ui;border:1px solid #b4c99a40;padding:3px 5px;border-radius:4px;margin-right:4px;color:#c8d4b0}
+.title-secondary{display:flex;align-items:center;gap:18px;margin-top:17px;font-size:10px;color:#a0b698;letter-spacing:.04em}
+.title-secondary button{padding:4px 0;font:inherit;color:inherit}.title-secondary button:hover{color:#edf0d5}.title-secondary>span{opacity:.4}
+.title-world-note{position:absolute;right:6vw;bottom:115px;color:#dbe5c6;border-top:1px solid #c5d4a433;padding-top:13px;width:150px}
+.title-world-note>span{font:7px system-ui;letter-spacing:.16em;opacity:.6}.title-world-note>p{font:12px/1.9 Georgia,"PingFang TC",serif;letter-spacing:.12em;margin-top:7px;opacity:.8}.title-world-note>i{display:block;width:5px;height:5px;border:1px solid #d3d49e80;transform:rotate(45deg);margin-top:14px}
+.title-footer{position:absolute;bottom:26px;left:7.5vw;right:6vw;display:flex;justify-content:space-between;gap:20px;font:7px system-ui;letter-spacing:.1em;color:#9fb495a6}
+.title-screen-active body{overflow:hidden}.title-screen-active .game-hud{visibility:hidden;pointer-events:none}.title-screen-active .world-labels,.title-screen-active .world-message,.title-screen-active .world-floaters,.title-screen-active .scene-caption,.title-screen-active .courier-beacon{visibility:hidden;pointer-events:none}
+.title-screen-active #btn-return-title{display:none}.game-entering .game-hud>.flight-header,.game-entering .game-hud>.typing,.game-entering .game-hud>.destination,.game-entering .game-hud>.field-menu{animation:title-game-arrive .6s ease-out both}
+@keyframes title-game-arrive{from{opacity:0}to{opacity:1}}
+@media(max-width:1100px) and (min-width:901px){.title-content{left:7vw;max-width:45vw}.title-eyebrow{font-size:6px;letter-spacing:.12em}.title-key-hint{display:none}.title-world-note{right:4vw;width:130px}.title-tagline{font-size:18px}}
+@media(max-height:700px) and (min-width:901px){.title-content{transform:translateY(-41%)}#title-name{font-size:70px}.title-tagline{font-size:17px;margin-top:19px}.title-features{margin:14px 0 18px}.title-story{font-size:10px;margin-top:8px}.title-save{margin-bottom:15px}#title-start{min-height:49px;font-size:13px}.title-secondary{margin-top:12px}}
+@media(max-width:900px){
+ .title-screen-active .expedition{height:100svh;min-height:100svh;padding-bottom:0}
+ .title-screen-active .world-stage{position:fixed;inset:0;height:100%;margin:0;max-height:none}
+ .title-atmosphere{background:linear-gradient(180deg,#0b241ff0 0%,#102b23b8 25%,#18372918 48%,#0a231b90 73%,#09211ded 100%)}
+ .title-masthead{left:25px;top:24px;font-size:7px;letter-spacing:.16em;gap:8px}.title-emblem{font-size:25px}.title-edition{font-size:6px}
+ .title-content{left:25px;right:25px;top:109px;bottom:69px;width:auto;max-width:none;transform:none;display:flex;flex-direction:column}
+ .title-eyebrow{font-size:5px;letter-spacing:.12em;margin-bottom:12px;gap:7px}.title-eyebrow>span{width:17px}
+ #title-name{font-size:clamp(52px,15vw,74px);line-height:1.15;letter-spacing:.06em}#title-name>span{font-size:10px;letter-spacing:.26em;margin:9px 0 0 2px}
+ .title-tagline{font-size:14px;line-height:1.7;margin-top:17px;letter-spacing:.06em}.title-story{font-size:9px;line-height:1.9;margin-top:8px;max-width:250px}.title-story>br{display:none}
+ .title-features{font-size:8px;gap:9px;margin:12px 0 0;color:#c3d1ad}
+ .title-bottom{margin-top:auto;padding-top:10px}.title-save{gap:9px;padding-left:10px;margin-bottom:14px;background:linear-gradient(90deg,#0d2a20b8,transparent);border-radius:0 6px 6px 0;padding-block:5px}
+ .title-save small{font-size:6px}.title-save strong{font-size:10px}.title-save>div>span{font-size:7px}.title-save-glyph{font-size:21px}
+ .title-actions{display:block}#title-start{width:100%;min-height:54px;padding:12px 20px;border-radius:8px;font-size:14px;box-shadow:0 10px 30px #071b153d}.title-key-hint{display:none}
+ .title-secondary{justify-content:center;gap:18px;font-size:10px;margin-top:13px}.title-secondary button{padding:7px 0}
+ .title-world-note{display:none}.title-footer{left:25px;right:25px;bottom:22px;flex-direction:column;gap:6px;font-size:6px;letter-spacing:.06em}.title-footer>span:first-child{opacity:.6}.title-footer>span:last-child{font-size:7px;color:#acbd9e}
+}
+@media(max-height:720px) and (max-width:900px){.title-content{top:87px;bottom:62px}.title-story,.title-features{display:none}.title-eyebrow{margin-bottom:8px}#title-name{font-size:50px}#title-name>span{font-size:9px}.title-tagline{font-size:12px;margin-top:11px}.title-save{margin-bottom:10px}.title-secondary{margin-top:8px}.title-footer{bottom:16px}}
+html.reduce-motion .title-screen *,html.reduce-motion .title-screen *:before,html.reduce-motion .title-screen *:after,html.reduce-motion.game-entering .game-hud>*{animation:none!important;transition:none!important}

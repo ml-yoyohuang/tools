@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="zh-Hant" data-theme="dark" class="title-screen-active"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#10261f"><title>高湯遠征｜3D 英打冒險</title><meta name="description" content="專心打字，深入蘑菇世界。固定第一人稱 3D 英打冒險。">
+<link rel="canonical" href="https://ml-yoyohuang.github.io/tools/game-mushroom-3d/">
+<meta property="og:url" content="https://ml-yoyohuang.github.io/tools/game-mushroom-3d/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:site_name" content="高湯遠征">
+<meta property="og:title" content="高湯遠征｜3D 英打冒險">
+<meta property="og:description" content="每個正確字元，都是一次攻擊。閉眼練習、廚具養成，挑戰三大菇王。">
+<meta property="og:image" content="https://ml-yoyohuang.github.io/tools/game-mushroom-3d/assets/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="高湯遠征 3D 英打冒險：森林綠背景上的立體白菇、冰晶菇與金色蘑菇。">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="高湯遠征｜3D 英打冒險">
+<meta name="twitter:description" content="每個正確字元，都是一次攻擊。閉眼練習、廚具養成，挑戰三大菇王。">
+<meta name="twitter:image" content="https://ml-yoyohuang.github.io/tools/game-mushroom-3d/assets/og-image.png">
+<meta name="twitter:image:alt" content="高湯遠征 3D 英打冒險與三隻立體蘑菇。">
+<link rel="icon" type="image/x-icon" href="assets/favicon.ico?v=2">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=2">
+<link rel="icon" type="image/svg+xml" sizes="any" href="assets/favicon.svg?v=2">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=2">
+<link rel="stylesheet" href="css/expedition.css?v=20261025-frenzy"><script>try{var pref=JSON.parse(localStorage.getItem('tools.mushroom3d.settings')||'{}'),t=pref.theme||'dark';document.documentElement.dataset.theme=t==='system'?(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'):t}catch(e){}</script><link rel="stylesheet" href="css/title-screen.css?v=1">
+</head>
+<body>
+
+<section id="title-screen" class="title-screen" aria-labelledby="title-name" aria-describedby="title-description">
+ <div class="title-atmosphere" aria-hidden="true"></div>
+ <header class="title-masthead"><span class="title-emblem">✳</span><span>THE SOUP EXPEDITION</span><span class="title-edition">3D</span></header>
+ <div class="title-content">
+  <p class="title-eyebrow"><span></span> A LITTLE TYPING. A GRAND ADVENTURE.</p>
+  <h1 id="title-name">高湯遠征<span>3D 英打冒險</span></h1>
+  <p class="title-tagline" id="title-description">每個正確字元，<br class="title-mobile-break">都是一次攻擊。</p>
+  <p class="title-story">帶上你的廚具，走進蘑菇世界。<br>把一段段英文，化成遠征的力量。</p>
+  <div class="title-features" aria-label="遊戲特色"><span>閉眼練習</span><i>✧</i><span>廚具養成</span><i>✧</i><span>菇王討伐</span></div>
+  <div class="title-bottom">
+   <div class="title-save" id="title-save" hidden><span class="title-save-glyph" aria-hidden="true">◈</span><div><small>你的遠征仍在繼續</small><strong id="title-save-location"></strong><span id="title-save-stats"></span></div></div>
+   <div class="title-actions"><button id="title-start" type="button" disabled><span id="title-start-label">開始遠征</span><span aria-hidden="true">↗</span></button><small class="title-key-hint"><kbd>Enter</kbd> 出發</small></div>
+   <nav class="title-secondary" aria-label="主選單"><button id="title-help" type="button">第一次遠征？</button><span aria-hidden="true">·</span><button id="title-settings" type="button">設定與存檔</button></nav>
+  </div>
+ </div>
+ <div class="title-world-note" aria-hidden="true"><span>FIELD NOTES / 001</span><p>這片世界，<br>正在等你的第一個字。</p><i></i></div>
+ <footer class="title-footer"><span>無限高湯討伐隊 · ORIGINAL WORLD</span><span id="title-save-note">遠征準備中…</span></footer>
+</section>
+
+<main class="expedition">
+<section id="stage" class="world-stage" aria-label="第一人稱採集戰場"><canvas id="world" aria-label="固定第一人稱 3D 戰場，點選蘑菇指定優先目標"></canvas><img class="stage__image" alt="" hidden><ul id="targets" class="world-labels"></ul><div id="floaters" class="world-floaters" aria-hidden="true"></div><div id="scene-message" class="world-message" role="status"></div><div class="world-shade"></div>
+ <div class="scene-caption"><span id="scene-caption">第一人稱採集</span><small>ORIGINAL WORLD · THE SOUP EXPEDITION</small></div>
+ <button id="courier" class="courier-beacon" type="button" hidden><span id="courier-art" hidden></span><span class="courier-glyph">♧</span><span>外送員到了<small>攔截領取補給 <b id="courier-countdown"></b></small></span></button>
+</section>
+<div id="game-hud" class="game-hud" inert>
+<header class="flight-header"><button type="button" id="btn-title-home" class="expedition-wordmark" aria-label="返回標題畫面" title="返回標題畫面"><span class="wordmark-icon">✳</span><span>高湯遠征<small>THE SOUP EXPEDITION</small></span><b>3D</b></button><dl class="resources hud-resources">        <div class="res">
+            <dt>菇幣</dt>
+            <dd><button type="button" class="res__value" id="res-coins" title="點一下切換完整數值">0</button></dd>
+        </div>
+        <div class="res">
+            <dt>金湯滴</dt>
+            <dd id="res-broth">0</dd>
+        </div>
+        <div class="res">
+            <dt>英打傷害／每字</dt>
+            <dd id="res-click">1</dd>
+            <small class="res__sub" id="res-boss-typing">菇王 ×1　設備 ×1</small>
+        </div>
+        <div class="res">
+            <dt>自動火力</dt>
+            <dd id="res-dps">0</dd>
+        </div></dl><nav class="header-tools" aria-label="遊戲選單"><button id="btn-help" class="utility-button" type="button" aria-label="玩法說明">?</button><button id="btn-settings" class="utility-button" type="button" aria-label="遊戲設定">⚙</button></nav></header>
+<div id="readonly-banner" class="readonly-banner" hidden>另一個分頁正在採集，目前為唯讀。<button id="btn-takeover" type="button">接管這個分頁</button></div>
+<section class="destination"><span class="eyebrow">YOUR EXPEDITION</span><div class="destination-line"><div><span class="destination-name" id="destination-name">新手木砧板</span><small id="zone-desc"></small></div><span class="depth-marker"><small>深度</small><strong id="zone-depth">1</strong></span></div><div id="zone-tabs" class="destination-path" role="group" aria-label="切換採集地區"></div></section>
+<nav class="field-menu" aria-label="遠征選單"><button type="button" data-open-book="devices"><span>⌁</span><b>整備</b></button><button type="button" data-open-book="dex"><span>◈</span><b>圖鑑</b></button><button type="button" data-open-book="achievements"><span>✧</span><b>成就</b></button><button type="button" id="btn-report"><span>▥</span><b>戰報</b></button></nav>
+<div class="field-actions" id="field-actions"><span class="eyebrow">NEXT ENCOUNTER</span><button id="btn-boss" type="button" disabled>菇王尚未現身</button><small>持續英打，召喚本區菇王</small></div>
+<section id="boss-panel" class="boss-command" hidden><div id="boss-combo" class="combo-command"><div><span>英打共鳴</span><strong id="boss-combo-value"></strong></div><div class="combo-track" role="progressbar" aria-label="菇王連擊" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0"><i id="boss-combo-fill"></i></div><p id="boss-combo-hint"></p></div><p id="boss-help" hidden></p><p id="boss-progress"></p><button id="btn-hold" class="charge-control" type="button" hidden><i id="hold-fill"></i><span id="hold-label">按住蓄力破盾</span></button><ul id="frozen-list" class="frozen-controls"></ul><button id="btn-exit-boss" class="withdraw-button" type="button">撤回採集區 ↗</button></section>
+<section class="typing strike-console" aria-label="英打攻擊操作台"><div class="console-grip" aria-hidden="true"></div><header class="strike-heading"><div><span class="live-dot"></span><span id="typing-mode-label">TYPE TO STRIKE</span><small id="typing-mode-caption">英打攻擊</small></div><div><span id="typing-rate">0.0 字/秒</span><button id="btn-skip-prompt" type="button" title="跳過此題">跳過 ↗</button></div></header><p id="typing-alert" role="status" hidden></p><div class="word-line"><p id="typing-prompt" class="strike-word" aria-live="off"></p><div id="typing-mask-tools"><button id="btn-typing-mask" type="button" aria-label="遮住單字" aria-pressed="false" title="閉眼模式"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="eye-outline" d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"/><circle class="eye-pupil" cx="12" cy="12" r="3"/><path class="eye-slash" d="M3 3l18 18"/></svg><span>閉眼模式</span></button></div></div><p id="typing-translation" class="strike-translation" hidden></p><div class="strike-input-wrap"><span aria-hidden="true">›</span><label class="visually-hidden" for="typing-input">依題目逐字輸入英文，正確字元會攻擊一次</label><input id="typing-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="在這裡輸入，逐字出擊…"></div><footer><p id="typing-status" role="status">每個正確字元，都是一次攻擊。</p><ul id="buff-bar" class="strike-buffs" aria-label="生效中的效果"></ul></footer></section>
+</div>
+<dialog id="field-book" class="field-book" aria-labelledby="book-title"><div class="book-shell"><aside class="book-navigation"><span class="book-seal">✳</span><span class="eyebrow">EXPEDITION KIT</span><nav aria-label="遠征手冊"><button type="button" data-book="devices" aria-label="設備整備">⌁ <span>設備整備</span></button><button type="button" data-book="upgrades" aria-label="永久升級">↑ <span>永久升級</span></button><button type="button" data-book="items" aria-label="消耗補給">♧ <span>消耗補給</span></button><button type="button" data-book="equipment" aria-label="隨身裝備">◇ <span>隨身裝備</span></button><button type="button" data-book="dex" aria-label="蘑菇圖鑑">◈ <span>蘑菇圖鑑</span></button><button type="button" data-book="words" aria-label="單字筆記">Aa <span>單字筆記</span></button><button type="button" data-book="achievements" aria-label="遠征成就">✧ <span>遠征成就</span></button></nav><small>每一趟遠征<br>都比上一次更強。</small></aside><section class="book-main"><header class="book-header"><div><span class="eyebrow" id="book-kicker">FIELD SYSTEMS</span><h1 id="book-title">設備整備</h1></div><button type="button" data-close-dialog aria-label="返回遊戲">×</button></header><div class="book-wallet"><span>菇幣 <b id="book-coins">0</b></span><span>金湯滴 <b id="book-broth">0</b></span></div><div id="book-toolbar"></div><div id="book-content"></div><div id="device-freeze-note" role="status" hidden></div></section></div></dialog>
+<div class="visually-hidden" id="live-region" role="status" aria-live="polite" aria-atomic="true"></div><div id="toast" class="toast" role="status" hidden></div>
+</main><dialog id="dlg-report" aria-labelledby="report-title"><div class="dialog__body"><span class="section-kicker">EXPEDITION RECORD</span><h2 id="report-title">遠征戰報</h2><dl class="resources report-resources">        <div class="res">
+            <dt>英打攻擊次數</dt>
+            <dd id="res-typing-count">0</dd>
+        </div>
+        <div class="res">
+            <dt>外送員攔截數</dt>
+            <dd id="res-couriers-caught">0</dd>
+        </div>
+        <div class="res">
+            <dt>歷史累積菇幣</dt>
+            <dd id="res-lifetime-coins">0</dd>
+        </div>
+        <div class="res">
+            <dt>累計有效傷害</dt>
+            <dd id="res-total-damage">0</dd>
+        </div>
+        <div class="res">
+            <dt>金湯滴累積取得</dt>
+            <dd id="res-broth-lifetime">0</dd>
+        </div>
+        <div class="res">
+            <dt>設備持有總數</dt>
+            <dd id="res-device-total">0</dd>
+        </div></dl></div><div class="dialog__foot"><button type="button" class="btn btn--primary" data-close-dialog>返回戰場</button></div></dialog>
+<!-- 說明 -->
+<dialog id="dlg-help" aria-labelledby="help-title">
+    <div class="dialog__body">
+        <h2 id="help-title">玩法說明</h2><p>固定第一人稱視角，不需移動。持續輸入題目發動逐字攻擊；點選蘑菇可指定單體設備優先目標。單字右側眼睛按鈕可切換閉眼模式。</p>
+        <ul>
+            <li><strong>選擇題庫與英打：</strong>在設定中選擇全民英檢初級、中級單字或 500 題句子題庫；單字題會附中文翻譯。輸入題目中下一個正確字元，每個字母、空格或符號都會造成<strong>一次英打攻擊</strong>。</li>
+            <li><strong>跳過與瘋狂連打：</strong>卡住時可<strong>跳過目前題目</strong>。偶爾會出現<strong>「瘋狂連打」</strong>超簡單題，每個字元仍會各自攻擊；新玩家完成 9 題後必定遇到第一次（約第 10 題），之後完成一般題目或按下跳過，皆有 2% 機率再次觸發。</li>
+            <li><strong>幸運加成與設備：</strong>幸運加成觸發時，該次英打傷害 <strong>×2</strong>；一般觸發機率為每個正確字元 4%。設備會提供自動火力或支援效果；商店會標示攻擊設備每台與持有合計的每秒傷害。</li>
+            <li><strong>菇王獎勵：</strong>首次擊敗每一隻菇王，英打每字傷害<strong>永久 ×2</strong>；擊敗不同菇王的加成會累乘，同一隻菇王重戰不會再次增加倍率。</li>
+            <li><strong>設備加成：</strong>每種設備第一次入手會啟用<strong>永久英打加成</strong>；階級越高，加成越大，並與菇王加成相乘。同種設備多買不會重複增加這項加成。</li>
+            <li><strong>菇幣獎勵：</strong>普通蘑菇受到<strong>有效傷害</strong>時會按傷害量掉落菇幣，擊敗目標還會另發懸賞；菇王則在擊敗時發放懸賞。超過剩餘血量的傷害不會增加傷害掉落。</li>
+            <li><strong>外送員：</strong>約每 15–25 分鐘出現在戰場，停留 12 秒。點擊攔截可取得一件<strong>隨機消耗道具</strong>；錯過就等下一次出現，上方會累計成功攔截數。</li>
+            <li><strong>採集深度：</strong>每個地區清完 8 輪普通蘑菇，採集深度就提升 1 級，最高可達 99 級；深度越高，普通蘑菇的血量與獎勵同步增加，菇王血量也會隨深度提升。同一波出現的群組蘑菇全部擊敗後算 1 輪。</li>
+            <li><strong>金湯滴：</strong>由菇王與純金大香菇掉落；取得<strong>「黃金孢子」</strong>升級後，擊敗普通蘑菇也有機率掉落。金湯滴可用來解鎖高階內容。</li>
+            <li><strong>菇王挑戰：</strong>沒有倒數失敗機制，隨時可以退出；<strong>退出或重新挑戰時菇王血量會重置</strong>，退出會保留英打進度與已取得資源。三個地區<strong>首次挑戰</strong>都要先在該地區累積 100 次英打攻擊；首次擊敗後，每次再挑戰前木砧板／鐵鍋／冰箱分別要累積 100／200／500 次英打攻擊。</li>
+        </ul>
+        <h3 class="dialog__sub">機制定義</h3>
+        <ul>
+            <li><strong>岩殼</strong>：單次傷害低於該地區門檻時，該次傷害強制變成 1。靠重擊設備或提高英打傷害突破。</li>
+            <li><strong>真實傷害</strong>（魔鬼椒爆彈）：穿透岩殼，但<strong>不</strong>穿透菇王護盾。</li>
+            <li><strong>軟化</strong>：肉槌造成，英打攻擊傷害獲得一個獨立乘區 ×2。</li>
+            <li><strong>破盾</strong>：百葉豆腐菇有 3 層護盾，護盾存在時所有傷害都會被擋下。第一層可直接按住 2 秒破除；第二層前要先完成 3 個單字，第三層前再完成 5 個。每層都要重新蓄力，太早放開不會受罰。</li>
+            <li><strong>設備冰凍</strong>：挑戰急凍菇時，每 18 秒約有一半持有中的自動設備會被凍結；冰凍期間自動效果暫停，但該設備的英打加成仍在。按住結冰設備 2 秒解凍，提早放開只需重新蓄力。</li>
+            <li><strong>吸湯海綿菇</strong>：超過 3 秒沒有手動攻擊（英打或點擊）後，每秒恢復最大血量的 15%；自動設備攻擊不會重設這個計時。</li>
+            <li><strong>速度倍率</strong>：攻擊頻率與平均每秒傷害都會乘上速度倍率；設備商店的傷害數字以每秒計算。</li>
+            <li><strong>連擊</strong>：每次英打攻擊 +1 層，3 秒未輸入就歸零；特調提神飲料生效時可避免連擊中斷。傷害逐層加速成長，10 層最高 ×10；「共振敲擊」可把上限提高到 ×15。</li>
+            <li><strong>閉眼盲打連擊</strong>：單字遮蔽時，每個正確字元累積 1 層；每 10 層英打傷害 +5%，最多 +25%。3 秒未輸入、跳過題目或睜眼時歸零；閉眼累積正確輸入、連續完成單字與盲打連擊，也能解鎖專屬成就。</li>
+        </ul>
+        <h3 class="dialog__sub">離線採集</h3>
+        <p id="help-offline">—</p>
+        <p><strong>離線只採集目前所在地區的普通蘑菇</strong>，不會推進菇王、不開新地區、不發稀有掉落，擊敗數為估算值。</p>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn btn--primary" data-close-dialog>知道了</button>
+    </div>
+</dialog>
+
+<!-- 設定 -->
+<dialog id="dlg-settings" aria-labelledby="settings-title">
+    <div class="dialog__body">
+        <h2 id="settings-title">設定</h2>
+        <fieldset>
+            <legend>英打題庫</legend>
+            <div class="radio-row radio-row--stacked">
+                <label><input type="radio" name="typingBank" value="geptElementary" checked> 全民英檢初級單字（2,218 題）</label>
+                <label><input type="radio" name="typingBank" value="geptIntermediate"> 全民英檢中級單字（2,568 題）</label>
+                <label><input type="radio" name="typingBank" value="sentences"> 句子 (500題)</label>
+            </div>
+            <p class="hint">單字題會顯示中文翻譯；切換題庫會立即換題。中級題庫只收錄官方字表標示為中級的詞目。</p>
+        </fieldset>
+        <fieldset>
+            <legend>外觀</legend>
+            <div class="radio-row">
+                <label><input type="radio" name="theme" value="system" checked> 跟隨系統</label>
+                <label><input type="radio" name="theme" value="light"> 白天</label>
+                <label><input type="radio" name="theme" value="dark"> 黑夜</label>
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>動畫</legend>
+            <div class="radio-row">
+                <label><input type="radio" name="motion" value="system" checked> 跟隨系統</label>
+                <label><input type="radio" name="motion" value="full"> 完整</label>
+                <label><input type="radio" name="motion" value="reduced"> 減少</label>
+            </div>
+            <p class="hint">減少動畫會關閉浮動數字與閃爍效果。</p>
+        </fieldset>
+        <fieldset>
+            <legend>數字顯示</legend>
+            <div class="radio-row">
+                <label><input type="radio" name="numberStyle" value="short" checked> 縮寫</label>
+                <label><input type="radio" name="numberStyle" value="full"> 完整</label>
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>存檔</legend>
+            <p class="hint" id="save-status">—</p>
+            <div class="button-row">
+                <button type="button" class="btn" id="btn-save">立即存檔</button>
+                <button type="button" class="btn" id="btn-backup">建立備份</button>
+                <button type="button" class="btn" id="btn-restore">還原備份</button>
+            </div>
+            <div class="button-row">
+                <button type="button" class="btn" id="btn-export">匯出</button>
+                <button type="button" class="btn" id="btn-import">匯入</button>
+                <button type="button" class="btn" id="btn-import-original">承接原版進度</button>
+                <button type="button" class="btn btn--danger" id="btn-clear">清除紀錄…</button>
+            </div>
+        </fieldset>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn" id="btn-return-title" data-close-dialog>返回標題畫面</button>
+        <button type="button" class="btn btn--primary" data-close-dialog>關閉</button>
+    </div>
+</dialog>
+
+<dialog id="dlg-export" aria-labelledby="export-title">
+    <div class="dialog__body">
+        <h2 id="export-title">匯出存檔</h2>
+        <p>複製下面這串文字保存，之後貼回「匯入」就能還原。</p>
+        <textarea id="export-text" rows="6" readonly aria-label="存檔字串"></textarea>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn" id="btn-copy-export">複製</button>
+        <button type="button" class="btn btn--primary" data-close-dialog>關閉</button>
+    </div>
+</dialog>
+
+<dialog id="dlg-import" aria-labelledby="import-title">
+    <div class="dialog__body">
+        <h2 id="import-title">匯入存檔</h2>
+        <p>貼上先前匯出的字串。資料會先驗證，失敗不會動到目前的存檔。</p>
+        <textarea id="import-text" rows="6" aria-label="要匯入的存檔字串" placeholder="MUSH1:..."></textarea>
+        <p class="error-text" id="import-error" hidden></p>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn" data-close-dialog>取消</button>
+        <button type="button" class="btn btn--primary" id="btn-import-confirm">匯入並覆寫</button>
+    </div>
+</dialog>
+
+<dialog id="dlg-confirm" aria-labelledby="confirm-title">
+    <div class="dialog__body">
+        <h2 id="confirm-title">確認</h2>
+        <p id="confirm-text"></p>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn" data-close-dialog>取消</button>
+        <button type="button" class="btn btn--primary" id="confirm-ok">確定</button>
+    </div>
+</dialog>
+
+<dialog id="dlg-offline" aria-labelledby="offline-title">
+    <div class="dialog__body">
+        <h2 id="offline-title">離線討伐報告</h2>
+        <p id="offline-text"></p>
+        <p class="hint" id="offline-note"></p>
+    </div>
+    <div class="dialog__foot">
+        <button type="button" class="btn btn--primary" data-close-dialog>收下</button>
+    </div>
+</dialog>
+
+<script src="js/format.js"></script><script src="js/config.js"></script><script src="js/content.js"></script><script src="js/combat.js"></script><script src="js/game.js"></script><script src="js/storage.js"></script><script src="js/images.js"></script><script src="js/interface.js?v=20261025-frenzy"></script><script src="js/typing-prompts.js"></script><script src="js/typing-vocab.js"></script><script src="js/title-screen.js?v=1"></script><script src="js/main.js?v=20261025-title"></script><script src="js/models3d.js"></script><script src="3d.js?v=20261025-title"></script>
+</body></html>
