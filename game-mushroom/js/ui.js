@@ -76,6 +76,7 @@
         this.maskVocabulary = false;
         this.currentTypingView = null;
         this.blindMilestoneTimer = null;
+        this.minimalStage = false;
 
         this.el = {
             coins: $('res-coins'), broth: $('res-broth'), click: $('res-click'), bossTyping: $('res-boss-typing'), dps: $('res-dps'),
@@ -91,6 +92,7 @@
             typingRate: $('typing-rate'),
             typingSection: document.querySelector('.typing'),
             btnTypingFloat: $('btn-typing-float'), btnTypingFloatClose: $('btn-typing-float-close'),
+            btnStageView: $('btn-stage-view'),
             typingAlert: $('typing-alert'),
             btnSkipPrompt: $('btn-skip-prompt'),
             courier: $('courier'), courierArt: $('courier-art'),
@@ -515,6 +517,15 @@
         }
 
         this.el.btnSkipPrompt.addEventListener('click', function () { self.handlers.onSkipPrompt(); });
+        this.el.btnStageView.addEventListener('click', function () {
+            self.minimalStage = !self.minimalStage;
+            self.el.stage.classList.toggle('is-minimal', self.minimalStage);
+            self.el.btnStageView.setAttribute('aria-pressed', self.minimalStage ? 'true' : 'false');
+            var actionLabel = self.minimalStage ? '還原場景' : '最小化場景';
+            self.el.btnStageView.setAttribute('aria-label', actionLabel);
+            self.el.btnStageView.title = actionLabel;
+            self._renderTargets(Date.now());
+        });
         this.el.btnTypingFloat.addEventListener('click', function () { self.setTypingFloating(true); });
         this.el.btnTypingFloatClose.addEventListener('click', function () { self.setTypingFloating(false); });
         window.addEventListener('resize', function () {
@@ -1018,16 +1029,27 @@
             setText(nodes.hpText, self.num(target.hp) + ' / ' + self.num(target.maxHp));
 
             var tagText = [];
-            if (Combat.isShielded(target)) tagText.push('護盾 ×' + target.shields);
-            if (Combat.isSoftened(target, now)) tagText.push('軟化');
-            if (target.armorThreshold > 0) tagText.push('岩殼 ' + self.num(target.armorThreshold));
-            if (target.fleeAt) tagText.push('逃跑 ' + Math.max(0, Math.ceil((target.fleeAt - now) / 1000)) + 's');
-            if (!isBoss && info.traits) {
-                if (info.traits.indexOf('slow') !== -1) tagText.push('緩速：設備減半');
-                if (info.traits.indexOf('regen') !== -1) tagText.push('吸血：3 秒沒手打後回血');
-                if (info.traits.indexOf('jackpot') !== -1) tagText.push('必掉金湯滴');
+            var tagDescriptions = [];
+            if (Combat.isShielded(target)) {
+                tagText.push(self.minimalStage ? '盾×' + target.shields : '護盾 ×' + target.shields);
+                tagDescriptions.push('護盾 ×' + target.shields);
             }
-            var signature = tagText.join('|');
+            if (Combat.isSoftened(target, now)) { tagText.push('軟化'); tagDescriptions.push('軟化'); }
+            if (target.armorThreshold > 0) {
+                tagText.push(self.minimalStage ? '岩殼' : '岩殼 ' + self.num(target.armorThreshold));
+                tagDescriptions.push('岩殼 ' + self.num(target.armorThreshold));
+            }
+            if (target.fleeAt) {
+                var fleeSeconds = Math.max(0, Math.ceil((target.fleeAt - now) / 1000));
+                tagText.push(self.minimalStage ? '逃' + fleeSeconds + 's' : '逃跑 ' + fleeSeconds + 's');
+                tagDescriptions.push('逃跑 ' + fleeSeconds + ' 秒');
+            }
+            if (!isBoss && info.traits) {
+                if (info.traits.indexOf('slow') !== -1) { tagText.push(self.minimalStage ? '緩速' : '緩速：設備減半'); tagDescriptions.push('緩速：設備減半'); }
+                if (info.traits.indexOf('regen') !== -1) { tagText.push(self.minimalStage ? '吸血' : '吸血：3 秒沒手打後回血'); tagDescriptions.push('吸血：3 秒沒手打後回血'); }
+                if (info.traits.indexOf('jackpot') !== -1) { tagText.push(self.minimalStage ? '金湯' : '必掉金湯滴'); tagDescriptions.push('必掉金湯滴'); }
+            }
+            var signature = tagText.join('|') + (self.minimalStage ? '|minimal' : '|normal');
             if (nodes.tagSignature !== signature) {
                 nodes.tagSignature = signature;
                 nodes.tags.textContent = '';
@@ -1039,7 +1061,7 @@
             nodes.button.classList.toggle('is-preferred', game.state.preferredUid === target.uid);
             nodes.button.setAttribute('aria-label',
                 info.name + '，血量 ' + Format.short(target.hp) + ' / ' + Format.short(target.maxHp) +
-                (tagText.length ? '，' + tagText.join('、') : '') + '。');
+                (tagDescriptions.length ? '，' + tagDescriptions.join('、') : '') + '。');
         });
 
         this.targetNodes.forEach(function (nodes, uid) {

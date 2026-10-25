@@ -106,6 +106,10 @@
 
             <div class="stage" id="stage">
                 <img class="stage__image" alt="" aria-hidden="true">
+                <button type="button" class="stage__view-toggle" id="btn-stage-view" aria-label="最小化場景" title="最小化場景" aria-pressed="false">
+                    <svg class="stage__view-icon--minimize" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 1 9 7m0 0h3m-3 0V4M9 23l6-6m0 0h-3m3 0v3"></path></svg>
+                    <svg class="stage__view-icon--restore" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 7l6-6m0 0h-3m3 0v3M15 17l-6 6m0 0v-3m0 3h3"></path></svg>
+                </button>
                 <ul class="targets" id="targets"></ul>
                 <div class="floaters" id="floaters" aria-hidden="true"></div>
                 <button type="button" class="courier" id="courier" hidden>
