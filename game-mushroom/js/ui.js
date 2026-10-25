@@ -1075,7 +1075,10 @@
         var stageImage = 'assets/bg-' + zone.id.replace('zone_', 'zone-') +
             (mobileBackdrop ? '-mobile' : '') + '.svg';
         if (this.el.stageImage.getAttribute('src') !== stageImage) this.el.stageImage.setAttribute('src', stageImage);
-        setText(this.el.zoneDepth, String(game.depthOf(zone.id)));
+        var depth = game.depthOf(zone.id);
+        var depthRange = Math.max(1, Config.BALANCE.depth.maxSteps - 1);
+        this.el.zoneDepth.style.setProperty('--depth-hue', String(Math.round(120 * (1 - (depth - 1) / depthRange))));
+        setText(this.el.zoneDepth, String(depth));
         setText(this.el.zoneDesc, zone.desc);
 
         Array.prototype.forEach.call(this.el.zoneTabs.children, function (button) {

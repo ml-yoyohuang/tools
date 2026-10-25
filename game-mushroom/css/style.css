@@ -132,8 +132,15 @@ textarea { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace
 .field__depth-label { color: var(--text-sub); font-size: .82rem; font-weight: 900; letter-spacing: .03em; }
 .field__depth-value {
     display: inline-grid; place-items: center; min-width: 32px; height: 29px; padding: 0 7px;
-    border: 1px solid var(--line); border-radius: 8px; background: var(--accent-soft); color: var(--accent);
+    border: 1px solid hsl(var(--depth-hue, 120), 45%, 68%); border-radius: 8px;
+    background: hsl(var(--depth-hue, 120), 65%, 94%); color: hsl(var(--depth-hue, 120), 55%, 30%);
     font-size: .98rem; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums;
+    transition: color 300ms ease, background-color 300ms ease, border-color 300ms ease;
+}
+html[data-theme="dark"] .field__depth-value {
+    border-color: hsl(var(--depth-hue, 120), 42%, 44%);
+    background: hsl(var(--depth-hue, 120), 38%, 23%);
+    color: hsl(var(--depth-hue, 120), 72%, 76%);
 }
 .field__description { color: var(--text-sub); font-size: .78rem; }
 
@@ -249,12 +256,19 @@ textarea { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace
 
 .target__name { font-size: .8rem; font-weight: 800; text-align: center; }
 .target__hpbar { width: 100%; height: 8px; background: var(--hp-bg); border-radius: 99px; overflow: hidden; }
-.target__hpfill { height: 100%; background: var(--hp); border-radius: 99px; transition: width 120ms linear; }
-.target__hptext { font-size: .7rem; color: var(--text-sub); font-variant-numeric: tabular-nums; transition: color 100ms ease, transform 100ms ease; }
+.target__hpfill { display: block; height: 100%; background: var(--hp); border-radius: 99px; transition: width 120ms linear; }
+.target__hptext {
+    width: 100%; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-size: .7rem; color: var(--text-sub); font-variant-numeric: tabular-nums;
+    transition: color 100ms ease, transform 100ms ease;
+}
 .target__hptext.is-hit { color: var(--danger); font-weight: 900; transform: scale(1.08); }
-.target__tags { display: flex; gap: 3px; flex-wrap: wrap; justify-content: center; }
+.target__tags {
+    display: flex; gap: 3px; flex-wrap: nowrap; justify-content: center;
+    width: 100%; max-width: 100%; overflow: hidden; white-space: nowrap;
+}
 .tag {
-    font-size: .64rem; font-weight: 700; padding: 1px 6px; border-radius: 99px;
+    flex: 0 0 auto; white-space: nowrap; font-size: .64rem; font-weight: 700; padding: 1px 6px; border-radius: 99px;
     background: var(--accent-soft); color: var(--accent); border: 1px solid var(--line);
 }
 .tag--soften { background: #f6dcc4; color: #8a4a12; }
