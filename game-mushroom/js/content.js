@@ -256,7 +256,7 @@
 
     EQUIPMENT.forEach(function (e, i) { e.image = 'assets/equip-' + String(i + 1).padStart(2, '0') + '.svg'; });
 
-    /* ---------------- 20 個成就 ---------------- */
+    /* ---------------- 成就 ---------------- */
 
     var ACHIEVEMENTS = [
         { id: 'ach_first_blood', name: '第一滴湯', desc: '取得第一滴金湯滴。', req: { brothLifetime: 1 } },
@@ -280,7 +280,10 @@
         { id: 'ach_fail_chest', name: '這不是自助餐', desc: '眼睜睜看著一隻寶箱松露成功逃進地底。', req: { flag: 'chestEscaped' } },
         { id: 'ach_lazy', name: '自動化流水線', desc: '完全不進行英打攻擊，連續擊敗 50 隻蘑菇。', req: { lazyStreak: 50 } },
         { id: 'ach_combo', name: '停不下來', desc: '維持最高階連擊加成超過 30 秒。', req: { comboHoldSeconds: 30 } },
-        { id: 'ach_speed', name: '鍵盤都在冒煙', desc: '10 秒內完成 50 次英打攻擊（平均每秒 5 次；可選挑戰，不影響主線）。', optional: true, req: { burstClicks: 50 } }
+        { id: 'ach_speed', name: '鍵盤都在冒煙', desc: '10 秒內完成 50 次英打攻擊（平均每秒 5 次；可選挑戰，不影響主線）。', optional: true, req: { burstClicks: 50 } },
+        { id: 'ach_blind_100', name: '指尖記憶', desc: '閉眼模式累積正確輸入 100 個字元。', req: { blindTypingChars: 100 } },
+        { id: 'ach_blind_words10', name: '摸黑高手', desc: '閉眼模式連續完成 10 個單字，中途不跳題也不睜眼。', req: { blindWordStreak: 10 } },
+        { id: 'ach_blind_boss', name: '黑暗料理師', desc: '閉眼連擊達到 50 字元，並擊敗任一菇王。', req: { blindComboBest: 50, anyBoss: true } }
     ];
 
     function byId(list) {

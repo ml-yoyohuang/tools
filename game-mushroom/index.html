@@ -78,10 +78,24 @@
                     <div class="typing__tools">
                         <span class="typing__rate is-steady" id="typing-rate" title="最近 10 秒平均；維持每秒 3.5 字元 3 秒顯示火焰">0.0 字/秒</span>
                         <button type="button" class="btn btn--ghost typing__skip" id="btn-skip-prompt">跳過此題</button>
+                        <button type="button" class="typing__float-close" id="btn-typing-float-close" aria-label="取消英打區懸浮" title="取消懸浮" hidden>
+                            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+                        </button>
                     </div>
                 </div>
                 <p class="typing__alert" id="typing-alert" role="status" aria-live="polite" hidden></p>
-                <p class="typing__prompt" id="typing-prompt" aria-live="off"></p>
+                <div class="typing__prompt-wrap">
+                    <p class="typing__prompt" id="typing-prompt" aria-live="off"></p>
+                    <div class="typing__mask-tools" id="typing-mask-tools" hidden>
+                        <button type="button" class="typing__mask-btn" id="btn-typing-mask" aria-label="遮住單字" title="遮住尚未輸入的字母" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <path class="typing__eye-outline" d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"></path>
+                                <circle class="typing__eye-pupil" cx="12" cy="12" r="3"></circle>
+                                <path class="typing__eye-slash" d="M4 4 20 20"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
                 <p class="typing__translation" id="typing-translation" hidden></p>
                 <label class="visually-hidden" for="typing-input">依照上方題目輸入，每個正確字元會攻擊一次</label>
                 <input id="typing-input" class="typing__input" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點此開始輸入…">
@@ -268,6 +282,7 @@
             <li><strong>吸湯海綿菇</strong>：超過 3 秒沒有手動攻擊（英打或點擊）後，每秒恢復最大血量的 15%；自動設備攻擊不會重設這個計時。</li>
             <li><strong>速度倍率</strong>：攻擊頻率與平均每秒傷害都會乘上速度倍率；設備商店的傷害數字以每秒計算。</li>
             <li><strong>連擊</strong>：每次英打攻擊 +1 層，3 秒未輸入就歸零；特調提神飲料生效時可避免連擊中斷。傷害逐層加速成長，10 層最高 ×10；「共振敲擊」可把上限提高到 ×15。</li>
+            <li><strong>閉眼盲打連擊</strong>：單字遮蔽時，每個正確字元累積 1 層；每 10 層英打傷害 +5%，最多 +25%。3 秒未輸入、跳過題目或睜眼時歸零；閉眼累積正確輸入、連續完成單字與盲打連擊，也能解鎖專屬成就。</li>
         </ul>
         <h3 class="dialog__sub">離線採集</h3>
         <p id="help-offline">—</p>
@@ -381,6 +396,13 @@
         <button type="button" class="btn btn--primary" data-close-dialog>收下</button>
     </div>
 </dialog>
+
+<button type="button" class="typing-float-toggle" id="btn-typing-float" aria-label="英打區固定在畫面底部" title="英打區固定在畫面底部">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <rect x="2.5" y="5" width="19" height="14" rx="2"></rect>
+        <path d="M6 9h1m3 0h1m3 0h1m3 0h1M6 12h1m3 0h1m3 0h1m3 0h1M8 15h8"></path>
+    </svg>
+</button>
 
 <script src="js/format.js"></script>
 <script src="js/config.js"></script>

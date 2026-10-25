@@ -41,6 +41,7 @@
         this.pendingImport = null;
         this.typingPromptIndex = 0;
         this.typingIndex = 0;
+        this.blindWordStarted = false;
         this.typingSentencesCompleted = 0;
         this.crazyTypingActive = false;
         this.firstLuckyGranted = false;
@@ -57,6 +58,7 @@
             handlers: {
                 onTypingKey: this.typingKey.bind(this),
                 onSkipPrompt: this.skipTypingPrompt.bind(this),
+                onTypingMaskChange: this.typingMaskChanged.bind(this),
                 onBuyDevice: this.buyDevice.bind(this),
                 onBuyUpgrade: this.buyUpgrade.bind(this),
                 onBuyItem: this.buyItem.bind(this),
@@ -279,15 +281,27 @@
 
     App.prototype.typingKey = function (key) {
         if (!this.requirePrimary()) return;
-        var prompt = this.currentTypingPrompts()[this.typingPromptIndex].text;
+        var promptData = this.currentTypingPrompts()[this.typingPromptIndex];
+        var prompt = promptData.text;
+        var blindTypingActive = this.isBlindTypingModeActive();
+        var blindTypingWord = blindTypingActive && !this.crazyTypingActive && !!promptData.translation;
+        if (!blindTypingActive && this.game.state.blindCombo) this.game.resetBlindTypingCombo();
+        if (this.typingIndex === 0) this.blindWordStarted = blindTypingWord;
         var expected = prompt.charAt(this.typingIndex);
         if (key.toLowerCase() !== expected.toLowerCase()) {
+            if (blindTypingWord) this.game.touchBlindTyping(Date.now());
             this.renderTyping('再試一次：注意空格與標點。', true);
             return;
         }
 
         var completesSentence = this.typingIndex === prompt.length - 1;
         var completesWord = completesSentence || prompt.charAt(this.typingIndex + 1) === ' ';
+        var blindComboBefore = this.game.state.blindCombo || 0;
+        var blindDamageMult = 1;
+        if (blindTypingWord) {
+            this.game.recordBlindTypingCharacter(Date.now());
+            blindDamageMult = this.game.blindTypingDamageMult();
+        }
         var guaranteedFirstLucky = !this.firstLuckyGranted &&
             (this.firstLuckyPending || (this.typingSentencesCompleted === 4 && completesSentence));
         var alive = this.game.aliveTargets();
@@ -296,8 +310,8 @@
                 (this.firstLuckyGranted && this.game.random() < TYPING_LUCKY_CHANCE);
             var targetUid = this.game.state.preferredUid || alive[0].uid;
             var comboBefore = this.game.state.combo;
-            var attackResult = this.clickTarget(targetUid,
-                lucky ? { damageMult: TYPING_LUCKY_DAMAGE_MULT } : null);
+            var damageMult = blindDamageMult * (lucky ? TYPING_LUCKY_DAMAGE_MULT : 1);
+            var attackResult = this.clickTarget(targetUid, damageMult > 1 ? { damageMult: damageMult } : null);
             if (this.game.mode === 'boss' && attackResult && attackResult.combo > comboBefore) {
                 var comboMilestones = [3, 5, Config.BALANCE.combo.maxStacks];
                 for (var comboIndex = 0; comboIndex < comboMilestones.length; comboIndex++) {
@@ -316,9 +330,15 @@
                 this.ui.announce('幸運加成！這次英打攻擊傷害 ×' + TYPING_LUCKY_DAMAGE_MULT + '。');
             }
         }
+        if (blindTypingWord && Math.floor((this.game.state.blindCombo || 0) / Config.BALANCE.blindCombo.charsPerBonus) >
+            Math.floor(blindComboBefore / Config.BALANCE.blindCombo.charsPerBonus)) {
+            this.ui.blindTypingMilestone(this.game.state.blindCombo, this.game.blindTypingDamageMult());
+        }
         this.typingIndex++;
         if (completesWord && this.game.completeBossTypingWord()) this.ui.tickFast(Date.now());
         if (this.typingIndex >= prompt.length) {
+            if (blindTypingWord && this.blindWordStarted) this.game.completeBlindTypingWord(Date.now());
+            this.blindWordStarted = false;
             this.typingSentencesCompleted++;
             if (this.typingSentencesCompleted >= 5 && !this.firstLuckyGranted) this.firstLuckyPending = true;
             var completedCrazyPrompt = this.crazyTypingActive;
@@ -339,6 +359,8 @@
 
     App.prototype.skipTypingPrompt = function () {
         if (!this.requirePrimary()) return;
+        this.game.resetBlindTypingCombo();
+        this.blindWordStarted = false;
         this.ui.showPass();
         var skippedCrazyPrompt = this.crazyTypingActive;
         this.crazyTypingActive = false;
@@ -356,6 +378,17 @@
         var bank = this.settings.typingBank || 'sentences';
         if (bank === 'geptElementary' || bank === 'geptIntermediate') return TYPING_VOCAB[bank];
         return TYPING_PROMPTS.map(function (text) { return { text: text, translation: '' }; });
+    };
+
+    App.prototype.isBlindTypingModeActive = function () {
+        var bank = this.settings.typingBank || 'sentences';
+        return !!this.ui.maskVocabulary && (bank === 'geptElementary' || bank === 'geptIntermediate');
+    };
+
+    App.prototype.typingMaskChanged = function () {
+        this.game.resetBlindTypingCombo();
+        this.blindWordStarted = false;
+        this.ui.tickFast(Date.now());
     };
 
     App.prototype.scheduleCrazyTyping = function () {
@@ -601,6 +634,8 @@
                     self.storage.saveSettings(self.settings);
                     self.applySettings();
                     if (name === 'typingBank') {
+                        self.game.resetBlindTypingCombo();
+                        self.blindWordStarted = false;
                         self.typingPromptIndex = Math.floor(self.game.random() * self.currentTypingPrompts().length);
                         self.typingIndex = 0;
                         self.renderTyping('已切換至「' + TYPING_BANK_NAMES[input.value] + '」。', false);

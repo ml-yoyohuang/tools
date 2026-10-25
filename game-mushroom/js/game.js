@@ -96,6 +96,11 @@
             lastClickAt: 0,
             comboMaxSince: 0,
             comboHoldBest: 0,
+            blindTypingChars: 0,
+            blindCombo: 0,
+            blindComboBest: 0,
+            blindWordStreak: 0,
+            lastBlindTypingAt: 0,
             cheerCharge: false,
             cheerTimer: 0,
             lazyStreak: 0,
@@ -773,6 +778,7 @@
 
         var report;
         if (delta > BALANCE.offline.graceSeconds * 1000) {
+            this.resetBlindTypingCombo();
             report = this.settleOffline(now, delta, { reason: 'offline' });
         } else {
             report = this._settleOnline(now, delta);
@@ -797,6 +803,7 @@
 
             this._expireBuffs(cursor);
             this._decayCombo(cursor);
+            this._decayBlindTypingCombo(cursor);
             this.refreshStats(cursor);
 
             this._stepDevices(cursor, seconds);
@@ -828,6 +835,49 @@
         // 提神飲料期間，連擊不會因中斷而歸零
         if (state.buffs.energy > now) return;
         if (now - finite(state.lastClickAt, 0) > BALANCE.combo.windowSeconds * 1000) state.combo = 0;
+    };
+
+    Game.prototype.recordBlindTypingCharacter = function (nowArg) {
+        var now = nowArg === undefined ? this.now() : nowArg;
+        var state = this.state;
+        this._decayBlindTypingCombo(now);
+        state.blindTypingChars = finite(state.blindTypingChars, 0) + 1;
+        state.blindCombo = Math.min(BALANCE.blindCombo.maxStacks, finite(state.blindCombo, 0) + 1);
+        state.blindComboBest = Math.max(finite(state.blindComboBest, 0), state.blindCombo);
+        state.lastBlindTypingAt = now;
+        this._checkAchievements(now);
+        return state.blindCombo;
+    };
+
+    Game.prototype.touchBlindTyping = function (nowArg) {
+        if (this.state.blindCombo > 0) this.state.lastBlindTypingAt = nowArg === undefined ? this.now() : nowArg;
+    };
+
+    Game.prototype.completeBlindTypingWord = function (nowArg) {
+        var now = nowArg === undefined ? this.now() : nowArg;
+        this.state.blindWordStreak = finite(this.state.blindWordStreak, 0) + 1;
+        this._checkAchievements(now);
+        return this.state.blindWordStreak;
+    };
+
+    Game.prototype.resetBlindTypingCombo = function () {
+        this.state.blindCombo = 0;
+        this.state.blindWordStreak = 0;
+        this.state.lastBlindTypingAt = 0;
+    };
+
+    Game.prototype.blindTypingDamageMult = function () {
+        var balance = BALANCE.blindCombo;
+        var tiers = Math.floor(Math.min(balance.maxStacks, finite(this.state.blindCombo, 0)) / balance.charsPerBonus);
+        return 1 + Math.min(balance.maxBonus, tiers * balance.bonusPerTier);
+    };
+
+    Game.prototype._decayBlindTypingCombo = function (now) {
+        var state = this.state;
+        if (!state.blindCombo || !state.lastBlindTypingAt) return;
+        if (now - finite(state.lastBlindTypingAt, 0) > BALANCE.blindCombo.windowSeconds * 1000) {
+            this.resetBlindTypingCombo();
+        }
     };
 
     Game.prototype._trackComboHold = function (now, seconds) {
@@ -1153,6 +1203,10 @@
         if (req.lazyStreak !== undefined && state.lazyStreak < req.lazyStreak) return false;
         if (req.comboHoldSeconds !== undefined && state.comboHoldBest < req.comboHoldSeconds) return false;
         if (req.burstClicks !== undefined && state.burstBest < req.burstClicks) return false;
+        if (req.blindTypingChars !== undefined && finite(state.blindTypingChars, 0) < req.blindTypingChars) return false;
+        if (req.blindComboBest !== undefined && finite(state.blindComboBest, 0) < req.blindComboBest) return false;
+        if (req.blindWordStreak !== undefined && finite(state.blindWordStreak, 0) < req.blindWordStreak) return false;
+        if (req.anyBoss && !Config.BOSSES.some(function (boss) { return !!state.bosses[boss.id]; })) return false;
         return true;
     };
 
@@ -1300,6 +1354,9 @@
         var copy = JSON.parse(JSON.stringify(this.state));
         copy.burstWindow = [];
         copy.courier = null;
+        copy.blindCombo = 0;
+        copy.blindWordStreak = 0;
+        copy.lastBlindTypingAt = 0;
         return copy;
     };
 
@@ -1318,6 +1375,11 @@
         s.flags = s.flags || {};
         s.frozen = {};
         s.combo = 0;
+        s.blindCombo = 0;
+        s.blindWordStreak = 0;
+        s.lastBlindTypingAt = 0;
+        s.blindTypingChars = finite(s.blindTypingChars, 0);
+        s.blindComboBest = Math.min(BALANCE.blindCombo.maxStacks, finite(s.blindComboBest, 0));
         s.courier = null;
         s.burstWindow = [];
         s.depths = s.depths || {};

@@ -39,7 +39,8 @@
         if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { ok: false, reason: 'shape' };
 
         var nums = ['coins', 'lifetimeCoins', 'broth', 'brothLifetime', 'totalDamage',
-            'clicks', 'couriersCaught', 'killsTotal', 'lazyStreak', 'lastSettle', 'startedAt'];
+            'clicks', 'couriersCaught', 'killsTotal', 'lazyStreak', 'lastSettle', 'startedAt',
+            'blindTypingChars', 'blindComboBest'];
         for (var i = 0; i < nums.length; i++) {
             var key = nums[i];
             if (raw[key] !== undefined && !nonNeg(raw[key])) return { ok: false, reason: 'number:' + key };
@@ -164,6 +165,11 @@
             lastClickAt: 0,
             comboMaxSince: 0,
             comboHoldBest: nonNeg(raw.comboHoldBest) ? raw.comboHoldBest : 0,
+            blindTypingChars: nonNeg(raw.blindTypingChars) ? Math.floor(raw.blindTypingChars) : 0,
+            blindCombo: 0,
+            blindComboBest: nonNeg(raw.blindComboBest) ? Math.min(Config.BALANCE.blindCombo.maxStacks, Math.floor(raw.blindComboBest)) : 0,
+            blindWordStreak: 0,
+            lastBlindTypingAt: 0,
             cheerCharge: raw.cheerCharge === true,
             cheerTimer: 0,
             lazyStreak: nonNeg(raw.lazyStreak) ? Math.floor(raw.lazyStreak) : 0,

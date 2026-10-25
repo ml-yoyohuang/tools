@@ -30,6 +30,13 @@
             maxMultiplier: 10,      // 指數成長，10 層達 ×10
             upgradedMaxMultiplier: 15 // 共振敲擊後 10 層達 ×15
         },
+        blindCombo: {
+            windowSeconds: 3,
+            maxStacks: 50,
+            charsPerBonus: 10,
+            bonusPerTier: 0.05,
+            maxBonus: 0.25
+        },
 
         /** 軟化：肉槌造成，對英打攻擊的獨立乘區 */
         soften: { seconds: 6, clickMult: 2 },

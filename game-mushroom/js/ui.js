@@ -73,6 +73,9 @@
         this.passBadgeTimer = null;
         this.passBadge = null;
         this.frozenHold = null;
+        this.maskVocabulary = false;
+        this.currentTypingView = null;
+        this.blindMilestoneTimer = null;
 
         this.el = {
             coins: $('res-coins'), broth: $('res-broth'), click: $('res-click'), bossTyping: $('res-boss-typing'), dps: $('res-dps'),
@@ -84,8 +87,10 @@
             deviceFreezeNote: $('device-freeze-note'),
             buffBar: $('buff-bar'), stage: $('stage'), stageImage: document.querySelector('.stage__image'), targets: $('targets'), floaters: $('floaters'),
             typingPrompt: $('typing-prompt'), typingTranslation: $('typing-translation'), typingInput: $('typing-input'), typingStatus: $('typing-status'),
+            typingMaskTools: $('typing-mask-tools'), btnTypingMask: $('btn-typing-mask'),
             typingRate: $('typing-rate'),
             typingSection: document.querySelector('.typing'),
+            btnTypingFloat: $('btn-typing-float'), btnTypingFloatClose: $('btn-typing-float-close'),
             typingAlert: $('typing-alert'),
             btnSkipPrompt: $('btn-skip-prompt'),
             courier: $('courier'), courierArt: $('courier-art'),
@@ -510,6 +515,21 @@
         }
 
         this.el.btnSkipPrompt.addEventListener('click', function () { self.handlers.onSkipPrompt(); });
+        this.el.btnTypingFloat.addEventListener('click', function () { self.setTypingFloating(true); });
+        this.el.btnTypingFloatClose.addEventListener('click', function () { self.setTypingFloating(false); });
+        window.addEventListener('resize', function () {
+            if (self.el.typingSection.classList.contains('is-floating') && window.innerWidth > 900) {
+                self.setTypingFloating(false);
+            }
+        });
+        this.el.btnTypingMask.addEventListener('click', function () {
+            self.maskVocabulary = !self.maskVocabulary;
+            self.el.btnTypingMask.setAttribute('aria-pressed', self.maskVocabulary ? 'true' : 'false');
+            self.el.btnTypingMask.setAttribute('aria-label', self.maskVocabulary ? '顯示完整單字' : '遮住單字');
+            self.el.btnTypingMask.title = self.maskVocabulary ? '顯示完整單字' : '遮住尚未輸入的字母';
+            if (self.handlers.onTypingMaskChange) self.handlers.onTypingMaskChange(self.maskVocabulary);
+            if (self.currentTypingView) self._renderTypingPrompt();
+        });
         this.el.typingInput.addEventListener('keydown', function (event) {
             if (event.ctrlKey || event.metaKey || event.altKey) return;
             var isComposing = composing || event.isComposing || event.key === 'Process' || event.keyCode === 229;
@@ -550,9 +570,30 @@
             this.value = '';
         });
         this.el.typingInput.addEventListener('paste', function (event) { event.preventDefault(); });
+
     };
 
     UI.prototype.focusTypingInput = function () { this.el.typingInput.focus(); };
+    UI.prototype.setTypingFloating = function (active) {
+        var section = this.el.typingSection;
+        if (!section) return;
+        active = !!active && window.matchMedia('(max-width: 900px)').matches;
+        if (active) {
+            if (!this.typingFloatSpacer) {
+                this.typingFloatSpacer = document.createElement('div');
+                this.typingFloatSpacer.className = 'typing-float-spacer';
+                section.parentNode.insertBefore(this.typingFloatSpacer, section);
+            }
+            this.typingFloatSpacer.style.height = section.offsetHeight + 'px';
+        } else if (this.typingFloatSpacer) {
+            this.typingFloatSpacer.remove();
+            this.typingFloatSpacer = null;
+        }
+        section.classList.toggle('is-floating', active);
+        this.el.btnTypingFloat.hidden = active;
+        this.el.btnTypingFloat.setAttribute('aria-pressed', active ? 'true' : 'false');
+        this.el.btnTypingFloatClose.hidden = !active;
+    };
     UI.prototype.pulseTypingCharacter = function () {
         var character = this.el.typingPrompt.querySelector('.typing__typed-hit');
         if (character) {
@@ -562,6 +603,25 @@
         }
     };
     UI.prototype.renderTyping = function (prompt, index, status, error, translation, crazy, forceStatusAnimation) {
+        this.currentTypingView = {
+            prompt: prompt, index: index, status: status, error: error, translation: translation,
+            crazy: crazy, forceStatusAnimation: forceStatusAnimation
+        };
+        this._renderTypingPrompt();
+    };
+    UI.prototype._renderTypingPrompt = function () {
+        var view = this.currentTypingView;
+        if (!view) return;
+        var prompt = view.prompt;
+        var index = view.index;
+        var status = view.status;
+        var error = view.error;
+        var translation = view.translation;
+        var crazy = view.crazy;
+        var forceStatusAnimation = view.forceStatusAnimation;
+        var isVocabulary = !!translation && !crazy;
+        var masked = this.maskVocabulary && isVocabulary;
+        this._updateBlindTypingTier(this.game.state.blindCombo, masked);
         var done = el('span', 'typing__done');
         if (index > 1) done.appendChild(document.createTextNode(prompt.slice(0, index - 1)));
         if (index > 0) {
@@ -571,10 +631,16 @@
         var rest = prompt.slice(index);
         this.el.typingPrompt.textContent = '';
         this.el.typingPrompt.appendChild(done);
-        if (rest) {
+        if (masked && rest) {
+            this.el.typingPrompt.appendChild(el('span', 'typing__masked-char', '•'.repeat(rest.length)));
+        } else if (rest) {
             this.el.typingPrompt.appendChild(el('span', 'typing__next', rest.charAt(0) === ' ' ? '␣' : rest.charAt(0)));
             this.el.typingPrompt.appendChild(document.createTextNode(rest.slice(1)));
         }
+        this.el.typingMaskTools.hidden = !isVocabulary;
+        this.el.btnTypingMask.setAttribute('aria-pressed', this.maskVocabulary ? 'true' : 'false');
+        this.el.btnTypingMask.setAttribute('aria-label', this.maskVocabulary ? '顯示完整單字' : '遮住單字');
+        this.el.btnTypingMask.title = this.maskVocabulary ? '顯示完整單字' : '遮住尚未輸入的字母';
         var statusText = status || '';
         var statusChanged = this.el.typingStatus.textContent !== statusText;
         setText(this.el.typingStatus, statusText);
@@ -588,6 +654,7 @@
         this.el.typingTranslation.classList.toggle('is-crazy', !!crazy);
         this.el.typingSection.classList.toggle('is-crazy', !!crazy);
         this.el.typingStatus.classList.toggle('is-error', !!error);
+        if (this.typingFloatSpacer) this.typingFloatSpacer.style.height = this.el.typingSection.offsetHeight + 'px';
         if (error) {
             this.el.typingInput.classList.remove('has-error');
             // 重新觸發輕微提示動畫
@@ -794,12 +861,37 @@
             : '⚡ 連擊 ' + stacks + ' 層！傷害 ×' + multiplier.toFixed(2), 'combo');
     };
 
+    UI.prototype.blindTypingMilestone = function (streak, multiplier) {
+        var button = this.el.btnTypingMask;
+        button.classList.remove('is-blind-surge');
+        void button.offsetWidth;
+        button.classList.add('is-blind-surge');
+        if (this.blindMilestoneTimer) clearTimeout(this.blindMilestoneTimer);
+        this.blindMilestoneTimer = setTimeout(function () {
+            button.classList.remove('is-blind-surge');
+            this.blindMilestoneTimer = null;
+        }.bind(this), 650);
+        this.floater('👁 盲打連擊 ' + streak + '！英打傷害 +' + Math.round((multiplier - 1) * 100) + '%', 'combo');
+    };
+
+    UI.prototype._updateBlindTypingTier = function (streak, active) {
+        var button = this.el.btnTypingMask;
+        for (var tier = 0; tier <= 5; tier++) button.classList.remove('blind-tier-' + tier);
+        if (active && streak > 0) {
+            var currentTier = Math.min(5, Math.floor(streak / Config.BALANCE.blindCombo.charsPerBonus));
+            button.classList.add('blind-tier-' + currentTier);
+        }
+    };
+
     /* ---------------- 快速更新 ---------------- */
 
     UI.prototype.tickFast = function (now) {
         var game = this.game;
         var state = game.state;
         var stats = game.stats;
+        var activeBlindVocabulary = this.maskVocabulary && this.currentTypingView &&
+            !!this.currentTypingView.translation && !this.currentTypingView.crazy;
+        this._updateBlindTypingTier(state.blindCombo, activeBlindVocabulary);
 
         setText(this.el.coins, (this.showFullCoins || this.numberStyle === 'full')
             ? Format.full(state.coins) : Format.short(state.coins));
@@ -865,16 +957,23 @@
         if (state.buffs.broth > now) list.push({ label: '金湯膠囊 菇幣 ×5', left: (state.buffs.broth - now) / 1000 });
         if (state.buffs.haste > now) list.push({ label: '辣油加速 速度 ×1.2', left: (state.buffs.haste - now) / 1000 });
         if (stats.comboMult > 1.001 && this.game.mode !== 'boss') list.push({ label: '連擊 ×' + stats.comboMult.toFixed(2), left: null });
+        if (state.blindCombo > 0) {
+            var blindTier = Math.min(5, Math.floor(state.blindCombo / Config.BALANCE.blindCombo.charsPerBonus));
+            list.push({
+                label: '閉眼連擊 ' + state.blindCombo + ' / ' + Config.BALANCE.blindCombo.maxStacks + '｜英打傷害 +' + Math.round((this.game.blindTypingDamageMult() - 1) * 100) + '%',
+                left: null, className: 'buff--blind-tier-' + blindTier
+            });
+        }
         if (state.cheerCharge) list.push({ label: '下次擊敗雙倍菇幣', left: null });
         if (stats.ruthlessActive) list.push({ label: '無情機器 ×1.5', left: null });
 
-        var signature = list.map(function (b) { return b.label + (b.left === null ? '' : Math.ceil(b.left)); }).join('|');
+        var signature = list.map(function (b) { return b.label + (b.left === null ? '' : Math.ceil(b.left)) + (b.className || ''); }).join('|');
         if (signature === this._buffSignature) return;
         this._buffSignature = signature;
 
         this.el.buffBar.textContent = '';
         list.forEach(function (buff) {
-            var node = el('li', 'buff');
+            var node = el('li', 'buff' + (buff.className ? ' ' + buff.className : ''));
             node.appendChild(el('span', '', buff.label));
             if (buff.left !== null) node.appendChild(el('span', 'buff__time', Format.clock(buff.left)));
             this.el.buffBar.appendChild(node);
