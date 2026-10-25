@@ -1083,6 +1083,7 @@
             var boss = Config.BOSS_BY_ID[zone.bossId];
             var respawn = boss && game.bossRespawnStatus(boss.id);
             this.el.btnBoss.disabled = !respawn || !respawn.canChallenge;
+            this.el.btnBoss.classList.toggle('is-ready', !this.el.btnBoss.disabled);
             if (!boss) setText(this.el.btnBoss, '此地區沒有菇王');
             else if (respawn.firstClear && respawn.canChallenge) setText(this.el.btnBoss, '挑戰菇王：' + boss.name);
             else if (respawn.canChallenge) setText(this.el.btnBoss, '菇王已重生：再次挑戰 ' + boss.name);

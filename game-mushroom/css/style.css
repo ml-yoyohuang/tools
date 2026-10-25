@@ -513,7 +513,7 @@ html[data-theme="dark"] .typing__mask-btn.blind-tier-5[aria-pressed="true"] { ba
     border: 1px dashed var(--accent); border-radius: var(--radius-m);
     background: var(--accent-soft); color: var(--text-sub); pointer-events: none;
 }
-.typing-float-spacer::after { content: '英打區已移至畫面底部'; font-size: .78rem; font-weight: 700; }
+.typing-float-spacer::after { content: '英打區已移至畫面頂部'; font-size: .78rem; font-weight: 700; }
 .floater--luck {
     z-index: 8; padding: 7px 14px; border: 2px solid #f0c34e; border-radius: 999px;
     color: #5c3c00; background: linear-gradient(135deg, #fff9d8, #f7c84d);
@@ -792,6 +792,13 @@ html[data-theme="dark"] .frozen-chip { background: #1d3b4c; color: #bfe4f5; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 .btn--primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
 .btn--primary:hover:not(:disabled) { background: var(--accent); filter: brightness(1.08); }
+.btn--primary.is-ready {
+    animation: boss-button-ready 2.2s ease-in-out infinite;
+}
+@keyframes boss-button-ready {
+    0%, 100% { transform: translateY(0); box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 24%, transparent); }
+    50% { transform: translateY(-2px); box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 52%, transparent); }
+}
 .btn--ghost { background: transparent; min-height: 38px; }
 .btn--danger { color: var(--danger); }
 .btn--small { min-height: 34px; padding: 0 12px; font-size: .8rem; }
