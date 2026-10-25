@@ -638,6 +638,8 @@
         var theme = this.settings.theme;
         if (theme === 'system') theme = (this.darkQuery && this.darkQuery.matches) ? 'dark' : 'light';
         document.documentElement.setAttribute('data-theme', theme);
+        var themeColor = document.querySelector('meta[name="theme-color"]');
+        if (themeColor) themeColor.setAttribute('content', theme === 'dark' ? '#0d1c24' : '#edf6f4');
 
         var reduced = this.settings.motion === 'reduced' ||
             (this.settings.motion === 'system' && this.motionQuery && this.motionQuery.matches);
@@ -692,7 +694,21 @@
         this.ui.announce('離線期間獲得 ' + Format.short(report.coins) + ' 菇幣。');
     };
 
+    function syncManagementDrawer() {
+        var drawer = document.querySelector('.management-drawer');
+        if (!drawer) return;
+        var desktopQuery = window.matchMedia ? window.matchMedia('(min-width: 901px)') : null;
+        var sync = function () {
+            drawer.open = desktopQuery ? desktopQuery.matches : window.innerWidth > 900;
+        };
+        sync();
+        if (!desktopQuery) return;
+        if (typeof desktopQuery.addEventListener === 'function') desktopQuery.addEventListener('change', sync);
+        else if (typeof desktopQuery.addListener === 'function') desktopQuery.addListener(sync);
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
+        syncManagementDrawer();
         window.mushroomApp = new App();
     });
 })();

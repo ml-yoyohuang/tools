@@ -1155,10 +1155,19 @@
             if (frozen) effectText = '❄ 冰凍中・停止運作　' + effectText;
             setText(nodes.effect, effectText);
 
+            var unitBrothCost = owned === 0 && device.brothCost ? device.brothCost : 0;
+            var unitCostText = self.num(game.deviceUnitCost(device, owned));
             var costText = plan.count > 0
-                ? '買 ' + plan.count + ' 台　' + self.num(plan.cost) + ' 菇幣' + (plan.brothCost ? ' + ' + plan.brothCost + ' 金湯滴' : '')
-                : '菇幣不足';
-            setText(nodes.cost, costText);
+                ? 'x' + plan.count + '台　' + self.num(plan.cost) + ' 菇幣' + (plan.brothCost ? ' + ' + plan.brothCost + ' 金湯滴' : '')
+                : '菇幣不足　' + unitCostText + ' 菇幣' + (unitBrothCost ? ' + ' + unitBrothCost + ' 金湯滴' : '');
+            if (plan.count > 0) {
+                setText(nodes.cost, costText);
+            } else {
+                nodes.cost.textContent = '';
+                nodes.cost.appendChild(document.createTextNode('菇幣不足　'));
+                nodes.cost.appendChild(el('strong', '', unitCostText + ' 菇幣'));
+                if (unitBrothCost) nodes.cost.appendChild(document.createTextNode(' + ' + unitBrothCost + ' 金湯滴'));
+            }
             nodes.cost.classList.toggle('is-too-much', !plan.affordable);
             nodes.row.classList.toggle('is-affordable', plan.affordable && plan.count > 0);
             nodes.row.disabled = !(plan.affordable && plan.count > 0);

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="純前端放置／英打練習遊戲：逐字輸入攻擊高湯菇，招募成精廚具，挑戰三個地區與三隻菇王。">
     <meta name="color-scheme" content="light dark">
-    <meta name="theme-color" content="#24352d">
+    <meta name="theme-color" content="#edf6f4">
     <meta property="og:type" content="website">
     <meta property="og:title" content="無限高湯討伐隊｜英打練習遊戲">
     <meta property="og:description" content="每敲一個正確字元就發動攻擊，收集菇幣、強化設備，挑戰三個地區的菇王。">
@@ -33,6 +33,8 @@
                     theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
                 }
                 document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
+                var themeColor = document.querySelector('meta[name="theme-color"]');
+                if (themeColor) themeColor.setAttribute('content', theme === 'dark' ? '#0d1c24' : '#edf6f4');
                 var motion = s && s.motion ? s.motion : 'system';
                 var reduced = motion === 'reduced' || (motion === 'system' &&
                     window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -61,7 +63,138 @@
         <button type="button" class="link-btn" id="btn-takeover">改由這個分頁接管</button>
     </p>
 
-    <dl class="resources">
+    <div class="layout">
+
+        <!-- 戰場 -->
+        <section class="field" aria-label="採集戰場">
+            <header class="field__head">
+                <div class="zone-tabs" id="zone-tabs" role="group" aria-label="地區切換"></div>
+                <p class="field__meta"><span class="field__depth"><span class="field__depth-label">採集深度</span><span class="field__depth-value" id="zone-depth">1</span></span><span class="field__description" id="zone-desc"></span></p>
+            </header>
+
+            <section class="typing" aria-label="英打練習">
+                <div class="typing__head">
+                    <span class="typing__label">英打攻擊</span>
+                    <div class="typing__tools">
+                        <span class="typing__rate is-steady" id="typing-rate" title="最近 10 秒平均；維持每秒 3.5 字元 3 秒顯示火焰">0.0 字/秒</span>
+                        <button type="button" class="btn btn--ghost typing__skip" id="btn-skip-prompt">跳過此題</button>
+                    </div>
+                </div>
+                <p class="typing__alert" id="typing-alert" role="status" aria-live="polite" hidden></p>
+                <p class="typing__prompt" id="typing-prompt" aria-live="off"></p>
+                <p class="typing__translation" id="typing-translation" hidden></p>
+                <label class="visually-hidden" for="typing-input">依照上方題目輸入，每個正確字元會攻擊一次</label>
+                <input id="typing-input" class="typing__input" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點此開始輸入…">
+                <p class="typing__status" id="typing-status" aria-live="polite">點一下輸入框，開始攻擊蘑菇。</p>
+            </section>
+
+            <ul class="buff-bar" id="buff-bar" aria-label="生效中的效果"></ul>
+
+            <div class="stage" id="stage">
+                <img class="stage__image" alt="" aria-hidden="true">
+                <ul class="targets" id="targets"></ul>
+                <div class="floaters" id="floaters" aria-hidden="true"></div>
+                <button type="button" class="courier" id="courier" hidden>
+                    <span class="courier__art" id="courier-art" aria-hidden="true"></span>
+                    <img class="courier__mushroom" src="assets/courier-mushroom.svg" alt="" aria-hidden="true" draggable="false">
+                    <span class="courier__label" aria-hidden="true">外送</span>
+                    <span class="visually-hidden">點擊迷路的外送員，取得一個隨機道具</span>
+                </button>
+            </div>
+
+            <div class="boss-panel" id="boss-panel" hidden>
+                <section class="boss-combo" id="boss-combo" aria-label="菇王戰連擊加成" hidden>
+                    <div class="boss-combo__head">
+                        <span class="boss-combo__title">⚡ 英打連擊</span>
+                        <strong id="boss-combo-value">連擊 0 / 10　傷害 ×1.00</strong>
+                    </div>
+                    <div class="boss-combo__track" role="progressbar" aria-label="英打連擊層數" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0">
+                        <span class="boss-combo__fill" id="boss-combo-fill"></span>
+                    </div>
+                    <p class="boss-combo__hint" id="boss-combo-hint">持續正確輸入疊加傷害；停打 3 秒，連擊就會歸零。</p>
+                </section>
+                <p class="boss-help" id="boss-help"></p>
+                <p class="boss-progress" id="boss-progress" hidden></p>
+                <div class="boss-actions">
+                    <button type="button" class="btn btn--primary hold-btn" id="btn-hold" hidden>
+                        <span class="hold-btn__fill" id="hold-fill" aria-hidden="true"></span>
+                        <span class="hold-btn__label" id="hold-label">按住不放 2 秒破 1 層護盾</span>
+                    </button>
+                    <button type="button" class="btn" id="btn-exit-boss">退出採集</button>
+                </div>
+                <ul class="frozen-list" id="frozen-list" aria-label="結冰的設備"></ul>
+            </div>
+
+            <div class="field-actions" id="field-actions">
+                <button type="button" class="btn btn--primary" id="btn-boss">挑戰菇王</button>
+            </div>
+        </section>
+
+        <!-- 點擊後展開設備與收藏面板 -->
+        <details class="management-drawer">
+            <summary>設備・升級・道具・裝備・圖鑑・成就</summary>
+            <section class="panels" aria-label="管理面板">
+            <div class="tabs" role="tablist" aria-label="面板分頁">
+                <button type="button" class="tab" role="tab" id="tab-devices" aria-controls="panel-devices" aria-selected="true">設備</button>
+                <button type="button" class="tab" role="tab" id="tab-upgrades" aria-controls="panel-upgrades" aria-selected="false">升級<span class="badge" id="badge-upgrades" hidden>0</span></button>
+                <button type="button" class="tab" role="tab" id="tab-items" aria-controls="panel-items" aria-selected="false">道具<span class="badge" id="badge-items" hidden>0</span></button>
+                <button type="button" class="tab" role="tab" id="tab-equipment" aria-controls="panel-equipment" aria-selected="false">裝備</button>
+                <button type="button" class="tab" role="tab" id="tab-dex" aria-controls="panel-dex" aria-selected="false">圖鑑</button>
+                <button type="button" class="tab" role="tab" id="tab-achievements" aria-controls="panel-achievements" aria-selected="false">成就</button>
+            </div>
+
+            <div class="panel" role="tabpanel" id="panel-devices" aria-labelledby="tab-devices">
+                <p class="panel__note panel__note--warning" id="device-freeze-note" role="alert" hidden></p>
+                <div class="buy-mode" role="group" aria-label="購買數量">
+                    <span class="buy-mode__label">購買數量</span>
+                    <button type="button" class="chip" data-buy-mode="1" aria-pressed="true">x1</button>
+                    <button type="button" class="chip" data-buy-mode="10" aria-pressed="false">x10</button>
+                    <button type="button" class="chip" data-buy-mode="max" aria-pressed="false">最大</button>
+                </div>
+                <ul class="shop-list" id="device-list"></ul>
+            </div>
+
+            <div class="panel" role="tabpanel" id="panel-upgrades" aria-labelledby="tab-upgrades" hidden>
+                <p class="panel__note">升級只能購買一次，效果永久。里程碑升級會在擊敗菇王時自動取得，不另外收費。</p>
+                <ul class="shop-list" id="upgrade-list"></ul>
+                <h3 class="panel__sub">已取得</h3>
+                <ul class="owned-list" id="upgrade-owned"></ul>
+            </div>
+
+            <div class="panel" role="tabpanel" id="panel-items" aria-labelledby="tab-items" hidden>
+                <p class="panel__note" id="item-note">道具商店會在擊敗第二區菇王後開放。</p>
+                <ul class="shop-list" id="item-list"></ul>
+            </div>
+
+            <div class="panel" role="tabpanel" id="panel-equipment" aria-labelledby="tab-equipment" hidden>
+                <p class="panel__note" id="equip-note">裝備系統會在擊敗第三區菇王後開放。只有一個欄位，效果僅在裝備時生效。</p>
+                <ul class="shop-list" id="equipment-list"></ul>
+            </div>
+
+            <div class="panel" role="tabpanel" id="panel-dex" aria-labelledby="tab-dex" hidden>
+                <p class="panel__note">遭遇過的蘑菇會永久點亮。擊敗菇王後可取得對應收藏品。</p>
+                <ul class="dex-list" id="dex-list"></ul>
+                <h3 class="panel__sub">收藏品</h3>
+                <ul class="dex-list" id="collection-list"></ul>
+                <section class="word-dex" aria-labelledby="word-dex-title">
+                    <h3 class="panel__sub" id="word-dex-title">單字圖鑑</h3>
+                    <p class="panel__note">收錄全民英檢初級與中級題庫的單字，依 A–Z 排列，可瀏覽英文與中文解釋。</p>
+                    <p class="word-dex__summary" id="word-dex-summary" aria-live="polite"></p>
+                    <div class="word-dex__filters" id="word-dex-filters" role="group" aria-label="篩選單字級別"></div>
+                    <div class="word-dex__letters" id="word-dex-letters" role="group" aria-label="依字母瀏覽單字"></div>
+                    <ul class="word-dex__list" id="word-dex-list"></ul>
+                </section>
+            </div>
+
+            <div class="panel" role="tabpanel" id="panel-achievements" aria-labelledby="tab-achievements" hidden>
+                <p class="panel__note"><span id="ach-count">0</span> / <span id="ach-total">0</span> 已達成。</p>
+                <ul class="ach-list" id="ach-list"></ul>
+            </div>
+            </section>
+        </details>
+    </div>
+
+    <dl class="resources" aria-label="遊戲資源與累積數據">
         <div class="res">
             <dt>菇幣</dt>
             <dd><button type="button" class="res__value" id="res-coins" title="點一下切換完整數值">0</button></dd>
@@ -104,133 +237,6 @@
             <dd id="res-device-total">0</dd>
         </div>
     </dl>
-
-    <div class="layout">
-
-        <!-- 戰場 -->
-        <section class="field" aria-label="採集戰場">
-            <header class="field__head">
-                <div class="zone-tabs" id="zone-tabs" role="group" aria-label="地區切換"></div>
-                <p class="field__meta"><span class="field__depth"><span class="field__depth-label">採集深度</span><span class="field__depth-value" id="zone-depth">1</span></span><span class="field__description" id="zone-desc"></span></p>
-            </header>
-
-            <ul class="buff-bar" id="buff-bar" aria-label="生效中的效果"></ul>
-
-            <div class="stage" id="stage">
-                <img class="stage__image" alt="" aria-hidden="true">
-                <ul class="targets" id="targets"></ul>
-                <div class="floaters" id="floaters" aria-hidden="true"></div>
-                <button type="button" class="courier" id="courier" hidden>
-                    <span class="courier__art" id="courier-art" aria-hidden="true"></span>
-                    <span class="courier__label" aria-hidden="true">外送</span>
-                    <span class="visually-hidden">點擊迷路的外送員，取得一個隨機道具</span>
-                </button>
-            </div>
-
-            <section class="typing" aria-label="英打練習">
-                <div class="typing__head">
-                    <span class="typing__label">英打攻擊</span>
-                    <div class="typing__tools">
-                        <span class="typing__rate is-steady" id="typing-rate" title="最近 10 秒平均；維持每秒 3.5 字元 3 秒顯示火焰">0.0 字/秒</span>
-                        <button type="button" class="btn btn--ghost typing__skip" id="btn-skip-prompt">跳過此題</button>
-                    </div>
-                </div>
-                <p class="typing__alert" id="typing-alert" role="status" aria-live="polite" hidden></p>
-                <p class="typing__prompt" id="typing-prompt" aria-live="off"></p>
-                <p class="typing__translation" id="typing-translation" hidden></p>
-                <label class="visually-hidden" for="typing-input">依照上方題目輸入，每個正確字元會攻擊一次</label>
-                <input id="typing-input" class="typing__input" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點此開始輸入…">
-                <p class="typing__status" id="typing-status" aria-live="polite">點一下輸入框，開始攻擊蘑菇。</p>
-            </section>
-
-            <div class="boss-panel" id="boss-panel" hidden>
-                <section class="boss-combo" id="boss-combo" aria-label="菇王戰連擊加成" hidden>
-                    <div class="boss-combo__head">
-                        <span class="boss-combo__title">⚡ 英打連擊</span>
-                        <strong id="boss-combo-value">連擊 0 / 10　傷害 ×1.00</strong>
-                    </div>
-                    <div class="boss-combo__track" role="progressbar" aria-label="英打連擊層數" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0">
-                        <span class="boss-combo__fill" id="boss-combo-fill"></span>
-                    </div>
-                    <p class="boss-combo__hint" id="boss-combo-hint">持續正確輸入疊加傷害；停打 3 秒，連擊就會歸零。</p>
-                </section>
-                <p class="boss-help" id="boss-help"></p>
-                <p class="boss-progress" id="boss-progress" hidden></p>
-                <div class="boss-actions">
-                    <button type="button" class="btn btn--primary hold-btn" id="btn-hold" hidden>
-                        <span class="hold-btn__fill" id="hold-fill" aria-hidden="true"></span>
-                        <span class="hold-btn__label" id="hold-label">按住不放 2 秒破 1 層護盾</span>
-                    </button>
-                    <button type="button" class="btn" id="btn-exit-boss">退出採集</button>
-                </div>
-                <ul class="frozen-list" id="frozen-list" aria-label="結冰的設備"></ul>
-            </div>
-
-            <div class="field-actions" id="field-actions">
-                <button type="button" class="btn btn--primary" id="btn-boss">挑戰菇王</button>
-            </div>
-        </section>
-
-        <!-- 右側面板 -->
-        <section class="panels" aria-label="管理面板">
-            <div class="tabs" role="tablist" aria-label="面板分頁">
-                <button type="button" class="tab" role="tab" id="tab-devices" aria-controls="panel-devices" aria-selected="true">設備</button>
-                <button type="button" class="tab" role="tab" id="tab-upgrades" aria-controls="panel-upgrades" aria-selected="false">升級<span class="badge" id="badge-upgrades" hidden>0</span></button>
-                <button type="button" class="tab" role="tab" id="tab-items" aria-controls="panel-items" aria-selected="false">道具<span class="badge" id="badge-items" hidden>0</span></button>
-                <button type="button" class="tab" role="tab" id="tab-equipment" aria-controls="panel-equipment" aria-selected="false">裝備</button>
-                <button type="button" class="tab" role="tab" id="tab-dex" aria-controls="panel-dex" aria-selected="false">圖鑑</button>
-                <button type="button" class="tab" role="tab" id="tab-achievements" aria-controls="panel-achievements" aria-selected="false">成就</button>
-            </div>
-
-            <div class="panel" role="tabpanel" id="panel-devices" aria-labelledby="tab-devices">
-                <p class="panel__note panel__note--warning" id="device-freeze-note" role="alert" hidden></p>
-                <div class="buy-mode" role="group" aria-label="購買數量">
-                    <span class="buy-mode__label">購買數量</span>
-                    <button type="button" class="chip" data-buy-mode="1" aria-pressed="true">1</button>
-                    <button type="button" class="chip" data-buy-mode="10" aria-pressed="false">10</button>
-                    <button type="button" class="chip" data-buy-mode="max" aria-pressed="false">最大</button>
-                </div>
-                <ul class="shop-list" id="device-list"></ul>
-            </div>
-
-            <div class="panel" role="tabpanel" id="panel-upgrades" aria-labelledby="tab-upgrades" hidden>
-                <p class="panel__note">升級只能購買一次，效果永久。里程碑升級會在擊敗菇王時自動取得，不另外收費。</p>
-                <ul class="shop-list" id="upgrade-list"></ul>
-                <h3 class="panel__sub">已取得</h3>
-                <ul class="owned-list" id="upgrade-owned"></ul>
-            </div>
-
-            <div class="panel" role="tabpanel" id="panel-items" aria-labelledby="tab-items" hidden>
-                <p class="panel__note" id="item-note">道具商店會在擊敗第二區菇王後開放。</p>
-                <ul class="shop-list" id="item-list"></ul>
-            </div>
-
-            <div class="panel" role="tabpanel" id="panel-equipment" aria-labelledby="tab-equipment" hidden>
-                <p class="panel__note" id="equip-note">裝備系統會在擊敗第三區菇王後開放。只有一個欄位，效果僅在裝備時生效。</p>
-                <ul class="shop-list" id="equipment-list"></ul>
-            </div>
-
-            <div class="panel" role="tabpanel" id="panel-dex" aria-labelledby="tab-dex" hidden>
-                <p class="panel__note">遭遇過的蘑菇會永久點亮。擊敗菇王後可取得對應收藏品。</p>
-                <ul class="dex-list" id="dex-list"></ul>
-                <h3 class="panel__sub">收藏品</h3>
-                <ul class="dex-list" id="collection-list"></ul>
-                <section class="word-dex" aria-labelledby="word-dex-title">
-                    <h3 class="panel__sub" id="word-dex-title">單字圖鑑</h3>
-                    <p class="panel__note">收錄全民英檢初級與中級題庫的單字，依 A–Z 排列，可瀏覽英文與中文解釋。</p>
-                    <p class="word-dex__summary" id="word-dex-summary" aria-live="polite"></p>
-                    <div class="word-dex__filters" id="word-dex-filters" role="group" aria-label="篩選單字級別"></div>
-                    <div class="word-dex__letters" id="word-dex-letters" role="group" aria-label="依字母瀏覽單字"></div>
-                    <ul class="word-dex__list" id="word-dex-list"></ul>
-                </section>
-            </div>
-
-            <div class="panel" role="tabpanel" id="panel-achievements" aria-labelledby="tab-achievements" hidden>
-                <p class="panel__note"><span id="ach-count">0</span> / <span id="ach-total">0</span> 已達成。</p>
-                <ul class="ach-list" id="ach-list"></ul>
-            </div>
-        </section>
-    </div>
 </div>
 
 <div class="visually-hidden" id="live-region" role="status" aria-live="polite" aria-atomic="true"></div>
@@ -289,8 +295,8 @@
             <legend>外觀</legend>
             <div class="radio-row">
                 <label><input type="radio" name="theme" value="system" checked> 跟隨系統</label>
-                <label><input type="radio" name="theme" value="light"> 淺色</label>
-                <label><input type="radio" name="theme" value="dark"> 深色</label>
+                <label><input type="radio" name="theme" value="light"> 白天</label>
+                <label><input type="radio" name="theme" value="dark"> 黑夜</label>
             </div>
         </fieldset>
         <fieldset>

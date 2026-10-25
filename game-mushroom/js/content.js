@@ -43,7 +43,7 @@
         {
             id: 'u_clk_5', group: 'click', name: '幻影連打', flavor: '超越視覺的手速。',
             desc: '每次英打攻擊自動追加一次 50% 傷害的判定。衍生判定不會再觸發自己，也不計入英打攻擊次數。',
-            cost: 2600000, req: { clicks: 20000 }, reqText: '英打攻擊 20,000 次',
+            cost: 2600000, req: { clicks: 10000 }, reqText: '英打攻擊 10,000 次',
             effect: { type: 'phantom', mult: 0.5 }
         },
 
