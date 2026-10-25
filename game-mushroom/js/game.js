@@ -609,7 +609,10 @@
 
         this.mode = 'boss';
         this.boss = boss;
-        this.targets = [Combat.createBossTarget(boss, { now: now })];
+        this.targets = [Combat.createBossTarget(boss, {
+            now: now,
+            depthMult: this.depthMult(zone.id, 'hp')
+        })];
         this.state.frozen = {};
         this.bossTimer = 0;
         this.holdStartedAt = 0;

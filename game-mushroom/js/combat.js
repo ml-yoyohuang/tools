@@ -329,12 +329,13 @@
 
     function createBossTarget(boss, options) {
         options = options || {};
+        var hp = boss.hp * (options.depthMult || 1);
         return {
             uid: options.uid !== undefined ? options.uid : nextUid++,
             typeId: boss.id,
             kind: 'boss',
-            hp: boss.hp,
-            maxHp: boss.hp,
+            hp: hp,
+            maxHp: hp,
             paidDamage: 0,
             settled: false,
             spawnedAt: options.now || 0,

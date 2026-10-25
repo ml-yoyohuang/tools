@@ -376,7 +376,7 @@ html[data-theme="dark"] .field__depth-value {
     84% { transform: translateY(-.75px) scale(1.02); }
 }
 .typing__translation {
-    display: flex; align-items: baseline; gap: 9px; margin: 5px 0 0; padding: 8px 12px;
+    display: flex; align-items: baseline; gap: 9px; margin: 0; padding: 8px 12px;
     border: 1px solid var(--accent); border-left-width: 5px; border-radius: var(--radius-s);
     background: var(--accent-soft); color: var(--accent);
     font-size: clamp(1.05rem, 2.8vw, 1.4rem); font-weight: 900; line-height: 1.4;
