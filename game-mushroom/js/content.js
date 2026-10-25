@@ -30,7 +30,7 @@
         },
         {
             id: 'u_clk_3', group: 'click', name: '共振敲擊', flavor: '你敲的是節奏。',
-            desc: '連擊加成上限由 ×1.3 提高到 ×2.0（滿層約需每秒 3 個正確字元、維持 3 秒）。',
+            desc: '連擊傷害上限由 ×10 提高到 ×15；連擊層數越高，傷害加成成長越快。',
             cost: 65000, req: { damage: 200000 }, reqText: '累積有效傷害 20 萬',
             effect: { type: 'comboBoost' }
         },
@@ -50,7 +50,7 @@
         /* --- 自動 --- */
         {
             id: 'u_aut_1', group: 'auto', name: '潤滑齒輪', flavor: '不再卡卡響。',
-            desc: '所有自動設備速度倍率 ×1.1（冷卻 ÷ 1.1）。',
+            desc: '所有自動設備攻擊速度與每秒傷害 ×1.1。',
             cost: 2400, req: { deviceTotal: 5 }, reqText: '擁有 5 台設備',
             effect: { type: 'deviceSpeed', speedMult: 1.1 }
         },
@@ -62,7 +62,7 @@
         },
         {
             id: 'u_aut_3', group: 'auto', name: '胡椒改良', flavor: '連打三個噴嚏。',
-            desc: '胡椒無人機的攻擊頻率翻倍（冷卻 ÷ 2）。',
+            desc: '胡椒無人機的攻擊速度與每秒傷害 ×2。',
             cost: 48000, req: { device: { id: 'pepper_drone', count: 10 } }, reqText: '擁有 10 台胡椒無人機',
             effect: { type: 'deviceSpeedOne', deviceId: 'pepper_drone', speedMult: 2 }
         },
@@ -82,7 +82,7 @@
         /* --- 協同 --- */
         {
             id: 'u_syn_1', group: 'syn', name: '辛香料風暴', flavor: '辣到連空氣都在咳嗽。',
-            desc: '辣油加速期間，胡椒無人機單次傷害 ×2。',
+            desc: '辣油加速期間，胡椒無人機每秒傷害 ×2。',
             cost: 560000, req: { devices: ['pepper_drone', 'spicy_sprinkler'] }, reqText: '同時擁有胡椒無人機與辣油灑水器',
             effect: { type: 'synPepperHaste', mult: 2 }
         },

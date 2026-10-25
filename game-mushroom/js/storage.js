@@ -39,7 +39,7 @@
         if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { ok: false, reason: 'shape' };
 
         var nums = ['coins', 'lifetimeCoins', 'broth', 'brothLifetime', 'totalDamage',
-            'clicks', 'killsTotal', 'lazyStreak', 'lastSettle', 'startedAt'];
+            'clicks', 'couriersCaught', 'killsTotal', 'lazyStreak', 'lastSettle', 'startedAt'];
         for (var i = 0; i < nums.length; i++) {
             var key = nums[i];
             if (raw[key] !== undefined && !nonNeg(raw[key])) return { ok: false, reason: 'number:' + key };
@@ -104,6 +104,11 @@
             Config.ZONES.forEach(function (z) { if (raw.unlockedZones[z.id] === true) zones[z.id] = true; });
         }
 
+        var zoneTypingAttacks = pickZoneNumbers(raw.zoneTypingAttacks, 0, 1000000000);
+        Config.ZONES.forEach(function (z) {
+            if (zoneTypingAttacks[z.id] === undefined) zoneTypingAttacks[z.id] = 0;
+        });
+
         var equipped = null;
         if (typeof raw.equipped === 'string' && Content.EQUIPMENT_BY_ID[raw.equipped]) equipped = raw.equipped;
 
@@ -122,7 +127,7 @@
 
         var flags = {};
         if (raw.flags && typeof raw.flags === 'object') {
-            ['coldWin', 'chestEscaped'].forEach(function (k) { if (raw.flags[k] === true) flags[k] = true; });
+            ['coldWin', 'chestEscaped', 'crazyTypingSeen'].forEach(function (k) { if (raw.flags[k] === true) flags[k] = true; });
         }
 
         var state = {
@@ -133,6 +138,7 @@
             brothLifetime: nonNeg(raw.brothLifetime) ? Math.floor(raw.brothLifetime) : (nonNeg(raw.broth) ? Math.floor(raw.broth) : 0),
             totalDamage: nonNeg(raw.totalDamage) ? raw.totalDamage : 0,
             clicks: nonNeg(raw.clicks) ? Math.floor(raw.clicks) : 0,
+            couriersCaught: nonNeg(raw.couriersCaught) ? Math.floor(raw.couriersCaught) : 0,
             devices: devices,
             deviceCooldowns: {},
             frozen: {},
@@ -144,6 +150,7 @@
             equipped: equipped,
             zoneId: zones[raw.zoneId] ? raw.zoneId : 'zone_01',
             unlockedZones: zones,
+            zoneTypingAttacks: zoneTypingAttacks,
             depths: pickZoneNumbers(raw.depths, 1, 100000),
             depthKills: pickZoneNumbers(raw.depthKills, 0, 100000),
             bosses: pickFlags(raw.bosses, Config.BOSSES),
@@ -178,8 +185,9 @@
 
     /**
      * 版本遷移。
-     * v1 → v2：舊版沒有 brothLifetime 與 equipmentOwned；
-     *          已擊敗第三隻菇王的存檔要補上裝備擁有紀錄，否則裝備系統會是空的。
+     * v1 → v2：補上 brothLifetime 與 equipmentOwned；
+     * v2 → v3：補上各地區菇王重生累計，舊存檔從 0 次開始累計。
+     * v3 → v4：補上外送員攔截累計。
      */
     function migrate(payload) {
         var version = isNum(payload.v) ? payload.v : 1;
@@ -197,6 +205,16 @@
             }
             migrated = true;
             version = 2;
+        }
+        if (version < 3) {
+            if (!data.zoneTypingAttacks || typeof data.zoneTypingAttacks !== 'object') data.zoneTypingAttacks = {};
+            migrated = true;
+            version = 3;
+        }
+        if (version < 4) {
+            if (!nonNeg(data.couriersCaught)) data.couriersCaught = 0;
+            migrated = true;
+            version = 4;
         }
         if (version > Config.SAVE_VERSION) return { data: null, migrated: false, from: version, tooNew: true };
         return { data: data, migrated: migrated, from: isNum(payload.v) ? payload.v : 1 };

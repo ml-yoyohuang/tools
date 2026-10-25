@@ -47,6 +47,16 @@
         this.game = options.game;
         this.images = options.images;
         this.handlers = options.handlers || {};
+        this.wordDexEntries = buildWordDex(options.typingVocab || {});
+        this.wordDexByLetter = {};
+        this.wordDexSelectedLetter = 'a';
+        this.wordDexFilter = 'all';
+        this._wordDexSignature = null;
+        this.wordDexEntries.forEach(function (entry) {
+            var letter = entry.key.charAt(0);
+            if (!this.wordDexByLetter[letter]) this.wordDexByLetter[letter] = [];
+            this.wordDexByLetter[letter].push(entry);
+        }, this);
 
         this.numberStyle = 'short';
         this.buyMode = 1;
@@ -54,26 +64,37 @@
         this.floaterCount = 0;
         this.toastTimer = null;
         this.pending = {};        // 傷害數字合併緩衝：uid -> {amount, crit, auto, until}
+        this.sceneTransitionTimer = null;
+        this.passStageTimer = null;
+        this.passBadgeTimer = null;
+        this.passBadge = null;
+        this.frozenHold = null;
 
         this.el = {
-            coins: $('res-coins'), broth: $('res-broth'), click: $('res-click'), dps: $('res-dps'),
+            coins: $('res-coins'), broth: $('res-broth'), click: $('res-click'), bossTyping: $('res-boss-typing'), dps: $('res-dps'),
             typingCount: $('res-typing-count'),
             lifetimeCoins: $('res-lifetime-coins'), totalDamage: $('res-total-damage'),
             brothLifetime: $('res-broth-lifetime'), deviceTotal: $('res-device-total'),
+            couriersCaught: $('res-couriers-caught'),
             zoneTabs: $('zone-tabs'), zoneDepth: $('zone-depth'), zoneDesc: $('zone-desc'),
+            deviceFreezeNote: $('device-freeze-note'),
             buffBar: $('buff-bar'), stage: $('stage'), targets: $('targets'), floaters: $('floaters'),
             typingPrompt: $('typing-prompt'), typingTranslation: $('typing-translation'), typingInput: $('typing-input'), typingStatus: $('typing-status'),
+            typingSection: document.querySelector('.typing'),
             typingAlert: $('typing-alert'),
-            typingLuckStatus: $('typing-luck-status'),
             btnSkipPrompt: $('btn-skip-prompt'),
             courier: $('courier'), courierArt: $('courier-art'),
-            bossPanel: $('boss-panel'), bossHelp: $('boss-help'), bossProgress: $('boss-progress'), btnHold: $('btn-hold'),
+            bossPanel: $('boss-panel'), bossHelp: $('boss-help'), bossProgress: $('boss-progress'),
+            bossCombo: $('boss-combo'), bossComboValue: $('boss-combo-value'), bossComboFill: $('boss-combo-fill'), bossComboHint: $('boss-combo-hint'),
+            btnHold: $('btn-hold'),
             btnExitBoss: $('btn-exit-boss'), holdFill: $('hold-fill'), holdLabel: $('hold-label'),
             frozenList: $('frozen-list'), fieldActions: $('field-actions'), btnBoss: $('btn-boss'),
             deviceList: $('device-list'), upgradeList: $('upgrade-list'), upgradeOwned: $('upgrade-owned'),
             itemList: $('item-list'), itemNote: $('item-note'),
             equipmentList: $('equipment-list'), equipNote: $('equip-note'),
             dexList: $('dex-list'), collectionList: $('collection-list'),
+            wordDexSummary: $('word-dex-summary'), wordDexFilters: $('word-dex-filters'),
+            wordDexLetters: $('word-dex-letters'), wordDexList: $('word-dex-list'),
             achList: $('ach-list'), achCount: $('ach-count'), achTotal: $('ach-total'),
             badgeUpgrades: $('badge-upgrades'), badgeItems: $('badge-items'),
             live: $('live-region'), toast: $('toast')
@@ -90,6 +111,28 @@
         this._bindBuyMode();
         this._bindStage();
         this._bindTyping();
+        this._bindWordDex();
+        this._renderWordDex();
+    }
+
+    function buildWordDex(banks) {
+        var entries = {};
+        ['geptElementary', 'geptIntermediate'].forEach(function (bankId) {
+            (banks[bankId] || []).forEach(function (item) {
+                var text = String(item.text || '').trim();
+                var key = text.toLowerCase();
+                if (!/^[a-z]/.test(key)) return;
+                var entry = entries[key];
+                if (!entry) entry = entries[key] = { key: key, text: text, translations: [], banks: {} };
+                if (item.translation && entry.translations.indexOf(item.translation) === -1) {
+                    entry.translations.push(item.translation);
+                }
+                entry.banks[bankId] = true;
+            });
+        });
+        return Object.keys(entries).map(function (key) { return entries[key]; }).sort(function (a, b) {
+            return a.key < b.key ? -1 : (a.key > b.key ? 1 : 0);
+        });
     }
 
     /* ---------------- 圖片 ---------------- */
@@ -128,6 +171,96 @@
         this.targetNodes.clear();
         this.el.targets.textContent = '';
         this._renderDex();
+        this._renderWordDex();
+    };
+
+    UI.prototype._bindWordDex = function () {
+        var self = this;
+        this.wordDexFilterButtons = [];
+        [
+            { id: 'all', label: '全部' },
+            { id: 'geptElementary', label: '初級' },
+            { id: 'geptIntermediate', label: '中級' }
+        ].forEach(function (filter) {
+            var button = el('button', 'word-dex__filter', filter.label);
+            button.type = 'button';
+            button.setAttribute('aria-pressed', 'false');
+            button.addEventListener('click', function () {
+                self.wordDexFilter = filter.id;
+                self._renderWordDex();
+            });
+            self.wordDexFilterButtons.push({ id: filter.id, button: button });
+            self.el.wordDexFilters.appendChild(button);
+        });
+        this.wordDexLetters = [];
+        for (var code = 97; code <= 122; code++) {
+            var letter = String.fromCharCode(code);
+            var button = el('button', 'word-dex__letter', letter.toUpperCase());
+            button.type = 'button';
+            button.setAttribute('aria-pressed', 'false');
+            button.addEventListener('click', function (selected) {
+                return function () {
+                    self.wordDexSelectedLetter = selected;
+                    self._renderWordDex();
+                };
+            }(letter));
+            this.wordDexLetters.push(button);
+            this.el.wordDexLetters.appendChild(button);
+        }
+    };
+
+    UI.prototype._renderWordDex = function () {
+        var letter = this.wordDexSelectedLetter;
+        var filter = this.wordDexFilter;
+        var getEntries = function (selectedLetter) {
+            return (this.wordDexByLetter[selectedLetter] || []).filter(function (entry) {
+                return filter === 'all' || !!entry.banks[filter];
+            });
+        }.bind(this);
+        var entries = getEntries(letter);
+        if (!entries.length) {
+            for (var code = 97; code <= 122; code++) {
+                var candidate = String.fromCharCode(code);
+                if (getEntries(candidate).length) {
+                    letter = candidate;
+                    this.wordDexSelectedLetter = candidate;
+                    entries = getEntries(candidate);
+                    break;
+                }
+            }
+        }
+        var self = this;
+        var filterCount = this.wordDexEntries.filter(function (entry) {
+            return filter === 'all' || !!entry.banks[filter];
+        }).length;
+        this.wordDexFilterButtons.forEach(function (item) {
+            item.button.setAttribute('aria-pressed', item.id === filter ? 'true' : 'false');
+        });
+        this.wordDexLetters.forEach(function (button) {
+            var selectedLetter = button.textContent.toLowerCase();
+            var count = getEntries(selectedLetter).length;
+            button.disabled = count === 0;
+            button.setAttribute('aria-label', selectedLetter.toUpperCase() + ' 開頭，共 ' + count + ' 個單字');
+        });
+        this.wordDexLetters.forEach(function (button) {
+            button.setAttribute('aria-pressed', button.textContent.toLowerCase() === letter ? 'true' : 'false');
+        });
+        setText(this.el.wordDexSummary,
+            (filter === 'all' ? '全部級別' : (filter === 'geptElementary' ? '初級' : '中級')) +
+            '共 ' + filterCount + ' 個單字　｜　' + letter.toUpperCase() + ' 開頭 ' + entries.length + ' 個');
+        this.el.wordDexList.textContent = '';
+        entries.forEach(function (entry) {
+            var item = el('li', 'word-dex__entry');
+            var head = el('div', 'word-dex__head');
+            head.appendChild(el('span', 'word-dex__word', entry.text));
+            var levels = [];
+            if (entry.banks.geptElementary) levels.push('初級');
+            if (entry.banks.geptIntermediate) levels.push('中級');
+            head.appendChild(el('span', 'word-dex__level', levels.join('・')));
+            item.appendChild(head);
+            item.appendChild(el('p', 'word-dex__translation', entry.translations.join('；') || '（尚無中文解釋）'));
+            self.el.wordDexList.appendChild(item);
+        });
     };
 
     /* ---------------- 靜態結構 ---------------- */
@@ -283,6 +416,58 @@
         hold.addEventListener('contextmenu', function (event) { event.preventDefault(); });
     };
 
+    /** 結冰設備需按住蓄力解凍；提早放開只會清空進度。 */
+    UI.prototype._bindFrozenHold = function (button, deviceId) {
+        var self = this;
+        var fill = button.querySelector('.frozen-chip__fill');
+        var duration = 2000;
+
+        var reset = function () {
+            if (!self.frozenHold || self.frozenHold.button !== button) return;
+            clearInterval(self.frozenHold.timer);
+            self.frozenHold = null;
+            fill.style.width = '0%';
+        };
+        var start = function (event) {
+            if (event.type === 'keydown') {
+                if (event.key !== ' ' && event.key !== 'Enter') return;
+                if (event.repeat) return;
+                event.preventDefault();
+            } else if (event.type === 'pointerdown') {
+                if (event.button !== 0) return;
+                if (button.setPointerCapture && event.pointerId !== undefined) {
+                    try { button.setPointerCapture(event.pointerId); } catch (ignore) {}
+                }
+            }
+            if (self.frozenHold) return;
+            var hold = { button: button, startedAt: Date.now(), timer: null };
+            self.frozenHold = hold;
+            hold.timer = setInterval(function () {
+                if (self.frozenHold !== hold) return;
+                var progress = Math.min(1, (Date.now() - hold.startedAt) / duration);
+                fill.style.width = (progress * 100).toFixed(1) + '%';
+                if (progress >= 1) {
+                    clearInterval(hold.timer);
+                    self.frozenHold = null;
+                    self.handlers.onUnfreeze(deviceId);
+                }
+            }, 30);
+        };
+        var stop = function (event) {
+            if (event.type === 'keyup' && event.key !== ' ' && event.key !== 'Enter') return;
+            reset();
+        };
+
+        button.addEventListener('pointerdown', start);
+        button.addEventListener('pointerup', stop);
+        button.addEventListener('pointercancel', stop);
+        button.addEventListener('lostpointercapture', stop);
+        button.addEventListener('keydown', start);
+        button.addEventListener('keyup', stop);
+        button.addEventListener('blur', stop);
+        button.addEventListener('contextmenu', function (event) { event.preventDefault(); });
+    };
+
     UI.prototype._bindTyping = function () {
         var self = this;
         this.el.btnSkipPrompt.addEventListener('click', function () { self.handlers.onSkipPrompt(); });
@@ -297,9 +482,7 @@
     };
 
     UI.prototype.focusTypingInput = function () { this.el.typingInput.focus(); };
-    UI.prototype.setTypingLuckStatus = function (text) { setText(this.el.typingLuckStatus, text); };
-
-    UI.prototype.renderTyping = function (prompt, index, status, error, translation) {
+    UI.prototype.renderTyping = function (prompt, index, status, error, translation, crazy) {
         var done = el('span', 'typing__done', prompt.slice(0, index));
         var rest = prompt.slice(index);
         this.el.typingPrompt.textContent = '';
@@ -311,6 +494,8 @@
         setText(this.el.typingStatus, status || '');
         setText(this.el.typingTranslation, translation || '');
         this.el.typingTranslation.hidden = !translation;
+        this.el.typingTranslation.classList.toggle('is-crazy', !!crazy);
+        this.el.typingSection.classList.toggle('is-crazy', !!crazy);
         this.el.typingStatus.classList.toggle('is-error', !!error);
         if (error) {
             this.el.typingInput.classList.remove('has-error');
@@ -407,6 +592,117 @@
         }, 1500);
     };
 
+    UI.prototype.showPass = function () {
+        var self = this;
+        var stage = this.el.stage;
+        if (this.passBadgeTimer) clearTimeout(this.passBadgeTimer);
+        if (this.passBadge && this.passBadge.parentNode) this.passBadge.parentNode.removeChild(this.passBadge);
+        this.passBadge = el('span', 'pass-badge', 'PASS');
+        this.passBadge.setAttribute('aria-hidden', 'true');
+        stage.appendChild(this.passBadge);
+        this.passBadgeTimer = setTimeout(function () {
+            if (self.passBadge && self.passBadge.parentNode) self.passBadge.parentNode.removeChild(self.passBadge);
+            self.passBadge = null;
+            self.passBadgeTimer = null;
+        }, 1300);
+
+        if (this.passStageTimer) clearTimeout(this.passStageTimer);
+        stage.classList.remove('is-pass');
+        void stage.offsetWidth;
+        stage.classList.add('is-pass');
+        this.passStageTimer = setTimeout(function () {
+            stage.classList.remove('is-pass');
+            self.passStageTimer = null;
+        }, 720);
+
+        var index = 0;
+        this.targetNodes.forEach(function (nodes) {
+            if (nodes.passTimer) clearTimeout(nodes.passTimer);
+            nodes.art.classList.remove('is-pass-nod');
+            nodes.art.style.animationDelay = (index * 65) + 'ms';
+            void nodes.art.offsetWidth;
+            nodes.art.classList.add('is-pass-nod');
+            var delay = index * 65;
+            nodes.passTimer = setTimeout(function () {
+                nodes.art.classList.remove('is-pass-nod');
+                nodes.art.style.animationDelay = '';
+                nodes.passTimer = null;
+            }, 760 + delay);
+            index++;
+        });
+    };
+
+    UI.prototype.shieldBreak = function (uid) {
+        var nodes = this.targetNodes.get(uid);
+        if (nodes) {
+            if (nodes.shieldBreakTimer) clearTimeout(nodes.shieldBreakTimer);
+            nodes.art.classList.remove('is-shield-break');
+            void nodes.art.offsetWidth;
+            nodes.art.classList.add('is-shield-break');
+            nodes.shieldBreakTimer = setTimeout(function () {
+                nodes.art.classList.remove('is-shield-break');
+                nodes.shieldBreakTimer = null;
+            }, 820);
+        }
+        this.floater('✦ 護盾破裂！', 'shield');
+    };
+
+    UI.prototype.bossSceneTransition = function (direction) {
+        var stage = this.el.stage;
+        if (this.sceneTransitionTimer) clearTimeout(this.sceneTransitionTimer);
+        stage.classList.remove('is-boss-entering', 'is-boss-exiting');
+        void stage.offsetWidth;
+        stage.classList.add(direction === 'enter' ? 'is-boss-entering' : 'is-boss-exiting');
+        this.sceneTransitionTimer = setTimeout(function () {
+            stage.classList.remove('is-boss-entering', 'is-boss-exiting');
+            this.sceneTransitionTimer = null;
+        }.bind(this), 760);
+    };
+
+    UI.prototype.luckyHit = function (uid, multiplier) {
+        var stage = this.el.stage;
+        var nodes = this.targetNodes.get(uid);
+        stage.classList.remove('is-lucky-hit');
+        void stage.offsetWidth;
+        stage.classList.add('is-lucky-hit');
+        if (stage.luckyHitTimer) clearTimeout(stage.luckyHitTimer);
+        stage.luckyHitTimer = setTimeout(function () {
+            stage.classList.remove('is-lucky-hit');
+            stage.luckyHitTimer = null;
+        }, 850);
+        if (nodes) {
+            if (nodes.luckyHitTimer) clearTimeout(nodes.luckyHitTimer);
+            nodes.button.classList.remove('is-lucky-hit');
+            void nodes.button.offsetWidth;
+            nodes.button.classList.add('is-lucky-hit');
+            nodes.luckyHitTimer = setTimeout(function () {
+                nodes.button.classList.remove('is-lucky-hit');
+                nodes.luckyHitTimer = null;
+            }, 760);
+        }
+        this.floater('✨ 幸運加成 ×' + multiplier + '！', 'luck');
+    };
+
+    UI.prototype.comboMilestone = function (stacks, multiplier, isMax) {
+        var stage = this.el.stage;
+        stage.classList.remove('is-combo-surge');
+        void stage.offsetWidth;
+        stage.classList.add('is-combo-surge');
+        if (stage.comboSurgeTimer) clearTimeout(stage.comboSurgeTimer);
+        stage.comboSurgeTimer = setTimeout(function () {
+            stage.classList.remove('is-combo-surge');
+            stage.comboSurgeTimer = null;
+        }, 900);
+        var combo = this.el.bossCombo;
+        combo.classList.remove('is-surge', 'is-max');
+        void combo.offsetWidth;
+        combo.classList.add('is-surge');
+        if (isMax) combo.classList.add('is-max');
+        this.floater(isMax
+            ? '🔥 連擊全開！英打傷害 ×' + multiplier.toFixed(2)
+            : '⚡ 連擊 ' + stacks + ' 層！傷害 ×' + multiplier.toFixed(2), 'combo');
+    };
+
     /* ---------------- 快速更新 ---------------- */
 
     UI.prototype.tickFast = function (now) {
@@ -419,6 +715,8 @@
         this.el.coins.title = Format.full(state.coins) + ' 菇幣';
         setText(this.el.broth, Format.full(state.broth));
         setText(this.el.click, this.num(Combat.expectedClickDamage(stats)) + ' / 每字');
+        setText(this.el.bossTyping, '菇王 ×' + Format.short(stats.bossTypingMult) +
+            '　設備 ×' + Format.short(stats.deviceTypingMult));
         setText(this.el.dps, this.num(stats.autoDps) + ' / 每秒');
         setText(this.el.typingCount, Format.full(state.clicks));
         setText(this.el.lifetimeCoins, Format.full(state.lifetimeCoins));
@@ -427,6 +725,7 @@
         var deviceTotal = 0;
         Config.DEVICES.forEach(function (device) { deviceTotal += state.devices[device.id] || 0; });
         setText(this.el.deviceTotal, Format.full(deviceTotal));
+        setText(this.el.couriersCaught, Format.full(state.couriersCaught));
         var spongePresent = game.aliveTargets().some(function (target) {
             var mushroom = Config.MUSHROOM_BY_ID[target.typeId];
             return mushroom && mushroom.traits.indexOf('regen') !== -1;
@@ -450,7 +749,7 @@
         if (state.buffs.energy > now) list.push({ label: '提神飲料 英打傷害 ×3', left: (state.buffs.energy - now) / 1000 });
         if (state.buffs.broth > now) list.push({ label: '金湯膠囊 菇幣 ×5', left: (state.buffs.broth - now) / 1000 });
         if (state.buffs.haste > now) list.push({ label: '辣油加速 速度 ×1.2', left: (state.buffs.haste - now) / 1000 });
-        if (stats.comboMult > 1.001) list.push({ label: '連擊 ×' + stats.comboMult.toFixed(2), left: null });
+        if (stats.comboMult > 1.001 && this.game.mode !== 'boss') list.push({ label: '連擊 ×' + stats.comboMult.toFixed(2), left: null });
         if (state.cheerCharge) list.push({ label: '下次擊敗雙倍菇幣', left: null });
         if (stats.ruthlessActive) list.push({ label: '無情機器 ×1.5', left: null });
 
@@ -539,20 +838,46 @@
         var game = this.game;
         var inBoss = game.mode === 'boss' && game.boss;
         this.el.bossPanel.hidden = !inBoss;
+        this.el.bossCombo.hidden = !inBoss;
         this.el.fieldActions.hidden = !!inBoss;
 
         if (!inBoss) {
             var zone = game.zone();
             var boss = Config.BOSS_BY_ID[zone.bossId];
-            var defeated = boss && game.state.bosses[boss.id];
-            this.el.btnBoss.disabled = !boss || defeated;
-            setText(this.el.btnBoss, defeated ? '這一區的菇王已被擊敗' : ('挑戰菇王：' + (boss ? boss.name : '')));
+            var respawn = boss && game.bossRespawnStatus(boss.id);
+            this.el.btnBoss.disabled = !respawn || !respawn.canChallenge;
+            if (!boss) setText(this.el.btnBoss, '此地區沒有菇王');
+            else if (respawn.firstClear && respawn.canChallenge) setText(this.el.btnBoss, '挑戰菇王：' + boss.name);
+            else if (respawn.canChallenge) setText(this.el.btnBoss, '菇王已重生：再次挑戰 ' + boss.name);
+            else setText(this.el.btnBoss,
+                (respawn.firstClear ? '首次挑戰進度 ' : '重生進度 ') +
+                Format.full(respawn.progress) + ' / ' + Format.full(respawn.goal) + ' 次英打攻擊');
             return;
         }
 
+        var comboState = game.state;
+        var comboMax = Config.BALANCE.combo.maxStacks;
+        var comboStacks = Math.min(comboMax, comboState.combo || 0);
+        var comboProgress = comboMax > 0 ? comboStacks / comboMax * 100 : 0;
+        var comboProtected = comboState.buffs.energy > now;
+        var comboLeft = Math.max(0, Config.BALANCE.combo.windowSeconds - (now - comboState.lastClickAt) / 1000);
+        var comboTrack = this.el.bossComboFill.parentNode;
+        this.el.bossComboFill.style.width = comboProgress.toFixed(1) + '%';
+        comboTrack.setAttribute('aria-valuenow', String(comboStacks));
+        setText(this.el.bossComboValue,
+            '連擊 ' + comboStacks + ' / ' + comboMax + '　傷害 ×' + game.stats.comboMult.toFixed(2));
+        setText(this.el.bossComboHint, comboStacks <= 0
+            ? '開始正確輸入累積連擊；停打 3 秒就會歸零。'
+            : comboProtected
+                ? '連擊保護中！持續輸入，火力不斷升高。'
+                : '保持節奏！' + comboLeft.toFixed(1) + ' 秒內再輸入即可維持連擊。');
+        this.el.bossCombo.classList.toggle('is-active', comboStacks > 0);
+        this.el.bossCombo.classList.toggle('is-max', comboStacks >= comboMax);
+
         setText(this.el.bossHelp, game.boss.intro + '　' + game.boss.help);
         var milestone = game.boss.mechanic === 'clickMilestone' ? game.boss.clickMilestone : 0;
-        this.el.bossProgress.hidden = !milestone;
+        var shieldGate = game.bossShieldGateStatus();
+        this.el.bossProgress.hidden = !milestone && !shieldGate;
         if (milestone) {
             var milestoneTarget = game.targets[0];
             var count = milestoneTarget ? milestoneTarget.clickCount : 0;
@@ -563,8 +888,22 @@
         var needsHold = game.boss.mechanic === 'holdShield' && game.targets[0] && game.targets[0].shields > 0;
         this.el.btnHold.hidden = !needsHold;
         if (needsHold) {
-            this.el.holdFill.style.width = (game.holdProgress(now) * 100).toFixed(1) + '%';
-            setText(this.el.holdLabel, '按住不放 ' + game.boss.holdSeconds + ' 秒破 1 層護盾（剩 ' + game.targets[0].shields + ' 層）');
+            var gate = shieldGate;
+            this.el.btnHold.disabled = !gate.canBreak;
+            this.el.holdFill.style.width = (gate.canBreak ? game.holdProgress(now) * 100 : 0).toFixed(1) + '%';
+            setText(this.el.holdLabel, gate.canBreak
+                ? '按住 ' + game.boss.holdSeconds + ' 秒後放開破第 ' + gate.layer + ' 層（剩 ' + gate.left + ' 層）'
+                : '先完成 ' + gate.goal + ' 個單字（' + gate.progress + ' / ' + gate.goal + '）');
+            if (gate.goal > 0) {
+                setText(this.el.bossProgress,
+                    '第 ' + gate.layer + ' 層護盾：再完成 ' + (gate.goal - gate.progress) +
+                    ' 個單字（' + gate.progress + ' / ' + gate.goal + '），即可蓄力破盾。');
+            } else {
+                setText(this.el.bossProgress, '第 1 層護盾可直接蓄力。每層需分開按住；放開太早就重新蓄力。');
+            }
+        } else if (game.boss.mechanic === 'holdShield' && game.targets[0] && game.targets[0].shields <= 0) {
+            this.el.bossProgress.hidden = false;
+            setText(this.el.bossProgress, '護盾全數破除！現在可以攻擊菇王。');
         } else {
             this.el.holdFill.style.width = '0%';
         }
@@ -572,15 +911,25 @@
         var frozen = Object.keys(game.state.frozen);
         var signature = frozen.join('|');
         if (signature !== this._frozenSignature) {
+            if (this.frozenHold) {
+                clearInterval(this.frozenHold.timer);
+                this.frozenHold = null;
+            }
             this._frozenSignature = signature;
             this.el.frozenList.textContent = '';
             var self = this;
             frozen.forEach(function (deviceId) {
                 var device = Config.DEVICE_BY_ID[deviceId];
                 var li = el('li');
-                var chip = el('button', 'frozen-chip', '❄ ' + (device ? device.name : deviceId) + '：點我解凍');
+                var chip = el('button', 'frozen-chip');
                 chip.type = 'button';
-                chip.addEventListener('click', function () { self.handlers.onUnfreeze(deviceId); });
+                chip.setAttribute('aria-label', '按住 2 秒解凍 ' + (device ? device.name : deviceId));
+                var fill = el('span', 'frozen-chip__fill');
+                fill.setAttribute('aria-hidden', 'true');
+                var label = el('span', 'frozen-chip__label', '❄ ' + (device ? device.name : deviceId) + '：按住 2 秒解凍');
+                chip.appendChild(fill);
+                chip.appendChild(label);
+                self._bindFrozenHold(chip, deviceId);
                 li.appendChild(chip);
                 self.el.frozenList.appendChild(li);
             });
@@ -605,7 +954,8 @@
     UI.prototype.tickSlow = function (now) {
         var game = this.game;
         var zone = game.zone();
-        setText(this.el.zoneDepth, '採集深度 ' + game.depthOf(zone.id));
+        this.el.stage.dataset.zoneId = zone.id;
+        setText(this.el.zoneDepth, String(game.depthOf(zone.id)));
         setText(this.el.zoneDesc, zone.desc);
 
         Array.prototype.forEach.call(this.el.zoneTabs.children, function (button) {
@@ -626,12 +976,23 @@
     UI.prototype._renderDevices = function (now) {
         var game = this.game;
         var self = this;
+        var frozenNames = Config.DEVICES.filter(function (device) {
+            return !!game.state.frozen[device.id] && (game.state.devices[device.id] || 0) > 0;
+        }).map(function (device) { return device.name; });
+        this.el.deviceFreezeNote.hidden = frozenNames.length === 0;
+        if (frozenNames.length) {
+            setText(this.el.deviceFreezeNote,
+                '急凍菇凍結了 ' + frozenNames.length + ' 種設備：' + frozenNames.join('、') +
+                '。這些設備的自動效果暫停，英打加成仍保留。請回到菇王挑戰畫面，按住結冰設備按鈕 2 秒解凍。');
+        }
         Config.DEVICES.forEach(function (device) {
             var nodes = self.deviceNodes[device.id];
             var owned = game.state.devices[device.id] || 0;
             var unlocked = game.deviceUnlocked(device);
+            var frozen = !!game.state.frozen[device.id];
 
             setText(nodes.count, String(owned));
+            nodes.row.classList.toggle('is-frozen', frozen);
             if (!unlocked) {
                 nodes.row.classList.add('is-locked');
                 nodes.row.classList.remove('is-affordable');
@@ -649,21 +1010,26 @@
             var payback = game.devicePaybackSeconds(device.id, paybackCount, paybackCost, now);
             var info = game.stats.perDevice[device.id];
             var effectText;
+            var typingEffect = owned
+                ? '首台英打加成已啟用 ×' + self.num(device.typingDamageMult)
+                : '首台啟用英打傷害 ×' + self.num(device.typingDamageMult);
             if (device.role === 'attack') {
-                effectText = '單次 ' + self.num(info.damage) + ' 傷害 / ' +
-                    (info.cooldown ? info.cooldown.toFixed(2) + ' 秒' : '—') +
-                    (owned ? '　合計 ' + self.num(info.dps) + ' DPS' : '');
+                effectText = '每台 ' + self.num(info.dps) + ' 傷害 / 秒' +
+                    (owned ? '　持有合計 ' + self.num(info.totalDps) + ' 傷害 / 秒' : '') +
+                    '　' + typingEffect;
                 effectText = appendPayback(effectText, payback);
             } else if (device.role === 'support') {
                 effectText = device.support.type === 'haste'
                     ? '每 ' + (device.cooldown / Math.max(0.0001, game.stats.speedMult)).toFixed(1) + ' 秒讓全設備速度 ×1.2，持續 3 秒'
                     : '每 ' + device.cooldown + ' 秒讓下一次擊敗掉落雙倍菇幣';
+                effectText += '　' + typingEffect;
                 effectText = appendPayback(effectText, payback);
             } else {
                 effectText = '依歷史菇幣提供全設備乘區，目前 ×' + game.stats.inductionMult.toFixed(2) +
-                    '（上限 ×' + Config.BALANCE.induction.cap + '）';
+                    '（上限 ×' + Config.BALANCE.induction.cap + '）　' + typingEffect;
                 effectText = appendPayback(effectText, payback);
             }
+            if (frozen) effectText = '❄ 冰凍中・停止運作　' + effectText;
             setText(nodes.effect, effectText);
 
             var costText = plan.count > 0

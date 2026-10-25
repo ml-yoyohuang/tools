@@ -6,4 +6,7 @@
   <rect x="46" y="62" width="28" height="46" rx="10" fill="#f3ece0" stroke="#4e636c" stroke-width="3"/>
   <path d="M8 66 C8 32 30 14 60 14 C90 14 112 32 112 66 Z" fill="url(#kboss_frozen)" stroke="#4e636c" stroke-width="3.5"/>
   <path d="M38 22 L46 8 L54 20 L60 4 L66 20 L74 8 L82 22 Z" fill="#4e86a6" stroke="#4e636c" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M49 78 Q53 82 57 78 M63 78 Q67 82 71 78" fill="none" stroke="#355764" stroke-width="3" stroke-linecap="round"/>
+  <path d="M55 91 Q60 98 65 91" fill="none" stroke="#355764" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="45" cy="86" r="3" fill="#8ac7df" opacity=".8"/><circle cx="75" cy="86" r="3" fill="#8ac7df" opacity=".8"/>
 </svg>

@@ -67,6 +67,7 @@
             broth: 0, brothLifetime: 0,
             totalDamage: 0,
             clicks: 0,
+            couriersCaught: 0,
             devices: devices,
             deviceCooldowns: cooldowns,
             frozen: {},
@@ -78,6 +79,10 @@
             equipped: null,
             zoneId: 'zone_01',
             unlockedZones: { zone_01: true },
+            zoneTypingAttacks: Config.ZONES.reduce(function (progress, zone) {
+                progress[zone.id] = 0;
+                return progress;
+            }, {}),
             depths: {},          // 每個地區的採集深度
             depthKills: {},      // 目前深度已擊敗數
             bosses: {},
@@ -303,7 +308,8 @@
         this.addCoins(bounty);
         this.addBroth(boss.brothDrop);
 
-        if (!this.state.bosses[boss.id]) {
+        var firstClear = !this.state.bosses[boss.id];
+        if (firstClear) {
             this.state.bosses[boss.id] = true;
             this.state.collections[boss.id] = true;
             // 冰凍狀態下獲勝的成就旗標
@@ -313,11 +319,24 @@
             this._grantMilestones(now);
         }
 
+        // 重複挑戰進度只在菇王真正被擊敗時歸零；退出挑戰會保留進度。
+        this.state.zoneTypingAttacks = this.state.zoneTypingAttacks || {};
+        this.state.zoneTypingAttacks[boss.zoneId] = 0;
+
         this.mode = 'field';
         this.boss = null;
         this.state.frozen = {};
         this.refillField(now);
-        this.emitter.emit('bossDefeated', { bossId: boss.id, bounty: bounty, broth: boss.brothDrop });
+        var defeatedBosses = Config.BOSSES.reduce(function (count, entry) {
+            return count + (this.state.bosses[entry.id] ? 1 : 0);
+        }.bind(this), 0);
+        this.emitter.emit('bossDefeated', {
+            bossId: boss.id,
+            firstClear: firstClear,
+            bounty: bounty,
+            broth: boss.brothDrop,
+            typingDamageMult: Math.pow(BALANCE.bossTypingDamageMult, defeatedBosses)
+        });
         this._checkAchievements(now);
         return { bounty: bounty, broth: boss.brothDrop };
     };
@@ -392,6 +411,17 @@
 
         var state = this.state;
         state.clicks++;
+        if (this.mode === 'field') {
+            var currentZone = this.zone();
+            var currentBoss = Config.BOSS_BY_ID[currentZone.bossId];
+            if (currentBoss) {
+                state.zoneTypingAttacks = state.zoneTypingAttacks || {};
+                state.zoneTypingAttacks[currentZone.id] = Math.min(
+                    Math.max(currentZone.bossFirstChallengeTypingAttacks || 0, currentZone.bossRespawnTypingAttacks || 0),
+                    finite(state.zoneTypingAttacks[currentZone.id], 0) + 1
+                );
+            }
+        }
         target.lastManualHitAt = now;
 
         // 連擊：3 秒內點擊累加，提神飲料期間不會因中斷歸零
@@ -571,7 +601,8 @@
         var zone = this.zone();
         var boss = Config.BOSS_BY_ID[zone.bossId];
         if (!boss) return false;
-        if (this.state.bosses[boss.id]) return false;
+        var respawn = this.bossRespawnStatus(boss.id);
+        if (!respawn || !respawn.canChallenge) return false;
 
         this.mode = 'boss';
         this.boss = boss;
@@ -582,6 +613,29 @@
         this.refreshStats(now);
         this.emitter.emit('bossStart', { bossId: boss.id });
         return true;
+    };
+
+    /** 首次挑戰與後續重戰，都依地區英打攻擊進度開放。 */
+    Game.prototype.bossRespawnStatus = function (bossId) {
+        var boss = Config.BOSS_BY_ID[bossId];
+        if (!boss) return null;
+        var zone = Config.ZONE_BY_ID[boss.zoneId];
+        var firstClear = !this.state.bosses[boss.id];
+        var goal = Math.max(0, Math.floor(finite(zone && (firstClear
+            ? zone.bossFirstChallengeTypingAttacks
+            : zone.bossRespawnTypingAttacks), 0)));
+        var progress = Math.min(goal, Math.floor(finite(
+            (this.state.zoneTypingAttacks || {})[boss.zoneId], 0
+        )));
+        return {
+            bossId: boss.id,
+            zoneId: boss.zoneId,
+            firstClear: firstClear,
+            goal: goal,
+            progress: progress,
+            remaining: Math.max(0, goal - progress),
+            canChallenge: progress >= goal
+        };
     };
 
     /** 退出採集：菇王血量重置，已取得的資源保留。 */
@@ -602,6 +656,8 @@
     Game.prototype.startHold = function (nowArg) {
         var now = nowArg === undefined ? this.now() : nowArg;
         if (this.mode !== 'boss' || !this.boss || this.boss.mechanic !== 'holdShield') return false;
+        var gate = this.bossShieldGateStatus();
+        if (!gate || !gate.canBreak) return false;
         this.holdStartedAt = now;
         return true;
     };
@@ -617,6 +673,32 @@
         return Math.min(1, (now - this.holdStartedAt) / (this.boss.holdSeconds * 1000));
     };
 
+    Game.prototype.bossShieldGateStatus = function () {
+        if (this.mode !== 'boss' || !this.boss || this.boss.mechanic !== 'holdShield') return null;
+        var target = this.targets[0];
+        if (!target || target.settled || target.shields <= 0) return null;
+        var left = target.shields;
+        var goal = left === 2 ? 3 : (left === 1 ? 5 : 0);
+        var progress = Math.min(goal, finite(target.shieldWordProgress, 0));
+        return {
+            left: left,
+            layer: this.boss.shields - left + 1,
+            progress: progress,
+            goal: goal,
+            canBreak: progress >= goal
+        };
+    };
+
+    Game.prototype.completeBossTypingWord = function () {
+        var gate = this.bossShieldGateStatus();
+        if (!gate || gate.goal <= 0 || gate.canBreak) return null;
+        var target = this.targets[0];
+        target.shieldWordProgress = Math.min(gate.goal, gate.progress + 1);
+        var updated = this.bossShieldGateStatus();
+        this.emitter.emit('shieldWordProgress', updated);
+        return updated;
+    };
+
     Game.prototype._stepBoss = function (now, seconds) {
         var boss = this.boss;
         if (!boss) return;
@@ -625,11 +707,17 @@
 
         if (boss.mechanic === 'holdShield' && this.holdStartedAt) {
             if (now - this.holdStartedAt >= boss.holdSeconds * 1000) {
-                if (finite(target.shields, 0) > 0) {
+                var gate = this.bossShieldGateStatus();
+                if (gate && gate.canBreak) {
                     target.shields -= 1;
-                    this.emitter.emit('shieldBreak', { left: target.shields });
+                    target.shieldWordProgress = 0;
+                    this.emitter.emit('shieldBreak', {
+                        uid: target.uid,
+                        left: target.shields,
+                        layer: gate.layer
+                    });
                 }
-                this.holdStartedAt = target.shields > 0 ? now : 0;
+                this.holdStartedAt = 0;
             }
         }
 
@@ -803,6 +891,7 @@
         if (!state.courier || now >= state.courier.expiresAt) return null;
         state.courier = null;
         this._scheduleCourier(now);
+        state.couriersCaught = finite(state.couriersCaught, 0) + 1;
 
         var item = Content.ITEMS[Math.floor(this.random() * Content.ITEMS.length)] || Content.ITEMS[0];
         state.items[item.id] = finite(state.items[item.id], 0) + 1;

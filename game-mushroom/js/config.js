@@ -18,7 +18,7 @@
 })(typeof self !== 'undefined' ? self : this, function () {
     'use strict';
 
-    var SAVE_VERSION = 2;
+    var SAVE_VERSION = 4;
 
     var BALANCE = {
         clickBaseDamage: 1,
@@ -26,9 +26,9 @@
         /** 連擊：每次英打攻擊 +1 層，3 秒未攻擊歸零 */
         combo: {
             windowSeconds: 3,
-            maxStacks: 10,          // 約每秒 3 下、維持 3.3 秒即可滿層
-            bonusPerStack: 0.03,    // 基礎上限 ×1.3
-            upgradedBonusPerStack: 0.10  // 買了共振敲擊後上限 ×2.0
+            maxStacks: 10,
+            maxMultiplier: 10,      // 指數成長，10 層達 ×10
+            upgradedMaxMultiplier: 15 // 共振敲擊後 10 層達 ×15
         },
 
         /** 軟化：肉槌造成，對英打攻擊的獨立乘區 */
@@ -68,6 +68,8 @@
 
         /** 傷害數字合併視窗（毫秒） */
         damageMergeMs: 400,
+        /** 每擊敗一隻菇王，英打傷害永久翻倍。 */
+        bossTypingDamageMult: 2,
 
         autoSaveSeconds: 20,
         tab: { heartbeatMs: 2000, staleMs: 6000 },
@@ -140,6 +142,8 @@
             bg: '#caa571', bgAlt: '#b8905c',
             hpMult: 1, coinMult: 1,
             armorThreshold: 5,
+            bossFirstChallengeTypingAttacks: 100,
+            bossRespawnTypingAttacks: 100,
             coinPerDamage: 0.3,
             pool: ['sh_basic', 'sh_walnut', 'sh_enoki', 'sh_chest', 'sh_gold'],
             bossId: 'boss_king'
@@ -150,6 +154,8 @@
             bg: '#c4582c', bgAlt: '#9c3f1c',
             hpMult: 50, coinMult: 45,
             armorThreshold: 22,
+            bossFirstChallengeTypingAttacks: 100,
+            bossRespawnTypingAttacks: 200,
             coinPerDamage: 0.26,
             pool: ['sh_basic', 'sh_walnut', 'sh_enoki', 'sh_sponge', 'sh_chest', 'sh_gold'],
             bossId: 'boss_tofu'
@@ -160,6 +166,8 @@
             bg: '#9fc4d8', bgAlt: '#7aa3bb',
             hpMult: 1200, coinMult: 1100,
             armorThreshold: 450,
+            bossFirstChallengeTypingAttacks: 100,
+            bossRespawnTypingAttacks: 500,
             coinPerDamage: 0.22,
             pool: ['sh_basic', 'sh_walnut', 'sh_enoki', 'sh_sponge', 'sh_ice', 'sh_chest', 'sh_gold'],
             bossId: 'boss_frozen'
@@ -192,7 +200,7 @@
             shields: 3, holdSeconds: 2,
             color: '#f4f0e2', accent: '#b9b094',
             reward: '解鎖第三地區與道具商店', collection: '不鏽鋼漏勺',
-            help: '護盾期間免疫所有自動攻擊與真實傷害。按住下方按鈕不放 2 秒，色條填滿時破壞一層；三層破完才能攻擊。'
+            help: '護盾期間會擋下所有傷害。第一層可直接蓄力；第二層前先完成 3 個單字，第三層前再完成 5 個。每層都要重新按住 2 秒並放開破除；提早放開只需重新蓄力。'
         },
         {
             id: 'boss_frozen', zoneId: 'zone_03',
@@ -204,7 +212,7 @@
             freezeEverySeconds: 18, freezeRatio: 0.5,
             color: '#aedcf0', accent: '#4e86a6',
             reward: '解鎖裝備系統與軌道微波砲', collection: '保鮮盒的蓋子',
-            help: '每隔一段時間凍結一半設備，點擊結冰的設備即可解凍。解凍不會算成攻擊蘑菇。'
+            help: '每 18 秒凍結約一半持有中的自動設備；冰凍時自動效果暫停，設備提供的英打加成仍保留。回到菇王挑戰畫面，按住結冰設備 2 秒解凍；提早放開只需重新蓄力。解凍不會算成攻擊蘑菇。'
         }
     ];
 
@@ -216,6 +224,7 @@
             flavor: '喀喀兩聲，是對食材最基本的尊重。',
             role: 'attack', targeting: 'single',
             baseCost: 100, damage: 1, cooldown: 1.0,
+            typingDamageMult: 1.5,
             unlock: { type: 'none' },
             unlockText: '一開始就能買',
             color: '#c9ced6', accent: '#6d7682'
@@ -225,6 +234,7 @@
             flavor: '哈啾！等等，這不是無人機的聲音。',
             role: 'attack', targeting: 'all',
             baseCost: 900, damage: 3, cooldown: 1.0,
+            typingDamageMult: 1.75,
             unlock: { type: 'device', deviceId: 'auto_tongs', count: 10 },
             unlockText: '擁有 10 把彈簧烤肉夾',
             color: '#9a8878', accent: '#5a4c40'
@@ -234,6 +244,7 @@
             flavor: '它只懂一件事：壓扁。非常徹底地壓扁。',
             role: 'attack', targeting: 'single',
             baseCost: 10000, damage: 320, cooldown: 10,
+            typingDamageMult: 2,
             unlock: { type: 'damage', amount: 10000 },
             unlockText: '累積有效傷害達 1 萬',
             color: '#8d93a0', accent: '#3f4654'
@@ -243,6 +254,7 @@
             flavor: '用科學的頻率，敲出最軟嫩的口感。',
             role: 'attack', targeting: 'single',
             baseCost: 60000, damage: 400, cooldown: 4,
+            typingDamageMult: 2.5,
             applies: 'soften',
             unlock: { type: 'zone', zoneIndex: 1 },
             unlockText: '解鎖第二地區',
@@ -253,6 +265,7 @@
             flavor: '危險！請勿對著眼睛或理智噴灑。',
             role: 'support', targeting: 'none',
             baseCost: 600000, damage: 0, cooldown: 8,
+            typingDamageMult: 3,
             support: { type: 'haste', speedMult: 1.2, seconds: 3 },
             unlock: { type: 'device', deviceId: 'garlic_mech', count: 5 },
             unlockText: '擁有 5 台重力蒜泥機',
@@ -263,6 +276,7 @@
             flavor: '嗶嗶嗶！時間到了！快點把它煮熟！',
             role: 'support', targeting: 'none',
             baseCost: 1500000, brothCost: 1, damage: 0, cooldown: 25,
+            typingDamageMult: 3.5,
             support: { type: 'doubleKill' },
             unlock: { type: 'broth', amount: 1 },
             unlockText: '曾累積取得 1 滴金湯滴',
@@ -273,6 +287,7 @@
             flavor: '用看不見的磁場，煮熟看得見的麻煩。',
             role: 'aura', targeting: 'none',
             baseCost: 2500000, damage: 0, cooldown: 0,
+            typingDamageMult: 4,
             unlock: { type: 'lifetimeCoins', amount: 1000000 },
             unlockText: '歷史累積獲得 100 萬菇幣',
             color: '#2d2f3a', accent: '#d03a2a'
@@ -282,6 +297,7 @@
             flavor: '叮！您的星球已加熱完畢。',
             role: 'attack', targeting: 'single',
             baseCost: 10000000, damage: 400000, cooldown: 60,
+            typingDamageMult: 5,
             bossMult: 6,
             unlock: { type: 'boss', bossId: 'boss_frozen' },
             unlockText: '擊敗第三區菇王（原企劃為第四地區，第一版改為此里程碑）',

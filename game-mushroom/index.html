@@ -56,8 +56,9 @@
             <dd id="res-broth">0</dd>
         </div>
         <div class="res">
-            <dt>英打傷害</dt>
+            <dt>英打傷害／每字</dt>
             <dd id="res-click">1</dd>
+            <small class="res__sub" id="res-boss-typing">菇王 ×1　設備 ×1</small>
         </div>
         <div class="res">
             <dt>自動火力</dt>
@@ -66,6 +67,10 @@
         <div class="res">
             <dt>英打攻擊次數</dt>
             <dd id="res-typing-count">0</dd>
+        </div>
+        <div class="res">
+            <dt>外送員攔截數</dt>
+            <dd id="res-couriers-caught">0</dd>
         </div>
         <div class="res">
             <dt>歷史累積菇幣</dt>
@@ -91,7 +96,7 @@
         <section class="field" aria-label="採集戰場">
             <header class="field__head">
                 <div class="zone-tabs" id="zone-tabs" role="group" aria-label="地區切換"></div>
-                <p class="field__meta"><span id="zone-depth">採集深度 1</span>　<span id="zone-desc"></span></p>
+                <p class="field__meta"><span class="field__depth"><span class="field__depth-label">採集深度</span><span class="field__depth-value" id="zone-depth">1</span></span><span class="field__description" id="zone-desc"></span></p>
             </header>
 
             <ul class="buff-bar" id="buff-bar" aria-label="生效中的效果"></ul>
@@ -101,6 +106,7 @@
                 <div class="floaters" id="floaters" aria-hidden="true"></div>
                 <button type="button" class="courier" id="courier" hidden>
                     <span class="courier__art" id="courier-art" aria-hidden="true"></span>
+                    <span class="courier__label" aria-hidden="true">外送</span>
                     <span class="visually-hidden">點擊迷路的外送員，取得一個隨機道具</span>
                 </button>
             </div>
@@ -109,7 +115,6 @@
                 <div class="typing__head">
                     <span class="typing__label">英打攻擊</span>
                     <div class="typing__tools">
-                        <span class="typing__hint" id="typing-luck-status">完成 0 / 5 題，領取首發幸運 ×2</span>
                         <button type="button" class="btn btn--ghost typing__skip" id="btn-skip-prompt">跳過此題</button>
                     </div>
                 </div>
@@ -122,6 +127,16 @@
             </section>
 
             <div class="boss-panel" id="boss-panel" hidden>
+                <section class="boss-combo" id="boss-combo" aria-label="菇王戰連擊加成" hidden>
+                    <div class="boss-combo__head">
+                        <span class="boss-combo__title">⚡ 英打連擊</span>
+                        <strong id="boss-combo-value">連擊 0 / 10　傷害 ×1.00</strong>
+                    </div>
+                    <div class="boss-combo__track" role="progressbar" aria-label="英打連擊層數" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0">
+                        <span class="boss-combo__fill" id="boss-combo-fill"></span>
+                    </div>
+                    <p class="boss-combo__hint" id="boss-combo-hint">持續正確輸入疊加傷害；停打 3 秒，連擊就會歸零。</p>
+                </section>
                 <p class="boss-help" id="boss-help"></p>
                 <p class="boss-progress" id="boss-progress" hidden></p>
                 <div class="boss-actions">
@@ -151,6 +166,7 @@
             </div>
 
             <div class="panel" role="tabpanel" id="panel-devices" aria-labelledby="tab-devices">
+                <p class="panel__note panel__note--warning" id="device-freeze-note" role="alert" hidden></p>
                 <div class="buy-mode" role="group" aria-label="購買數量">
                     <span class="buy-mode__label">購買數量</span>
                     <button type="button" class="chip" data-buy-mode="1" aria-pressed="true">1</button>
@@ -182,6 +198,14 @@
                 <ul class="dex-list" id="dex-list"></ul>
                 <h3 class="panel__sub">收藏品</h3>
                 <ul class="dex-list" id="collection-list"></ul>
+                <section class="word-dex" aria-labelledby="word-dex-title">
+                    <h3 class="panel__sub" id="word-dex-title">單字圖鑑</h3>
+                    <p class="panel__note">收錄全民英檢初級與中級題庫的單字，依 A–Z 排列，可瀏覽英文與中文解釋。</p>
+                    <p class="word-dex__summary" id="word-dex-summary" aria-live="polite"></p>
+                    <div class="word-dex__filters" id="word-dex-filters" role="group" aria-label="篩選單字級別"></div>
+                    <div class="word-dex__letters" id="word-dex-letters" role="group" aria-label="依字母瀏覽單字"></div>
+                    <ul class="word-dex__list" id="word-dex-list"></ul>
+                </section>
             </div>
 
             <div class="panel" role="tabpanel" id="panel-achievements" aria-labelledby="tab-achievements" hidden>
@@ -200,19 +224,27 @@
     <div class="dialog__body">
         <h2 id="help-title">玩法說明</h2>
         <ul>
-            <li>照著戰場下方的英文句子輸入；每個正確字母、空格或符號都會造成一次攻擊。卡住時可跳過此句，正確輸入時也有機會觸發傷害 ×2 的幸運加成。設備會依各自的冷卻自動攻擊。</li>
-            <li>造成<strong>有效傷害</strong>與<strong>擊敗</strong>都會掉菇幣。過量傷害不會額外給錢。</li>
-            <li>每個地區有「採集深度」，擊敗一定數量後深度 +1，血量與獎勵同步提升。</li>
-            <li>金湯滴來自菇王、純金大香菇與黃金孢子升級，用於解鎖高階內容。</li>
-            <li>菇王沒有倒數失敗機制，隨時可以退出；<strong>退出或重新挑戰時菇王血量會重置</strong>，已取得的資源保留。</li>
+            <li><strong>選擇題庫與英打：</strong>在設定中選擇全民英檢初級、中級單字或 500 題句子題庫；單字題會附中文翻譯。輸入題目中下一個正確字元，每個字母、空格或符號都會造成一次英打攻擊。</li>
+            <li><strong>跳過與瘋狂連打：</strong>卡住時可跳過目前題目。偶爾會出現「瘋狂連打」超簡單題，每個字元仍會各自攻擊；新玩家完成 9 題後必定遇到第一次（約第 10 題），之後完成一般題目或按下跳過，皆有 2% 機率再次觸發。</li>
+            <li><strong>幸運加成與設備：</strong>幸運加成觸發時，該次英打傷害 ×2；一般觸發機率為每個正確字元 4%。設備會提供自動火力或支援效果；商店會標示攻擊設備每台與持有合計的每秒傷害。</li>
+            <li>首次擊敗每一隻菇王，英打每字傷害永久 ×2；擊敗不同菇王的加成會累乘，同一隻菇王重戰不會再次增加倍率。</li>
+            <li>每種設備第一次入手會啟用永久英打加成；階級越高，加成越大，並與菇王加成相乘。同種設備多買不會重複增加這項加成。</li>
+            <li>普通蘑菇受到<strong>有效傷害</strong>時會按傷害量掉落菇幣，擊敗目標還會另發懸賞；菇王則在擊敗時發放懸賞。超過剩餘血量的傷害不會增加傷害掉落。</li>
+            <li><strong>外送員</strong>約每 15–25 分鐘出現在戰場，停留 12 秒。點擊攔截可取得一件隨機消耗道具；錯過就等下一次出現，上方會累計成功攔截數。</li>
+            <li>每個地區的普通蘑菇每擊敗 8 隻，採集深度就提升 1 級，血量與獎勵同步增加；菇王血量不受深度影響。</li>
+            <li>金湯滴由菇王與純金大香菇掉落；取得「黃金孢子」升級後，擊敗普通蘑菇也有機率掉落。金湯滴可用來解鎖高階內容。</li>
+            <li>菇王沒有倒數失敗機制，隨時可以退出；<strong>退出或重新挑戰時菇王血量會重置</strong>，退出會保留英打進度與已取得資源。三個地區首次挑戰都要先在該地區累積 100 次英打攻擊；首次擊敗後，每次再挑戰前木砧板／鐵鍋／冰箱分別要累積 100／200／500 次英打攻擊。</li>
         </ul>
         <h3 class="dialog__sub">機制定義</h3>
         <ul>
             <li><strong>岩殼</strong>：單次傷害低於該地區門檻時，該次傷害強制變成 1。靠重擊設備或提高英打傷害突破。</li>
             <li><strong>真實傷害</strong>（魔鬼椒爆彈）：穿透岩殼，但<strong>不</strong>穿透菇王護盾。</li>
             <li><strong>軟化</strong>：肉槌造成，英打攻擊傷害獲得一個獨立乘區 ×2。</li>
-            <li><strong>速度倍率</strong>：冷卻時間 = 基礎冷卻 ÷ 速度倍率。「攻速 +10%」即速度倍率 ×1.1。</li>
-            <li><strong>連擊</strong>：每個正確輸入字元 +1 層，3 秒未輸入歸零；滿層約需每秒 3 個字元維持 3 秒。</li>
+            <li><strong>破盾</strong>：百葉豆腐菇有 3 層護盾，護盾存在時所有傷害都會被擋下。第一層可直接按住 2 秒破除；第二層前要先完成 3 個單字，第三層前再完成 5 個。每層都要重新蓄力，太早放開不會受罰。</li>
+            <li><strong>設備冰凍</strong>：挑戰急凍菇時，每 18 秒約有一半持有中的自動設備會被凍結；冰凍期間自動效果暫停，但該設備的英打加成仍在。按住結冰設備 2 秒解凍，提早放開只需重新蓄力。</li>
+            <li><strong>吸湯海綿菇</strong>：超過 3 秒沒有手動攻擊（英打或點擊）後，每秒恢復最大血量的 15%；自動設備攻擊不會重設這個計時。</li>
+            <li><strong>速度倍率</strong>：攻擊頻率與平均每秒傷害都會乘上速度倍率；設備商店的傷害數字以每秒計算。</li>
+            <li><strong>連擊</strong>：每次英打攻擊 +1 層，3 秒未輸入就歸零；特調提神飲料生效時可避免連擊中斷。傷害逐層加速成長，10 層最高 ×10；「共振敲擊」可把上限提高到 ×15。</li>
         </ul>
         <h3 class="dialog__sub">離線採集</h3>
         <p id="help-offline">—</p>
@@ -232,7 +264,7 @@
             <div class="radio-row radio-row--stacked">
                 <label><input type="radio" name="typingBank" value="geptElementary" checked> 全民英檢初級單字（2,218 題）</label>
                 <label><input type="radio" name="typingBank" value="geptIntermediate"> 全民英檢中級單字（2,568 題）</label>
-                <label><input type="radio" name="typingBank" value="sentences"> 句子</label>
+                <label><input type="radio" name="typingBank" value="sentences"> 句子 (500題)</label>
             </div>
             <p class="hint">單字題會顯示中文翻譯；切換題庫會立即換題。中級題庫只收錄官方字表標示為中級的詞目。</p>
         </fieldset>

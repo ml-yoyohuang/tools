@@ -17,6 +17,8 @@
     var LOOP_MS = 100;
     var SLOW_EVERY = 4;
     var TYPING_PROMPTS = window.MushTypingPrompts;
+    var CRAZY_TYPING_PROMPT = { text: 'aaaaaaaaaaaaaaaaaaaa', translation: '瘋狂連打！' };
+    var CRAZY_TYPING_CHANCE = 0.02;
     var TYPING_LUCKY_CHANCE = 0.04;
     var TYPING_LUCKY_DAMAGE_MULT = 2;
     var TYPING_BANK_NAMES = {
@@ -40,6 +42,7 @@
         this.typingPromptIndex = 0;
         this.typingIndex = 0;
         this.typingSentencesCompleted = 0;
+        this.crazyTypingActive = false;
         this.firstLuckyGranted = false;
         this.firstLuckyPending = false;
 
@@ -50,6 +53,7 @@
         this.ui = new UIAPI.UI({
             game: this.game,
             images: this.images,
+            typingVocab: TYPING_VOCAB,
             handlers: {
                 onTypingKey: this.typingKey.bind(this),
                 onSkipPrompt: this.skipTypingPrompt.bind(this),
@@ -84,7 +88,6 @@
         this.loadGame();
         this.typingPromptIndex = Math.floor(this.game.random() * this.currentTypingPrompts().length);
         this.renderTyping('點一下輸入框，開始攻擊蘑菇。', false);
-        this.updateTypingLuckHint();
         this.claimTab(true);
         this.start();
     }
@@ -220,13 +223,25 @@
             self.ui.killReward(mushroom ? mushroom.name : '蘑菇', e);
         });
         this.game.on('blocked', function () { self.ui.floater('護盾擋下', 'block'); });
+        this.game.on('shieldBreak', function (event) {
+            self.ui.shieldBreak(event.uid);
+            self.ui.announce(event.left > 0
+                ? '護盾裂開！還有 ' + event.left + ' 層。'
+                : '三層護盾全部破除，可以攻擊菇王了。');
+        });
+        this.game.on('bossStart', function () { self.ui.bossSceneTransition('enter'); });
+        this.game.on('bossExit', function () { self.ui.bossSceneTransition('exit'); });
         this.game.on('achievement', function (a) {
             self.ui.toast('達成成就：' + a.name);
             self.ui.announce('達成成就：' + a.name);
         });
         this.game.on('bossDefeated', function (e) {
+            self.ui.bossSceneTransition('exit');
             var boss = Config.BOSS_BY_ID[e.bossId];
-            var text = '擊敗 ' + boss.name + '！' + boss.reward + '，取得收藏品「' + boss.collection + '」。';
+            var text = e.firstClear
+                ? '擊敗 ' + boss.name + '！' + boss.reward + '，取得收藏品「' + boss.collection + '」。英打傷害永久 ×' +
+                    Format.short(e.typingDamageMult) + '（每擊敗一位菇王翻倍）。'
+                : '再次擊敗 ' + boss.name + '！獲得 +' + Format.short(e.bounty) + ' 菇幣與 ' + e.broth + ' 金湯滴。';
             self.ui.toast(text);
             self.ui.announce(text);
             self.save(false);
@@ -237,7 +252,7 @@
             self.ui.announce('寶箱松露逃走了，沒有掉落獎勵。');
         });
         this.game.on('courier', function () { self.ui.announce('迷路的外送員出現了。'); });
-        this.game.on('freeze', function (e) { self.ui.announce('有 ' + e.count + ' 台設備被凍結，點擊它們解凍。'); });
+        this.game.on('freeze', function (e) { self.ui.announce('急凍菇凍結了 ' + e.count + ' 種設備。設備商店已標出紅框，回到菇王挑戰畫面按住結冰設備 2 秒即可解凍。'); });
         this.game.on('depth', function (e) {
             if (e.zoneId === self.game.state.zoneId) self.ui.floater('採集深度 ' + e.depth, '');
         });
@@ -271,56 +286,86 @@
         }
 
         var completesSentence = this.typingIndex === prompt.length - 1;
+        var completesWord = completesSentence || prompt.charAt(this.typingIndex + 1) === ' ';
         var guaranteedFirstLucky = !this.firstLuckyGranted &&
             (this.firstLuckyPending || (this.typingSentencesCompleted === 4 && completesSentence));
         var alive = this.game.aliveTargets();
         if (alive.length) {
             var lucky = guaranteedFirstLucky ||
                 (this.firstLuckyGranted && this.game.random() < TYPING_LUCKY_CHANCE);
-            this.clickTarget(this.game.state.preferredUid || alive[0].uid,
+            var targetUid = this.game.state.preferredUid || alive[0].uid;
+            var comboBefore = this.game.state.combo;
+            var attackResult = this.clickTarget(targetUid,
                 lucky ? { damageMult: TYPING_LUCKY_DAMAGE_MULT } : null);
+            if (this.game.mode === 'boss' && attackResult && attackResult.combo > comboBefore) {
+                var comboMilestones = [3, 5, Config.BALANCE.combo.maxStacks];
+                for (var comboIndex = 0; comboIndex < comboMilestones.length; comboIndex++) {
+                    var milestone = comboMilestones[comboIndex];
+                    if (comboBefore < milestone && attackResult.combo >= milestone) {
+                        this.ui.comboMilestone(attackResult.combo, this.game.stats.comboMult,
+                            attackResult.combo >= Config.BALANCE.combo.maxStacks);
+                        break;
+                    }
+                }
+            }
             if (lucky) {
                 this.firstLuckyGranted = true;
                 this.firstLuckyPending = false;
-                this.ui.floater('幸運加成 ×' + TYPING_LUCKY_DAMAGE_MULT + '！', 'luck');
+                this.ui.luckyHit(this.game.state.preferredUid || targetUid, TYPING_LUCKY_DAMAGE_MULT);
                 this.ui.announce('幸運加成！這次英打攻擊傷害 ×' + TYPING_LUCKY_DAMAGE_MULT + '。');
-                this.updateTypingLuckHint();
             }
         }
         this.typingIndex++;
+        if (completesWord && this.game.completeBossTypingWord()) this.ui.tickFast(Date.now());
         if (this.typingIndex >= prompt.length) {
             this.typingSentencesCompleted++;
             if (this.typingSentencesCompleted >= 5 && !this.firstLuckyGranted) this.firstLuckyPending = true;
-            this.typingPromptIndex = this.nextTypingPromptIndex();
+            var completedCrazyPrompt = this.crazyTypingActive;
+            if (completedCrazyPrompt) {
+                this.crazyTypingActive = false;
+                this.typingPromptIndex = Math.floor(this.game.random() * this.currentTypingPrompts().length);
+            } else {
+                this.scheduleCrazyTyping();
+                this.typingPromptIndex = this.crazyTypingActive ? 0 : this.nextTypingPromptIndex();
+            }
             this.typingIndex = 0;
             this.renderTyping('題目完成！繼續輸入下一題。', false);
-            this.updateTypingLuckHint();
         } else {
             this.renderTyping('輸入中：每個正確字元都會攻擊。', false);
         }
     };
 
-    App.prototype.updateTypingLuckHint = function () {
-        var message = this.firstLuckyGranted
-            ? '首發幸運已領取・之後每字 4% 機率觸發 ×2'
-            : this.firstLuckyPending
-                ? '首發幸運已送出，下一次攻擊觸發 ×2'
-                : '完成 ' + this.typingSentencesCompleted + ' / 5 題，領取首發幸運 ×2';
-        this.ui.setTypingLuckStatus(message);
-    };
-
     App.prototype.skipTypingPrompt = function () {
         if (!this.requirePrimary()) return;
-        this.typingPromptIndex = this.nextTypingPromptIndex();
+        this.ui.showPass();
+        var skippedCrazyPrompt = this.crazyTypingActive;
+        this.crazyTypingActive = false;
+        this.scheduleCrazyTyping();
+        this.typingPromptIndex = this.crazyTypingActive ? 0 : (skippedCrazyPrompt
+            ? Math.floor(this.game.random() * this.currentTypingPrompts().length)
+            : this.nextTypingPromptIndex());
         this.typingIndex = 0;
         this.renderTyping('已跳過，換一題試試。', false);
         this.ui.focusTypingInput();
     };
 
     App.prototype.currentTypingPrompts = function () {
+        if (this.crazyTypingActive) return [CRAZY_TYPING_PROMPT];
         var bank = this.settings.typingBank || 'sentences';
         if (bank === 'geptElementary' || bank === 'geptIntermediate') return TYPING_VOCAB[bank];
         return TYPING_PROMPTS.map(function (text) { return { text: text, translation: '' }; });
+    };
+
+    App.prototype.scheduleCrazyTyping = function () {
+        var flags = this.game.state.flags || (this.game.state.flags = {});
+        if (!flags.crazyTypingSeen) {
+            if (this.typingSentencesCompleted < 9) return;
+            flags.crazyTypingSeen = true;
+            this.crazyTypingActive = true;
+            this.save(false);
+            return;
+        }
+        this.crazyTypingActive = this.game.random() < CRAZY_TYPING_CHANCE;
     };
 
     App.prototype.nextTypingPromptIndex = function () {
@@ -331,7 +376,7 @@
 
     App.prototype.renderTyping = function (status, error) {
         var prompt = this.currentTypingPrompts()[this.typingPromptIndex];
-        this.ui.renderTyping(prompt.text, this.typingIndex, status, error, prompt.translation);
+        this.ui.renderTyping(prompt.text, this.typingIndex, status, error, prompt.translation, this.crazyTypingActive);
     };
 
     App.prototype.buyDevice = function (deviceId) {
@@ -557,7 +602,6 @@
                         self.typingPromptIndex = Math.floor(self.game.random() * self.currentTypingPrompts().length);
                         self.typingIndex = 0;
                         self.renderTyping('已切換至「' + TYPING_BANK_NAMES[input.value] + '」。', false);
-                        self.updateTypingLuckHint();
                     }
                 });
             });

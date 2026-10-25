@@ -179,13 +179,13 @@
     /** 連擊乘區。 */
     function comboMult(state, fx) {
         var stacks = Math.max(0, Math.min(BALANCE.combo.maxStacks, finite(state.combo, 0)));
-        var per = fx.comboBoost ? BALANCE.combo.upgradedBonusPerStack : BALANCE.combo.bonusPerStack;
-        return 1 + stacks * per;
+        var max = comboMaxMult(fx);
+        if (BALANCE.combo.maxStacks <= 0) return 1;
+        return Math.pow(max, stacks / BALANCE.combo.maxStacks);
     }
 
     function comboMaxMult(fx) {
-        var per = fx.comboBoost ? BALANCE.combo.upgradedBonusPerStack : BALANCE.combo.bonusPerStack;
-        return 1 + BALANCE.combo.maxStacks * per;
+        return fx.comboBoost ? BALANCE.combo.upgradedMaxMultiplier : BALANCE.combo.maxMultiplier;
     }
 
     /**
@@ -228,7 +228,15 @@
         var clickBase = BALANCE.clickBaseDamage + fx.clickFlat;
         var combo = comboMult(state, fx);
         var energyMult = buffs.energy ? 3 : 1;
-        var clickNoCrit = clickBase * combo * energyMult * globalDamage;
+        var defeatedBosses = Config.BOSSES.reduce(function (count, boss) {
+            return count + (state.bosses && state.bosses[boss.id] ? 1 : 0);
+        }, 0);
+        var bossTypingMult = Math.pow(BALANCE.bossTypingDamageMult, defeatedBosses);
+        var deviceTypingMult = 1;
+        Config.DEVICES.forEach(function (device) {
+            if (deviceCount(state, device.id) > 0) deviceTypingMult *= device.typingDamageMult || 1;
+        });
+        var clickNoCrit = clickBase * combo * energyMult * globalDamage * bossTypingMult * deviceTypingMult;
 
         var speedMult = fx.deviceSpeedMult * (buffs.haste ? 1.2 : 1);
         // 冰晶雪花菇存活時，所有自動設備速度減半
@@ -247,9 +255,10 @@
                 count: count,
                 cooldown: cooldown,
                 damage: damage,
-                dps: (device.role === 'attack' && cooldown > 0) ? (damage * count / cooldown) : 0
+                dps: (device.role === 'attack' && cooldown > 0) ? (damage / cooldown) : 0,
+                totalDps: (device.role === 'attack' && cooldown > 0) ? (damage * count / cooldown) : 0
             };
-            autoDps += perDevice[device.id].dps;
+            autoDps += perDevice[device.id].totalDps;
         });
 
         return {
@@ -257,6 +266,9 @@
             buffs: buffs,
             clickBase: clickBase,
             clickDamage: clickNoCrit,                     // 不含暴擊與軟化的期望前值
+            defeatedBosses: defeatedBosses,
+            bossTypingMult: bossTypingMult,
+            deviceTypingMult: deviceTypingMult,
             clickCritChance: Math.min(1, fx.critChance),
             clickCritMult: fx.critMult,
             comboMult: combo,
@@ -327,6 +339,7 @@
             settled: false,
             spawnedAt: options.now || 0,
             lastHitAt: options.now || 0,
+            shieldWordProgress: 0,
             softenUntil: 0,
             fleeAt: 0,
             armorThreshold: 0,
