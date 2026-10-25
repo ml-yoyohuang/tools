@@ -228,6 +228,7 @@ button { font: inherit; color: inherit; cursor: pointer; border: 0; background: 
     min-width: 0;
 }
 .stat--main { grid-column: 1 / -1; }
+.stat--wide { grid-column: 1 / -1; }
 
 .stat dt {
     font-size: .68rem;
@@ -277,6 +278,7 @@ button { font: inherit; color: inherit; cursor: pointer; border: 0; background: 
     border: 2px solid rgba(0, 0, 0, .25);
     text-shadow: 0 1px 2px rgba(0, 0, 0, .5);
 }
+.next-swatch { object-fit: contain; background: transparent !important; }
 
 /* 桌機維持原本的縱向排列；手機時才併成一列 */
 .side__row { display: contents; }
@@ -385,6 +387,9 @@ dialog::backdrop { background: rgba(10, 8, 6, .5); }
 }
 
 .index-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.index-visual { position: relative; display: block; width: 32px; height: 32px; border-radius: 50%; overflow: visible; }
+.index-custom-art { display: block; width: 32px; height: 32px; object-fit: cover; border: 1px solid var(--line); border-radius: 50%; }
+.index-art-level { position: absolute; right: -4px; bottom: -3px; display: grid; place-items: center; width: 15px; height: 15px; border-radius: 50%; background: var(--surface); border: 1px solid var(--line); color: var(--text); font-size: .58rem; line-height: 1; font-weight: 800; }
 .index-item {
     display: grid;
     grid-template-columns: 34px minmax(70px, auto) 1fr;
@@ -487,20 +492,28 @@ kbd {
         min-height: 0;
     }
 
-    .scoreboard { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+    .scoreboard { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
     .stat--main { grid-column: auto; }
-    .stat { padding: 5px 8px; }
-    .stat dt { font-size: .62rem; }
-    .stat dd { font-size: 1rem; }
-    .stat--main dd { font-size: 1.2rem; }
-    .panel { padding: 7px 10px; }
+    .stat--wide { grid-column: auto; }
+    .stat {
+        display: flex; align-items: baseline; justify-content: center; gap: 4px;
+        padding: 4px 3px; white-space: nowrap; border-radius: 9px; box-shadow: none;
+    }
+    .stat dt { font-size: .68rem; letter-spacing: 0; text-transform: none; }
+    .stat dd, .stat--main dd { font-size: .82rem; line-height: 1.2; }
+    .panel { padding: 5px 8px; }
     .side > .panel:first-of-type { display: none; }   /* 目前這顆已經畫在畫面上 */
 
     /* 下一顆與按鈕併成一列，把高度留給棋盤 */
-    .side__row { display: flex; gap: 8px; align-items: stretch; }
-    .side__row > .panel { flex: 1 1 auto; min-width: 0; }
+    .side__row { display: flex; gap: 6px; align-items: center; }
+    .side__row > .panel { display: flex; align-items: center; gap: 5px; flex: 1 1 120px; min-width: 0; height: 36px; padding: 4px 7px; }
     .side__row > .controls { flex: 0 0 auto; }
-    .next-row { margin-top: 2px; }
+    .panel__title { flex: 0 0 auto; font-size: .68rem; letter-spacing: 0; text-transform: none; }
+    .next-row { min-width: 0; margin-top: 0; }
+    .next-row .swatch { display: block; width: 20px; height: 20px; flex: 0 0 20px; border: 0; border-radius: 50%; object-fit: contain; text-shadow: none; }
+    .next-row .panel__value { margin: 0; font-size: .78rem; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
+    .controls { gap: 5px; }
+    .controls .btn { height: 36px; min-height: 36px; padding: 0 7px; font-size: .75rem; line-height: 1; border-radius: 9px; box-shadow: none; white-space: nowrap; }
     .hint { font-size: .74rem; }
 }
 
@@ -509,10 +522,16 @@ kbd {
 }
 
 @media (max-width: 420px) {
+    .stat { gap: 3px; padding-inline: 2px; }
     .stat dt { font-size: .58rem; letter-spacing: 0; }
-    .stat dd { font-size: .92rem; }
-    .stat--main dd { font-size: 1.05rem; }
+    .stat dd, .stat--main dd { font-size: .72rem; }
     .btn { padding: 0 10px; }
+    .side__row { gap: 4px; }
+    .side__row > .panel { padding-inline: 5px; gap: 4px; }
+    .panel__title { font-size: .62rem; }
+    .next-row .panel__value { font-size: .70rem; }
+    .controls { gap: 3px; }
+    .controls .btn { padding-inline: 5px; font-size: .68rem; }
     .index-item { grid-template-columns: 30px 1fr; }
     .index-meta { grid-column: 1 / -1; text-align: left; }
 }

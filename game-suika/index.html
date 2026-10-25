@@ -38,7 +38,7 @@
             <button type="button" class="btn btn--large" id="btn-default-game">使用預設圖案立即遊玩</button>
         </div>
         <p class="welcome-note">共 11 種水果 · 圖案會保存在這台裝置</p>
-        <a href="../ura.html" class="nav-back">← 返回 Ura</a>
+        <a href="../ura.html" class="nav-back" aria-label="返回 Ura" title="返回 Ura">←&nbsp;</a>
     </div>
 </main>
 
@@ -94,7 +94,7 @@
 <div class="app" id="game-screen" hidden>
 
     <div class="topbar">
-        <a href="../ura.html" class="nav-back">← 返回 Ura</a>
+        <a href="../ura.html" class="nav-back" aria-label="返回 Ura" title="返回 Ura">←&nbsp;</a>
         <div class="topbar__actions">
             <button type="button" class="btn btn--ghost" id="btn-title">標題畫面</button>
             <button type="button" class="btn btn--ghost" id="btn-index">合成圖鑑</button>
@@ -142,7 +142,7 @@
                     <dt>合成次數</dt>
                     <dd id="stat-merges">0</dd>
                 </div>
-                <div class="stat">
+                <div class="stat stat--wide">
                     <dt>狀態</dt>
                     <dd id="game-status">進行中</dd>
                 </div>
@@ -157,7 +157,7 @@
                 <div class="panel">
                     <h2 class="panel__title">下一顆</h2>
                     <div class="next-row">
-                        <span class="swatch" id="next-swatch" aria-hidden="true">1</span>
+                        <img class="swatch next-swatch" id="next-swatch" src="assets/fruits/fruit-01.svg" alt="" aria-hidden="true">
                         <p class="panel__value" id="next-name">莓果（等級 1）</p>
                     </div>
                 </div>

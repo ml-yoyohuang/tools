@@ -178,6 +178,7 @@
 
         this.el.customGame.addEventListener('click', function () { self.showDrawingScreen(); });
         this.el.defaultGame.addEventListener('click', function () {
+            self.useCustomArt = false;
             self.images.clearCustom();
             self.showScreen('game');
             self.restart();
@@ -207,7 +208,10 @@
         });
 
         this.el.btnHelp.addEventListener('click', function () { self.openDialog(self.el.dlgHelp); });
-        this.el.btnIndex.addEventListener('click', function () { self.openDialog(self.el.dlgIndex); });
+        this.el.btnIndex.addEventListener('click', function () {
+            self.buildIndexDialog();
+            self.openDialog(self.el.dlgIndex);
+        });
 
         this.el.btnExport.addEventListener('click', function () {
             self.el.exportText.value = self.storage.exportText({
@@ -361,7 +365,7 @@
         });
         this.el.clearDrawing.addEventListener('click', function () {
             self.pushDrawingUndo(); self.paintFruitBase(self.drawingLevel + 1);
-            self.hasUserEdit = false; self.drawingDirty = true;
+            self.hasUserEdit = true; self.drawingDirty = true;
             self.updateDrawingControls();
         });
         this.el.drawingPrev.addEventListener('click', function () { self.storeDrawing(); self.openDrawingLevel(Math.max(0, self.drawingLevel - 1)); });
@@ -614,6 +618,7 @@
 
     Game.prototype.beginCustomGame = function () {
         var self = this, levels = Config.LEVELS, remaining = 0;
+        this.useCustomArt = true;
         this.showScreen('game'); this.images.clearCustom();
         levels.forEach(function (info) { if (self.artwork[info.level]) remaining++; });
         if (!remaining) { this.restart(); return; }
@@ -627,16 +632,34 @@
     };
 
     Game.prototype.buildIndexDialog = function () {
+        var self = this;
         var list = this.el.indexList;
         list.textContent = '';
         Config.LEVELS.forEach(function (info) {
             var item = document.createElement('li');
             item.className = 'index-item';
 
-            var swatch = document.createElement('span');
-            swatch.className = 'swatch';
-            swatch.style.background = info.color;
-            swatch.textContent = String(info.level);
+            var artwork = self.artwork[info.level];
+            var visual;
+            if (artwork) {
+                visual = document.createElement('span');
+                visual.className = 'index-visual';
+                visual.style.backgroundColor = info.color;
+                var image = document.createElement('img');
+                image.className = 'index-custom-art';
+                image.src = artwork;
+                image.alt = info.name + '：玩家自繪圖案';
+                visual.appendChild(image);
+                var level = document.createElement('span');
+                level.className = 'index-art-level';
+                level.textContent = String(info.level);
+                visual.appendChild(level);
+            } else {
+                visual = document.createElement('span');
+                visual.className = 'swatch';
+                visual.style.background = info.color;
+                visual.textContent = String(info.level);
+            }
 
             var name = document.createElement('span');
             name.className = 'index-name';
@@ -649,7 +672,7 @@
                 ? '最高級 · 兩顆相碰一起消除 +' + Config.SCORING.topClear + ' 分'
                 : '合成得分 +' + Config.SCORING.merge[info.level - 1];
 
-            item.appendChild(swatch);
+            item.appendChild(visual);
             item.appendChild(name);
             item.appendChild(meta);
             list.appendChild(item);
@@ -666,8 +689,7 @@
         this.el.merges.textContent = String(world.mergeCount);
         this.el.currentName.textContent = current.name + '（等級 ' + current.level + '）';
         this.el.nextName.textContent = next.name + '（等級 ' + next.level + '）';
-        this.el.nextSwatch.style.background = next.color;
-        this.el.nextSwatch.textContent = String(next.level);
+        this.el.nextSwatch.src = this.useCustomArt && this.artwork[next.level] ? this.artwork[next.level] : next.image;
 
         var stateText = {
             running: '進行中',
