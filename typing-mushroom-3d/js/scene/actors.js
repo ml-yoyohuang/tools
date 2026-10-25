@@ -8,7 +8,7 @@
  *  - height：模型頂端高度（名牌錨點）
  */
 import * as THREE from 'three';
-import { blobShadowTexture } from './env.js';
+import { blobShadowTexture } from './env.js?v=20261025-title';
 
 function mat(color, opts) {
     return new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.65, metalness: 0 }, opts || {}));

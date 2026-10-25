@@ -9,10 +9,10 @@
  * 鍵盤字母全部留給英打，因此不使用 WASD 移動。
  */
 import * as THREE from 'three';
-import { buildEnvironment, disposeGroup } from './env.js';
-import { buildMushroom, buildBoss, buildDevice, buildCourier, buildViewmodel } from './actors.js';
-import { Effects } from './fx.js';
-import { Labels } from './labels.js';
+import { buildEnvironment, disposeGroup } from './env.js?v=20261025-title';
+import { buildMushroom, buildBoss, buildDevice, buildCourier, buildViewmodel } from './actors.js?v=20261025-title';
+import { Effects } from './fx.js?v=20261025-title';
+import { Labels } from './labels.js?v=20261025-title';
 
 const Config = window.MushConfig;
 const Combat = window.MushCombat;
