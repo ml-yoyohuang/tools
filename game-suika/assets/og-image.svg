@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="paper" x2="0" y2="1"><stop stop-color="#fffaf2"/><stop offset="1" stop-color="#f7ead7"/></linearGradient>
+    <linearGradient id="melon" x2="1" y2="1"><stop stop-color="#5caa70"/><stop offset="1" stop-color="#23643f"/></linearGradient>
+    <linearGradient id="berry" x2=".9" y2="1"><stop stop-color="#ff8a9f"/><stop offset="1" stop-color="#d8325c"/></linearGradient>
+    <linearGradient id="orange" x2=".8" y2="1"><stop stop-color="#ffc65b"/><stop offset="1" stop-color="#e97818"/></linearGradient>
+    <filter id="shadow" x="-.3" y="-.3" width="1.6" height="1.7"><feGaussianBlur in="SourceAlpha" stdDeviation="13"/><feOffset dy="11"/><feComponentTransfer><feFuncA type="linear" slope=".18"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <pattern id="dots" width="26" height="26" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.5" fill="#cdb99c" opacity=".34"/></pattern>
+    <clipPath id="bowl"><path d="M694 229h425l-30 291q-6 62-68 62H793q-62 0-68-62z"/></clipPath>
+  </defs>
+  <rect width="1200" height="630" fill="url(#paper)"/>
+  <circle cx="1050" cy="60" r="210" fill="#f4dfc2" opacity=".58"/>
+  <circle cx="115" cy="570" r="220" fill="#f6e4cc" opacity=".48"/>
+  <rect x="0" y="0" width="1200" height="630" fill="url(#dots)" opacity=".32"/>
+
+  <g font-family="-apple-system,BlinkMacSystemFont,'PingFang TC','Microsoft JhengHei',sans-serif">
+    <rect x="86" y="82" width="210" height="37" rx="18.5" fill="#fbe8d4"/>
+    <circle cx="108" cy="100.5" r="5" fill="#c2631c"/>
+    <text x="125" y="106" font-size="14" font-weight="800" letter-spacing="2.3" fill="#9b4d18">FRUIT MERGE STUDIO</text>
+    <text x="82" y="226" font-size="76" font-weight="900" letter-spacing="-4" fill="#3b2f22">果實合成</text>
+    <text x="86" y="276" font-size="26" font-weight="650" fill="#765d43">畫出你的水果家族</text>
+    <text x="86" y="322" font-size="18" fill="#887761">親手創作，再投入容器、碰撞、合成。</text>
+    <g transform="translate(86 373)">
+      <rect width="236" height="54" rx="16" fill="#c2631c"/>
+      <text x="118" y="35" text-anchor="middle" font-size="19" font-weight="750" fill="#fff">畫水果・開始遊戲</text>
+    </g>
+    <text x="87" y="469" font-size="14" font-weight="650" letter-spacing="1" fill="#927c63">11 種水果 · 自由繪製 · 立即遊玩</text>
+  </g>
+
+  <!-- Glass fruit jar -->
+  <g filter="url(#shadow)">
+    <path d="M694 229h425l-30 291q-6 62-68 62H793q-62 0-68-62z" fill="#fffdf7" fill-opacity=".58" stroke="#c99e6b" stroke-width="9"/>
+    <path d="M686 224h441" stroke="#bd8a54" stroke-width="13" stroke-linecap="round"/>
+    <path d="M713 252l22 252q4 48 53 48" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" opacity=".82"/>
+    <g clip-path="url(#bowl)">
+      <path d="M710 455q190-42 392 0v157H710z" fill="#f5dfc0" opacity=".8"/>
+      <!-- orange -->
+      <circle cx="817" cy="470" r="57" fill="url(#orange)" stroke="#d96b13" stroke-width="4"/>
+      <path d="M817 415c-7-12-1-20 7-25 9 9 10 18 4 27" fill="#568e44"/>
+      <path d="M817 420v10m-35 5 28 20m45-20-28 20m-9 47v-38" stroke="#ffe9ad" stroke-width="4" opacity=".7"/>
+      <!-- berry -->
+      <path d="M935 421c-4-24-38-34-51-5-25-5-39 19-26 42l42 67q9 14 19 0l43-67c14-22-1-47-27-42Z" fill="url(#berry)" stroke="#b92349" stroke-width="4"/>
+      <path d="M885 418q18-25 42-2m-26-13q-6-17 4-28 15 5 18 20" fill="#438c50"/>
+      <g fill="#ffe9af"><ellipse cx="883" cy="447" rx="3" ry="5"/><ellipse cx="909" cy="450" rx="3" ry="5"/><ellipse cx="932" cy="447" rx="3" ry="5"/><ellipse cx="897" cy="470" rx="3" ry="5"/><ellipse cx="923" cy="472" rx="3" ry="5"/><ellipse cx="908" cy="490" rx="3" ry="5"/></g>
+      <!-- lime -->
+      <circle cx="1016" cy="491" r="42" fill="#74ae43" stroke="#548d31" stroke-width="4"/>
+      <circle cx="1016" cy="491" r="28" fill="#f4ed9e"/>
+      <circle cx="1016" cy="491" r="5" fill="#fff8cb"/>
+      <path d="M1016 463v23m0 10v23m-24-28 20 7m8 3 20 8m-48 0 20-8m8-3 20-7" stroke="#d9bf54" stroke-width="3"/>
+      <!-- watermelon -->
+      <circle cx="1052" cy="393" r="91" fill="url(#melon)" stroke="#1d5a39" stroke-width="5"/>
+      <path d="M1000 318q53 14 89 66m-126-28q52 18 95 72m-109-25q46 20 78 67m-51-169q37 10 67 35" fill="none" stroke="#a5ce76" stroke-width="8" stroke-linecap="round" opacity=".76"/>
+      <path d="M1005 343q30-36 70-29" fill="none" stroke="#e7f4ce" stroke-width="9" stroke-linecap="round" opacity=".8"/>
+      <!-- floating sparkles -->
+      <path d="M770 365v28m-14-14h28m223-5v22m-11-11h22" stroke="#c2631c" stroke-width="5" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <!-- playful small fruit accents -->
+  <g filter="url(#shadow)">
+    <circle cx="654" cy="303" r="34" fill="#df4763"/>
+    <path d="M647 269q0-17 15-22 5 13-5 23" fill="#4d8d4d"/>
+    <circle cx="1113" cy="177" r="29" fill="#e98d23"/>
+    <path d="M1111 147q2-14 13-16 4 12-5 18" fill="#548c43"/>
+    <circle cx="1080" cy="576" r="12" fill="#e7a83b"/>
+    <circle cx="655" cy="495" r="10" fill="#7aaf53"/>
+  </g>
+</svg>

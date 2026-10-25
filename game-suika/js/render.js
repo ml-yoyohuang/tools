@@ -257,6 +257,11 @@
         if (scale !== 1) ctx.scale(scale, scale);
 
         if (image) {
+            if (this.images && this.images.isCustom && this.images.isCustom(level)) {
+                ctx.beginPath();
+                ctx.arc(0, 0, radius, 0, TAU);
+                ctx.clip();
+            }
             var size = radius * 2 * (info.imageScale || 1);
             var ratio = (image.naturalWidth && image.naturalHeight)
                 ? image.naturalWidth / image.naturalHeight

@@ -3,17 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="純前端果實合成遊戲，使用 Matter.js 物理引擎，支援桌機滑鼠鍵盤與手機拖曳操作。">
+    <meta name="description" content="畫出專屬水果圖案，投入容器、碰撞合成，玩出你的果實家族。可用預設圖案立即開始。">
     <title>果實合成 | DevToolbox</title>
+    <meta name="theme-color" content="#fdf7ee">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="canonical" href="https://ml-yoyohuang.github.io/tools/game-suika/">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="zh_TW">
+    <meta property="og:site_name" content="DevToolbox">
+    <meta property="og:title" content="果實合成｜畫出你的水果家族">
+    <meta property="og:description" content="畫出專屬水果圖案，投入容器、碰撞合成，玩出你的果實家族。也可以使用預設圖案立即遊玩。">
+    <meta property="og:url" content="https://ml-yoyohuang.github.io/tools/game-suika/">
+    <meta property="og:image" content="https://ml-yoyohuang.github.io/tools/game-suika/assets/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:alt" content="果實合成：莓果、櫻桃、柑橘與西瓜在奶油色遊戲容器裡彈跳。">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="果實合成｜畫出你的水果家族">
+    <meta name="twitter:description" content="畫出專屬水果圖案，投入容器、碰撞合成，玩出你的果實家族。">
+    <meta name="twitter:image" content="https://ml-yoyohuang.github.io/tools/game-suika/assets/og-image.png">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<div class="app">
+<main class="welcome-screen" id="title-screen" aria-labelledby="welcome-title">
+    <div class="welcome-card">
+        <div class="welcome-mark" aria-hidden="true">🍉</div>
+        <p class="eyebrow">FRUIT MERGE STUDIO</p>
+        <h1 id="welcome-title">果實合成</h1>
+        <p class="welcome-copy">畫出你的水果家族，讓每一次合成都變成自己的作品。</p>
+        <div class="welcome-actions">
+            <button type="button" class="btn btn--primary btn--large" id="btn-custom-game">畫出水果，開始遊戲</button>
+            <button type="button" class="btn btn--large" id="btn-default-game">使用預設圖案立即遊玩</button>
+        </div>
+        <p class="welcome-note">共 11 種水果 · 圖案會保存在這台裝置</p>
+        <a href="../ura.html" class="nav-back">← 返回 Ura</a>
+    </div>
+</main>
+
+<main class="drawing-screen" id="drawing-screen" hidden aria-labelledby="drawing-title">
+    <header class="drawing-header">
+        <a href="#" class="nav-back" id="btn-drawing-home">← 回到標題</a>
+        <span class="eyebrow">YOUR FRUIT FAMILY</span>
+    </header>
+    <section class="drawing-card">
+        <div class="drawing-heading">
+            <p class="step-label" id="drawing-step">FRUIT 01 / 11</p>
+            <h1 id="drawing-title">畫出莓果</h1>
+            <p>在圓形畫布裡自由繪製。每種水果都完成後，就能帶著你的作品開始遊戲。</p>
+        </div>
+        <div class="drawing-progress" id="drawing-progress" aria-label="水果繪圖進度"></div>
+        <div class="drawing-workspace">
+            <div class="drawing-canvas-wrap">
+                <canvas id="fruit-canvas" width="360" height="360" aria-label="水果繪圖畫布"></canvas>
+                <canvas id="image-canvas" width="360" height="360" aria-label="移動或縮放匯入的圖片" hidden></canvas>
+            </div>
+            <div class="drawing-tools">
+                <p class="tool-label">繪圖工具</p>
+                <div class="tool-actions tool-mode">
+                    <button type="button" class="btn is-selected" id="btn-tool-brush" aria-pressed="true">畫筆</button>
+                    <button type="button" class="btn" id="btn-tool-bucket" aria-pressed="false">油漆桶</button>
+                </div>
+                <p class="tool-label">選擇顏色</p>
+                <div class="color-palette" id="color-palette" aria-label="筆刷顏色"></div>
+                <label class="color-custom">自訂顏色 <input type="color" id="custom-color" value="#e0486b"></label>
+                <label class="tool-label" for="brush-size">筆刷大小 <span id="brush-size-value">12</span></label>
+                <input type="range" id="brush-size" min="4" max="36" value="12">
+                <div class="tool-actions image-actions">
+                    <label class="btn image-upload-label" for="image-upload">從相簿選圖片</label>
+                    <input type="file" id="image-upload" accept="image/*" hidden>
+                    <button type="button" class="btn" id="btn-place-image" hidden>放置完成</button>
+                    <button type="button" class="btn" id="btn-cancel-image" hidden>取消圖片</button>
+                </div>
+                <div class="tool-actions">
+                    <button type="button" class="btn" id="btn-undo">復原</button>
+                    <button type="button" class="btn" id="btn-clear-drawing">清除重畫</button>
+                </div>
+                <p class="drawing-tip" id="drawing-tip">用滑鼠或手指在畫布上塗畫。背景會保持透明。</p>
+            </div>
+        </div>
+        <div class="drawing-footer">
+            <button type="button" class="btn" id="btn-drawing-prev">上一步</button>
+            <span id="drawing-save-status" aria-live="polite">完成這個水果的圖案後繼續</span>
+            <button type="button" class="btn btn--primary" id="btn-drawing-next" disabled>下一種水果</button>
+        </div>
+    </section>
+</main>
+
+<div class="app" id="game-screen" hidden>
 
     <div class="topbar">
         <a href="../ura.html" class="nav-back">← 返回 Ura</a>
         <div class="topbar__actions">
+            <button type="button" class="btn btn--ghost" id="btn-title">標題畫面</button>
             <button type="button" class="btn btn--ghost" id="btn-index">合成圖鑑</button>
             <button type="button" class="btn btn--ghost" id="btn-help">操作說明</button>
         </div>

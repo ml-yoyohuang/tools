@@ -24,6 +24,7 @@
         this.config = options.config || Config;
         this.createImage = options.createImage || function () { return new Image(); };
         this.images = {};     // level -> 圖片物件
+        this.customImages = {};
         this.failures = {};   // level -> true
         this.loaded = false;
     }
@@ -65,12 +66,29 @@
 
     /** 取得可直接繪製的圖片；回傳 null 代表該等級要走降級繪製。 */
     ImageStore.prototype.get = function (level) {
-        var image = this.images[level];
+        var image = this.customImages[level] || this.images[level];
         if (!image) return null;
         // 瀏覽器中如果圖片沒有實際尺寸，也視為不可用
         if (typeof image.naturalWidth === 'number' && image.naturalWidth === 0) return null;
         return image;
     };
+
+    ImageStore.prototype.setCustom = function (level, source, done) {
+        var self = this;
+        if (!source) {
+            delete this.customImages[level];
+            if (done) done(null);
+            return;
+        }
+        var image = this.createImage();
+        image._suikaCustom = true;
+        image.onload = function () { self.customImages[level] = image; if (done) done(image); };
+        image.onerror = function () { if (done) done(null); };
+        image.src = source;
+    };
+
+    ImageStore.prototype.clearCustom = function () { this.customImages = {}; };
+    ImageStore.prototype.isCustom = function (level) { return !!this.customImages[level]; };
 
     ImageStore.prototype.isFallback = function (level) { return this.get(level) === null; };
 
