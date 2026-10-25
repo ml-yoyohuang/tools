@@ -15,35 +15,35 @@
     /* ---------------- 25 個永久升級 ---------------- */
 
     var UPGRADES = [
-        /* --- 手動 --- */
+        /* --- 英打攻擊 --- */
         {
             id: 'u_clk_1', group: 'click', name: '鋒利指甲', flavor: '先別剪指甲。',
-            desc: '基礎點擊傷害 +1（絕對值）。',
-            cost: 120, req: { clicks: 100 }, reqText: '手動點擊 100 次',
+            desc: '基礎英打攻擊傷害 +1（絕對值）。',
+            cost: 120, req: { clicks: 100 }, reqText: '英打攻擊 100 次',
             effect: { type: 'clickFlat', value: 1 }
         },
         {
-            id: 'u_clk_2', group: 'click', name: '人體工學滑鼠', flavor: '保護手腕。',
-            desc: '每次點擊有 5% 機率造成 300% 傷害（×3 爆擊）。',
-            cost: 9000, req: { clicks: 2000 }, reqText: '手動點擊 2,000 次',
+            id: 'u_clk_2', group: 'click', name: '人體工學鍵盤', flavor: '保護手腕。',
+            desc: '每次英打攻擊有 5% 機率造成 300% 傷害（×3 爆擊）。',
+            cost: 9000, req: { clicks: 2000 }, reqText: '英打攻擊 2,000 次',
             effect: { type: 'clickCrit', chance: 0.05, mult: 3 }
         },
         {
-            id: 'u_clk_3', group: 'click', name: '共振敲擊', flavor: '你點的是節奏。',
-            desc: '連擊加成上限由 ×1.3 提高到 ×2.0（滿層約需每秒 3 下、維持 3 秒）。',
+            id: 'u_clk_3', group: 'click', name: '共振敲擊', flavor: '你敲的是節奏。',
+            desc: '連擊加成上限由 ×1.3 提高到 ×2.0（滿層約需每秒 3 個正確字元、維持 3 秒）。',
             cost: 65000, req: { damage: 200000 }, reqText: '累積有效傷害 20 萬',
             effect: { type: 'comboBoost' }
         },
         {
-            id: 'u_clk_4', group: 'click', name: '點石成金手', flavor: '摸什麼都賺。',
-            desc: '手動點擊造成的傷害，額外有 1% 直接轉成菇幣（衍生點擊不計）。',
+            id: 'u_clk_4', group: 'click', name: '敲字成金手', flavor: '敲什麼都賺。',
+            desc: '英打攻擊造成的傷害，額外有 1% 直接轉成菇幣（衍生判定不計）。',
             cost: 4000, req: { lifetimeCoins: 10000 }, reqText: '歷史累積 1 萬菇幣',
             effect: { type: 'clickToCoin', pct: 0.01 }
         },
         {
             id: 'u_clk_5', group: 'click', name: '幻影連打', flavor: '超越視覺的手速。',
-            desc: '每次手動點擊自動追加一次 50% 傷害的判定。衍生判定不會再觸發自己，也不計入點擊次數。',
-            cost: 2600000, req: { clicks: 20000 }, reqText: '手動點擊 20,000 次',
+            desc: '每次英打攻擊自動追加一次 50% 傷害的判定。衍生判定不會再觸發自己，也不計入英打攻擊次數。',
+            cost: 2600000, req: { clicks: 20000 }, reqText: '英打攻擊 20,000 次',
             effect: { type: 'phantom', mult: 0.5 }
         },
 
@@ -185,15 +185,15 @@
     var ITEMS = [
         {
             id: 'i_bomb', name: '地獄魔鬼椒爆彈',
-            desc: '立刻對場上所有目標造成「基準點擊傷害 × 1000」的真實傷害。',
-            note: '基準點擊傷害 = 不含暴擊、連擊與限時道具的點擊傷害快照。真實傷害穿透岩殼，但不穿透菇王護盾。不觸發點擊收益與連擊。',
+            desc: '立刻對場上所有目標造成「基準英打傷害 × 1000」的真實傷害。',
+            note: '基準英打傷害 = 不含暴擊、連擊與限時道具的英打傷害快照。真實傷害穿透岩殼，但不穿透菇王護盾。不觸發英打收益與連擊。',
             cost: 25000, cooldownSeconds: 5,
             effect: { type: 'bomb', clicks: 1000 },
             color: '#c7392a', accent: '#5e140c'
         },
         {
             id: 'i_energy', name: '特調提神飲料',
-            desc: '15 秒內手動點擊傷害 ×3，期間連擊不會因中斷而歸零。',
+            desc: '15 秒內英打攻擊傷害 ×3，期間連擊不會因中斷而歸零。',
             note: '效果期間無法重複使用，也不會延長時間。',
             cost: 40000, durationSeconds: 15,
             effect: { type: 'energy', clickMult: 3 },
@@ -224,7 +224,7 @@
     var EQUIPMENT = [
         {
             id: 'eq_apron', name: '防滑圍裙',
-            desc: '手動點擊爆擊率 +10%（加在既有機率上）。',
+            desc: '英打攻擊爆擊率 +10%（加在既有機率上）。',
             effect: { type: 'critChance', value: 0.1 }
         },
         {
@@ -278,9 +278,9 @@
         { id: 'ach_gold', name: '金礦主廚', desc: '擊敗 5 隻純金大香菇。', req: { kills: { id: 'sh_gold', count: 5 } } },
         { id: 'ach_chest', name: '別想跑', desc: '成功擊敗 5 隻寶箱松露。', req: { kills: { id: 'sh_chest', count: 5 } } },
         { id: 'ach_fail_chest', name: '這不是自助餐', desc: '眼睜睜看著一隻寶箱松露成功逃進地底。', req: { flag: 'chestEscaped' } },
-        { id: 'ach_lazy', name: '自動化流水線', desc: '完全不手動點擊，連續擊敗 50 隻蘑菇。', req: { lazyStreak: 50 } },
+        { id: 'ach_lazy', name: '自動化流水線', desc: '完全不進行英打攻擊，連續擊敗 50 隻蘑菇。', req: { lazyStreak: 50 } },
         { id: 'ach_combo', name: '停不下來', desc: '維持最高階連擊加成超過 30 秒。', req: { comboHoldSeconds: 30 } },
-        { id: 'ach_speed', name: '連滑鼠都在流汗', desc: '10 秒內手動點擊超過 100 次（可選挑戰，不影響主線）。', optional: true, req: { burstClicks: 100 } }
+        { id: 'ach_speed', name: '鍵盤都在冒煙', desc: '10 秒內完成超過 100 次英打攻擊（可選挑戰，不影響主線）。', optional: true, req: { burstClicks: 100 } }
     ];
 
     function byId(list) {

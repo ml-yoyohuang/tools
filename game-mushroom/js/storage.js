@@ -24,11 +24,12 @@
         lock: 'tools.mushroom.lock'
     };
 
-    var DEFAULT_SETTINGS = { theme: 'system', motion: 'system', buyMode: 1, numberStyle: 'short' };
+    var DEFAULT_SETTINGS = { theme: 'system', motion: 'system', buyMode: 1, numberStyle: 'short', typingBank: 'geptElementary' };
     var THEMES = ['system', 'light', 'dark'];
     var MOTIONS = ['system', 'full', 'reduced'];
     var BUY_MODES = [1, 10, 'max'];
     var NUMBER_STYLES = ['short', 'full'];
+    var TYPING_BANKS = ['geptElementary', 'geptIntermediate', 'sentences'];
 
     function isNum(v) { return typeof v === 'number' && isFinite(v); }
     function nonNeg(v) { return isNum(v) && v >= 0; }
@@ -315,6 +316,7 @@
         if (MOTIONS.indexOf(raw.motion) !== -1) out.motion = raw.motion;
         if (BUY_MODES.indexOf(raw.buyMode) !== -1) out.buyMode = raw.buyMode;
         if (NUMBER_STYLES.indexOf(raw.numberStyle) !== -1) out.numberStyle = raw.numberStyle;
+        if (TYPING_BANKS.indexOf(raw.typingBank) !== -1) out.typingBank = raw.typingBank;
         return out;
     }
 

@@ -300,6 +300,7 @@
             settled: false,           // 死亡只結算一次
             spawnedAt: options.now || 0,
             lastHitAt: options.now || 0,
+            lastManualHitAt: options.now || 0,
             softenUntil: 0,
             fleeAt: mushroom.traits.indexOf('flee') !== -1
                 ? (options.now || 0) + mushroom.fleeSeconds * 1000

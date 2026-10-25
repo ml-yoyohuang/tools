@@ -31,6 +31,17 @@
         return node;
     }
     function setText(node, text) { if (node && node.textContent !== text) node.textContent = text; }
+    function formatPayback(seconds) {
+        if (seconds === null || !isFinite(seconds) || seconds < 0) return '';
+        var total = Math.ceil(seconds);
+        var minutes = Math.floor(total / 60);
+        var rest = total % 60;
+        return Format.full(minutes) + '分' + (rest < 10 ? '0' : '') + rest + '秒回本';
+    }
+    function appendPayback(text, seconds) {
+        var payback = formatPayback(seconds);
+        return payback ? text + '　' + payback : text;
+    }
 
     function UI(options) {
         this.game = options.game;
@@ -46,11 +57,18 @@
 
         this.el = {
             coins: $('res-coins'), broth: $('res-broth'), click: $('res-click'), dps: $('res-dps'),
+            typingCount: $('res-typing-count'),
+            lifetimeCoins: $('res-lifetime-coins'), totalDamage: $('res-total-damage'),
+            brothLifetime: $('res-broth-lifetime'), deviceTotal: $('res-device-total'),
             zoneTabs: $('zone-tabs'), zoneDepth: $('zone-depth'), zoneDesc: $('zone-desc'),
             buffBar: $('buff-bar'), stage: $('stage'), targets: $('targets'), floaters: $('floaters'),
+            typingPrompt: $('typing-prompt'), typingTranslation: $('typing-translation'), typingInput: $('typing-input'), typingStatus: $('typing-status'),
+            typingAlert: $('typing-alert'),
+            typingLuckStatus: $('typing-luck-status'),
+            btnSkipPrompt: $('btn-skip-prompt'),
             courier: $('courier'), courierArt: $('courier-art'),
-            bossPanel: $('boss-panel'), bossHelp: $('boss-help'), btnHold: $('btn-hold'),
-            btnExitBoss: $('btn-exit-boss'), holdBar: $('hold-bar'), holdFill: $('hold-fill'),
+            bossPanel: $('boss-panel'), bossHelp: $('boss-help'), bossProgress: $('boss-progress'), btnHold: $('btn-hold'),
+            btnExitBoss: $('btn-exit-boss'), holdFill: $('hold-fill'), holdLabel: $('hold-label'),
             frozenList: $('frozen-list'), fieldActions: $('field-actions'), btnBoss: $('btn-boss'),
             deviceList: $('device-list'), upgradeList: $('upgrade-list'), upgradeOwned: $('upgrade-owned'),
             itemList: $('item-list'), itemNote: $('item-note'),
@@ -71,6 +89,7 @@
         this._bindTabs();
         this._bindBuyMode();
         this._bindStage();
+        this._bindTyping();
     }
 
     /* ---------------- 圖片 ---------------- */
@@ -240,6 +259,11 @@
                 if (event.key !== ' ' && event.key !== 'Enter') return;
                 if (event.repeat) return;
                 event.preventDefault();
+            } else if (event.type === 'pointerdown') {
+                if (event.button !== 0) return;
+                if (hold.setPointerCapture && event.pointerId !== undefined) {
+                    try { hold.setPointerCapture(event.pointerId); } catch (ignore) {}
+                }
             }
             self.handlers.onHoldStart();
         };
@@ -251,12 +275,51 @@
         hold.addEventListener('pointerdown', start);
         hold.addEventListener('pointerup', stop);
         hold.addEventListener('pointercancel', stop);
-        hold.addEventListener('pointerleave', stop);
+        hold.addEventListener('lostpointercapture', stop);
         hold.addEventListener('keydown', start);
         hold.addEventListener('keyup', stop);
         hold.addEventListener('blur', stop);
         // 避免長按在手機上跳出系統選單
         hold.addEventListener('contextmenu', function (event) { event.preventDefault(); });
+    };
+
+    UI.prototype._bindTyping = function () {
+        var self = this;
+        this.el.btnSkipPrompt.addEventListener('click', function () { self.handlers.onSkipPrompt(); });
+        this.el.typingInput.addEventListener('keydown', function (event) {
+            if (event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey) return;
+            event.preventDefault();
+            self.handlers.onTypingKey(event.key);
+        });
+        // 不讓瀏覽器自動填字、拼字修正或貼上內容繞過逐字攻擊。
+        this.el.typingInput.addEventListener('input', function () { this.value = ''; });
+        this.el.typingInput.addEventListener('paste', function (event) { event.preventDefault(); });
+    };
+
+    UI.prototype.focusTypingInput = function () { this.el.typingInput.focus(); };
+    UI.prototype.setTypingLuckStatus = function (text) { setText(this.el.typingLuckStatus, text); };
+
+    UI.prototype.renderTyping = function (prompt, index, status, error, translation) {
+        var done = el('span', 'typing__done', prompt.slice(0, index));
+        var rest = prompt.slice(index);
+        this.el.typingPrompt.textContent = '';
+        this.el.typingPrompt.appendChild(done);
+        if (rest) {
+            this.el.typingPrompt.appendChild(el('span', 'typing__next', rest.charAt(0) === ' ' ? '␣' : rest.charAt(0)));
+            this.el.typingPrompt.appendChild(document.createTextNode(rest.slice(1)));
+        }
+        setText(this.el.typingStatus, status || '');
+        setText(this.el.typingTranslation, translation || '');
+        this.el.typingTranslation.hidden = !translation;
+        this.el.typingStatus.classList.toggle('is-error', !!error);
+        if (error) {
+            this.el.typingInput.classList.remove('has-error');
+            // 重新觸發輕微提示動畫
+            void this.el.typingInput.offsetWidth;
+            this.el.typingInput.classList.add('has-error');
+        } else {
+            this.el.typingInput.classList.remove('has-error');
+        }
     };
 
     UI.prototype.setBuyMode = function (mode) {
@@ -276,6 +339,8 @@
     UI.prototype.queueDamage = function (uid, amount, opts) {
         opts = opts || {};
         var now = Date.now();
+        var targetNodes = this.targetNodes.get(uid);
+        if (targetNodes) this.pulseTarget(targetNodes);
         var entry = this.pending[uid];
         if (!entry || now > entry.until) {
             this.pending[uid] = { amount: amount, crit: !!opts.crit, auto: !!opts.fromAuto, until: now + Config.BALANCE.damageMergeMs };
@@ -284,6 +349,18 @@
         entry.amount += amount;
         entry.crit = entry.crit || !!opts.crit;
         entry.auto = entry.auto && !!opts.fromAuto;
+    };
+
+    UI.prototype.pulseTarget = function (nodes) {
+        var pulseNodes = [nodes.button, nodes.art, nodes.hpText];
+        if (nodes.hitTimer) clearTimeout(nodes.hitTimer);
+        pulseNodes.forEach(function (node) { node.classList.remove('is-hit'); });
+        void nodes.art.offsetWidth;
+        pulseNodes.forEach(function (node) { node.classList.add('is-hit'); });
+        nodes.hitTimer = setTimeout(function () {
+            pulseNodes.forEach(function (node) { node.classList.remove('is-hit'); });
+            nodes.hitTimer = null;
+        }, 360);
     };
 
     UI.prototype.flushDamage = function () {
@@ -316,6 +393,20 @@
         setTimeout(remove, 1500);
     };
 
+    UI.prototype.killReward = function (name, reward) {
+        var burst = el('div', 'kill-reward');
+        burst.setAttribute('aria-hidden', 'true');
+        burst.style.left = (26 + Math.random() * 48) + '%';
+        burst.style.top = (18 + Math.random() * 34) + '%';
+        burst.appendChild(el('span', 'kill-reward__title', name + ' 擊敗！'));
+        burst.appendChild(el('strong', 'kill-reward__coins', '+' + Format.short(reward.bounty) + ' 菇幣'));
+        burst.appendChild(el('span', 'kill-reward__bonus', '額外懸賞 +' + Format.short(reward.bonusBounty)));
+        this.el.stage.appendChild(burst);
+        setTimeout(function () {
+            if (burst.parentNode) burst.parentNode.removeChild(burst);
+        }, 1500);
+    };
+
     /* ---------------- 快速更新 ---------------- */
 
     UI.prototype.tickFast = function (now) {
@@ -327,8 +418,24 @@
             ? Format.full(state.coins) : Format.short(state.coins));
         this.el.coins.title = Format.full(state.coins) + ' 菇幣';
         setText(this.el.broth, Format.full(state.broth));
-        setText(this.el.click, this.num(Combat.expectedClickDamage(stats)));
-        setText(this.el.dps, this.num(stats.autoDps));
+        setText(this.el.click, this.num(Combat.expectedClickDamage(stats)) + ' / 每字');
+        setText(this.el.dps, this.num(stats.autoDps) + ' / 每秒');
+        setText(this.el.typingCount, Format.full(state.clicks));
+        setText(this.el.lifetimeCoins, Format.full(state.lifetimeCoins));
+        setText(this.el.totalDamage, Format.full(state.totalDamage));
+        setText(this.el.brothLifetime, Format.full(state.brothLifetime));
+        var deviceTotal = 0;
+        Config.DEVICES.forEach(function (device) { deviceTotal += state.devices[device.id] || 0; });
+        setText(this.el.deviceTotal, Format.full(deviceTotal));
+        var spongePresent = game.aliveTargets().some(function (target) {
+            var mushroom = Config.MUSHROOM_BY_ID[target.typeId];
+            return mushroom && mushroom.traits.indexOf('regen') !== -1;
+        });
+        this.el.typingAlert.hidden = !spongePresent;
+        if (spongePresent) {
+            var spongeAlertText = '遭遇吸湯海綿菇！超過 3 秒沒有手動英打攻擊後，牠每秒會恢復最大血量的 15%。持續手打可阻止回血。';
+            if (this.el.typingAlert.textContent !== spongeAlertText) setText(this.el.typingAlert, spongeAlertText);
+        }
 
         this._renderBuffs(stats, now);
         this._renderTargets(now);
@@ -340,7 +447,7 @@
     UI.prototype._renderBuffs = function (stats, now) {
         var state = this.game.state;
         var list = [];
-        if (state.buffs.energy > now) list.push({ label: '提神飲料 點擊 ×3', left: (state.buffs.energy - now) / 1000 });
+        if (state.buffs.energy > now) list.push({ label: '提神飲料 英打傷害 ×3', left: (state.buffs.energy - now) / 1000 });
         if (state.buffs.broth > now) list.push({ label: '金湯膠囊 菇幣 ×5', left: (state.buffs.broth - now) / 1000 });
         if (state.buffs.haste > now) list.push({ label: '辣油加速 速度 ×1.2', left: (state.buffs.haste - now) / 1000 });
         if (stats.comboMult > 1.001) list.push({ label: '連擊 ×' + stats.comboMult.toFixed(2), left: null });
@@ -374,8 +481,8 @@
             if (!info) return;
 
             if (!nodes) {
-                var button = el('button', 'target' + (isBoss ? ' is-boss' : ''));
-                button.type = 'button';
+                var button = el('div', 'target' + (isBoss ? ' is-boss' : ''));
+                button.setAttribute('role', 'img');
                 var art = el('span', 'target__art');
                 art.appendChild(self.icon((isBoss ? 'k:' : 'm:') + info.id, info.image, info.name.slice(0, 3)));
                 var name = el('span', 'target__name', info.name);
@@ -386,10 +493,9 @@
                 var tags = el('span', 'target__tags');
                 button.appendChild(art); button.appendChild(name);
                 button.appendChild(bar); button.appendChild(hpText); button.appendChild(tags);
-                button.addEventListener('click', function () { self.handlers.onClickTarget(target.uid); });
                 var li = el('li'); li.appendChild(button);
                 self.el.targets.appendChild(li);
-                nodes = { li: li, button: button, fill: fill, hpText: hpText, tags: tags };
+                nodes = { li: li, button: button, art: art, fill: fill, hpText: hpText, tags: tags };
                 self.targetNodes.set(target.uid, nodes);
             }
 
@@ -404,7 +510,7 @@
             if (target.fleeAt) tagText.push('逃跑 ' + Math.max(0, Math.ceil((target.fleeAt - now) / 1000)) + 's');
             if (!isBoss && info.traits) {
                 if (info.traits.indexOf('slow') !== -1) tagText.push('緩速：設備減半');
-                if (info.traits.indexOf('regen') !== -1) tagText.push('吸血：停手會回血');
+                if (info.traits.indexOf('regen') !== -1) tagText.push('吸血：3 秒沒手打後回血');
                 if (info.traits.indexOf('jackpot') !== -1) tagText.push('必掉金湯滴');
             }
             var signature = tagText.join('|');
@@ -419,7 +525,7 @@
             nodes.button.classList.toggle('is-preferred', game.state.preferredUid === target.uid);
             nodes.button.setAttribute('aria-label',
                 info.name + '，血量 ' + Format.short(target.hp) + ' / ' + Format.short(target.maxHp) +
-                (tagText.length ? '，' + tagText.join('、') : '') + '。點擊攻擊');
+                (tagText.length ? '，' + tagText.join('、') : '') + '。');
         });
 
         this.targetNodes.forEach(function (nodes, uid) {
@@ -445,11 +551,22 @@
         }
 
         setText(this.el.bossHelp, game.boss.intro + '　' + game.boss.help);
+        var milestone = game.boss.mechanic === 'clickMilestone' ? game.boss.clickMilestone : 0;
+        this.el.bossProgress.hidden = !milestone;
+        if (milestone) {
+            var milestoneTarget = game.targets[0];
+            var count = milestoneTarget ? milestoneTarget.clickCount : 0;
+            var current = count % milestone;
+            var remaining = milestone - current;
+            setText(this.el.bossProgress, '本場英打進度 ' + current + ' / ' + milestone + ' 次；再 ' + remaining + ' 次就會噴出資源。');
+        }
         var needsHold = game.boss.mechanic === 'holdShield' && game.targets[0] && game.targets[0].shields > 0;
         this.el.btnHold.hidden = !needsHold;
-        this.el.holdBar.hidden = !needsHold;
         if (needsHold) {
             this.el.holdFill.style.width = (game.holdProgress(now) * 100).toFixed(1) + '%';
+            setText(this.el.holdLabel, '按住不放 ' + game.boss.holdSeconds + ' 秒破 1 層護盾（剩 ' + game.targets[0].shields + ' 層）');
+        } else {
+            this.el.holdFill.style.width = '0%';
         }
 
         var frozen = Object.keys(game.state.frozen);
@@ -527,24 +644,30 @@
             nodes.row.classList.remove('is-locked');
 
             var plan = game.planDevicePurchase(device.id, self.buyMode);
+            var paybackCount = plan.count || 1;
+            var paybackCost = plan.count ? plan.cost : game.deviceUnitCost(device, owned);
+            var payback = game.devicePaybackSeconds(device.id, paybackCount, paybackCost, now);
             var info = game.stats.perDevice[device.id];
             var effectText;
             if (device.role === 'attack') {
                 effectText = '單次 ' + self.num(info.damage) + ' 傷害 / ' +
                     (info.cooldown ? info.cooldown.toFixed(2) + ' 秒' : '—') +
                     (owned ? '　合計 ' + self.num(info.dps) + ' DPS' : '');
+                effectText = appendPayback(effectText, payback);
             } else if (device.role === 'support') {
                 effectText = device.support.type === 'haste'
                     ? '每 ' + (device.cooldown / Math.max(0.0001, game.stats.speedMult)).toFixed(1) + ' 秒讓全設備速度 ×1.2，持續 3 秒'
                     : '每 ' + device.cooldown + ' 秒讓下一次擊敗掉落雙倍菇幣';
+                effectText = appendPayback(effectText, payback);
             } else {
                 effectText = '依歷史菇幣提供全設備乘區，目前 ×' + game.stats.inductionMult.toFixed(2) +
                     '（上限 ×' + Config.BALANCE.induction.cap + '）';
+                effectText = appendPayback(effectText, payback);
             }
             setText(nodes.effect, effectText);
 
             var costText = plan.count > 0
-                ? '買 ' + plan.count + ' 台　' + self.num(plan.cost) + (plan.brothCost ? ' + ' + plan.brothCost + ' 金湯滴' : '')
+                ? '買 ' + plan.count + ' 台　' + self.num(plan.cost) + ' 菇幣' + (plan.brothCost ? ' + ' + plan.brothCost + ' 金湯滴' : '')
                 : '菇幣不足';
             setText(nodes.cost, costText);
             nodes.cost.classList.toggle('is-too-much', !plan.affordable);
@@ -565,11 +688,15 @@
         });
         var locked = Content.UPGRADES.filter(function (u) {
             return !state.upgrades[u.id] && !u.auto && !game.meetsRequirement(u.req);
-        }).slice(0, 4);
+        });
+        var pendingMilestones = Content.UPGRADES.filter(function (u) {
+            return !state.upgrades[u.id] && u.auto;
+        });
         var owned = Content.UPGRADES.filter(function (u) { return state.upgrades[u.id]; });
 
         var signature = available.map(function (u) { return u.id; }).join(',') + '#' +
-            locked.map(function (u) { return u.id; }).join(',') + '#' + owned.length;
+            locked.map(function (u) { return u.id; }).join(',') + '#' +
+            pendingMilestones.map(function (u) { return u.id; }).join(',') + '#' + owned.length;
         if (signature !== this._upgradeSignature) {
             this._upgradeSignature = signature;
             this.el.upgradeList.textContent = '';
@@ -583,6 +710,7 @@
                 var mid = el('span');
                 mid.appendChild(el('span', 'shop-row__name', upgrade.name));
                 mid.appendChild(el('p', 'shop-row__desc', upgrade.desc));
+                mid.appendChild(el('p', 'shop-row__effect', '解鎖條件：' + upgrade.reqText));
                 var right = el('span', 'shop-row__right');
                 var cost = el('span', 'shop-row__cost');
                 right.appendChild(cost);
@@ -605,7 +733,19 @@
                 self.el.upgradeList.appendChild(row);
             });
 
-            if (!available.length && !locked.length) {
+            pendingMilestones.forEach(function (upgrade) {
+                var row = el('li', 'shop-row is-locked');
+                var icon = el('span', 'shop-row__icon');
+                icon.appendChild(self.icon('u:' + upgrade.id, upgrade.image, upgrade.name.slice(0, 2)));
+                var mid = el('span');
+                mid.appendChild(el('span', 'shop-row__name', upgrade.name));
+                mid.appendChild(el('p', 'shop-row__desc', upgrade.desc));
+                mid.appendChild(el('p', 'shop-row__effect', '自動取得條件：' + upgrade.reqText));
+                row.appendChild(icon); row.appendChild(mid);
+                self.el.upgradeList.appendChild(row);
+            });
+
+            if (!available.length && !locked.length && !pendingMilestones.length) {
                 self.el.upgradeList.appendChild(el('li', 'panel__note', '所有升級都已取得。'));
             }
 
@@ -627,7 +767,7 @@
             var brothCost = upgrade.brothCost || 0;
             var canBuy = state.coins + 1e-6 >= cost && state.broth >= brothCost;
             if (canBuy) affordable++;
-            setText(nodes.cost, self.num(cost) + (brothCost ? ' + ' + brothCost + ' 金湯滴' : ''));
+            setText(nodes.cost, self.num(cost) + ' 菇幣' + (brothCost ? ' + ' + brothCost + ' 金湯滴' : ''));
             nodes.cost.classList.toggle('is-too-much', !canBuy);
             nodes.row.classList.toggle('is-affordable', canBuy);
             nodes.row.disabled = !canBuy;

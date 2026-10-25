@@ -258,7 +258,9 @@
             bounty *= 2;
             doubled = true;
         }
-        this.addCoins(bounty);
+        var bonusBounty = bounty * BALANCE.killBonusMultiplier;
+        var totalBounty = bounty + bonusBounty;
+        this.addCoins(totalBounty);
 
         var brothGained = 0;
         if (mushroom.brothDrop) brothGained += mushroom.brothDrop;
@@ -274,11 +276,12 @@
         else this.state.lazyStreak++;
 
         this.emitter.emit('kill', {
-            typeId: target.typeId, bounty: bounty, broth: brothGained,
+            typeId: target.typeId, bounty: totalBounty, baseBounty: bounty,
+            bonusBounty: bonusBounty, broth: brothGained,
             doubled: doubled, uid: target.uid
         });
         this._checkAchievements(now);
-        return { bounty: bounty, broth: brothGained };
+        return { bounty: totalBounty, baseBounty: bounty, bonusBounty: bonusBounty, broth: brothGained };
     };
 
     /** 累積擊敗數推進採集深度。 */
@@ -381,13 +384,15 @@
 
     /* ---------------- 手動點擊 ---------------- */
 
-    Game.prototype.clickTarget = function (uid, nowArg) {
+    Game.prototype.clickTarget = function (uid, nowArg, options) {
         var now = nowArg === undefined ? this.now() : nowArg;
+        options = options || {};
         var target = this._findTarget(uid);
         if (!target) return null;
 
         var state = this.state;
         state.clicks++;
+        target.lastManualHitAt = now;
 
         // 連擊：3 秒內點擊累加，提神飲料期間不會因中斷歸零
         if (now - finite(state.lastClickAt, 0) <= BALANCE.combo.windowSeconds * 1000 || state.combo === 0) {
@@ -412,7 +417,8 @@
 
         var crit = this.random() < this.stats.clickCritChance;
         var soften = Combat.softenMult(target, now);
-        var damage = this.stats.clickDamage * soften * (crit ? this.stats.clickCritMult : 1);
+        var damageMult = Math.max(1, Math.min(10, finite(options.damageMult, 1)));
+        var damage = this.stats.clickDamage * soften * (crit ? this.stats.clickCritMult : 1) * damageMult;
 
         var effective = this.dealDamage(target, damage, { byClick: true, crit: crit }, now);
 
@@ -749,9 +755,10 @@
             var mushroom = Config.MUSHROOM_BY_ID[target.typeId];
             if (!mushroom) return;
 
-            // 吸湯海綿菇：一段時間沒受傷就回血（回血不會補回掉錢預算）
+            // 吸湯海綿菇：一段時間沒受手動英打攻擊就回血（回血不會補回掉錢預算）
             if (mushroom.traits.indexOf('regen') !== -1) {
-                if (now - target.lastHitAt >= mushroom.regenIdleSeconds * 1000) {
+                var lastManualHitAt = finite(target.lastManualHitAt, finite(target.spawnedAt, target.lastHitAt));
+                if (now - lastManualHitAt >= mushroom.regenIdleSeconds * 1000) {
                     target.hp = Math.min(target.maxHp,
                         target.hp + target.maxHp * mushroom.regenPerSecond * seconds);
                 }
@@ -842,7 +849,7 @@
                 ? (m.clusterMin + m.clusterMax) / 2 : 1;
             avgHp += share * m.hp * zone.hpMult * hpDepth * cluster;
             avgBounty += share * (m.bounty + stats.fx.killBountyFlat)
-                * zone.coinMult * rewardDepth * cluster;
+                * zone.coinMult * rewardDepth * cluster * (1 + BALANCE.killBonusMultiplier);
         });
         if (!(avgHp > 0)) return { coins: 0, kills: 0, seconds: seconds, dps: dps, estimated: true };
 
@@ -858,10 +865,56 @@
         return {
             coins: gain,
             kills: killsPerSecond * seconds,
+            avgBounty: avgBounty,
+            coinMult: stats.coinMult,
+            offlineGainMult: stats.fx.offlineGainMult,
             seconds: seconds,
             dps: dps,
             estimated: true
         };
+    };
+
+    /** 以目前地區平均菇幣收入，估算購買設備組合的回本秒數。 */
+    Game.prototype.devicePaybackSeconds = function (deviceId, count, cost, nowArg) {
+        var device = Config.DEVICE_BY_ID[deviceId];
+        var amount = Math.max(0, Math.floor(finite(count, 0)));
+        var price = Math.max(0, finite(cost, 0));
+        if (!device || amount <= 0 || price <= 0) return null;
+
+        var now = nowArg === undefined ? this.now() : nowArg;
+        var interval = 60;
+        var originalCount = finite(this.state.devices[deviceId], 0);
+        var estimate = this.offlineEstimate(interval, now);
+        var efficiency = Math.max(0.0001, BALANCE.offline.efficiency);
+        var offlineGain = Math.max(0.0001, finite(estimate.offlineGainMult, 1));
+        var baselineRate = estimate.coins / (interval * efficiency * offlineGain);
+        var addedCoinsPerSecond = 0;
+
+        if (device.role === 'attack' || device.role === 'aura') {
+            var projectedCoins;
+            try {
+                this.state.devices[deviceId] = originalCount + amount;
+                projectedCoins = this.offlineEstimate(interval, now).coins;
+            } finally {
+                this.state.devices[deviceId] = originalCount;
+            }
+            // 離線模型刻意套用 60% 效率；還原該折減後比較新增收入。
+            addedCoinsPerSecond = (projectedCoins - estimate.coins) / (interval * efficiency * offlineGain);
+        } else if (device.role === 'support' && originalCount === 0) {
+            var info = this.stats.perDevice[deviceId];
+            if (!(baselineRate > 0) || !info || !(info.cooldown > 0)) return null;
+            if (device.support.type === 'haste') {
+                var uptime = Math.min(1, device.support.seconds / info.cooldown);
+                addedCoinsPerSecond = baselineRate * (device.support.speedMult - 1) * uptime;
+            } else if (device.support.type === 'doubleKill') {
+                var killsPerSecond = estimate.kills / interval;
+                addedCoinsPerSecond = Math.min(killsPerSecond, 1 / info.cooldown)
+                    * estimate.avgBounty * estimate.coinMult;
+            }
+        }
+
+        if (!(addedCoinsPerSecond > 0) || !isFinite(addedCoinsPerSecond)) return null;
+        return price / addedCoinsPerSecond;
     };
 
     Game.prototype.offlineCapHours = function () {

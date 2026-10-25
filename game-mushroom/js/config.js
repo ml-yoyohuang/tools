@@ -7,7 +7,7 @@
  *  - 速度倍率 speedMult：冷卻 = 基礎冷卻 ÷ 速度倍率。「攻速 +10%」= speedMult ×1.1。
  *  - 岩殼 armorThreshold：單次傷害低於門檻時，該次傷害強制變成 1。
  *  - 真實傷害 trueDamage：穿透岩殼，但「不」穿透菇王的豆腐盾。
- *  - 軟化 soften：對手動點擊的獨立乘區（softenClickMult），不是「倍率 +100%」。
+ *  - 軟化 soften：對英打攻擊的獨立乘區（softenClickMult），不是「倍率 +100%」。
  *  - 掉錢預算：每個目標的傷害掉錢上限 = 最大血量，回血不會補回預算（避免無限刷錢）。
  */
 (function (root, factory) {
@@ -23,7 +23,7 @@
     var BALANCE = {
         clickBaseDamage: 1,
 
-        /** 連擊：每次點擊 +1 層，3 秒未點擊歸零 */
+        /** 連擊：每次英打攻擊 +1 層，3 秒未攻擊歸零 */
         combo: {
             windowSeconds: 3,
             maxStacks: 10,          // 約每秒 3 下、維持 3.3 秒即可滿層
@@ -31,7 +31,7 @@
             upgradedBonusPerStack: 0.10  // 買了共振敲擊後上限 ×2.0
         },
 
-        /** 軟化：肉槌造成，對點擊的獨立乘區 */
+        /** 軟化：肉槌造成，對英打攻擊的獨立乘區 */
         soften: { seconds: 6, clickMult: 2 },
 
         /** 電磁爐力場：以歷史菇幣計算，有界成長 */
@@ -39,6 +39,9 @@
 
         /** 設備價格成長（每台） */
         deviceGrowth: 1.12,
+
+        /** 擊敗蘑菇時額外發放的懸賞倍率（加在原懸賞之外） */
+        killBonusMultiplier: 2,
 
         /**
          * 採集深度（企劃未定義，為解決「單一目標」造成的吞吐上限而加入）。
@@ -173,11 +176,11 @@
             mechanic: 'clickMilestone',
             hp: 2600,
             bounty: 900, brothDrop: 3,
-            clickMilestone: 20,          // 每 20 次真人點擊
-            milestoneCoinMult: 24,       // 噴出 24 倍單次點擊傷害價值的菇幣
+            clickMilestone: 20,          // 每 20 次英打攻擊
+            milestoneCoinMult: 24,       // 噴出 24 倍單次英打傷害價值的菇幣
             color: '#d8c49a', accent: '#8a7446',
             reward: '解鎖第二地區', collection: '斷掉的木製菜刀',
-            help: '沒有失敗威脅，純考驗火力。每 20 次手動點擊會噴出大量資源。'
+            help: '沒有失敗威脅，純考驗火力。每 20 次英打攻擊會噴出大量資源。'
         },
         {
             id: 'boss_tofu', zoneId: 'zone_02',
@@ -189,7 +192,7 @@
             shields: 3, holdSeconds: 2,
             color: '#f4f0e2', accent: '#b9b094',
             reward: '解鎖第三地區與道具商店', collection: '不鏽鋼漏勺',
-            help: '護盾期間免疫所有自動攻擊與真實傷害。長按蘑菇 2 秒破壞一層，三層破完才能輸出。'
+            help: '護盾期間免疫所有自動攻擊與真實傷害。按住下方按鈕不放 2 秒，色條填滿時破壞一層；三層破完才能攻擊。'
         },
         {
             id: 'boss_frozen', zoneId: 'zone_03',
@@ -212,7 +215,7 @@
             id: 'auto_tongs', name: '彈簧烤肉夾',
             flavor: '喀喀兩聲，是對食材最基本的尊重。',
             role: 'attack', targeting: 'single',
-            baseCost: 60, damage: 1, cooldown: 1.0,
+            baseCost: 100, damage: 1, cooldown: 1.0,
             unlock: { type: 'none' },
             unlockText: '一開始就能買',
             color: '#c9ced6', accent: '#6d7682'
@@ -262,7 +265,7 @@
             baseCost: 1500000, brothCost: 1, damage: 0, cooldown: 25,
             support: { type: 'doubleKill' },
             unlock: { type: 'broth', amount: 1 },
-            unlockText: '擁有至少 1 滴金湯滴',
+            unlockText: '曾累積取得 1 滴金湯滴',
             color: '#f2d14a', accent: '#8a7312'
         },
         {
