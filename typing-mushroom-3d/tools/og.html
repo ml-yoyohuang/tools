@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="robots" content="noindex">
+    <title>OG 圖產生頁</title>
+    <!--
+        社群分享圖（1200×630）產生頁：用遊戲本身的 3D 場景擺好一個畫面，再加上標題。
+        產生方式（需先在專案根目錄啟動 http 伺服器）：
+          "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new \
+            --use-angle=swiftshader --enable-unsafe-swiftshader --hide-scrollbars \
+            --window-size=1200,630 --virtual-time-budget=5000 \
+            --screenshot=typing-mushroom-3d/assets/og-image.png \
+            http://127.0.0.1:8768/typing-mushroom-3d/tools/og.html
+    -->
+    <link rel="stylesheet" href="../css/game.css">
+    <script type="importmap">{ "imports": { "three": "../vendor/three.module.min.js" } }</script>
+    <style>
+        html, body { width: 1200px; height: 630px; overflow: hidden; }
+        .stage { position: fixed; inset: 0; }
+        .og-fade {
+            position: fixed; inset: 0; z-index: 5; pointer-events: none;
+            background: linear-gradient(90deg, rgba(230, 246, 244, .97) 0, rgba(230, 246, 244, .9) 36%, rgba(230, 246, 244, 0) 58%);
+        }
+        .og-copy { position: fixed; z-index: 6; left: 64px; top: 46px; width: 560px; display: grid; gap: 13px; color: #17363a; }
+        .og-badge { display: inline-flex; align-items: center; gap: 8px; justify-self: start; padding: 6px 14px; border-radius: 999px; background: #1f7f93; color: #fff; font-weight: 900; font-size: 20px; letter-spacing: .06em; }
+        .og-badge .mdi { width: 24px; height: 24px; }
+        .og-title { margin: 0; font-size: 72px; line-height: 1.04; font-weight: 1000; letter-spacing: -.01em; }
+        .og-title span { color: #1f7f93; }
+        .og-sub { font-size: 27px; font-weight: 800; color: #3f6264; }
+        .og-console {
+            margin-top: 2px; display: grid; gap: 8px; padding: 14px 18px; border-radius: 22px; width: 470px;
+            background: rgba(255, 255, 255, .92); border: 1px solid rgba(30, 96, 104, .18); box-shadow: 0 14px 34px rgba(20, 60, 64, .2);
+        }
+        .og-console .typing__label { font-size: 17px; }
+        .og-console .typing__prompt { font-size: 44px; min-height: 0; padding: 8px 16px; }
+        .og-console .typing__translation { font-size: 25px; }
+        .og-chips { display: flex; gap: 10px; flex-wrap: wrap; }
+        .og-chip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; background: rgba(255, 255, 255, .9); border: 1px solid rgba(30, 96, 104, .2); font-size: 19px; font-weight: 850; color: #24545a; }
+        .og-chip .mdi { width: 22px; height: 22px; color: #1f7f93; }
+        .floater { animation: none !important; font-size: 30px !important; padding: 10px 22px !important; }
+        .scene-labels .tlabel { transform-origin: 50% 100%; }
+    </style>
+</head>
+<body>
+<main class="stage" id="stage">
+    <div class="scene-labels" id="scene-labels"></div>
+    <div class="floaters" id="floaters"></div>
+</main>
+<div class="og-fade"></div>
+<section class="og-copy">
+    <span class="og-badge"><svg data-mdi="typing"></svg>第一人稱 3D 英打遊戲</span>
+    <h1 class="og-title">無限高湯<br><span>討伐隊</span> 3D</h1>
+    <p class="og-sub">每敲一個正確字元，湯杓砲就發射一次</p>
+    <div class="og-console">
+        <span class="typing__label"><svg data-mdi="typing"></svg> 英打攻擊</span>
+        <p class="typing__prompt"><span class="typing__done">mush</span><span class="typing__next">r</span>oom</p>
+        <p class="typing__translation">蘑菇</p>
+    </div>
+    <div class="og-chips">
+        <span class="og-chip"><svg data-mdi="dex"></svg>全民英檢單字・500 句</span>
+        <span class="og-chip"><svg data-mdi="crown"></svg>3 地區・3 菇王</span>
+    </div>
+</section>
+
+<script src="../js/icons.js"></script>
+<script src="../js/format.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/content.js"></script>
+<script src="../js/combat.js"></script>
+<script src="../js/game.js"></script>
+<script type="module">
+    import '../js/scene/index.js';
+
+    const Config = window.MushConfig;
+    const Combat = window.MushCombat;
+    const Format = window.MushFormat;
+    const now = Date.now();
+    const game = new window.MushGame.Game({ now: () => now, random: () => 0.5 });
+    ['auto_tongs', 'pepper_drone', 'garlic_mech', 'tenderizer_array', 'cheer_timer', 'induction_field'].forEach((id) => { game.state.devices[id] = 5; });
+    game.refreshStats(now);
+    const zone = Config.ZONE_BY_ID.zone_01;
+    const pick = (id, uid, hpRatio) => {
+        const t = Combat.createTarget(Config.MUSHROOM_BY_ID[id], zone, { now, uid, depthMult: 1.9 });
+        t.hp = t.maxHp * hpRatio;
+        t.fleeAt = 0;
+        return t;
+    };
+    game.targets = [pick('sh_walnut', 901, 0.8), pick('sh_basic', 902, 0.42), pick('sh_gold', 903, 1)];
+    game.state.preferredUid = 902;
+
+    const hud = {
+        scene: null,
+        toast() {}, floater() {},
+        describeTarget(t) {
+            const info = Config.MUSHROOM_BY_ID[t.typeId];
+            const tags = [];
+            if (info.traits.includes('armor')) tags.push({ text: '岩殼 5', cls: 'tag--armor' });
+            if (info.traits.includes('jackpot')) tags.push({ text: '必掉金湯滴', cls: 'tag--gold' });
+            return {
+                uid: t.uid, isBoss: false, name: info.name, ratio: t.hp / t.maxHp,
+                hpText: Format.short(t.hp) + ' / ' + Format.short(t.maxHp), tags,
+                preferred: t.uid === game.state.preferredUid, aria: info.name
+            };
+        }
+    };
+    const stage = document.getElementById('stage');
+    const scene = window.MushScene3D.create({
+        stage, game, hud,
+        isReducedMotion: () => false, getTheme: () => 'light',
+        onPickTarget() {}, onCourier() {}, onUnfreeze() {}
+    });
+    stage.classList.add('is-3d');
+    scene.setViewInsets({ top: 30, right: 0, bottom: 60, left: 600 });
+
+    // 在截圖前一刻：幸運一擊、金幣噴發、設備開火
+    setTimeout(() => {
+        scene.lucky(902);
+        scene.onGameEvent('deviceFire', { deviceId: 'garlic_mech', uid: 902 });
+        scene.onGameEvent('deviceFire', { deviceId: 'auto_tongs', uid: 901 });
+        const gold = scene.actors.get(903);
+        if (gold) scene.fx.coinFountain(scene.centerOf(gold), 40, true);
+        setTimeout(() => {
+            const anchor = scene.anchorFor(902);
+            const node = document.createElement('span');
+            node.className = 'floater floater--luck';
+            node.appendChild(window.MushIcons.svg('lucky'));
+            node.appendChild(document.createTextNode('幸運加成 ×2！'));
+            node.style.left = (anchor ? anchor.x : 900) + 'px';
+            node.style.top = (anchor ? anchor.y - 40 : 150) + 'px';
+            document.getElementById('floaters').appendChild(node);
+        }, 150);
+    }, 4300);
+</script>
+</body>
+</html>

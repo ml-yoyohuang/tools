@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" fill="none">
+  <defs>
+    <linearGradient id="wood" x2="0" y2="1"><stop stop-color="#dfbd88"/><stop offset=".48" stop-color="#c99b61"/><stop offset="1" stop-color="#aa7948"/></linearGradient>
+    <linearGradient id="edge" x2="0" y2="1"><stop stop-color="#f0d5a5"/><stop offset="1" stop-color="#9b683d"/></linearGradient>
+    <pattern id="grain" width="240" height="96" patternUnits="userSpaceOnUse"><path d="M-20 18c50-20 93 16 145-2s75-13 130 1M-16 57c56 15 89-20 145-5s87 7 125-4M35 83c34-12 58 8 94 1" stroke="#805632" stroke-opacity=".2" stroke-width="3"/><path d="M64 0v96M204 0v96" stroke="#f9e2b7" stroke-opacity=".12" stroke-width="2"/></pattern>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+  <rect width="1200" height="600" fill="#ead7b5"/>
+  <ellipse cx="600" cy="326" rx="540" ry="270" fill="#5b3b24" opacity=".2" filter="url(#shadow)"/>
+  <rect x="36" y="30" width="1128" height="540" rx="54" fill="url(#edge)"/>
+  <rect x="54" y="48" width="1092" height="504" rx="42" fill="url(#wood)" stroke="#885b37" stroke-opacity=".55" stroke-width="8"/>
+  <rect x="54" y="48" width="1092" height="504" rx="42" fill="url(#grain)"/>
+  <path d="M124 126c160-24 231 20 378 0m71 373c122-18 233 17 432-9M811 144c81 13 139 4 224-12" stroke="#f4d8a9" stroke-opacity=".34" stroke-width="8" stroke-linecap="round"/>
+  <g fill="#6c8d48" opacity=".62"><ellipse cx="112" cy="444" rx="13" ry="28" transform="rotate(-35 112 444)"/><ellipse cx="139" cy="463" rx="12" ry="25" transform="rotate(24 139 463)"/><ellipse cx="1065" cy="128" rx="13" ry="29" transform="rotate(48 1065 128)"/><ellipse cx="1090" cy="151" rx="11" ry="24" transform="rotate(-19 1090 151)"/></g>
+  <g fill="#f5e4c4" opacity=".66"><circle cx="212" cy="168" r="6"/><circle cx="245" cy="185" r="4"/><circle cx="966" cy="434" r="5"/><circle cx="1002" cy="416" r="3"/><circle cx="338" cy="468" r="4"/></g>
+  <rect width="1200" height="600" fill="#fff2d8" opacity=".12"/>
+</svg>
