@@ -775,6 +775,90 @@ textarea { width: 100%; padding: 8px; border-radius: var(--r-s); border: 1px sol
 @keyframes toast-in { from { transform: translate(-50%, -10px); opacity: 0; } }
 html.is-boss-mode .toast { top: calc(var(--top-h) + 190px); }
 
+/* ---------- 標題畫面（Title Screen） ---------- */
+
+.title-screen {
+    position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    padding: max(7vh, var(--pad-t)) var(--pad-r) max(6vh, var(--pad-b)) var(--pad-l); text-align: center; cursor: pointer;
+    background:
+        radial-gradient(ellipse 70% 55% at 50% 42%, rgba(255, 255, 255, 0) 0%, rgba(8, 40, 48, .18) 60%, rgba(6, 26, 32, .62) 100%),
+        linear-gradient(180deg, rgba(10, 40, 48, .45) 0%, rgba(10, 40, 48, 0) 35%, rgba(10, 40, 48, 0) 60%, rgba(6, 22, 28, .7) 100%);
+    color: #fff;
+}
+html:not(.is-title-screen) .title-screen { display: none; }
+html.is-title-screen .hud { opacity: 0; pointer-events: none; }
+html.is-title-screen .hud * { pointer-events: none !important; }
+html.is-title-screen .scene-labels, html.is-title-screen .floaters, html.is-title-screen .stage__hint, html.is-title-screen .courier { visibility: hidden; }
+.title-screen.is-leaving { pointer-events: none; animation: title-screen-out 650ms cubic-bezier(.5, 0, .75, 0) forwards; }
+.title-screen.is-leaving .title-screen__logo { animation: logo-out 650ms cubic-bezier(.5, 0, .75, 0) forwards; }
+@keyframes title-screen-out { to { opacity: 0; } }
+@keyframes logo-out { to { transform: scale(1.6) translateY(-12vh); opacity: 0; filter: blur(6px); } }
+.hud { transition: opacity 400ms ease; }
+
+.title-screen__logo { display: grid; justify-items: center; gap: 6px; animation: logo-in 900ms cubic-bezier(.2, .9, .3, 1.2) both; }
+@keyframes logo-in { from { transform: translateY(-30px) scale(.85); opacity: 0; } }
+.title-screen__emblem {
+    width: clamp(84px, 14vh, 128px); height: auto; border-radius: 28%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .35), 0 0 0 4px rgba(255, 255, 255, .8);
+    animation: emblem-float 3.2s ease-in-out infinite;
+}
+@keyframes emblem-float { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-8px) rotate(3deg); } }
+.title-screen__kicker {
+    margin-top: 10px; padding: 5px 16px; border-radius: 999px; background: rgba(31, 127, 147, .92); color: #fff;
+    font-size: clamp(.8rem, 2.2vw, 1rem); font-weight: 900; letter-spacing: .14em; box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
+}
+.title-screen__title { display: grid; justify-items: center; margin: 4px 0 0; line-height: .98; font-weight: 1000; letter-spacing: .02em; }
+.title-screen__line {
+    font-size: clamp(3rem, 11vw, 6.6rem); color: #fffaf0;
+    -webkit-text-stroke: 3px #17363a; paint-order: stroke fill;
+    text-shadow: 0 6px 0 #17363a, 0 10px 24px rgba(0, 0, 0, .45);
+}
+.title-screen__line--accent { position: relative; color: #ffd84d; }
+.title-screen__badge {
+    position: absolute; right: -0.95em; top: -.1em; transform: rotate(10deg); padding: .08em .28em; border-radius: .22em;
+    font-size: .42em; line-height: 1.1; color: #fff; -webkit-text-stroke: 0; text-shadow: none;
+    background: linear-gradient(135deg, #ff6a3d, #e5384d); box-shadow: 0 4px 0 #8a1f1f, 0 8px 18px rgba(0, 0, 0, .35);
+    animation: badge-bob 1.8s ease-in-out infinite;
+}
+@keyframes badge-bob { 50% { transform: rotate(4deg) translateY(-4px); } }
+.title-screen__tagline {
+    margin-top: 12px; font-size: clamp(1rem, 2.8vw, 1.35rem); font-weight: 900; color: #fff;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, .6);
+}
+
+.title-screen__actions { display: grid; justify-items: center; gap: 12px; animation: logo-in 900ms 200ms cubic-bezier(.2, .9, .3, 1.2) both; }
+.title-screen__progress {
+    padding: 6px 16px; border-radius: 999px; background: rgba(6, 26, 32, .55); color: #e6f6f2;
+    font-size: clamp(.74rem, 2.6vw, .88rem); font-weight: 800; white-space: nowrap; max-width: 94vw; overflow: hidden; text-overflow: ellipsis;
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.title-screen__start {
+    display: inline-flex; align-items: center; gap: 10px; min-height: 64px; padding: 0 38px 0 30px; border-radius: 999px;
+    font-size: clamp(1.25rem, 3.4vw, 1.6rem); font-weight: 1000; letter-spacing: .12em; color: #4a2400;
+    background: linear-gradient(120deg, #ffe48a, #ffb83d 55%, #ffd970); border: 3px solid #fff3c4;
+    box-shadow: 0 6px 0 #b9761a, 0 12px 30px rgba(0, 0, 0, .4), 0 0 30px rgba(255, 190, 60, .55);
+    animation: start-glow 1.8s ease-in-out infinite;
+}
+.title-screen__start .mdi { width: 1.3em; height: 1.3em; }
+.title-screen__start:hover { filter: brightness(1.06); }
+.title-screen__start:active { transform: translateY(4px); box-shadow: 0 2px 0 #b9761a, 0 8px 20px rgba(0, 0, 0, .4); }
+@keyframes start-glow { 50% { box-shadow: 0 6px 0 #b9761a, 0 12px 30px rgba(0, 0, 0, .4), 0 0 52px rgba(255, 200, 70, .9); } }
+.title-screen__hint { font-size: .9rem; font-weight: 900; letter-spacing: .3em; color: #fff; text-shadow: 0 2px 6px rgba(0, 0, 0, .7); animation: hint-blink 1.4s ease-in-out infinite; }
+@keyframes hint-blink { 50% { opacity: .35; } }
+.title-screen__links { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.title-screen__link {
+    display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 16px; border-radius: 999px;
+    background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .45); color: #fff; font-weight: 850; font-size: .86rem;
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.title-screen__link:hover { background: rgba(255, 255, 255, .28); }
+.title-screen__link .mdi { width: 20px; height: 20px; }
+@media (max-height: 560px) {
+    .title-screen__emblem { display: none; }
+    .title-screen__line { font-size: clamp(2.4rem, 9vw, 4rem); }
+}
+html.reduce-motion .title-screen__logo, html.reduce-motion .title-screen__actions { animation: none !important; }
+
 /* ---------- 寬螢幕：管理面板可釘選 ---------- */
 
 @media (min-width: 1180px) {

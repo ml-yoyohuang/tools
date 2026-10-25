@@ -238,6 +238,8 @@ class World {
             from.pos = to.pos.clone().add(new THREE.Vector3(0, 1.2, 4.5));
             from.fov = 62;
             duration = 0.8;
+        } else if (kind === 'title') {
+            duration = 1.1;
         } else if (kind === 'exit') {
             // 拉遠：先往後拉高，再回到料理台
             control = from.pos.clone().add(new THREE.Vector3(0, 1.4, 4.2));
@@ -280,6 +282,17 @@ class World {
         } else {
             this.camState.pos.copy(preset.pos);
             this.camState.look.copy(preset.look);
+            this.camState.fov = preset.fov;
+        }
+        if (this.titleScreen && !this.tween) {
+            // 標題畫面運鏡：以戰場為中心左右環繞、拉高拉遠
+            const angle = this.reduced() ? 0.35 : Math.sin(t * 0.16) * 0.6 + 0.15;
+            const look = preset.look;
+            const offset = preset.pos.clone().sub(look).multiplyScalar(1.35);
+            offset.applyAxisAngle(UP, angle);
+            this.camState.pos.copy(look).add(offset);
+            this.camState.pos.y += 0.6;
+            this.camState.look.copy(look).add(new THREE.Vector3(0, 0.25, 0));
             this.camState.fov = preset.fov;
         }
 
@@ -917,6 +930,7 @@ class World {
     updateViewmodel(dt, t) {
         const vm = this.viewmodel;
         const reduced = this.reduced();
+        vm.group.visible = !this.titleScreen;          // 標題畫面運鏡時收起湯杓砲
         const vfov = THREE.MathUtils.degToRad(this.camera.fov);
         const hh = Math.tan(vfov / 2) * 0.95;
         const hw = hh * this.camera.aspect;
@@ -970,6 +984,13 @@ class World {
     }
 
     /* ---------------- 回饋事件（由 HUD／app 呼叫） ---------------- */
+
+    /** 標題畫面：鏡頭在料理台上方慢慢環繞；離開時推進第一人稱視角。 */
+    setTitleScreen(active) {
+        const was = !!this.titleScreen;
+        this.titleScreen = !!active;
+        if (was && !this.titleScreen && this.presetKey) this.startTween(this.presetKey, this.presetKey, 'title');
+    }
 
     /** 瘋狂連打期間：湯杓砲冒火。 */
     setCrazy(active) { this.crazy = !!active; }

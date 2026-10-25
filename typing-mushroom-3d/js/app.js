@@ -89,8 +89,7 @@
         this.renderTyping('直接開始打字，每個正確字元都會攻擊。', false);
         this.claimTab(true);
         this.start();
-        // 桌機直接可以打字；觸控裝置等玩家點輸入框再叫出鍵盤
-        if (!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches)) this.ui.focusTypingInput();
+        this.showTitleScreen();
         this.waitForScene();
     }
 
@@ -153,6 +152,7 @@
             }
             if (!self.scene) { self.useFallback('此裝置無法啟動 3D 繪圖，已改用 2D 戰場，所有機制照常運作。'); return; }
             self.ui.scene = self.scene;
+            self.scene.setTitleScreen(self.titleScreenActive);
             stage.classList.add('is-3d');
             stage.classList.remove('is-loading', 'is-fallback');
             self.ui.tickFast(Date.now());
@@ -174,6 +174,78 @@
         stage.classList.remove('is-loading');
         stage.classList.add('is-fallback');
         this.ui.toast(message);
+    };
+
+    /* ---------------- 標題畫面 ---------------- */
+
+    App.prototype.showTitleScreen = function () {
+        var self = this;
+        var root = document.documentElement;
+        var titleScreen = $('title-screen');
+        var state = this.game.state;
+        var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+        this.titleScreenActive = true;
+        root.classList.add('is-title-screen');
+        if (this.scene) this.scene.setTitleScreen(true);
+
+        var hasProgress = state.clicks > 0 || state.lifetimeCoins > 0;
+        var bosses = Config.BOSSES.filter(function (b) { return state.bosses[b.id]; }).length;
+        var zone = this.game.zone();
+        $('title-screen-progress').textContent = hasProgress
+            ? zone.name + '・深度 ' + this.game.depthOf(zone.id) + '・菇幣 ' + Format.short(state.coins) + '・菇王 ' + bosses + '/' + Config.BOSSES.length
+            : '新的冒險即將開始';
+        $('title-screen-start-label').textContent = hasProgress ? '繼續討伐' : '開始討伐';
+        $('title-screen-hint').textContent = coarse ? '點一下畫面開始' : '按任意鍵開始';
+        $('title-screen-bank').textContent = '題庫：' + Typing.BANK_NAMES[this.typing.bank];
+
+        if (this._titleScreenBound) return;
+        this._titleScreenBound = true;
+        $('btn-title-start').addEventListener('click', function (event) {
+            event.stopPropagation();
+            self.startFromTitleScreen();
+        });
+        $('btn-title-help').addEventListener('click', function (event) {
+            event.stopPropagation();
+            self.openDialog($('dlg-help'));
+        });
+        $('btn-title-settings').addEventListener('click', function (event) {
+            event.stopPropagation();
+            self.openDialog($('dlg-settings'));
+        });
+        titleScreen.addEventListener('click', function () { self.startFromTitleScreen(); });
+        // 標題畫面上的按鍵只用來開始，不會被當成英打輸入
+        window.addEventListener('keydown', function (event) {
+            if (!self.titleScreenActive || document.querySelector('dialog[open]')) return;
+            if (event.ctrlKey || event.metaKey || event.altKey) return;
+            var target = event.target;
+            var onTitleLink = target && target.closest && target.closest('.title-screen__link');
+            if (onTitleLink && (event.key === 'Enter' || event.key === ' ')) return;
+            if (event.key === 'Enter' || event.key === ' ' || (event.key && event.key.length === 1)) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                self.startFromTitleScreen();
+            }
+        }, true);
+    };
+
+    App.prototype.startFromTitleScreen = function () {
+        if (!this.titleScreenActive) return;
+        var self = this;
+        var root = document.documentElement;
+        var titleScreen = $('title-screen');
+        this.titleScreenActive = false;
+        if (this.scene) this.scene.setTitleScreen(false);       // 鏡頭推進第一人稱視角
+        // 在同一個點擊／按鍵事件中聚焦，手機才會叫出軟鍵盤
+        this.ui.focusTypingInput();
+        titleScreen.classList.add('is-leaving');
+        var done = function () {
+            titleScreen.classList.remove('is-leaving');
+            root.classList.remove('is-title-screen');
+            self.ui.layout();
+            self.ui.announce('開始討伐！直接打字攻擊蘑菇。');
+        };
+        var reduced = root.classList.contains('reduce-motion');
+        setTimeout(done, reduced ? 0 : 650);
     };
 
     /* ---------------- 存檔 ---------------- */
@@ -705,6 +777,7 @@
                     self.applySettings();
                     if (name === 'typingBank') {
                         self.typing.setBank(input.value);
+                        if (self.titleScreenActive) $('title-screen-bank').textContent = '題庫：' + Typing.BANK_NAMES[input.value];
                         self.renderTyping('已切換至「' + Typing.BANK_NAMES[input.value] + '」。', false);
                     }
                 });

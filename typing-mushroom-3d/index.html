@@ -38,6 +38,7 @@
                 var reduced = motion === 'reduced' || (motion === 'system' &&
                     window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
                 if (reduced) document.documentElement.classList.add('reduce-motion');
+                document.documentElement.classList.add('is-title-screen');      // 先顯示標題畫面，HUD 不會閃一下
             } catch (err) {
                 document.documentElement.setAttribute('data-theme', 'light');
             }
@@ -301,6 +302,30 @@
         </div>
     </aside>
 </div>
+
+<!-- 標題畫面（Title Screen）：3D 場景在背後慢慢環繞，按任意鍵或點一下開始 -->
+<section class="title-screen" id="title-screen" aria-labelledby="title-screen-title">
+    <div class="title-screen__logo">
+        <img class="title-screen__emblem" src="assets/favicon.svg" alt="" width="120" height="120">
+        <p class="title-screen__kicker">第一人稱 3D 英打遊戲</p>
+        <h2 class="title-screen__title" id="title-screen-title">
+            <span class="title-screen__line">無限高湯</span>
+            <span class="title-screen__line title-screen__line--accent">討伐隊<span class="title-screen__badge">3D</span></span>
+        </h2>
+        <p class="title-screen__tagline">每敲一個正確字元，湯杓砲就發射一次</p>
+    </div>
+    <div class="title-screen__actions">
+        <p class="title-screen__progress" id="title-screen-progress">新的冒險即將開始</p>
+        <button type="button" class="title-screen__start" id="btn-title-start">
+            <svg data-mdi="play"></svg><span id="title-screen-start-label">開始討伐</span>
+        </button>
+        <p class="title-screen__hint" id="title-screen-hint" aria-hidden="true">按任意鍵開始</p>
+        <div class="title-screen__links">
+            <button type="button" class="title-screen__link" id="btn-title-help"><svg data-mdi="help"></svg>玩法說明</button>
+            <button type="button" class="title-screen__link" id="btn-title-settings"><svg data-mdi="settings"></svg><span id="title-screen-bank">題庫設定</span></button>
+        </div>
+    </div>
+</section>
 
 <div class="visually-hidden" id="live-region" role="status" aria-live="polite" aria-atomic="true"></div>
 <div class="toast" id="toast" role="status" hidden></div>
