@@ -219,6 +219,12 @@ window.InvoiceArtwork.push({
   portraitSrc:'artworks/orange-keeper-portrait.jpg?v=4',
   landscapeSrc:'artworks/orange-keeper-landscape.jpg?v=4'
 });
+window.InvoiceArtwork.push({
+  id:'unit-beta-todays-find',name:'一片大發現',kind:'illustration',color:'#e7edc6',
+  src:'thumbs/unit-beta-todays-find.jpg',
+  portraitSrc:'artworks/unit-beta-todays-find-portrait.jpg',
+  landscapeSrc:'artworks/unit-beta-todays-find-landscape.jpg'
+});
 window.prepareInvoiceArtworkGallery=function(root){
   const button=root.querySelector('[data-image="study-riso"]');
   if(!button)return;

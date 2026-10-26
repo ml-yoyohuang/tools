@@ -18,9 +18,9 @@ document.getElementById('run').onclick=async()=>{
     saved=win.localStorage.getItem('invoice-gen.carrier.v1');storageRead=true;
     $('remember').checked=false;
     input('carrier','');await tick();
-    await until(()=>$('canvas').width>0&&doc.querySelectorAll('.gallery-item').length===10,'頁面初始化');
+    await until(()=>$('canvas').width>0&&doc.querySelectorAll('.gallery-item').length===11,'頁面初始化');
     check($('export').disabled,'沒有載具時不能匯出');
-    check(doc.querySelectorAll('.gallery-item').length===10&&doc.querySelectorAll('[data-image^="pattern-"]').length===5&&doc.querySelectorAll('[data-image^="study-"]').length===3,'五組圖樣、三組藝術圖與貓狗兩張插畫');
+    check(doc.querySelectorAll('.gallery-item').length===11&&doc.querySelectorAll('[data-image^="pattern-"]').length===5&&doc.querySelectorAll('[data-image^="study-"]').length===3&&doc.querySelector('[data-image="unit-beta-todays-find"]')?.textContent.includes('一片大發現'),'五組圖樣、三組藝術圖與三張插畫');
     check(!$('upload-panel').hidden&&$('gallery-panel').hidden,'預設使用自選圖片');
     check(!doc.querySelector('[data-category]'),'圖庫沒有分類篩選');
     check([...doc.querySelectorAll('.control-section h2')].map(el=>el.textContent.replace(/\d/g,'').trim()).join('|')==='輸入你的載具|選擇版型與調整樣式|決定畫布的形狀|選一張喜歡的圖片','四個步驟順序正確');

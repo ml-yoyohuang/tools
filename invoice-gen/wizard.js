@@ -23,6 +23,7 @@
   function openSheet(name){
     cancelGesture();document.querySelectorAll('[data-sheet]').forEach(el=>el.hidden=el.dataset.sheet!==name);
     $('sheet-title').textContent={layout:'選擇版型',size:'畫布形狀',image:'選一張圖片',adjust:'調整',save:'儲存圖片'}[name];
+    if(name==='image')window.prepareInvoiceArtworkGallery($('gallery'));
     syncForms();if(!$('sheet').open)$('sheet').showModal();
   }
   function goStep(step){
@@ -127,7 +128,6 @@
     ['ratio-w','ratio-h'].forEach(id=>{$(id).oninput=()=>{const w=Number($('ratio-w').value),h=Number($('ratio-h').value);if(w>0&&h>0)applyRatio(w/h);};$(id).onchange=syncRatioFields;});
     $('swap').onclick=()=>{applyRatio(1/state.ratio);syncRatioFields();};
     $('resize-canvas').onclick=()=>{resizing=true;state.mode='ratio';closeSheet();requestRender();};
-    document.querySelectorAll('[data-source]').forEach(el=>el.onclick=()=>{pressed('[data-source]','source',el.dataset.source);$('upload-panel').hidden=el.dataset.source!=='upload';$('gallery').hidden=el.dataset.source!=='gallery';if(el.dataset.source==='gallery')window.prepareInvoiceArtworkGallery($('gallery'));});
     $('file').onchange=e=>{const file=e.target.files[0];e.target.value='';if(!file)return;if(file.size>30*1024*1024){toast('請選擇小於 30 MB 的圖片。');return;}if(file.type==='image/svg+xml'||!(/\.(jpe?g|png|webp|avif|gif|heic|heif)$/i.test(file.name))){toast('請選擇 JPG、PNG 或 WebP 圖片。');return;}picker.reset();loadImage(URL.createObjectURL(file),null,null,true);};
     document.querySelectorAll('[data-object]').forEach(el=>el.onclick=()=>setMode(el.dataset.object));
     $('zoom').oninput=()=>setZoom(Number($('zoom').value)/100);$('rotate').onclick=()=>{state.rotation=(state.rotation+90)%360;state.panX=state.panY=0;requestRender();};$('reset-photo').onclick=()=>{resetPhoto();requestRender();};
