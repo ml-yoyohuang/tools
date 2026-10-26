@@ -8,13 +8,15 @@
   <title>隨身一張｜載具桌布製作器</title>
   <link rel="stylesheet" href="style.css?v=4">
   <script src="core.js?v=4" defer></script>
-  <script src="gallery.js" defer></script>
-  <script src="app.js?v=4" defer></script>
+  <script src="artwork-study-shader.js" defer></script>
+  <script src="artwork-renderer.js?v=12" defer></script>
+  <script src="gallery.js?v=4" defer></script>
+  <script src="app.js?v=5" defer></script>
 </head>
 <body>
   <header class="site-header">
     <a class="wordmark" href="./" aria-label="隨身一張首頁"><span class="brand-icon" aria-hidden="true">▥</span> 隨身一張<span class="brand-en">POCKET CANVAS</span></a>
-    <nav style="display:flex;align-items:center;gap:20px" aria-label="頁面導覽"><a class="back-link" href="wizard.html">簡易製作 ↗</a><a class="back-link" href="../">工具集 ↗</a></nav>
+    <nav style="display:flex;align-items:center;gap:20px" aria-label="頁面導覽"><a class="back-link" href="wizard.html">簡易製作 ↗</a><a class="back-link" href="artwork-study.html">藝術圖預覽 ↗</a><a class="back-link" href="../">工具集 ↗</a></nav>
   </header>
   <main>
     <section class="intro"><div><p class="eyebrow">A LITTLE PICTURE. EVERYDAY WITH YOU.</p><h1>把喜歡的，<span>帶在身上。</span></h1><p>一張圖片、一組載具。做一張屬於你的日常桌布。</p></div><span class="privacy-badge"><i></i> 圖片與號碼留在你的裝置</span></section>
@@ -52,7 +54,7 @@
         <section id="image-step" class="control-section">
           <h2><span class="step">04</span> 選一張喜歡的圖片</h2>
           <div class="tabs" role="group" aria-label="圖片來源"><button class="active" data-source="upload" aria-pressed="true">自選圖片</button><button data-source="gallery" aria-pressed="false">內建圖庫</button></div>
-          <div id="gallery-panel" hidden><div id="gallery" class="gallery"></div><p class="small-note">六款 SVG 構圖占位，正式插畫準備中。</p></div>
+          <div id="gallery-panel" hidden><div id="gallery" class="gallery"></div><p class="small-note">六款插畫占位圖＋三組藝術圖；藝術圖可再次點選換色。</p></div>
           <div id="upload-panel"><label class="upload-zone" id="drop-zone"><span class="upload-icon">＋</span><strong>挑一張你的照片</strong><span>點選或拖入 JPG、PNG、WebP 等圖片</span><input id="file-input" type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/heic,image/heif"><span class="small-note">單張上限 30 MB；不支援的格式會提示轉檔</span></label><p id="file-name" class="small-note"></p></div>
         </section>
       </aside>

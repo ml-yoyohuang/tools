@@ -10,6 +10,7 @@
   const pointers=new Map();
   let guideTimer, activeGuides={x:null,y:null};
   let ratioStart=state.ratio, customCardScale=false;
+  const picker=window.createInvoiceArtworkPicker({getImageId:()=>state.imageId,getOrientation:()=>state.ratio>1?'landscape':'portrait',begin:()=>{loadToken++;state.loading=true;syncExport();},load:art=>loadImage(art.src,art.name,art.id,art.color,false,art.keepTransform),error:message=>{state.loading=false;syncExport();toast(message);}});
   const requestRender=()=>{if(!frame)frame=requestAnimationFrame(()=>{frame=0;render();});};
   function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>{$('toast').hidden=true;},4500);}
   function pressed(selector, attribute, value){document.querySelectorAll(selector).forEach(el=>{const active=el.dataset[attribute]===value;el.classList.toggle('active',active);el.setAttribute('aria-pressed',String(active));});}
@@ -161,7 +162,7 @@
     const scale=(state.fit==='contain'||state.layout==='contain'?Math.min(r.w/iw,r.h/ih):Math.max(r.w/iw,r.h/ih))*state.zoom;
     if(scale>1.5)toast('照片解析度較小，放大後可能模糊；條碼仍會清晰繪製。');
   }
-  async function loadImage(source,name,id,color,temporary=false){
+  async function loadImage(source,name,id,color,temporary=false,keepTransform=false){
     const token=++loadToken;state.loading=true;syncExport();
     try{
       const image=new Image();image.src=source;await image.decode();
@@ -170,10 +171,10 @@
       const maxSide=4096, scale=Math.min(1,maxSide/Math.max(image.naturalWidth,image.naturalHeight));
       // Freeze one frame too: animated uploads must not change between preview and export.
       const small=document.createElement('canvas');small.width=Math.round(image.naturalWidth*scale);small.height=Math.round(image.naturalHeight*scale);small.getContext('2d').drawImage(image,0,0,small.width,small.height);state.image=small;
-      state.imageName=name;state.imageId=id;state.rotation=0;
+      state.imageName=name;state.imageId=id;if(!keepTransform)state.rotation=0;
       if(color){state.background=color;$('background').value=color;}
-      state.panX=0;state.panY=0;state.zoom=1;clearGuides();
-      if(state.size==='original')setSize('original');
+      if(!keepTransform){state.panX=0;state.panY=0;state.zoom=1;clearGuides();}
+      if(state.size==='original'&&!keepTransform)setSize('original');
       document.querySelectorAll('.gallery-item').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.image===id)));
       $('file-name').textContent=id?'':name;
       photoWarning();requestRender();
@@ -184,15 +185,15 @@
     if(!file)return;
     if(file.size>30*1024*1024){toast('圖片超過 30 MB，請先縮小檔案。');return;}
     if(!/^image\/(jpeg|png|webp|avif|gif|heic|heif)$/.test(file.type)&&!(/\.(jpe?g|png|webp|avif|gif|heic|heif)$/i.test(file.name)&&!file.type)){toast('請選擇 JPG、PNG、WebP、AVIF 或 GIF 圖片。');return;}
-    loadImage(URL.createObjectURL(file),file.name,null,null,true);
+    picker.reset();loadImage(URL.createObjectURL(file),file.name,null,null,true);
   }
   function buildGallery(){
     $('gallery').replaceChildren();
     gallery.forEach(item=>{
-      const button=document.createElement('button');button.className='gallery-item';button.dataset.image=item.id;button.setAttribute('aria-pressed',String(state.imageId===item.id));button.setAttribute('aria-label',item.name+' SVG 占位圖');
+      const button=document.createElement('button');button.className='gallery-item';button.dataset.image=item.id;button.setAttribute('aria-pressed',String(state.imageId===item.id));button.setAttribute('aria-label',item.name+(item.kind==='generative'?'，再次點選換色':' SVG 占位圖'));
       const img=document.createElement('img');img.src=item.src;img.alt='';img.width=200;img.height=200;
-      const label=document.createElement('span');label.textContent=item.name;
-      button.append(img,label);button.onclick=()=>loadImage(img.src,item.name,item.id,item.color);$('gallery').append(button);
+      const label=document.createElement('span');label.textContent=item.name+(item.kind==='generative'?' ↻':'');
+      button.append(img,label);button.onclick=()=>picker.select(item,img,button);$('gallery').append(button);
     });
   }
   function initHandles(){

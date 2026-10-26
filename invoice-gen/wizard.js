@@ -6,6 +6,7 @@
   const colors=['#ff6633','#2446ff','#dfff00','#ff1688','#00c78b','#a737ff','#ffd000','#00c9ff','#ffffff','#111111'];
   const artColors=[['#ff6633','#dfff00','#2446ff'],['#ff1688','#ffd000','#6b00e8'],['#dfff00','#2446ff','#ff6633'],['#00c9ff','#a737ff','#dfff00'],['#2446ff','#ff6633','#dfff00'],['#a737ff','#00e6ad','#ff1688']];
   const artworks=window.InvoiceArtwork.map((art,i)=>{
+    if(art.kind==='generative')return art;
     const [background,accent,ink]=artColors[i];
     const svg=decodeURIComponent(art.src.slice(art.src.indexOf(',')+1)).replaceAll(art.color,background).replaceAll(art.accent,accent).replaceAll(art.ink,ink);
     return {...art,color:background,src:'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)};
@@ -15,6 +16,7 @@
   const requestRender=()=>{if(!renderFrame)renderFrame=requestAnimationFrame(()=>{renderFrame=0;render();});};
   const outputSize=()=>state.size==='portrait'||state.size==='landscape'?C.printCard(state.size):C.dimensions(state.ratio,state.size==='phone'?state.phone:null);
   const minZoom=()=>state.layout==='contain'||state.fit==='contain'?.25:1;
+  const picker=window.createInvoiceArtworkPicker({getImageId:()=>state.imageId,getOrientation:()=>state.ratio>1?'landscape':'portrait',begin:()=>{loadToken++;loading=true;syncForms();},load:art=>loadImage(art.src,art.id,art.color,false,art),error:message=>{loading=false;syncForms();toast(message);}});
   function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>{$('toast').hidden=true;},3500);}
   function pressed(selector,key,value){document.querySelectorAll(selector).forEach(el=>el.setAttribute('aria-pressed',String(el.dataset[key]===value)));}
   function validCarrier(){
@@ -83,15 +85,15 @@
     Object.assign($('selection').style,{left:card.x/width*100+'%',top:card.y/height*100+'%',width:card.w/width*100+'%',height:card.h/height*100+'%'});
     $('handles').hidden=!resizing||state.step!==2;renderGuides();syncForms();
   }
-  async function loadImage(src,id,color,temporary=false){
+  async function loadImage(src,id,color,temporary=false,options={}){
     const token=++loadToken;loading=true;syncForms();
     try{
       const img=new Image();img.src=src;await img.decode();if(token!==loadToken)return;
       const scale=Math.min(1,4096/Math.max(img.naturalWidth,img.naturalHeight)),small=document.createElement('canvas');
       small.width=Math.max(1,Math.round(img.naturalWidth*scale));small.height=Math.max(1,Math.round(img.naturalHeight*scale));small.getContext('2d').drawImage(img,0,0,small.width,small.height);
-      state.image=small;state.imageId=id;resetPhoto();if(color&&!colorChosen)state.background=color;
-      if(state.size==='original'){state.ratio=C.clamp(small.width/small.height,C.MIN_RATIO,C.MAX_RATIO);if(small.width/small.height!==state.ratio)state.layout='contain';resetCard();}
-      state.mode='photo';closeSheet();requestRender();
+      state.image=small;state.imageId=id;if(!options.keepTransform)resetPhoto();if(color&&!colorChosen)state.background=color;
+      if(state.size==='original'&&!options.keepTransform){state.ratio=C.clamp(small.width/small.height,C.MIN_RATIO,C.MAX_RATIO);if(small.width/small.height!==state.ratio)state.layout='contain';resetCard();}
+      state.mode='photo';if(!options.keepSheet)closeSheet();requestRender();
       const dim=outputSize(),geometry=C.photoGeometry(dim.width,dim.height,state);if(geometry.scale>1.5)toast('圖片較小，放大後可能模糊。');
     }catch{if(token===loadToken)toast('無法讀取圖片，請改用 JPG、PNG 或 WebP。');}
     finally{if(temporary)URL.revokeObjectURL(src);if(token===loadToken){loading=false;syncForms();}}
@@ -116,7 +118,7 @@
   }
   function init(){
     colors.forEach((color,i)=>{const button=document.createElement('button');button.dataset.color=color;button.style.background=color;button.setAttribute('aria-label',['亮橘','電光藍','萊姆綠','桃紅','翡翠綠','紫羅蘭','亮黃','亮青','白','黑'][i]);button.onclick=()=>{colorChosen=true;state.background=color;syncForms();requestRender();};$('swatches').append(button);});
-    artworks.forEach(art=>{const button=document.createElement('button');button.dataset.image=art.id;button.setAttribute('aria-label',art.name+'占位圖');const img=document.createElement('img');img.src=art.src;img.alt='';const name=document.createElement('span');name.textContent=art.name;button.append(img,name);button.onclick=()=>loadImage(art.src,art.id,art.color);$('gallery').append(button);});
+    artworks.forEach(art=>{const button=document.createElement('button');button.dataset.image=art.id;button.setAttribute('aria-label',art.name+(art.kind==='generative'?'，再次點選換色':'占位圖'));const img=document.createElement('img');img.src=art.src;img.alt='';const name=document.createElement('span');name.textContent=art.name+(art.kind==='generative'?' ↻':'');button.append(img,name);button.onclick=()=>picker.select(art,img,button);$('gallery').append(button);});
     const positions={nw:[0,0],n:[50,0],ne:[100,0],e:[100,50],se:[100,100],s:[50,100],sw:[0,100],w:[0,50]};
     Object.entries(positions).forEach(([key,[x,y]])=>{const button=document.createElement('button');button.className='handle';button.dataset.handle=key;button.style.left=x+'%';button.style.top=y+'%';button.setAttribute('aria-label','調整比例 '+key);$('handles').append(button);});
     $('carrier').addEventListener('input',e=>{if(!e.isComposing)validCarrier();});$('carrier').addEventListener('compositionend',validCarrier);
@@ -131,8 +133,8 @@
     ['ratio-w','ratio-h'].forEach(id=>{$(id).oninput=()=>{const w=Number($('ratio-w').value),h=Number($('ratio-h').value);if(w>0&&h>0)applyRatio(w/h);};$(id).onchange=syncRatioFields;});
     $('swap').onclick=()=>{applyRatio(1/state.ratio);syncRatioFields();};
     $('resize-canvas').onclick=()=>{resizing=true;state.mode='ratio';closeSheet();requestRender();};
-    document.querySelectorAll('[data-source]').forEach(el=>el.onclick=()=>{pressed('[data-source]','source',el.dataset.source);$('upload-panel').hidden=el.dataset.source!=='upload';$('gallery').hidden=el.dataset.source!=='gallery';});
-    $('file').onchange=e=>{const file=e.target.files[0];e.target.value='';if(!file)return;if(file.size>30*1024*1024){toast('請選擇小於 30 MB 的圖片。');return;}if(file.type==='image/svg+xml'||!(/\.(jpe?g|png|webp|avif|gif|heic|heif)$/i.test(file.name))){toast('請選擇 JPG、PNG 或 WebP 圖片。');return;}loadImage(URL.createObjectURL(file),null,null,true);};
+    document.querySelectorAll('[data-source]').forEach(el=>el.onclick=()=>{pressed('[data-source]','source',el.dataset.source);$('upload-panel').hidden=el.dataset.source!=='upload';$('gallery').hidden=el.dataset.source!=='gallery';$('artwork-preview-link').hidden=el.dataset.source!=='gallery';});
+    $('file').onchange=e=>{const file=e.target.files[0];e.target.value='';if(!file)return;if(file.size>30*1024*1024){toast('請選擇小於 30 MB 的圖片。');return;}if(file.type==='image/svg+xml'||!(/\.(jpe?g|png|webp|avif|gif|heic|heif)$/i.test(file.name))){toast('請選擇 JPG、PNG 或 WebP 圖片。');return;}picker.reset();loadImage(URL.createObjectURL(file),null,null,true);};
     document.querySelectorAll('[data-object]').forEach(el=>el.onclick=()=>setMode(el.dataset.object));
     $('zoom').oninput=()=>setZoom(Number($('zoom').value)/100);$('rotate').onclick=()=>{state.rotation=(state.rotation+90)%360;state.panX=state.panY=0;requestRender();};$('reset-photo').onclick=()=>{resetPhoto();requestRender();};
     $('fit').onchange=()=>{state.fit=$('fit').value;state.zoom=Math.max(minZoom(),state.zoom);state.panX=state.panY=0;requestRender();};

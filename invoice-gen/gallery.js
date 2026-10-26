@@ -21,3 +21,33 @@ window.InvoiceArtwork = [
   <text x="600" y="1050" fill="${art.ink}" fill-opacity=".7" font-family="sans-serif" font-size="15" letter-spacing="4" text-anchor="middle">ILLUSTRATION PLACEHOLDER</text>
   </svg>`)
 }));
+
+// Generative studies keep one thumbnail per work, with two selectable palettes.
+if(window.InvoiceArtworkRenderer){
+  for(const art of window.InvoiceArtworkRenderer.metadata){
+    let src;
+    try{src=window.InvoiceArtworkRenderer.thumbnail(art.id);}catch{src='data:image/svg+xml,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="300" height="480"><rect width="300" height="480" fill="${art.colors[0]}"/><text x="150" y="240" text-anchor="middle" font-size="18">${art.name}</text></svg>`);}
+    window.InvoiceArtwork.push({id:'study-'+art.id,name:art.name,kind:'generative',artworkId:art.id,src,color:art.colors[0]});
+  }
+}
+window.createInvoiceArtworkPicker=function({getImageId,getOrientation,begin,load,error}){
+  let revision=0,lastId=null;const variants=new Map();
+  return {
+    reset(){revision++;lastId=null;},
+    async select(art,img,button){
+      const token=++revision,generated=art.kind==='generative';
+      const R=window.InvoiceArtworkRenderer,meta=generated?R.metadata.find(item=>item.id===art.artworkId):null;
+      const repeated=generated&&(lastId===art.id||getImageId()===art.id);
+      const variant=repeated?((variants.get(art.id)||0)+1)%meta.colors.length:(variants.get(art.id)||0);
+      lastId=art.id;if(generated)variants.set(art.id,variant);begin();
+      try{
+        const src=generated?await R.imageURL(art.artworkId,variant,getOrientation()):art.src;
+        if(token!==revision)return;
+        const keepTransform=generated&&getImageId()===art.id;
+        await load({src,id:art.id,name:art.name,color:generated?meta.colors[variant]:art.color,keepTransform,keepSheet:generated});
+        if(token!==revision)return;
+        if(generated){img.src=R.thumbnail(art.artworkId,variant);button.dataset.variant=variant;button.setAttribute('aria-label',`${art.name}，${meta.labels[variant]}，再次點選換色`);}
+      }catch(e){if(token===revision)error(e.message||'圖片無法讀取，請再試一次。');}
+    }
+  };
+};

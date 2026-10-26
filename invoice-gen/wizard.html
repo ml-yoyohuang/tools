@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#f9f9f6">
   <title>簡易製作｜隨身一張</title>
-  <link rel="stylesheet" href="wizard.css?v=1">
+  <link rel="stylesheet" href="wizard.css?v=3">
   <script src="core.js?v=wizard1" defer></script>
-  <script src="gallery.js" defer></script>
-  <script src="wizard.js?v=2" defer></script>
+  <script src="artwork-study-shader.js" defer></script>
+  <script src="artwork-renderer.js?v=12" defer></script>
+  <script src="gallery.js?v=4" defer></script>
+  <script src="wizard.js?v=4" defer></script>
 </head>
 <body data-step="1">
   <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -49,7 +51,7 @@
         <div id="phone-options"><label for="device">螢幕比例</label><select id="device"><option value="1080,2340">通用長螢幕</option><option value="current">目前手機</option><option value="1179,2556">iPhone 14 Pro／15／16</option><option value="1206,2622">iPhone 16 Pro</option><option value="1320,2868">iPhone 16 Pro Max</option><option value="1080,2400">Android 長螢幕</option><option value="750,1334">iPhone SE</option></select></div>
         <div id="custom-options" hidden><div class="ratio-fields"><label>寬<input id="ratio-w" type="number" min="0.1" step="any" value="9"></label><span>:</span><label>高<input id="ratio-h" type="number" min="0.1" step="any" value="19.5"></label><button id="swap" aria-label="交換寬高">⇄</button></div><label class="check"><input id="ratio-snap" type="checkbox" checked>吸附常用比例</label><button id="resize-canvas" class="primary">在畫布上拖拉</button></div>
       </section>
-      <section data-sheet="image" hidden><div class="source-tabs" role="group" aria-label="圖片來源"><button data-source="upload" aria-pressed="true">自選圖片</button><button data-source="gallery" aria-pressed="false">內建圖庫</button></div><div id="upload-panel"><label class="upload"><svg><use href="#i-upload"/></svg><span>從相簿選擇</span><input id="file" type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/heic,image/heif"></label></div><div id="gallery" class="gallery" hidden></div></section>
+      <section data-sheet="image" hidden><div class="source-tabs" role="group" aria-label="圖片來源"><button data-source="upload" aria-pressed="true">自選圖片</button><button data-source="gallery" aria-pressed="false">內建圖庫</button></div><div id="upload-panel"><label class="upload"><svg><use href="#i-upload"/></svg><span>從相簿選擇</span><input id="file" type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/heic,image/heif"></label></div><div id="gallery" class="gallery" hidden></div><a id="artwork-preview-link" href="artwork-study.html" target="_blank" rel="noopener" hidden>查看藝術圖的三種配色 ↗</a></section>
       <section data-sheet="adjust" hidden><div class="source-tabs" role="group" aria-label="調整對象"><button data-object="photo" aria-pressed="true">圖片</button><button data-object="barcode" aria-pressed="false">條碼</button></div>
         <div id="photo-settings"><label for="zoom">縮放 <output id="zoom-value">100%</output></label><input id="zoom" type="range" min="100" max="400" value="100"><div class="row"><button id="rotate"><svg><use href="#i-rotate"/></svg>旋轉</button><button id="reset-photo">重置</button></div><label for="fit">圖片顯示</label><select id="fit"><option value="cover">填滿裁切</option><option value="contain">完整顯示</option></select></div>
         <div id="barcode-settings" hidden><label for="card-scale">大小</label><input id="card-scale" type="range" min="64" max="94" value="84"><label for="radius">圓角</label><input id="radius" type="range" min="0" max="36" value="16"><label for="card-title">小標題</label><input id="card-title" maxlength="20" value="我的發票載具"></div>
