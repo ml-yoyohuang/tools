@@ -127,13 +127,24 @@ png("og-home.png", width: canvasWidth, height: canvasHeight) {
 }
 
 png("og-wizard.png", width: canvasWidth, height: canvasHeight) {
-    fill(rectangle(0, 0, 1200, 630), color: NSColor(srgbRed: 249/255, green: 249/255, blue: 246/255, alpha: 1))
-    mark(x: 74, y: 630 - 72 - 44, size: 44)
-    text("隨身一張", x: 133, top: 77, size: 27, color: ink, weight: .bold)
-    text("簡易製作  /  3 STEPS", x: 76, top: 200, size: 17, color: blue, weight: .semibold)
-    text("選一張圖，", x: 72, top: 255, size: 68, color: ink, weight: .bold)
-    text("帶著走。", x: 72, top: 341, size: 68, color: blue, weight: .bold)
-    fill(rectangle(74, 525, 446, 2), color: NSColor(srgbRed: 223/255, green: 226/255, blue: 228/255, alpha: 1))
-    text("01  載具     02  版型     03  圖片", x: 74, top: 544, size: 17, color: ink, weight: .medium)
-    card(artwork("cat-in-bag-portrait.jpg"), x: 912, top: 315, width: 303, height: 482)
+    fill(rectangle(0, 0, 1200, 630), color: .white)
+    orange.setStroke()
+    for row in -2...8 {
+        let y = CGFloat(row) * 104 + 10
+        let path = NSBezierPath()
+        path.lineWidth = 44
+        path.move(to: NSPoint(x: -210, y: y))
+        for segment in 0..<8 {
+            let start = CGFloat(segment) * 210 - 210
+            let bend: CGFloat = segment.isMultiple(of: 2) ? 59 : -59
+            path.curve(to: NSPoint(x: start + 210, y: y),
+                       controlPoint1: NSPoint(x: start + 58, y: y + bend),
+                       controlPoint2: NSPoint(x: start + 152, y: y + bend))
+        }
+        path.stroke()
+    }
+    fill(rectangle(218, 116, 764, 398), color: blue)
+    text("隨身一張  /  簡易製作", x: 272, top: 163, size: 25, color: .white, weight: .medium)
+    text("三步，做一張。", x: 267, top: 262, size: 78, color: .white, weight: .bold)
+    text("你的發票載具卡面", x: 272, top: 384, size: 31, color: .white, weight: .medium)
 }

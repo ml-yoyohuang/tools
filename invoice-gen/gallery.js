@@ -200,7 +200,7 @@ window.InvoiceArtwork=invoicePatternGroups.map(group=>{
 });
 
 // These small JPEGs are interface assets; the full-size artwork renders on selection.
-const invoiceArtworkThumb=(id,variant=0)=>`thumbs/${id}-${['original','alternate-1','alternate-2'][variant]}.jpg`;
+const invoiceArtworkThumb=(id,variant=0)=>`thumbs/${id}-${['original','alternate-1','alternate-2'][variant]}.jpg${id==='moire'?'?v=3':id==='blob'||id==='riso'?'?v=2':''}`;
 if(window.InvoiceArtworkRenderer){
   for(const art of window.InvoiceArtworkRenderer.metadata){
     const src=invoiceArtworkThumb(art.id);
