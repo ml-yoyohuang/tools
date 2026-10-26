@@ -4,6 +4,8 @@
   const C=window.InvoiceCore,$=id=>document.getElementById(id),canvas=$('canvas'),ctx=canvas.getContext('2d');
   const state={step:1,carrier:'',layout:'full',size:'phone',ratio:1080/2340,phone:[1080,2340],background:'#ff6633',image:null,imageId:null,rotation:0,zoom:1,panX:0,panY:0,cardX:.5,cardY:.74,cardScale:.84,radius:16,title:'我的發票載具',fit:'cover',mode:'photo'};
   const colors=['#ff6633','#2446ff','#dfff00','#ff1688','#00c78b','#a737ff','#ffd000','#00c9ff','#ffffff','#111111'];
+  const layoutBackgrounds={full:'#ff6633',bottom:'#ffffff',contain:'#ffd000',side:'#00c9ff'};
+  const layoutPlaceholders={bottom:'#ff1688',contain:'#2446ff',side:'#dfff00'};
   const artworks=window.InvoiceArtwork;
   let renderFrame=0,gesture=null,activeGuides={x:null,y:null},guideTimer,toastTimer,loading=false,loadToken=0,resizing=false,result=null,busy=false,colorChosen=false;
   const pointers=new Map();
@@ -29,7 +31,7 @@
   function goStep(step){
     closeSheet();cancelGesture();resizing=false;state.step=step;state.mode='photo';document.body.dataset.step=step;
     $('carrier-screen').hidden=step!==1;$('workspace').hidden=step===1;$('toolbar').hidden=step===1;$('next').hidden=step===1;
-    $('step-title').textContent=['','輸入你的載具','選擇版型與形狀','選一張圖片'][step];
+    $('step-title').textContent=['','輸入你的載具','選擇版型與形狀','編輯圖片與條碼'][step];
     $('next').textContent=step===3?'完成':'下一步';
     document.querySelectorAll('[data-panel]').forEach(el=>el.hidden=!({2:['layout','size'],3:['image','adjust']}[step]||[]).includes(el.dataset.panel));
     requestRender();
@@ -122,7 +124,7 @@
     $('back').onclick=()=>{if(state.step===1)location.href='./index.html';else goStep(state.step-1);};
     $('next').onclick=()=>state.step<3?goStep(state.step+1):exportImage();
     document.querySelectorAll('[data-panel]').forEach(el=>el.onclick=()=>openSheet(el.dataset.panel));
-    document.querySelectorAll('[data-layout]').forEach(el=>el.onclick=()=>{state.layout=el.dataset.layout;if(state.layout==='side'&&state.ratio<1.2)setSize('landscape');resetPhoto();resetCard();closeSheet();requestRender();});
+    document.querySelectorAll('[data-layout]').forEach(el=>el.onclick=()=>{state.layout=el.dataset.layout;if(!colorChosen)state.background=layoutBackgrounds[state.layout];if(state.layout==='side'&&state.ratio<1.2)setSize('landscape');resetPhoto();resetCard();closeSheet();requestRender();});
     document.querySelectorAll('[data-size]').forEach(el=>el.onclick=()=>{setSize(el.dataset.size);if(state.size==='custom')syncRatioFields();else if(state.size!=='phone')closeSheet();});
     $('device').onchange=()=>{if($('device').value==='current'){const ratio=C.clamp(Math.min(screen.width,screen.height)/Math.max(screen.width,screen.height),C.MIN_RATIO,1);state.phone=[Math.round(2340*ratio),2340];}else state.phone=$('device').value.split(',').map(Number);setSize('phone');closeSheet();};
     ['ratio-w','ratio-h'].forEach(id=>{$(id).oninput=()=>{const w=Number($('ratio-w').value),h=Number($('ratio-h').value);if(w>0&&h>0)applyRatio(w/h);};$(id).onchange=syncRatioFields;});
@@ -166,7 +168,7 @@
     context.shadowColor='transparent';
     const box={x:card.x+unit*.055,y:card.y+card.h*.31,w:unit*.89,h:card.h*.40};
     const title=state.title.trim();
-    if(title){context.fillStyle='#53614b';context.textAlign='center';context.textBaseline='middle';context.font=`${Math.round(unit*.031)}px -apple-system, sans-serif`;context.fillText(title,card.x+unit/2,card.y+card.h*.17,unit*.87);}
+    if(title){context.fillStyle='#53614b';context.textAlign='center';context.textBaseline='middle';context.font=`${Math.round(unit*.046)}px -apple-system, sans-serif`;context.fillText(title,card.x+unit/2,card.y+card.h*.17,unit*.87);}
     const isValid=C.valid(state.carrier);
     if(isValid){C.drawBarcode(context,state.carrier,box);context.fillStyle='#18251b';context.textAlign='center';context.textBaseline='middle';context.font=`${Math.round(unit*.046)}px ui-monospace, monospace`;context.fillText(state.carrier,card.x+unit/2,card.y+card.h*.85);}
     else{
@@ -178,7 +180,17 @@
     }
     context.restore();return box;
   }
-  function draw(context,w,h,options={}){context.clearRect(0,0,w,h);context.fillStyle=options.backup?'#fff':state.background;context.fillRect(0,0,w,h);if(!options.backup)drawPhoto(context,w,h);return drawCard(context,w,h,options);}
+  function draw(context,w,h,options={}){
+    context.clearRect(0,0,w,h);context.fillStyle=options.backup?'#fff':state.background;context.fillRect(0,0,w,h);
+    if(!options.backup){
+      if(!state.image&&state.step===2&&layoutPlaceholders[state.layout]){
+        const area=C.photoRect(w,h,state.layout);
+        context.fillStyle=layoutPlaceholders[state.layout];context.fillRect(area.x,area.y,area.w,area.h);
+      }
+      drawPhoto(context,w,h);
+    }
+    return drawCard(context,w,h,options);
+  }
 
   function renderGuides(){
     const {width,height}=outputSize();

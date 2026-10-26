@@ -388,7 +388,7 @@ dialog::backdrop {
   border-radius:4px;
 }
 .layout-art.bottom {
-  background:linear-gradient(#ff6633 67%,white 67%);
+  background:linear-gradient(#ff1688 80%,white 80%);
 }
 .layout-art.contain::before {
   width:76%;
@@ -400,7 +400,10 @@ dialog::backdrop {
   background:#2446ff;
 }
 .layout-art.contain {
-  background:#e8ff00;
+  background:#ffd000;
+}
+.layout-art.side {
+  background:#00c9ff;
 }
 .layout-art.side::before {
   left:0;
@@ -598,10 +601,23 @@ input[type=checkbox] {
   width:52px;
   height:38px;
   min-height:38px;
-  border:0;
-  background:transparent;
-  padding:0;
+  border:1px solid #dedee5;
+  border-radius:10px;
+  background:white;
+  padding:3px;
+  overflow:hidden;
   cursor:pointer;
+}
+.custom-color input::-webkit-color-swatch-wrapper {
+  padding:0;
+}
+.custom-color input::-webkit-color-swatch {
+  border:0;
+  border-radius:7px;
+}
+.custom-color input::-moz-color-swatch {
+  border:0;
+  border-radius:7px;
 }
 output {
   float:right;
