@@ -64,36 +64,49 @@ func pattern(_ name: String) -> NSImage {
           let context = NSGraphicsContext(bitmapImageRep: bitmap) else { fatalError("Cannot create pattern") }
     NSGraphicsContext.saveGraphicsState()
     NSGraphicsContext.current = context
-    if name == "dots-touching" {
-        fill(NSRect(x: 0, y: 0, width: width, height: height), color: color("#42c65b"))
-        color("#ff9ac8").setFill()
-        for row in 0..<8 { for col in 0..<6 {
-            NSBezierPath(ovalIn: NSRect(x: col * 200, y: row * 200, width: 200, height: 200)).fill()
-        }}
-    } else if name == "quarter-mosaic" {
-        let colors = ["#fff6e4", "#313692", "#dafa5a", "#ec789f", "#7bd0ce"].map(color)
-        let cells: [[(Int, Int, String)]] = [
-            [(0,1,"tl"),(4,2,"tr"),(3,4,"bl"),(0,3,"br"),(3,1,"tl"),(1,4,"tr")],
-            [(3,0,"br"),(0,4,"bl"),(1,0,"full"),(1,2,"tr"),(4,3,"tl"),(0,2,"full")],
-            [(0,3,"bl"),(4,0,"tl"),(2,1,"tr"),(2,4,"br"),(0,3,"full"),(4,1,"bl")],
-            [(2,4,"tl"),(1,4,"full"),(3,1,"br"),(0,4,"tr"),(1,3,"bl"),(3,0,"tl")],
-            [(4,2,"br"),(0,1,"tr"),(3,2,"full"),(2,3,"bl"),(4,1,"tl"),(0,4,"br")],
-            [(3,0,"tr"),(1,3,"bl"),(4,0,"full"),(0,2,"tl"),(3,4,"br"),(2,1,"tr")],
-            [(0,4,"bl"),(2,1,"full"),(1,0,"tl"),(3,2,"tr"),(4,3,"bl"),(0,1,"br")],
-            [(1,3,"br"),(4,0,"tr"),(0,2,"bl"),(2,4,"full"),(3,1,"tl"),(4,3,"br")]
+    if name == "grid-two-tone" {
+        fill(NSRect(x: 0, y: 0, width: width, height: height), color: color("#17665b"))
+        let lines = NSBezierPath()
+        lines.lineWidth = 18
+        for col in 0..<8 {
+            let x = CGFloat(col * 180)
+            lines.move(to: NSPoint(x: x, y: 0))
+            lines.line(to: NSPoint(x: x, y: CGFloat(height)))
+        }
+        for row in 0..<10 {
+            let y = CGFloat(row * 180)
+            lines.move(to: NSPoint(x: 0, y: y))
+            lines.line(to: NSPoint(x: CGFloat(width), y: y))
+        }
+        color("#f8df9b").setStroke()
+        lines.stroke()
+    } else if name == "squiggle-night" {
+        fill(NSRect(x: 0, y: 0, width: width, height: height), color: color("#292054"))
+        let segments: [[CGFloat]] = [
+            [115,20,270,35,430,125], [610,240,770,20,950,90],
+            [1150,155,1290,195,1240,300], [1180,420,1020,345,860,310],
+            [670,260,550,380,660,450], [780,525,980,450,1080,550],
+            [1210,680,990,750,840,670], [690,580,560,595,420,685],
+            [300,765,110,625,0,760], [-90,870,80,965,230,850],
+            [365,745,520,820,585,920], [665,1040,820,835,950,900],
+            [1120,980,1260,910,1270,1030], [1280,1160,1070,1110,930,1075],
+            [785,1030,680,1150,560,1130], [420,1110,335,1030,195,1135],
+            [50,1240,-45,1270,-45,1375], [-40,1480,145,1430,280,1370],
+            [410,1315,530,1425,660,1390], [800,1350,870,1290,1010,1385],
+            [1140,1470,1210,1525,1300,1580]
         ]
-        let corners: [String: (CGFloat, CGFloat)] = ["tl":(0,0),"tr":(200,0),"br":(200,200),"bl":(0,200),"full":(100,100)]
-        for (row, items) in cells.enumerated() { for (col, cell) in items.enumerated() {
-            let box = NSRect(x: col * 200, y: (7 - row) * 200, width: 200, height: 200)
-            NSGraphicsContext.saveGraphicsState()
-            NSBezierPath(rect: box).addClip()
-            fill(box, color: colors[cell.0])
-            let corner = corners[cell.2]!, radius: CGFloat = cell.2 == "full" ? 100 : 200
-            let cx = box.minX + corner.0, cy = box.maxY - corner.1
-            colors[cell.1].setFill()
-            NSBezierPath(ovalIn: NSRect(x: cx - radius, y: cy - radius, width: radius * 2, height: radius * 2)).fill()
-            NSGraphicsContext.restoreGraphicsState()
-        }}
+        let line = NSBezierPath()
+        line.move(to: NSPoint(x: -80, y: CGFloat(height - 90)))
+        for s in segments {
+            line.curve(to: NSPoint(x: s[4], y: CGFloat(height) - s[5]),
+                       controlPoint1: NSPoint(x: s[0], y: CGFloat(height) - s[1]),
+                       controlPoint2: NSPoint(x: s[2], y: CGFloat(height) - s[3]))
+        }
+        line.lineWidth = 34
+        line.lineCapStyle = .round
+        line.lineJoinStyle = .round
+        color("#d9ff63").setStroke()
+        line.stroke()
     } else { fatalError("Unknown pattern: \(name)") }
     context.flushGraphics()
     NSGraphicsContext.restoreGraphicsState()
@@ -172,8 +185,8 @@ png("og-home.png", width: canvasWidth, height: canvasHeight) {
     text("手機桌布", x: 105, top: 545, size: 16, color: ink, weight: .medium)
     fill(rectangle(255, 535, 171, 42), color: NSColor(srgbRed: 1, green: 230/255, blue: 206/255, alpha: 1), radius: 21)
     text("悠遊卡卡面", x: 285, top: 545, size: 16, color: ink, weight: .medium)
-    card(pattern("dots-touching"), x: 735, top: 340, width: 211, height: 336, angle: -12)
-    card(pattern("quarter-mosaic"), x: 967, top: 308, width: 274, height: 436, angle: 8)
+    card(pattern("grid-two-tone"), x: 735, top: 340, width: 211, height: 336, angle: -12)
+    card(pattern("squiggle-night"), x: 967, top: 308, width: 274, height: 436, angle: 8)
 }
 
 png("og-wizard.png", width: canvasWidth, height: canvasHeight) {
