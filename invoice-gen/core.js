@@ -28,14 +28,18 @@
   async function jpegAtDpi(blob,dpi=EASY_CARD.dpi) {
     const bytes=new Uint8Array(await blob.arrayBuffer());
     // Canvas usually emits a JFIF density record. Set units to dots per inch
-    // and preserve the 300 dpi tag required by the EasyCard print instructions.
+    // and preserve the requested print density in the exported JPEG.
     for(let i=2;i<Math.min(bytes.length-18,64);i++) {
-      if(bytes[i]===0xff&&bytes[i+1]===0xe0&&bytes[i+6]===0x4a&&bytes[i+7]===0x46&&bytes[i+8]===0x49&&bytes[i+9]===0x46&&bytes[i+10]===0) {
-        bytes[i+13]=1;bytes[i+14]=dpi>>8;bytes[i+15]=dpi&255;bytes[i+16]=dpi>>8;bytes[i+17]=dpi&255;
+      if(bytes[i]===0xff&&bytes[i+1]===0xe0&&bytes[i+4]===0x4a&&bytes[i+5]===0x46&&bytes[i+6]===0x49&&bytes[i+7]===0x46&&bytes[i+8]===0) {
+        bytes[i+11]=1;bytes[i+12]=dpi>>8;bytes[i+13]=dpi&255;bytes[i+14]=dpi>>8;bytes[i+15]=dpi&255;
         return new Blob([bytes],{type:'image/jpeg'});
       }
     }
-    throw new Error('無法為 JPG 設定 300 dpi，請改用現代瀏覽器重新匯出。');
+    if(bytes[0]===0xff&&bytes[1]===0xd8){
+      const jfif=new Uint8Array([0xff,0xe0,0,16,0x4a,0x46,0x49,0x46,0,1,1,1,dpi>>8,dpi&255,dpi>>8,dpi&255,0,0]);
+      return new Blob([bytes.slice(0,2),jfif,bytes.slice(2)],{type:'image/jpeg'});
+    }
+    throw new Error('無法為 JPG 設定印刷解析度，請重新匯出。');
   }
   function ratioText(ratio) {
     const pairs = [[1,1],[3,2],[2,3],[4,3],[3,4],[16,9],[9,16],[9,19.5],[9,20],[6,13]];

@@ -389,12 +389,12 @@
     const name=result.backup?'invoice-barcode.png':`invoice-${isPrintCard()?'easycard':'wallpaper'}.${extension}`;
     const section=document.createElement('section');section.className='result-card';
     const img=document.createElement('img');img.src=result.url;img.alt=result.backup?'純條碼備用卡':'合成圖片';
-    const title=document.createElement('h3');title.textContent=(result.backup?'純條碼備用卡':isPrintCard()?'悠遊卡印刷 JPG':'你的合成圖片')+` · ${result.width} × ${result.height}${isPrintCard()?' · 300 dpi':''}`;
+    const title=document.createElement('h3');title.textContent=(result.backup?'純條碼備用卡':isPrintCard()?'悠遊卡印刷 JPG':'你的合成圖片')+` · ${result.width} × ${result.height}${!result.backup&&isPrintCard()?` · ${C.EASY_CARD.dpi} dpi`:''}`;
     const actions=document.createElement('div');actions.className='result-actions';
-    const download=document.createElement('a');download.href=result.url;download.download=name;download.textContent='下載 PNG';
+    const download=document.createElement('a');download.href=result.url;download.download=name;download.textContent='下載 '+extension.toUpperCase();
     const open=document.createElement('a');open.href=result.url;open.target='_blank';open.rel='noopener';open.textContent='開啟原圖';
     actions.append(download,open);
-    const file=new File([result.blob],name,{type:'image/png'});
+    const file=new File([result.blob],name,{type:result.mimeType});
     if(navigator.canShare?.({files:[file]})){
       const share=document.createElement('button');share.textContent='分享圖片';share.onclick=async()=>{try{await navigator.share({files:[file],title:'我的載具圖片'});}catch(error){if(error.name!=='AbortError')toast('目前無法分享，請改用下載或開啟原圖。');}};actions.append(share);
     }
@@ -411,7 +411,7 @@
     try{
       completed.push(await createImage(false));if($('backup').checked)completed.push(await createImage(true));
       resultURLs.forEach(url=>URL.revokeObjectURL(url));resultURLs=[];$('export-results').replaceChildren();completed.forEach(appendResult);
-      $('verified').textContent='✓ 已從輸出的 PNG 還原條碼，與輸入的載具號碼一致。';
+      $('verified').textContent='✓ 已從輸出的圖片還原條碼，與輸入的載具號碼一致。';
       $('export-dialog').showModal();
     }catch(error){completed.forEach(item=>URL.revokeObjectURL(item.url));toast(error.message||'圖片儲存失敗，請重新嘗試。');}
     finally{exportBusy=false;document.querySelector('.workspace').inert=false;$('export').replaceChildren(document.createTextNode('儲存圖片 '));const arrow=document.createElement('span');arrow.textContent='↓';$('export').append(arrow);syncExport();}

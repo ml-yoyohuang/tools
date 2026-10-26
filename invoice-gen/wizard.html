@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f9f9f6">
+  <title>簡易製作｜隨身一張</title>
+  <link rel="stylesheet" href="wizard.css?v=1">
+  <script src="core.js?v=wizard1" defer></script>
+  <script src="gallery.js" defer></script>
+  <script src="wizard.js?v=2" defer></script>
+</head>
+<body data-step="1">
+  <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="m14 5-7 7 7 7"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-layout" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 15h16M8 18h8"/></symbol>
+    <symbol id="i-size" viewBox="0 0 24 24"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6M3 3l6 6m12-6-6 6M3 21l6-6m12 6-6-6"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 4-7 5 8"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h4m5 0h7M4 17h9m5 0h2"/><circle cx="10.5" cy="7" r="2.5"/><circle cx="15.5" cy="17" r="2.5"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 15v6h16v-6"/></symbol>
+    <symbol id="i-rotate" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 16V3m-4 4 4-4 4 4M6 11H4v10h16V11h-2"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+  </defs></svg>
+
+  <main id="wizard">
+    <div id="workspace" hidden>
+      <div id="stage"><div id="frame" tabindex="0" role="group" aria-label="編輯畫布，可拖曳及雙指縮放，方向鍵精準移動">
+        <canvas id="canvas" aria-label="載具卡面預覽"></canvas>
+        <div id="guides" aria-hidden="true"><i id="guide-x" hidden></i><i id="guide-y" hidden></i></div>
+        <div id="selection" hidden aria-hidden="true"></div><div id="handles" hidden></div>
+      </div></div>
+    </div>
+    <header id="topbar"><button id="back" class="icon-button" aria-label="返回"><svg><use href="#i-back"/></svg></button><h1 id="step-title">輸入你的載具</h1><button id="next" class="next" hidden>下一步</button></header>
+    <section id="carrier-screen" aria-labelledby="carrier-heading">
+      <div class="carrier-content"><h2 id="carrier-heading">輸入你的載具</h2><label class="sr-only" for="carrier">手機載具號碼</label><input id="carrier" type="text" placeholder="/ABC+123" autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="24" enterkeyhint="go" aria-describedby="carrier-error"><p id="carrier-error" role="status"></p></div>
+      <button id="continue" class="primary" disabled>繼續</button>
+    </section>
+    <nav id="toolbar" aria-label="畫布工具" hidden><button data-panel="layout"><svg><use href="#i-layout"/></svg><span>版型</span></button><button data-panel="size" hidden><svg><use href="#i-size"/></svg><span>尺寸</span></button><button data-panel="image" hidden><svg><use href="#i-image"/></svg><span>圖片</span></button><button data-panel="adjust" hidden><svg><use href="#i-sliders"/></svg><span>調整</span></button></nav>
+  </main>
+
+  <dialog id="sheet" aria-labelledby="sheet-title"><div id="sheet-grip" aria-hidden="true"><i></i></div><header class="sheet-header"><h2 id="sheet-title">版型</h2><button id="close-sheet" class="icon-button" aria-label="關閉設定"><svg><use href="#i-close"/></svg></button></header>
+    <div class="sheet-content">
+      <section data-sheet="layout" hidden><div class="layout-grid" role="group" aria-label="選擇版型">
+        <button data-layout="full"><span class="layout-art full"><i></i></span><span>滿版</span></button><button data-layout="bottom"><span class="layout-art bottom"><i></i></span><span>下方留白</span></button><button data-layout="contain"><span class="layout-art contain"><i></i></span><span>完整圖片</span></button><button data-layout="side"><span class="layout-art side"><i></i></span><span>左右分欄</span></button>
+      </div></section>
+      <section data-sheet="size" hidden><div class="size-grid" role="group" aria-label="選擇形狀"><button data-size="phone">手機桌布</button><button data-size="square">正方形</button><button data-size="portrait">悠遊卡直式</button><button data-size="landscape">悠遊卡橫式</button><button data-size="original">原圖比例</button><button data-size="custom">自訂比例</button></div>
+        <div id="phone-options"><label for="device">螢幕比例</label><select id="device"><option value="1080,2340">通用長螢幕</option><option value="current">目前手機</option><option value="1179,2556">iPhone 14 Pro／15／16</option><option value="1206,2622">iPhone 16 Pro</option><option value="1320,2868">iPhone 16 Pro Max</option><option value="1080,2400">Android 長螢幕</option><option value="750,1334">iPhone SE</option></select></div>
+        <div id="custom-options" hidden><div class="ratio-fields"><label>寬<input id="ratio-w" type="number" min="0.1" step="any" value="9"></label><span>:</span><label>高<input id="ratio-h" type="number" min="0.1" step="any" value="19.5"></label><button id="swap" aria-label="交換寬高">⇄</button></div><label class="check"><input id="ratio-snap" type="checkbox" checked>吸附常用比例</label><button id="resize-canvas" class="primary">在畫布上拖拉</button></div>
+      </section>
+      <section data-sheet="image" hidden><div class="source-tabs" role="group" aria-label="圖片來源"><button data-source="upload" aria-pressed="true">自選圖片</button><button data-source="gallery" aria-pressed="false">內建圖庫</button></div><div id="upload-panel"><label class="upload"><svg><use href="#i-upload"/></svg><span>從相簿選擇</span><input id="file" type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/heic,image/heif"></label></div><div id="gallery" class="gallery" hidden></div></section>
+      <section data-sheet="adjust" hidden><div class="source-tabs" role="group" aria-label="調整對象"><button data-object="photo" aria-pressed="true">圖片</button><button data-object="barcode" aria-pressed="false">條碼</button></div>
+        <div id="photo-settings"><label for="zoom">縮放 <output id="zoom-value">100%</output></label><input id="zoom" type="range" min="100" max="400" value="100"><div class="row"><button id="rotate"><svg><use href="#i-rotate"/></svg>旋轉</button><button id="reset-photo">重置</button></div><label for="fit">圖片顯示</label><select id="fit"><option value="cover">填滿裁切</option><option value="contain">完整顯示</option></select></div>
+        <div id="barcode-settings" hidden><label for="card-scale">大小</label><input id="card-scale" type="range" min="64" max="94" value="84"><label for="radius">圓角</label><input id="radius" type="range" min="0" max="36" value="16"><label for="card-title">小標題</label><input id="card-title" maxlength="20" value="我的發票載具"></div>
+        <label>底色</label><div id="swatches" class="swatches" role="group" aria-label="底色選項"></div><label class="custom-color">自選色<input id="color" type="color" value="#ff6633"></label><label class="check"><input id="align" type="checkbox" checked>吸附對齊參考線</label>
+      </section>
+      <section data-sheet="save" hidden><a id="result-link" target="_blank" rel="noopener"><img id="result" alt="你的載具卡面"></a><p id="result-info"></p><a id="download" class="primary" download>儲存圖片</a><button id="share" class="secondary" hidden><svg><use href="#i-share"/></svg>分享圖片</button><p class="save-hint">也可以長按圖片儲存。</p></section>
+    </div>
+  </dialog>
+  <p id="toast" role="status" hidden></p>
+</body>
+</html>
