@@ -261,6 +261,14 @@ main {
   aspect-ratio:1/1;
   object-fit:cover;
 }
+.gallery-item .artwork-thumb-crop {
+  aspect-ratio:1;
+  overflow:hidden;
+}
+.gallery-item .artwork-thumb-crop img {
+  aspect-ratio:1;
+  transform:scale(2);
+}
 .gallery-item span {
   display:block;
   font-size:10px;

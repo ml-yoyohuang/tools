@@ -541,6 +541,13 @@ input[type=checkbox] {
   object-fit:cover;
   display:block;
 }
+.gallery .artwork-thumb-crop {
+  aspect-ratio:1;
+  overflow:hidden;
+}
+.gallery .artwork-thumb-crop img {
+  transform:scale(2);
+}
 .gallery span {
   display:block;
   font-size:10px;

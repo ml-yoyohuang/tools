@@ -190,10 +190,13 @@
   function buildGallery(){
     $('gallery').replaceChildren();
     gallery.forEach(item=>{
-      const button=document.createElement('button');button.className='gallery-item';button.dataset.image=item.id;button.setAttribute('aria-pressed',String(state.imageId===item.id));button.setAttribute('aria-label',item.name+(item.kind==='generative'?'，再次點選換色':' SVG 占位圖'));
-      const img=document.createElement('img');img.src=item.src;img.alt='';img.width=200;img.height=200;
-      const label=document.createElement('span');label.textContent=item.name+(item.kind==='generative'?' ↻':'');
-      button.append(img,label);button.onclick=()=>picker.select(item,img,button);$('gallery').append(button);
+      const button=document.createElement('button');button.className='gallery-item';button.dataset.image=item.id;button.setAttribute('aria-pressed',String(state.imageId===item.id));button.setAttribute('aria-label',item.name+(item.kind==='pattern-group'?'，再次點選切換圖案':item.kind==='generative'?'，再次點選換色':item.kind==='illustration'?' 插畫':' 圖樣'));
+      const img=document.createElement('img');img.src=item.thumbSrc||item.src;img.alt='';img.width=200;img.height=200;
+      const label=document.createElement('span');label.textContent=item.name+(item.kind==='generative'||item.kind==='pattern-group'?' ↻':'');
+      if(item.kind==='generative'){
+        const crop=document.createElement('div');crop.className='artwork-thumb-crop';crop.append(img);button.append(crop,label);
+      }else button.append(img,label);
+      button.onclick=()=>picker.select(item,img,button);$('gallery').append(button);
     });
   }
   function initHandles(){

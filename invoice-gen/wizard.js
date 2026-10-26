@@ -4,13 +4,7 @@
   const C=window.InvoiceCore,$=id=>document.getElementById(id),canvas=$('canvas'),ctx=canvas.getContext('2d');
   const state={step:1,carrier:'',layout:'full',size:'phone',ratio:1080/2340,phone:[1080,2340],background:'#ff6633',image:null,imageId:null,rotation:0,zoom:1,panX:0,panY:0,cardX:.5,cardY:.74,cardScale:.84,radius:16,title:'我的發票載具',fit:'cover',mode:'photo'};
   const colors=['#ff6633','#2446ff','#dfff00','#ff1688','#00c78b','#a737ff','#ffd000','#00c9ff','#ffffff','#111111'];
-  const artColors=[['#ff6633','#dfff00','#2446ff'],['#ff1688','#ffd000','#6b00e8'],['#dfff00','#2446ff','#ff6633'],['#00c9ff','#a737ff','#dfff00'],['#2446ff','#ff6633','#dfff00'],['#a737ff','#00e6ad','#ff1688']];
-  const artworks=window.InvoiceArtwork.map((art,i)=>{
-    if(art.kind==='generative')return art;
-    const [background,accent,ink]=artColors[i];
-    const svg=decodeURIComponent(art.src.slice(art.src.indexOf(',')+1)).replaceAll(art.color,background).replaceAll(art.accent,accent).replaceAll(art.ink,ink);
-    return {...art,color:background,src:'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)};
-  });
+  const artworks=window.InvoiceArtwork;
   let renderFrame=0,gesture=null,activeGuides={x:null,y:null},guideTimer,toastTimer,loading=false,loadToken=0,resizing=false,result=null,busy=false,colorChosen=false;
   const pointers=new Map();
   const requestRender=()=>{if(!renderFrame)renderFrame=requestAnimationFrame(()=>{renderFrame=0;render();});};
@@ -118,7 +112,7 @@
   }
   function init(){
     colors.forEach((color,i)=>{const button=document.createElement('button');button.dataset.color=color;button.style.background=color;button.setAttribute('aria-label',['亮橘','電光藍','萊姆綠','桃紅','翡翠綠','紫羅蘭','亮黃','亮青','白','黑'][i]);button.onclick=()=>{colorChosen=true;state.background=color;syncForms();requestRender();};$('swatches').append(button);});
-    artworks.forEach(art=>{const button=document.createElement('button');button.dataset.image=art.id;button.setAttribute('aria-label',art.name+(art.kind==='generative'?'，再次點選換色':'占位圖'));const img=document.createElement('img');img.src=art.src;img.alt='';const name=document.createElement('span');name.textContent=art.name+(art.kind==='generative'?' ↻':'');button.append(img,name);button.onclick=()=>picker.select(art,img,button);$('gallery').append(button);});
+    artworks.forEach(art=>{const button=document.createElement('button');button.dataset.image=art.id;button.setAttribute('aria-label',art.name+(art.kind==='pattern-group'?'，再次點選切換圖案':art.kind==='generative'?'，再次點選換色':art.kind==='illustration'?' 插畫':' 圖樣'));const img=document.createElement('img');img.src=art.thumbSrc||art.src;img.alt='';const name=document.createElement('span');name.textContent=art.name+(art.kind==='generative'||art.kind==='pattern-group'?' ↻':'');if(art.kind==='generative'){const crop=document.createElement('div');crop.className='artwork-thumb-crop';crop.append(img);button.append(crop,name);}else button.append(img,name);button.onclick=()=>picker.select(art,img,button);$('gallery').append(button);});
     const positions={nw:[0,0],n:[50,0],ne:[100,0],e:[100,50],se:[100,100],s:[50,100],sw:[0,100],w:[0,50]};
     Object.entries(positions).forEach(([key,[x,y]])=>{const button=document.createElement('button');button.className='handle';button.dataset.handle=key;button.style.left=x+'%';button.style.top=y+'%';button.setAttribute('aria-label','調整比例 '+key);$('handles').append(button);});
     $('carrier').addEventListener('input',e=>{if(!e.isComposing)validCarrier();});$('carrier').addEventListener('compositionend',validCarrier);
