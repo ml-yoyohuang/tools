@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#eeede7">
+  <meta name="description" content="把喜歡的圖片，變成每天帶著走的發票載具桌布。圖片與號碼只在你的裝置處理。">
+  <title>隨身一張｜載具桌布製作器</title>
+  <link rel="stylesheet" href="style.css?v=4">
+  <script src="core.js?v=4" defer></script>
+  <script src="gallery.js" defer></script>
+  <script src="app.js?v=4" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="wordmark" href="./" aria-label="隨身一張首頁"><span class="brand-icon" aria-hidden="true">▥</span> 隨身一張<span class="brand-en">POCKET CANVAS</span></a>
+    <a class="back-link" href="../">工具集 ↗</a>
+  </header>
+  <main>
+    <section class="intro"><div><p class="eyebrow">A LITTLE PICTURE. EVERYDAY WITH YOU.</p><h1>把喜歡的，<span>帶在身上。</span></h1><p>一張圖片、一組載具。做一張屬於你的日常桌布。</p></div><span class="privacy-badge"><i></i> 圖片與號碼留在你的裝置</span></section>
+    <div class="workspace">
+      <aside id="editor-settings" class="controls" aria-label="圖片與載具設定">
+        <section class="control-section">
+          <h2><span class="step">01</span> 輸入你的載具</h2>
+          <label class="sr-only" for="carrier">手機載具號碼</label><input id="carrier" class="carrier-input" type="text" placeholder="/ABC+123" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="carrier-status" maxlength="24">
+          <p id="carrier-status" class="field-status" aria-live="polite">輸入「/」加 7 碼；也可以直接貼上後 7 碼。</p>
+          <div class="remember-row"><label class="check"><input id="remember" type="checkbox"> 在這台裝置記住號碼</label><button id="forget" class="text-button">清除</button></div>
+          <p class="small-note">僅檢查格式，不驗證載具是否已申請或屬於本人。</p>
+        </section>
+        <section class="control-section">
+          <h2><span class="step">02</span> 選擇版型與調整樣式</h2>
+          <label class="field-label" for="layout">版型</label><select id="layout"><option value="full">滿版桌布 · 浮動條碼卡</option><option value="bottom">留白卡片 · 下方條碼</option><option value="contain">完整圖片 · 底色補滿</option><option value="side">左右分欄 · 右側條碼</option></select>
+          <div class="two-fields"><label>圖片顯示<select id="fit"><option value="cover">填滿裁切</option><option value="contain">完整顯示</option></select></label><label>畫布底色<input id="background" type="color" value="#e9e2d1"></label></div>
+          <div id="swatches" class="swatches" aria-label="底色選擇"></div>
+          <div class="range-label"><label for="zoom">圖片縮放</label><output id="zoom-value">100%</output></div><input id="zoom" type="range" min="100" max="400" value="100">
+          <p class="small-note">也可在畫板拖曳、滾輪縮放，或以雙指捏合縮放及移動。</p>
+          <div class="inline-actions"><button id="rotate" class="secondary">旋轉 90°</button><button id="reset-photo" class="secondary">重置圖片</button></div>
+          <div class="range-label"><label for="card-size">條碼卡片大小</label><output id="card-size-value">84%</output></div><input id="card-size" type="range" min="64" max="94" value="84">
+          <div class="range-label"><label for="radius">卡片圓角</label><output id="radius-value">適中</output></div><input id="radius" type="range" min="0" max="36" value="16">
+          <label class="field-label" for="card-title">卡片小標題 <span>選填</span></label><input id="card-title" type="text" maxlength="20" value="我的發票載具" placeholder="例如：我的發票載具">
+          <div class="positions" role="group" aria-label="條碼快捷位置"><button data-position="top">置上</button><button data-position="center">置中</button><button data-position="bottom">置下</button></div>
+        </section>
+        <section class="control-section">
+          <h2><span class="step">03</span> 決定畫布的形狀</h2>
+          <div class="size-grid" role="group" aria-label="尺寸選項">
+            <button data-size="phone" class="active" aria-pressed="true"><i class="shape phone"></i>手機桌面大小</button><button data-size="original" aria-pressed="false"><i class="shape original"></i>原圖比例</button><button data-size="portrait" aria-pressed="false"><i class="shape portrait"></i>悠遊卡直式</button><button data-size="landscape" aria-pressed="false"><i class="shape landscape"></i>悠遊卡橫式</button><button data-size="square" aria-pressed="false"><i class="shape square"></i>正方形</button><button data-size="custom" aria-pressed="false"><i class="shape custom"></i>自訂比例</button>
+          </div>
+          <div id="phone-options" class="sub-options"><label for="device">手機尺寸</label><select id="device"><option value="generic">通用長螢幕 · 1080 × 2340</option><option value="current">依目前裝置估算</option><option value="1170,2532">iPhone 12 / 13 / 14 · 6.1 吋</option><option value="1179,2556">iPhone 14 Pro / 15 / 15 Pro / 16</option><option value="1290,2796">iPhone 14 Pro Max / 15 Plus / 15 Pro Max / 16 Plus</option><option value="1206,2622">iPhone 16 Pro</option><option value="1320,2868">iPhone 16 Pro Max</option><option value="750,1334">iPhone SE 第 2 / 3 代</option><option value="1080,2400">Android · 1080 × 2400</option><option value="1440,3200">Android · 1440 × 3200</option></select><p class="small-note">機型未列出時，可使用自訂比例。裝置估算並非型號辨識。</p></div>
+          <div id="ratio-options" class="sub-options" hidden><div class="ratio-row"><label>寬<input id="ratio-w" type="number" min="0.1" max="9999" step="any" value="9"></label><span>:</span><label>高<input id="ratio-h" type="number" min="0.1" max="9999" step="any" value="19.5"></label><button id="swap-ratio" class="icon-button" aria-label="交換寬高">⇄</button><button id="reset-ratio" class="text-button">重置</button></div><label class="check"><input id="snap" type="checkbox" checked> 拖拉時吸附常用比例</label><p class="small-note">拖曳預覽的八個控制點，也可以改變比例。</p></div>
+          <p id="size-status" class="small-note" aria-live="polite">悠遊卡印刷尺寸會依 300 dpi 換算輸出。</p>
+        </section>
+        <section id="image-step" class="control-section">
+          <h2><span class="step">04</span> 選一張喜歡的圖片</h2>
+          <div class="tabs" role="group" aria-label="圖片來源"><button class="active" data-source="upload" aria-pressed="true">自選圖片</button><button data-source="gallery" aria-pressed="false">內建圖庫</button></div>
+          <div id="gallery-panel" hidden><div id="gallery" class="gallery"></div><p class="small-note">六款 SVG 構圖占位，正式插畫準備中。</p></div>
+          <div id="upload-panel"><label class="upload-zone" id="drop-zone"><span class="upload-icon">＋</span><strong>挑一張你的照片</strong><span>點選或拖入 JPG、PNG、WebP 等圖片</span><input id="file-input" type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/heic,image/heif"><span class="small-note">單張上限 30 MB；不支援的格式會提示轉檔</span></label><p id="file-name" class="small-note"></p></div>
+        </section>
+      </aside>
+      <section id="preview-section" class="preview-column" aria-label="成品預覽">
+        <div class="preview-sticky">
+          <div class="preview-heading"><span class="eyebrow">YOUR EVERYDAY CANVAS</span><span id="preview-label">即時預覽</span></div>
+          <div class="preview-modes" role="group" aria-label="編輯模式"><button data-mode="photo" class="active" aria-pressed="true">移動圖片</button><button data-mode="barcode" aria-pressed="false">移動條碼</button><button data-mode="ratio" aria-pressed="false">調整比例</button></div>
+          <div id="stage" class="stage"><div id="canvas-wrap" class="canvas-wrap" tabindex="0" role="group" aria-label="編輯畫布；方向鍵每次移動 1 輸出像素，Shift 加方向鍵移動 10 像素" aria-describedby="gesture-hint"><canvas id="canvas" aria-label="圖片與載具條碼合成預覽"></canvas><div id="phone-overlay" class="phone-overlay" aria-hidden="true" hidden><div class="phone-clock"><span>星期一，10 月 26 日</span><strong>09:41</strong></div><div class="notification">通知示意 <span>實際通知可能遮住條碼</span></div><div class="phone-bottom"><span>◉</span><span>▣</span></div><div class="app-icons"></div></div><div id="empty-photo" class="empty-photo"><span>你的圖片，從這裡開始</span><a href="#image-step">選擇圖片 ↗</a></div><div id="alignment-guides" class="alignment-guides" aria-hidden="true"><i id="guide-x" class="guide-x" hidden></i><i id="guide-y" class="guide-y" hidden></i></div><div id="card-outline" class="card-outline" hidden></div><div id="handles" hidden></div></div></div>
+          <div class="preview-meta"><span id="dimensions">1080 × 2340 px</span><span id="ratio-display">6 : 13</span></div>
+          <div class="canvas-tools"><div class="canvas-zoom"><button id="zoom-out" aria-label="縮小圖片" disabled>−</button><output id="canvas-zoom-value">100%</output><button id="zoom-in" aria-label="放大圖片" disabled>＋</button></div><label class="check"><input id="alignment-snap" type="checkbox" checked> 吸附對齊參考線</label></div>
+          <output id="edit-readout" class="edit-readout">選擇圖片後開始調整</output>
+          <p id="gesture-hint" class="gesture-hint">拖曳移動・滾輪或雙指縮放。方向鍵 1 px，Shift＋方向鍵 10 px；Alt 暫停吸附。</p>
+          <div id="overlay-controls" class="overlay-controls"><label for="overlay">手機介面示意</label><select id="overlay"><option value="none">不顯示</option><option value="lock">鎖定畫面</option><option value="home">主畫面</option></select><p>僅供位置參考，不會輸出到圖片。</p></div>
+          <div class="export-panel"><div><span class="export-kicker">READY TO TAKE WITH YOU</span><h2>把這張日常，存起來。</h2></div><button id="export" class="primary" disabled>儲存圖片 <span>↓</span></button><label class="check"><input id="backup" type="checkbox" checked> 同時製作純條碼備用卡</label><p id="export-status" role="status">填入正確格式的載具號碼，就可以儲存。</p></div>
+        </div>
+      </section>
+    </div>
+    <footer><span>隨身一張 / POCKET CANVAS</span><p>照片只在本機合成，不上傳。請使用自己已申請的手機條碼，首次使用前確認可掃描。</p></footer>
+  </main>
+  <nav class="mobile-nav" aria-label="編輯快捷導覽"><a href="#editor-settings">圖片與設定</a><a href="#preview-section">預覽與調整</a><button id="mobile-export" disabled>儲存 ↓</button></nav>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <dialog id="export-dialog"><div class="dialog-heading"><div><p class="eyebrow">MADE FOR YOUR EVERYDAY</p><h2>你的隨身圖片，完成了。</h2></div><button id="close-dialog" class="icon-button" aria-label="關閉儲存視窗">×</button></div><p id="verified" class="verified"></p><div id="export-results" class="export-results"></div><div class="save-help"><strong>在手機上儲存</strong><p>點「分享圖片」使用系統選單；也可下載 PNG，或開啟原圖後長按儲存。不同瀏覽器可能先存到「下載項目」。</p><p>設為桌布時，請關閉模糊與會改變構圖的效果，確認條碼完整、沒有被圖示或通知遮住。掃描時適度提高螢幕亮度。</p><p>圖片解碼成功不等於所有店家設備都能掃描，首次使用請實際測試。</p></div></dialog>
+</body>
+</html>

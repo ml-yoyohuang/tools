@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-Hant"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Invoice Gen — Browser QA</title>
+<style>body{font:14px system-ui;margin:24px;color:#263d31;background:#f5f5ef}button{padding:12px 20px;cursor:pointer}iframe{display:block;background:white;width:100%;height:850px;border:1px solid #cdd5c6;margin-top:20px}pre{white-space:pre-wrap;line-height:1.8}.pass{color:#3c693b}.fail{color:#a13025}</style>
+<h1>載具製作器・瀏覽器驗收</h1><p>使用測試號碼，不代表真實載具。此頁會測試實際 Canvas、圖片匯出與響應式版面；不會下載檔案。</p><button id="run">執行瀏覽器測試</button><pre id="log" aria-live="polite">尚未執行。</pre><iframe id="app" title="載具製作器測試視窗" src="../index.html"></iframe>
+<script>
+const frame=document.getElementById('app'),log=document.getElementById('log');
+let passed=0;
+function report(message){log.textContent+=message+'\n';}
+function check(condition,label){if(!condition)throw Error(label);passed++;report('✓ '+label);}
+async function until(predicate,label){const start=performance.now();while(!predicate()){if(performance.now()-start>8000)throw Error('逾時：'+label);await new Promise(r=>setTimeout(r,40));}}
+const tick=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+document.getElementById('run').onclick=async()=>{
+  const button=document.getElementById('run');button.disabled=true;log.className='';log.textContent='';passed=0;
+  let saved=null,storageRead=false;
+  try{
+    const win=frame.contentWindow,doc=win.document,$=id=>doc.getElementById(id);
+    const input=(id,value,event='input')=>{$(id).value=value;$(id).dispatchEvent(new win.Event(event,{bubbles:true}));};
+    saved=win.localStorage.getItem('invoice-gen.carrier.v1');storageRead=true;
+    $('remember').checked=false;
+    input('carrier','');await tick();
+    await until(()=>$('canvas').width>0&&doc.querySelectorAll('.gallery-item').length===6,'頁面初始化');
+    check($('export').disabled,'沒有載具時不能匯出');
+    check(doc.querySelectorAll('.gallery-item').length===6,'六張 SVG 占位圖');
+    check(!$('upload-panel').hidden&&$('gallery-panel').hidden,'預設使用自選圖片');
+    check(!doc.querySelector('[data-category]'),'圖庫沒有分類篩選');
+    check([...doc.querySelectorAll('.control-section h2')].map(el=>el.textContent.replace(/\d/g,'').trim()).join('|')==='輸入你的載具|選擇版型與調整樣式|決定畫布的形狀|選一張喜歡的圖片','四個步驟順序正確');
+    input('carrier',' abc+123 ');check($('export').disabled,'選圖前不會自動使用內建圖片匯出');
+    doc.querySelector('[data-source="gallery"]').click();doc.querySelector('.gallery-item').click();
+    await until(()=>!$('export').disabled,'圖片讀取與有效載具');
+    check($('carrier').value==='/ABC+123','貼上號碼自動整理');
+    input('carrier','/AB_1234');await tick();check($('export').disabled,'拒絕不合法字元');
+    input('carrier','/ABC+123');
+    doc.querySelector('[data-mode="photo"]').click();
+    const wrap=$('canvas-wrap'),preview=wrap.getBoundingClientRect();
+    wrap.dispatchEvent(new win.WheelEvent('wheel',{deltaY:-100,clientX:preview.left+preview.width/2,clientY:preview.top+preview.height/2,bubbles:true,cancelable:true}));
+    await until(()=>Number($('zoom').value)>100,'畫布滾輪縮放');check(Number($('zoom').value)>100,'滑鼠滾輪可在畫板上縮放');
+    const xBefore=Number($('edit-readout').dataset.x);
+    wrap.dispatchEvent(new win.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
+    await until(()=>Number($('edit-readout').dataset.x)!==xBefore,'圖片精準微調');
+    check(Math.abs(Number($('edit-readout').dataset.x)-xBefore-1)<.001,'圖片方向鍵精準移動 1 輸出像素');
+    wrap.dispatchEvent(new win.KeyboardEvent('keydown',{key:'ArrowRight',shiftKey:true,bubbles:true}));
+    await until(()=>Number($('edit-readout').dataset.x)>xBefore+10,'圖片 Shift 微調');
+    check(Math.abs(Number($('edit-readout').dataset.x)-xBefore-11)<.001,'Shift＋方向鍵移動 10 輸出像素');
+    // Exercise pointer event streams; these do not replace a physical touchscreen test.
+    const pointer=(type,id,x,y,pointerType='touch',altKey=false)=>wrap.dispatchEvent(new win.PointerEvent(type,{pointerId:id,pointerType,button:0,buttons:type==='pointerup'?0:1,clientX:x,clientY:y,bubbles:true,cancelable:true,altKey}));
+    input('zoom','150');await tick();
+    const r=wrap.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+    pointer('pointerdown',11,cx-50,cy);pointer('pointerdown',12,cx+50,cy);
+    pointer('pointermove',11,cx-70,cy);pointer('pointermove',12,cx+70,cy);
+    await until(()=>Number($('zoom').value)===210,'雙指捏合縮放');check(Number($('zoom').value)===210,'雙指事件距離決定縮放比例');
+    pointer('pointerup',11,cx-70,cy);const afterPinch=Number($('edit-readout').dataset.x);
+    pointer('pointermove',12,cx+90,cy,'touch',true);
+    await until(()=>Number($('edit-readout').dataset.x)!==afterPinch,'雙指轉單指平移');
+    check(Math.abs(Number($('edit-readout').dataset.x)-afterPinch)<20/r.width*$('canvas').width+1,'放開一指後可以平順繼續拖曳');pointer('pointerup',12,cx+90,cy);
+    $('reset-photo').click();input('zoom','200');await tick();
+    pointer('pointerdown',21,cx,cy,'mouse');pointer('pointermove',21,cx+3,cy,'mouse');await tick();
+    check(Math.abs(Number($('edit-readout').dataset.x))<.001&&!$('guide-x').hidden,'圖片靠近中心會吸附並顯示參考線');
+    pointer('pointermove',21,cx+24,cy,'mouse');await until(()=>Number($('edit-readout').dataset.x)>0,'離開吸附範圍');check(Number($('edit-readout').dataset.x)>0,'超過吸附範圍可以繼續拖動');pointer('pointerup',21,cx+24,cy,'mouse');
+    $('reset-photo').click();input('zoom','200');await tick();
+    pointer('pointerdown',22,cx,cy,'mouse');pointer('pointermove',22,cx+3,cy,'mouse',true);await tick();
+    check(Number($('edit-readout').dataset.x)>0&&$('guide-x').hidden,'Alt 可暫停吸附');pointer('pointerup',22,cx+3,cy,'mouse');
+    $('alignment-snap').checked=false;$('alignment-snap').dispatchEvent(new win.Event('change'));
+    check($('guide-x').hidden&&$('guide-y').hidden,'可關閉吸附與參考線');$('alignment-snap').checked=true;
+    input('layout','side','change');await tick();check($('canvas').width>$('canvas').height,'先選左右分欄會自動採用橫式畫布');
+    input('layout','full','change');
+    for(const [size,w,h] of [['landscape',2540,1595],['portrait',1595,2540],['square',1800,1800]]){
+      doc.querySelector(`[data-size="${size}"]`).click();await tick();check($('canvas').width===w&&$('canvas').height===h,size+' 尺寸正確');
+    }
+    doc.querySelector('[data-size="custom"]').click();input('ratio-w','4');input('ratio-h','3');await tick();
+    check($('canvas').width===1800&&$('canvas').height===1350,'自訂 4:3 自動產出 1800 × 1350');
+    check(!$('handles').hidden&&$('handles').children.length===8,'自訂比例有八個拖曳控制點');
+    $('swap-ratio').click();await tick();check($('canvas').width===1350&&$('canvas').height===1800,'寬高交換');
+    input('ratio-w','100');input('ratio-h','1');await tick();check($('canvas').height===750,'狹長比例受到限制');
+    input('ratio-w','-3');input('ratio-h','-2');await tick();check($('size-status').textContent.includes('大於 0'),'拒絕負數寬高');
+    input('ratio-w','3');input('ratio-h','2');await tick();
+    input('layout','side','change');await tick();check($('layout').value==='side','橫式支援左右版型');
+    doc.querySelector('[data-size="portrait"]').click();await tick();check($('layout').value==='bottom','直式自動切換合適版型');
+    doc.querySelector('[data-mode="barcode"]').click();await tick();
+    const before=$('card-outline').style.top;
+    const cardYBefore=Number($('edit-readout').dataset.y);
+    $('canvas-wrap').dispatchEvent(new win.KeyboardEvent('keydown',{key:'ArrowUp',bubbles:true}));await until(()=>$('card-outline').style.top!==before,'方向鍵移動後的預覽');
+    check($('card-outline').style.top!==before,'鍵盤可移動條碼');
+    check(Math.abs(Number($('edit-readout').dataset.y)-cardYBefore+1)<.001,'條碼方向鍵精準移動 1 輸出像素');
+    doc.querySelector('[data-position="center"]').click();await tick();
+    const cardCenterX=Number($('edit-readout').dataset.x),cardCenterY=Number($('edit-readout').dataset.y),cardView=wrap.getBoundingClientRect();
+    const mx=cardView.left+cardView.width/2,my=cardView.top+cardView.height/2;
+    pointer('pointerdown',31,mx,my,'mouse');pointer('pointermove',31,mx+3,my+3,'mouse');await tick();
+    check(Math.abs(Number($('edit-readout').dataset.x)-cardCenterX)<.001&&Math.abs(Number($('edit-readout').dataset.y)-cardCenterY)<.001,'條碼拖曳會吸附畫布中心');
+    check(!$('guide-x').hidden&&!$('guide-y').hidden,'條碼對齊時顯示兩軸參考線');pointer('pointerup',31,mx+3,my+3,'mouse');
+    input('card-title','<img src=x onerror=alert(1)>');check(!doc.querySelector('img[src=x]'),'標題不會被當成 HTML');
+    input('card-title','測試載具');
+    for(const layout of ['full','bottom','contain']){
+      input('layout',layout,'change');await tick();$('export').click();
+      await until(()=>$('export-dialog').open,'PNG 匯出 '+layout);
+      check($('verified').textContent.includes('一致'),layout+' PNG 重讀解碼成功');
+      check($('export-results').children.length===2,'輸出合成圖與備用卡');
+      const image=$('export-results').querySelector('img');await image.decode();check(image.naturalHeight===2540,'實際輸出尺寸正確');
+      $('close-dialog').click();
+    }
+    const source=doc.createElement('canvas');source.width=600;source.height=400;source.getContext('2d').fillRect(0,0,600,400);
+    const blob=await new Promise(resolve=>source.toBlob(resolve));const transfer=new win.DataTransfer();transfer.items.add(new win.File([blob],'test-photo.png',{type:'image/png'}));
+    $('file-input').files=transfer.files;$('file-input').dispatchEvent(new win.Event('change',{bubbles:true}));await until(()=>$('file-name').textContent==='test-photo.png','上傳 PNG');
+    doc.querySelector('[data-size="original"]').click();await tick();check($('canvas').width===1800&&$('canvas').height===1200,'上傳照片的原圖比例');
+    $('rotate').click();await tick();check($('canvas').width===1200&&$('canvas').height===1800,'旋轉照片同步原圖比例');
+    for(const width of [390,320,768,1200]){
+      frame.style.width=width+'px';await tick();await new Promise(r=>setTimeout(r,80));
+      check(doc.documentElement.scrollWidth<=width+1,'視窗 '+width+'px 沒有水平溢出');
+    }
+    frame.style.width='390px';doc.querySelector('[data-size="phone"]').click();input('overlay','lock','change');await tick();
+    check(!$('phone-overlay').hidden,'手機介面示意開關');
+    $('backup').checked=false;$('export').click();await until(()=>$('export-dialog').open,'桌布匯出');
+    check($('export-results').children.length===1,'可以只輸出桌布');$('close-dialog').click();
+    $('forget').click();await tick();check($('export').disabled&&$('carrier').value==='','清除資料後停用匯出');
+    log.className='pass';report('\nPASS：'+passed+' 項瀏覽器檢查完成。仍需實體手機觸控與店家掃描器測試。');
+  }catch(error){log.className='fail';report('\nFAIL：'+error.message);}
+  finally{if(storageRead){if(saved===null)frame.contentWindow.localStorage.removeItem('invoice-gen.carrier.v1');else frame.contentWindow.localStorage.setItem('invoice-gen.carrier.v1',saved);}button.disabled=false;}
+};
+</script></html>
