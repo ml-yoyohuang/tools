@@ -1,6 +1,7 @@
 // Run from invoice-gen: swift tools/generate-social-assets.swift
-// Generates raster sharing previews from the checked-in artwork.
+// Generates raster sharing previews with two patterns from gallery.js.
 import AppKit
+import CryptoKit
 import Foundation
 
 let canvasWidth = 1200
@@ -47,8 +48,57 @@ func mark(x: CGFloat, y: CGFloat, size: CGFloat) {
     context.restoreGState()
 }
 
-func artwork(_ name: String) -> NSImage {
-    guard let image = NSImage(contentsOfFile: "artworks/\(name)") else { fatalError("Missing artwork: \(name)") }
+func color(_ hex: String) -> NSColor {
+    guard let value = Int(hex.dropFirst(), radix: 16) else { fatalError("Invalid color: \(hex)") }
+    return NSColor(srgbRed: CGFloat((value >> 16) & 255) / 255,
+                   green: CGFloat((value >> 8) & 255) / 255,
+                   blue: CGFloat(value & 255) / 255, alpha: 1)
+}
+
+func pattern(_ name: String) -> NSImage {
+    let width = 1200, height = 1600
+    guard let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: width, pixelsHigh: height,
+                                       bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true,
+                                       isPlanar: false, colorSpaceName: .deviceRGB,
+                                       bytesPerRow: 0, bitsPerPixel: 0),
+          let context = NSGraphicsContext(bitmapImageRep: bitmap) else { fatalError("Cannot create pattern") }
+    NSGraphicsContext.saveGraphicsState()
+    NSGraphicsContext.current = context
+    if name == "dots-touching" {
+        fill(NSRect(x: 0, y: 0, width: width, height: height), color: color("#42c65b"))
+        color("#ff9ac8").setFill()
+        for row in 0..<8 { for col in 0..<6 {
+            NSBezierPath(ovalIn: NSRect(x: col * 200, y: row * 200, width: 200, height: 200)).fill()
+        }}
+    } else if name == "quarter-mosaic" {
+        let colors = ["#fff6e4", "#313692", "#dafa5a", "#ec789f", "#7bd0ce"].map(color)
+        let cells: [[(Int, Int, String)]] = [
+            [(0,1,"tl"),(4,2,"tr"),(3,4,"bl"),(0,3,"br"),(3,1,"tl"),(1,4,"tr")],
+            [(3,0,"br"),(0,4,"bl"),(1,0,"full"),(1,2,"tr"),(4,3,"tl"),(0,2,"full")],
+            [(0,3,"bl"),(4,0,"tl"),(2,1,"tr"),(2,4,"br"),(0,3,"full"),(4,1,"bl")],
+            [(2,4,"tl"),(1,4,"full"),(3,1,"br"),(0,4,"tr"),(1,3,"bl"),(3,0,"tl")],
+            [(4,2,"br"),(0,1,"tr"),(3,2,"full"),(2,3,"bl"),(4,1,"tl"),(0,4,"br")],
+            [(3,0,"tr"),(1,3,"bl"),(4,0,"full"),(0,2,"tl"),(3,4,"br"),(2,1,"tr")],
+            [(0,4,"bl"),(2,1,"full"),(1,0,"tl"),(3,2,"tr"),(4,3,"bl"),(0,1,"br")],
+            [(1,3,"br"),(4,0,"tr"),(0,2,"bl"),(2,4,"full"),(3,1,"tl"),(4,3,"br")]
+        ]
+        let corners: [String: (CGFloat, CGFloat)] = ["tl":(0,0),"tr":(200,0),"br":(200,200),"bl":(0,200),"full":(100,100)]
+        for (row, items) in cells.enumerated() { for (col, cell) in items.enumerated() {
+            let box = NSRect(x: col * 200, y: (7 - row) * 200, width: 200, height: 200)
+            NSGraphicsContext.saveGraphicsState()
+            NSBezierPath(rect: box).addClip()
+            fill(box, color: colors[cell.0])
+            let corner = corners[cell.2]!, radius: CGFloat = cell.2 == "full" ? 100 : 200
+            let cx = box.minX + corner.0, cy = box.maxY - corner.1
+            colors[cell.1].setFill()
+            NSBezierPath(ovalIn: NSRect(x: cx - radius, y: cy - radius, width: radius * 2, height: radius * 2)).fill()
+            NSGraphicsContext.restoreGraphicsState()
+        }}
+    } else { fatalError("Unknown pattern: \(name)") }
+    context.flushGraphics()
+    NSGraphicsContext.restoreGraphicsState()
+    let image = NSImage(size: NSSize(width: width, height: height))
+    image.addRepresentation(bitmap)
     return image
 }
 
@@ -122,8 +172,8 @@ png("og-home.png", width: canvasWidth, height: canvasHeight) {
     text("手機桌布", x: 105, top: 545, size: 16, color: ink, weight: .medium)
     fill(rectangle(255, 535, 171, 42), color: NSColor(srgbRed: 1, green: 230/255, blue: 206/255, alpha: 1), radius: 21)
     text("悠遊卡卡面", x: 285, top: 545, size: 16, color: ink, weight: .medium)
-    card(artwork("cat-in-bag-portrait.jpg"), x: 735, top: 340, width: 211, height: 336, angle: -12)
-    card(artwork("unit-beta-todays-find-portrait.jpg"), x: 967, top: 308, width: 274, height: 436, angle: 8)
+    card(pattern("dots-touching"), x: 735, top: 340, width: 211, height: 336, angle: -12)
+    card(pattern("quarter-mosaic"), x: 967, top: 308, width: 274, height: 436, angle: 8)
 }
 
 png("og-wizard.png", width: canvasWidth, height: canvasHeight) {
@@ -148,3 +198,19 @@ png("og-wizard.png", width: canvasWidth, height: canvasHeight) {
     text("三步，做一張。", x: 267, top: 262, size: 78, color: .white, weight: .bold)
     text("你的發票載具卡面", x: 272, top: 384, size: 31, color: .white, weight: .medium)
 }
+
+func updateOGHash(page: String, image: String) {
+    let bytes = try! Data(contentsOf: URL(fileURLWithPath: image))
+    let hash = SHA256.hash(data: bytes).prefix(6).map { String(format: "%02x", $0) }.joined()
+    let imageURL = "https://ml-yoyohuang.github.io/tools/invoice-gen/\(image)"
+    let regex = try! NSRegularExpression(pattern: NSRegularExpression.escapedPattern(for: imageURL) + "(?:\\?v=[a-f0-9]+)?")
+    let pageURL = URL(fileURLWithPath: page)
+    let html = try! String(contentsOf: pageURL, encoding: .utf8)
+    let range = NSRange(html.startIndex..<html.endIndex, in: html)
+    let updated = regex.stringByReplacingMatches(in: html, range: range, withTemplate: imageURL + "?v=" + hash)
+    precondition(regex.numberOfMatches(in: html, range: range) == 2, "Expected OG and Twitter image URLs in \(page)")
+    try! updated.write(to: pageURL, atomically: true, encoding: .utf8)
+}
+
+updateOGHash(page: "index.html", image: "og-home.png")
+updateOGHash(page: "wizard.html", image: "og-wizard.png")

@@ -185,11 +185,11 @@ const invoicePatternArtwork=invoicePatterns.map(({draw,thumbViewBox,...art})=>{
   return {...art,kind:'pattern',...variants[0],variants};
 });
 const invoicePatternGroups=[
-  {id:'pattern-waves',name:'流動的波浪',members:['waves-even','waves','squiggle','squiggle-night']},
+  {id:'pattern-waves',name:'流動的波浪',members:['waves-even','waves','squiggle']},
   {id:'pattern-grid',name:'方格與立方',members:['grid','grid-two-tone','cube-blocks']},
   {id:'pattern-lines',name:'斜向節奏',members:['diagonal','diagonal-wide']},
   {id:'pattern-circles',name:'圓形拼貼',members:['dots','dots-touching','quarter-circles','quarter-mosaic']},
-  {id:'pattern-curves',name:'自由曲線',members:['squiggle-free']}
+  {id:'pattern-curves',name:'自由曲線',members:['squiggle-night','squiggle-free']}
 ];
 window.InvoiceArtwork=invoicePatternGroups.map(group=>{
   const variants=group.members.flatMap(id=>{
