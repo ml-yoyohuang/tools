@@ -546,14 +546,6 @@ input[type=checkbox] {
   font-size:10px;
   padding:8px 2px;
 }
-#artwork-preview-link {
-  display:inline-block;
-  margin-top:16px;
-  color:var(--accent);
-  font-size:12px;
-  text-underline-offset:3px;
-}
-#artwork-preview-link[hidden] { display:none; }
 .row {
   display:flex;
   gap:10px;

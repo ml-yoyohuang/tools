@@ -22,14 +22,23 @@ window.InvoiceArtwork = [
   </svg>`)
 }));
 
-// Generative studies keep one thumbnail per work, with two selectable palettes.
+// These small JPEGs are interface assets; the full-size artwork renders on selection.
+const invoiceArtworkThumb=(id,variant=0)=>`thumbs/${id}-${['original','alternate-1','alternate-2'][variant]}.jpg`;
 if(window.InvoiceArtworkRenderer){
   for(const art of window.InvoiceArtworkRenderer.metadata){
-    let src;
-    try{src=window.InvoiceArtworkRenderer.thumbnail(art.id);}catch{src='data:image/svg+xml,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="300" height="480"><rect width="300" height="480" fill="${art.colors[0]}"/><text x="150" y="240" text-anchor="middle" font-size="18">${art.name}</text></svg>`);}
+    const src=invoiceArtworkThumb(art.id);
     window.InvoiceArtwork.push({id:'study-'+art.id,name:art.name,kind:'generative',artworkId:art.id,src,color:art.colors[0]});
   }
 }
+window.prepareInvoiceArtworkGallery=function(root){
+  const button=root.querySelector('[data-image="study-riso"]');
+  if(!button)return;
+  try{
+    const canvas=document.createElement('canvas'),gl=canvas.getContext('webgl');
+    if(!gl)button.remove();
+    else gl.getExtension('WEBGL_lose_context')?.loseContext();
+  }catch{button.remove();}
+};
 window.createInvoiceArtworkPicker=function({getImageId,getOrientation,begin,load,error}){
   let revision=0,lastId=null;const variants=new Map();
   return {
@@ -46,7 +55,7 @@ window.createInvoiceArtworkPicker=function({getImageId,getOrientation,begin,load
         const keepTransform=generated&&getImageId()===art.id;
         await load({src,id:art.id,name:art.name,color:generated?meta.colors[variant]:art.color,keepTransform,keepSheet:generated});
         if(token!==revision)return;
-        if(generated){img.src=R.thumbnail(art.artworkId,variant);button.dataset.variant=variant;button.setAttribute('aria-label',`${art.name}，${meta.labels[variant]}，再次點選換色`);}
+        if(generated){img.src=invoiceArtworkThumb(art.artworkId,variant);button.dataset.variant=variant;button.setAttribute('aria-label',`${art.name}，${meta.labels[variant]}，再次點選換色`);}
       }catch(e){if(token===revision)error(e.message||'圖片無法讀取，請再試一次。');}
     }
   };

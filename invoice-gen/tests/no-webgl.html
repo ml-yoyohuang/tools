@@ -1,0 +1,14 @@
+<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><title>無 WebGL 圖庫檢查</title>
+<script>
+const originalGetContext=HTMLCanvasElement.prototype.getContext;
+HTMLCanvasElement.prototype.getContext=function(type,...args){return type==='webgl'?null:originalGetContext.call(this,type,...args);};
+</script>
+<script src="../artwork-study-shader.js" defer></script><script src="../artwork-renderer.js" defer></script><script src="../gallery.js" defer></script>
+<body><div id="gallery"><button data-image="study-moire"></button><button data-image="study-blob"></button><button data-image="study-riso"></button></div><output id="result">檢查中</output>
+<script defer>
+window.addEventListener('DOMContentLoaded',()=>{
+  window.prepareInvoiceArtworkGallery(document.getElementById('gallery'));
+  const ids=[...document.querySelectorAll('#gallery button')].map(el=>el.dataset.image);
+  document.getElementById('result').textContent=ids.join(',')==='study-moire,study-blob'?'PASS：不支援 WebGL 時隱藏套印圖':'FAIL：'+ids.join(',');
+});
+</script></body></html>

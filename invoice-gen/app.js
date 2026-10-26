@@ -421,7 +421,7 @@
     buildGallery();initHandles();
     for(let i=0;i<24;i++)$('phone-overlay').querySelector('.app-icons').append(document.createElement('i'));
     ['#e9e2d1','#e8d9d2','#dfe6d7','#dce4e2','#dce0e9','#f6f3eb','#d9c7b5'].forEach(color=>{const button=document.createElement('button');button.style.background=color;button.setAttribute('aria-label','底色 '+color);button.onclick=()=>{state.background=color;$('background').value=color;requestRender();};$('swatches').append(button);});
-    document.querySelectorAll('[data-source]').forEach(button=>button.onclick=()=>{pressed('[data-source]','source',button.dataset.source);$('gallery-panel').hidden=button.dataset.source!=='gallery';$('upload-panel').hidden=button.dataset.source!=='upload';});
+    document.querySelectorAll('[data-source]').forEach(button=>button.onclick=()=>{pressed('[data-source]','source',button.dataset.source);$('gallery-panel').hidden=button.dataset.source!=='gallery';$('upload-panel').hidden=button.dataset.source!=='upload';if(button.dataset.source==='gallery')window.prepareInvoiceArtworkGallery($('gallery'));});
     document.querySelectorAll('[data-size]').forEach(button=>button.onclick=()=>{setSize(button.dataset.size);if(button.dataset.size==='custom')setMode('ratio');});
     document.querySelectorAll('[data-mode]').forEach(button=>button.onclick=()=>setMode(button.dataset.mode));
     document.querySelectorAll('[data-position]').forEach(button=>button.onclick=()=>{const {width,height}=outputSize();moveCard(state.cardX*width,{top:0,center:height/2,bottom:height}[button.dataset.position]);expireGuides();});
