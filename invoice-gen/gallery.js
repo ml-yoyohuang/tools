@@ -185,11 +185,11 @@ const invoicePatternArtwork=invoicePatterns.map(({draw,thumbViewBox,...art})=>{
   return {...art,kind:'pattern',...variants[0],variants};
 });
 const invoicePatternGroups=[
-  {id:'pattern-waves',name:'流動的波浪',members:['waves-even','waves']},
+  {id:'pattern-waves',name:'流動的波浪',members:['waves-even','waves','squiggle','squiggle-night']},
   {id:'pattern-grid',name:'方格與立方',members:['grid','grid-two-tone','cube-blocks']},
   {id:'pattern-lines',name:'斜向節奏',members:['diagonal','diagonal-wide']},
   {id:'pattern-circles',name:'圓形拼貼',members:['dots','dots-touching','quarter-circles','quarter-mosaic']},
-  {id:'pattern-curves',name:'自由曲線',members:['squiggle','squiggle-night','squiggle-free']}
+  {id:'pattern-curves',name:'自由曲線',members:['squiggle-free']}
 ];
 window.InvoiceArtwork=invoicePatternGroups.map(group=>{
   const variants=group.members.flatMap(id=>{
@@ -203,6 +203,7 @@ window.InvoiceArtwork=invoicePatternGroups.map(group=>{
 const invoiceArtworkThumb=(id,variant=0)=>`thumbs/${id}-${['original','alternate-1','alternate-2'][variant]}.jpg${id==='moire'?'?v=3':id==='blob'||id==='riso'?'?v=2':''}`;
 if(window.InvoiceArtworkRenderer){
   for(const art of window.InvoiceArtworkRenderer.metadata){
+    if(art.galleryVisible===false)continue;
     const src=invoiceArtworkThumb(art.id);
     window.InvoiceArtwork.push({id:'study-'+art.id,name:art.name,kind:'generative',artworkId:art.id,src,color:art.colors[0]});
   }

@@ -94,7 +94,7 @@
   }
   const paints={moire,blob,riso};
   const metadata=[
-    {id:'moire',name:'偏移的頻率',colors:['#dfff00','#6940df','#fffefd'],labels:['萊姆藍','紫光萊姆','白橘']},
+    {id:'moire',name:'偏移的頻率',galleryVisible:false,colors:['#dfff00','#6940df','#fffefd'],labels:['萊姆藍','紫光萊姆','白橘']},
     {id:'blob',name:'浮力練習',colors:['#ffffff','#ffec00','#b8ffdb'],labels:['藍桃紅','黃紫橘','薄荷珊瑚']},
     {id:'riso',name:'兩種墨，一張紙',colors:['#f3efe6','#f2ffab','#131734'],labels:['粉藍套印','橘紫套印','白墨粉紅']}
   ];
