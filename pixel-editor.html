@@ -17,6 +17,9 @@
 * { box-sizing: border-box; }
 body {
   margin: 0;
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   background: var(--bg);
   color: var(--text);
   font: 14px/1.5 system-ui, sans-serif;
@@ -59,8 +62,7 @@ header strong { color: var(--accent); font-size: 17px; }
 main {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
-  height: calc(100dvh - 105px);
-  min-height: 420px;
+  min-height: 0;
 }
 aside {
   background: var(--panel);
@@ -124,8 +126,8 @@ h3 {
   overscroll-behavior: contain;
 }
 #wrap { width: max-content; padding: 24px; }
-#stage {
-  position: relative;
+#stage { position: relative; box-shadow: 0 0 0 1px #52605a, 0 10px 30px #0006; }
+#stage, .checker {
   background-color: #d0d0d0;
   background-image:
     linear-gradient(45deg, #aaa 25%, transparent 25%),
@@ -134,7 +136,6 @@ h3 {
     linear-gradient(-45deg, transparent 75%, #aaa 75%);
   background-size: 16px 16px;
   background-position: 0 0, 0 8px, 8px -8px, -8px 0;
-  box-shadow: 0 0 0 1px #52605a, 0 10px 30px #0006;
 }
 #canvas {
   display: block;
@@ -171,13 +172,21 @@ dialog {
 dialog::backdrop { background: #000a; }
 dialog h2 { margin: 0 0 12px; font-size: 20px; }
 dialog p { color: var(--muted); }
-#thumb {
+#importDialog { width: min(760px, calc(100vw - 24px)); }
+.import-previews {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 12px 0;
+}
+.import-previews figure { margin: 0; min-width: 0; }
+.preview {
   display: block;
   max-width: 100%;
-  max-height: 200px;
-  margin: 12px auto;
+  margin-top: 4px;
   image-rendering: pixelated;
 }
+#importOffsetX, #importOffsetY { width: 70px; }
 .dialog-actions {
   display: flex;
   justify-content: flex-end;
@@ -242,6 +251,7 @@ kbd {
   aside { padding: 10px; }
   header { padding: 9px; }
   dialog { padding: 14px; }
+  .import-previews { grid-template-columns: 1fr; }
   .color-item {
     grid-template-columns: 24px 24px 1fr auto;
     gap: 5px;
@@ -408,15 +418,39 @@ kbd {
 <dialog id="importDialog">
   <h2>匯入到低解析度畫布</h2>
   <div id="sourceInfo" class="small"></div>
-  <img id="thumb" alt="待匯入圖片預覽">
+  <div class="import-previews">
+    <figure>
+      <figcaption class="small">原圖＋取樣網格</figcaption>
+      <canvas id="thumb" class="preview checker"
+              aria-label="待匯入圖片預覽"></canvas>
+    </figure>
+    <figure>
+      <figcaption class="small">匯入結果</figcaption>
+      <canvas id="importResult" class="preview checker"
+              aria-label="匯入結果預覽"></canvas>
+    </figure>
+  </div>
   <div class="row">
     <label>寬 <input id="importW" type="number" min="1" max="512"></label>
     <label>高 <input id="importH" type="number" min="1" max="512"></label>
+    <label for="importMode">取樣</label>
+    <select id="importMode">
+      <option value="mode" selected>每格眾數色</option>
+      <option value="center">每格中心點</option>
+    </select>
   </div>
+  <div class="row">
+    <span>網格偏移</span>
+    <label>X <input id="importOffsetX" type="number" step="0.5" value="0"></label>
+    <label>Y <input id="importOffsetY" type="number" step="0.5" value="0"></label>
+    <span class="small">原圖 px；正值＝網格往右／下移</span>
+  </div>
+  <div id="importInfo" class="small"></div>
   <p>
     請填「原始邏輯像素數」，不是放大圖片的尺寸。
-    匯入使用 nearest-neighbor 取樣，不模糊、不自動补色。
-    原圖若有錯位網格或漸層，仍需人工精修。
+    「眾數色」取每格中出現最多的顏色（近似色先歸為一組再投票），
+    可濾掉 AI 圖格線邊緣的雜色與漸層；結果只使用原圖中真實存在的顏色。
+    若結果出現雙線或鋸齒，通常是網格偏移或寬高不對。
   </p>
   <p class="small">
     每個方向最多 512 px。匯入會替換目前畫布，但可復原。
@@ -513,10 +547,16 @@ let past = [], future = [];
 let gesture = null;
 let spaceDown = false;
 let pendingImage = null;
+let pendingSource = null;
+let importPreviewFrame = 0;
 
 const HISTORY_LIMIT = 50;
 const HISTORY_BYTES = 32 * 1024 * 1024;
 const PAGE_SIZE = 64;
+const ZOOM_STEPS = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32];
+const WHEEL_ZOOM_THRESHOLD = 40;
+let wheelZoomDelta = 0;
+const MAX_SOURCE_PIXELS = 40_000_000;
 
 let mergeColors = [];
 let mergeFiltered = [];
@@ -868,9 +908,8 @@ canvas.addEventListener("pointermove", event => {
     return;
   }
 
+  // 不夾回畫布範圍：拖出畫布的部分由 putPixel 略過，避免沿邊緣畫出一整條
   const p = point(event);
-  p.x = Math.max(0, Math.min(W - 1, p.x));
-  p.y = Math.max(0, Math.min(H - 1, p.y));
 
   if (gesture.type === "line") {
     pixels.set(gesture.before.pixels);
@@ -916,10 +955,11 @@ canvas.addEventListener("pointercancel", endGesture);
 canvas.addEventListener("lostpointercapture", endGesture);
 canvas.addEventListener("contextmenu", e => e.preventDefault());
 
-function changeZoom(delta, clientX, clientY) {
+function changeZoom(direction, clientX, clientY) {
   if (gesture) return;
   const old = zoom;
-  const next = Math.max(1, Math.min(32, zoom + delta));
+  const index = ZOOM_STEPS.indexOf(old) + direction;
+  const next = ZOOM_STEPS[Math.max(0, Math.min(ZOOM_STEPS.length - 1, index))];
   if (next === old) return;
 
   const vr = viewport.getBoundingClientRect();
@@ -938,7 +978,13 @@ function changeZoom(delta, clientX, clientY) {
 viewport.addEventListener("wheel", event => {
   if (!event.ctrlKey && !event.metaKey) return;
   event.preventDefault();
-  changeZoom(event.deltaY < 0 ? 1 : -1, event.clientX, event.clientY);
+  // 觸控板捏合會連發許多小 delta，累積到門檻才縮放一級；滑鼠滾輪一格即達門檻
+  const delta = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
+  if (Math.sign(delta) !== Math.sign(wheelZoomDelta)) wheelZoomDelta = 0;
+  wheelZoomDelta += delta;
+  if (Math.abs(wheelZoomDelta) < WHEEL_ZOOM_THRESHOLD) return;
+  changeZoom(wheelZoomDelta < 0 ? 1 : -1, event.clientX, event.clientY);
+  wheelZoomDelta = 0;
 }, { passive: false });
 
 /* ---------- 手動合併色盤 ---------- */
@@ -1344,18 +1390,24 @@ $("imageFile").addEventListener("change", event => {
   const image = new Image();
 
   image.onload = () => {
-    pendingImage = image;
-
-    const preview = document.createElement("canvas");
-    const ratio = Math.min(1, 440 / image.width, 200 / image.height);
-    preview.width = Math.max(1, Math.round(image.width * ratio));
-    preview.height = Math.max(1, Math.round(image.height * ratio));
-    const pctx = preview.getContext("2d");
-    pctx.imageSmoothingEnabled = false;
-    pctx.drawImage(image, 0, 0, preview.width, preview.height);
-    $("thumb").src = preview.toDataURL();
-
     URL.revokeObjectURL(url);
+    if (image.width * image.height > MAX_SOURCE_PIXELS) {
+      alert("圖片太大，請先縮小到 4000 萬像素以內。");
+      return;
+    }
+
+    const full = document.createElement("canvas");
+    full.width = image.width;
+    full.height = image.height;
+    const fctx = full.getContext("2d", { willReadFrequently: true });
+    fctx.drawImage(image, 0, 0);
+    pendingImage = image;
+    pendingSource = {
+      w: image.width,
+      h: image.height,
+      data: fctx.getImageData(0, 0, image.width, image.height).data
+    };
+
     $("sourceInfo").textContent =
       `來源：${image.width} × ${image.height} px`;
 
@@ -1363,6 +1415,9 @@ $("imageFile").addEventListener("change", event => {
       ? 128 / Math.max(image.width, image.height) : 1;
     $("importW").value = Math.max(1, Math.round(image.width * factor));
     $("importH").value = Math.max(1, Math.round(image.height * factor));
+    $("importOffsetX").value = 0;
+    $("importOffsetY").value = 0;
+    renderImportPreview();
     $("importDialog").showModal();
   };
 
@@ -1374,29 +1429,201 @@ $("imageFile").addEventListener("change", event => {
   image.src = url;
 });
 
-$("confirmImport").onclick = () => {
-  const w = Number($("importW").value);
-  const h = Number($("importH").value);
-  if (!pendingImage || !validSize(w, h)) {
-    alert("寬高必須是 1～512 的整數。");
+function readImportSettings() {
+  const s = {
+    w: Number($("importW").value),
+    h: Number($("importH").value),
+    ox: Number($("importOffsetX").value),
+    oy: Number($("importOffsetY").value),
+    mode: $("importMode").value
+  };
+  if (!validSize(s.w, s.h) ||
+      !Number.isFinite(s.ox) || !Number.isFinite(s.oy)) return null;
+  return s;
+}
+
+// 近似色歸組：RGB 各取高 5 bit、Alpha 取高 3 bit；完全透明自成一組
+function bucketKey(d, i) {
+  const a = d[i + 3];
+  if (!a) return -1;
+  return (d[i] >> 3) << 13 | (d[i + 1] >> 3) << 8 | (d[i + 2] >> 3) << 3 | a >> 5;
+}
+
+// 兩組在 RGB 上是否相鄰（各軸差 ≤ 1 且 Alpha 同組），雜訊跨組時票才不會被拆散
+function bucketsNear(a, b) {
+  if (a === -1 || b === -1) return a === b;
+  return (a & 7) === (b & 7) &&
+    Math.abs((a >> 13) - (b >> 13)) <= 1 &&
+    Math.abs(((a >> 8) & 31) - ((b >> 8) & 31)) <= 1 &&
+    Math.abs(((a >> 3) & 31) - ((b >> 3) & 31)) <= 1;
+}
+
+// 每格 = 原圖中「像素中心」落在格內的像素；格內沒有任何像素中心時退回取中心點
+function sampleImage(src, s) {
+  const out = new Uint8ClampedArray(s.w * s.h * 4);
+  const d = src.data;
+  const cw = src.w / s.w, ch = src.h / s.h;
+  const buckets = new Map();
+
+  for (let cy = 0; cy < s.h; cy++) {
+    const top = s.oy + cy * ch;
+    const y0 = Math.max(0, Math.ceil(top - 0.5));
+    const y1 = Math.min(src.h, Math.ceil(top + ch - 0.5));
+
+    for (let cx = 0; cx < s.w; cx++) {
+      const left = s.ox + cx * cw;
+      const x0 = Math.max(0, Math.ceil(left - 0.5));
+      const x1 = Math.min(src.w, Math.ceil(left + cw - 0.5));
+      const o = (cy * s.w + cx) * 4;
+
+      if (s.mode === "center" || x0 >= x1 || y0 >= y1) {
+        const sx = Math.floor(left + cw / 2), sy = Math.floor(top + ch / 2);
+        if (sx < 0 || sy < 0 || sx >= src.w || sy >= src.h) continue;
+        const i = (sy * src.w + sx) * 4;
+        out.set(d.subarray(i, i + 4), o);
+        continue;
+      }
+
+      // 第一輪：近似色組計票
+      buckets.clear();
+      for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+          const k = bucketKey(d, (y * src.w + x) * 4);
+          buckets.set(k, (buckets.get(k) || 0) + 1);
+        }
+      }
+
+      // 第二輪：每組得分 = 自己＋相鄰組的票數，取最高者
+      let bestBucket = -1, bestScore = -1;
+      for (const [k, n] of buckets) {
+        let score = n;
+        if (k !== -1) {
+          const r = k >> 13, g = (k >> 8) & 31, b = (k >> 3) & 31, a = k & 7;
+          for (let dr = -1; dr <= 1; dr++) {
+            for (let dg = -1; dg <= 1; dg++) {
+              for (let db = -1; db <= 1; db++) {
+                if (!(dr || dg || db)) continue;
+                const nr = r + dr, ng = g + dg, nb = b + db;
+                if (nr < 0 || ng < 0 || nb < 0 || nr > 31 || ng > 31 || nb > 31) continue;
+                score += buckets.get(nr << 13 | ng << 8 | nb << 3 | a) || 0;
+              }
+            }
+          }
+        }
+        if (score > bestScore) { bestScore = score; bestBucket = k; }
+      }
+      if (bestBucket === -1) continue;
+
+      // 第三輪：勝出群集的平均色
+      const sum = [0, 0, 0, 0];
+      let members = 0;
+      for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+          const i = (y * src.w + x) * 4;
+          if (!bucketsNear(bestBucket, bucketKey(d, i))) continue;
+          for (let k = 0; k < 4; k++) sum[k] += d[i + k];
+          members++;
+        }
+      }
+
+      // 第四輪：取群集內最接近平均的像素，確保只用原圖真實存在的顏色
+      let bestIndex = -1, bestDist = Infinity;
+      for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+          const i = (y * src.w + x) * 4;
+          if (!bucketsNear(bestBucket, bucketKey(d, i))) continue;
+          let dist = 0;
+          for (let k = 0; k < 4; k++) dist += (d[i + k] - sum[k] / members) ** 2;
+          if (dist < bestDist) { bestDist = dist; bestIndex = i; }
+        }
+      }
+      out.set(d.subarray(bestIndex, bestIndex + 4), o);
+    }
+  }
+  return out;
+}
+
+function renderImportPreview() {
+  importPreviewFrame = 0;
+  if (!pendingSource) return;
+  const src = pendingSource;
+  const s = readImportSettings();
+
+  const thumb = $("thumb");
+  const ratio = Math.min(340 / src.w, 240 / src.h);
+  thumb.width = Math.max(1, Math.round(src.w * ratio));
+  thumb.height = Math.max(1, Math.round(src.h * ratio));
+  const tctx = thumb.getContext("2d");
+  tctx.imageSmoothingEnabled = false;
+  tctx.drawImage(pendingImage, 0, 0, thumb.width, thumb.height);
+
+  const result = $("importResult");
+  if (!s) {
+    $("importInfo").textContent = "寬高須為 1～512 的整數，偏移須為數字。";
+    result.width = result.height = 1;
+    result.getContext("2d").clearRect(0, 0, 1, 1);
     return;
   }
 
-  const offscreen = document.createElement("canvas");
-  offscreen.width = w;
-  offscreen.height = h;
-  const c = offscreen.getContext("2d", { willReadFrequently: true });
-  c.imageSmoothingEnabled = false;
-  c.drawImage(pendingImage, 0, 0, w, h);
+  const cw = src.w / s.w, ch = src.h / s.h;
+  const drawGrid = cw * ratio >= 3 && ch * ratio >= 3;
+  if (drawGrid) {
+    tctx.beginPath();
+    for (let i = 0; i <= s.w; i++) {
+      const x = Math.round((s.ox + i * cw) * ratio) + 0.5;
+      tctx.moveTo(x, 0);
+      tctx.lineTo(x, thumb.height);
+    }
+    for (let i = 0; i <= s.h; i++) {
+      const y = Math.round((s.oy + i * ch) * ratio) + 0.5;
+      tctx.moveTo(0, y);
+      tctx.lineTo(thumb.width, y);
+    }
+    tctx.strokeStyle = "rgba(255, 0, 200, .6)";
+    tctx.lineWidth = 1;
+    tctx.stroke();
+  }
+
+  result.width = s.w;
+  result.height = s.h;
+  result.getContext("2d")
+    .putImageData(new ImageData(sampleImage(src, s), s.w, s.h), 0, 0);
+  const fit = Math.min(340 / s.w, 240 / s.h);
+  result.style.width = Math.round(s.w * fit) + "px";
+  result.style.height = Math.round(s.h * fit) + "px";
+
+  $("importInfo").textContent =
+    `每格 ≈ ${cw.toFixed(2)} × ${ch.toFixed(2)} 原圖 px` +
+    (cw < 1 || ch < 1 ? " · ⚠ 目標比原圖大，等同放大取樣" : "") +
+    (drawGrid ? "" : " · 網格太密，預覽未畫格線");
+}
+
+function scheduleImportPreview() {
+  if (!importPreviewFrame) {
+    importPreviewFrame = requestAnimationFrame(renderImportPreview);
+  }
+}
+
+["importW", "importH", "importOffsetX", "importOffsetY", "importMode"]
+  .forEach(id => $(id).addEventListener("input", scheduleImportPreview));
+
+$("confirmImport").onclick = () => {
+  const s = readImportSettings();
+  if (!pendingSource || !s) {
+    alert("寬高必須是 1～512 的整數，偏移必須是數字。");
+    return;
+  }
 
   remember();
-  W = w;
-  H = h;
-  pixels = c.getImageData(0, 0, w, h).data.slice();
+  W = s.w;
+  H = s.h;
+  pixels = sampleImage(pendingSource, s);
   extractPalette();
   draw();
-  inspect("圖片已匯入；請檢查輪廓與邏輯網格");
-  pendingImage = null;
+  inspect(
+    (s.mode === "mode" ? "已用每格眾數色匯入" : "已用每格中心點匯入") +
+    "；請檢查輪廓與邏輯網格"
+  );
   $("importDialog").close();
   viewport.scrollTo(0, 0);
 };
@@ -1404,6 +1631,7 @@ $("confirmImport").onclick = () => {
 $("cancelImport").onclick = () => $("importDialog").close();
 $("importDialog").addEventListener("close", () => {
   pendingImage = null;
+  pendingSource = null;
 });
 
 $("projectFile").addEventListener("change", async event => {
