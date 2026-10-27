@@ -200,6 +200,8 @@ kbd {
   font-size: 11px;
 }
 #mergeDialog { width: min(760px, calc(100vw - 24px)); }
+#newDialog, #messageDialog { width: min(420px, calc(100vw - 24px)); }
+#messageText { color: var(--text); margin: 0; white-space: pre-line; }
 .target-panel {
   background: #18201d;
   border: 1px solid #556348;
@@ -520,6 +522,27 @@ kbd {
     <button id="mergeUndo">復原上一操作</button>
     <button id="closeMerge">完成／關閉</button>
     <button id="applyMerge" class="primary">合併所選顏色</button>
+  </div>
+</dialog>
+
+<dialog id="newDialog">
+  <h2>新畫布</h2>
+  <div class="row">
+    <label>寬 <input id="newW" type="number" min="1" max="512"></label>
+    <label>高 <input id="newH" type="number" min="1" max="512"></label>
+  </div>
+  <p class="small">每個方向 1～512 px。會替換目前畫布，但可復原。</p>
+  <div class="dialog-actions">
+    <button id="cancelNew">取消</button>
+    <button id="confirmNew" class="primary">建立</button>
+  </div>
+</dialog>
+
+<dialog id="messageDialog">
+  <p id="messageText"></p>
+  <div class="dialog-actions">
+    <button id="messageCancel">取消</button>
+    <button id="messageOk" class="primary">確定</button>
   </div>
 </dialog>
 
@@ -1166,7 +1189,7 @@ function applyMerge() {
   if (!mergeSelected.size) return;
   const targetHex = normalizeHex($("mergeTargetHex").value);
   if (!targetHex) {
-    alert("請輸入有效的六位 HEX 色碼。");
+    showMessage("請輸入有效的六位 HEX 色碼。");
     return;
   }
   if (targetHex !== mergeTarget) setMergeTarget(targetHex);
@@ -1358,7 +1381,7 @@ function exportPNG(scale = 1) {
     if (blob) {
       download(blob, `pixel-art-${W}x${H}-${scale}x.png`);
     } else {
-      alert("PNG 匯出失敗，請嘗試較小倍數。");
+      showMessage("PNG 匯出失敗，請嘗試較小倍數。");
     }
   }, "image/png");
 }
@@ -1392,7 +1415,7 @@ $("imageFile").addEventListener("change", event => {
   image.onload = () => {
     URL.revokeObjectURL(url);
     if (image.width * image.height > MAX_SOURCE_PIXELS) {
-      alert("圖片太大，請先縮小到 4000 萬像素以內。");
+      showMessage("圖片太大，請先縮小到 4000 萬像素以內。");
       return;
     }
 
@@ -1423,7 +1446,7 @@ $("imageFile").addEventListener("change", event => {
 
   image.onerror = () => {
     URL.revokeObjectURL(url);
-    alert("無法讀取這張圖片。");
+    showMessage("無法讀取這張圖片。");
   };
 
   image.src = url;
@@ -1610,7 +1633,7 @@ function scheduleImportPreview() {
 $("confirmImport").onclick = () => {
   const s = readImportSettings();
   if (!pendingSource || !s) {
-    alert("寬高必須是 1～512 的整數，偏移必須是數字。");
+    showMessage("寬高必須是 1～512 的整數，偏移必須是數字。");
     return;
   }
 
@@ -1674,29 +1697,73 @@ $("projectFile").addEventListener("change", async event => {
     inspect("專案已載入");
     viewport.scrollTo(0, 0);
   } catch (error) {
-    alert("載入失敗：" + error.message);
+    showMessage("載入失敗：" + error.message);
   }
 });
 
 $("newBtn").onclick = () => {
   finishGesture();
-  const answer = prompt("新畫布尺寸，例如 128x80、64x64：", "128x80");
-  if (answer === null) return;
+  $("newW").value = W;
+  $("newH").value = H;
+  $("newDialog").showModal();
+  $("newW").select();
+};
 
-  const match = answer.trim().match(/^(\d+)\s*[x×,，]\s*(\d+)$/i);
-  if (!match || !validSize(Number(match[1]), Number(match[2]))) {
-    alert("請輸入 1～512 的整數寬高，例如 128x80。");
+function confirmNewCanvas() {
+  const w = Number($("newW").value);
+  const h = Number($("newH").value);
+  if (!validSize(w, h)) {
+    showMessage("請輸入 1～512 的整數寬高，例如 128 × 80。");
     return;
   }
 
   remember();
-  W = Number(match[1]);
-  H = Number(match[2]);
+  W = w;
+  H = h;
   pixels = new Uint8ClampedArray(W * H * 4);
   draw();
   inspect("新透明畫布");
+  $("newDialog").close();
   viewport.scrollTo(0, 0);
-};
+}
+
+$("confirmNew").onclick = confirmNewCanvas;
+$("cancelNew").onclick = () => $("newDialog").close();
+$("newDialog").addEventListener("keydown", event => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    confirmNewCanvas();
+  }
+});
+
+/* ---------- 頁內訊息對話框 ---------- */
+// 不用 alert／confirm／prompt：部分內嵌瀏覽器會直接封鎖原生對話框（confirm 一律回傳 false）
+
+function openMessage(text, { okLabel = "確定", cancel = false } = {}) {
+  const dialog = $("messageDialog");
+  if (dialog.open) dialog.close();
+  return new Promise(resolve => {
+    $("messageText").textContent = text;
+    $("messageOk").textContent = okLabel;
+    $("messageCancel").hidden = !cancel;
+    dialog.returnValue = "";
+    dialog.addEventListener("close",
+      () => resolve(dialog.returnValue === "ok"), { once: true });
+    dialog.showModal();
+    $("messageOk").focus();
+  });
+}
+
+function showMessage(text) {
+  openMessage(text);
+}
+
+function askConfirm(text, okLabel) {
+  return openMessage(text, { okLabel, cancel: true });
+}
+
+$("messageOk").onclick = () => $("messageDialog").close("ok");
+$("messageCancel").onclick = () => $("messageDialog").close();
 
 /* ---------- 一般介面 ---------- */
 
@@ -1715,7 +1782,7 @@ $("addColorBtn").onclick = () => {
   finishGesture();
   if (workingPalette.includes(currentColor)) return;
   if (workingPalette.length >= 32) {
-    alert("快速色盤已滿 32 色。請使用整理／合併，或重新擷取常用色。");
+    showMessage("快速色盤已滿 32 色。請使用整理／合併，或重新擷取常用色。");
     return;
   }
   remember();
@@ -1730,10 +1797,13 @@ $("extractBtn").onclick = () => {
   inspect("快速色盤已更新，圖片本身未改變");
 };
 
-$("quantizeBtn").onclick = () => {
+$("quantizeBtn").onclick = async () => {
   finishGesture();
-  if (confirm("將全圖量化為有限色盤？細微色差會被合併，可復原。")) {
-    quantize(Number($("colorLimit").value));
+  const limit = Number($("colorLimit").value);
+  if (await askConfirm(
+    `將全圖量化為 ${limit} 色？細微色差會被合併，可復原。`, "量化"
+  )) {
+    quantize(limit);
   }
 };
 
@@ -1781,7 +1851,9 @@ window.addEventListener("keydown", event => {
   const key = event.key.toLowerCase();
   const modifier = event.ctrlKey || event.metaKey;
 
-  if ($("importDialog").open) return;
+  const otherDialogOpen = [...document.querySelectorAll("dialog[open]")]
+    .some(d => d !== $("mergeDialog"));
+  if (otherDialogOpen) return;
 
   if ($("mergeDialog").open) {
     if (!typing(event) && modifier && key === "z") {
