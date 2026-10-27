@@ -406,7 +406,8 @@ kbd {
         原尺寸／放大 PNG 不含編輯網格。<br>
         「畫面 PNG」照目前倍率輸出整張畫布，網格與畫面顯示一致。<br>
         放大採 nearest-neighbor。<br>
-        請定期保存 JSON 專案，關閉分頁不會自動保存。<br>
+        畫布、色盤與設定會自動存到此瀏覽器，重新開啟時自動還原；
+        復原紀錄不保存。換瀏覽器、清除網站資料前，請另存 JSON 專案。<br>
         復原保留最近操作，受記憶體上限限制。
       </div>
     </section>
@@ -431,6 +432,7 @@ kbd {
       <button id="zoomIn">＋</button>
       <label><input type="checkbox" id="gridToggle" checked> 網格</label>
       <span id="dimensions" class="small"></span>
+      <span id="autosaveState" class="small" role="status"></span>
     </div>
     <div id="viewport">
       <div id="wrap">
@@ -746,6 +748,7 @@ function renderPalette() {
     b.onclick = () => setColor(color);
     $("palette").appendChild(b);
   }
+  scheduleAutosave();
 }
 
 function snapshot() {
@@ -820,6 +823,7 @@ function updateView() {
     $("gridToggle").checked && zoom >= 4 ? "block" : "none";
   $("zoomLabel").textContent = zoom + "×";
   $("dimensions").textContent = `${W} × ${H} px`;
+  scheduleAutosave();
 }
 
 function histogram() {
@@ -878,6 +882,7 @@ function selectTool(value) {
   document.querySelectorAll("[data-tool]").forEach(b => {
     b.classList.toggle("active", b.dataset.tool === tool);
   });
+  scheduleAutosave();
 }
 
 function point(event) {
@@ -2342,10 +2347,161 @@ window.addEventListener("blur", () => {
   canvas.style.cursor = "crosshair";
 });
 
+/* ---------- 自動存檔（IndexedDB） ---------- */
+// 存畫布、色盤、目前顏色與介面設定；復原紀錄只在記憶體，不存。
+// data: 或 sandbox 等不透明來源不允許 IndexedDB，此時只顯示提示、不影響編輯。
+
+const AUTOSAVE_DB = "pixel-workshop";
+const AUTOSAVE_STORE = "autosave";
+const AUTOSAVE_KEY = "current";
+const AUTOSAVE_DELAY = 500;
+const AUTOSAVE_SETTINGS = {
+  brush: "value", pickerReturn: "checked", gridToggle: "checked",
+  exportScale: "value", viewChecker: "checked", colorLimit: "value"
+};
+let autosaveDb = null;
+let autosaveReady = false;  // 還原完成前不寫入，避免空白畫布蓋掉舊存檔
+let autosaveTimer = 0;
+
+function setAutosaveState(text) {
+  $("autosaveState").textContent = "· " + text;
+}
+
+function clockTime(ms) {
+  return new Date(ms).toLocaleTimeString("zh-Hant", { hour12: false });
+}
+
+function openAutosaveDb() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(AUTOSAVE_DB, 1);
+    request.onupgradeneeded = () =>
+      request.result.createObjectStore(AUTOSAVE_STORE);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function collectSettings() {
+  const settings = { zoom, tool };
+  for (const [id, prop] of Object.entries(AUTOSAVE_SETTINGS)) {
+    settings[id] = $(id)[prop];
+  }
+  return settings;
+}
+
+function applySettings(settings) {
+  if (!settings) return;
+  for (const [id, prop] of Object.entries(AUTOSAVE_SETTINGS)) {
+    if (!(id in settings)) continue;
+    const el = $(id);
+    if (prop === "value" &&
+        ![...el.options].some(o => o.value === String(settings[id]))) continue;
+    el[prop] = settings[id];
+  }
+  if (ZOOM_STEPS.includes(settings.zoom)) zoom = settings.zoom;
+  if (settings.tool !== "picker" &&
+      document.querySelector(`[data-tool="${settings.tool}"]`)) {
+    selectTool(settings.tool);
+  }
+}
+
+function scheduleAutosave() {
+  if (!autosaveReady) return;
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(writeAutosave, AUTOSAVE_DELAY);
+}
+
+function writeAutosave() {
+  clearTimeout(autosaveTimer);
+  autosaveTimer = 0;
+  if (!autosaveReady) return;
+  const record = {
+    version: 1,
+    savedAt: Date.now(),
+    w: W,
+    h: H,
+    pixels,  // put() 會當下複製一份，不受之後繪製影響
+    palette: workingPalette,
+    color: currentColor,
+    settings: collectSettings()
+  };
+  try {
+    const tx = autosaveDb.transaction(AUTOSAVE_STORE, "readwrite");
+    tx.objectStore(AUTOSAVE_STORE).put(record, AUTOSAVE_KEY);
+    tx.oncomplete = () => setAutosaveState("已自動存檔 " + clockTime(record.savedAt));
+    tx.onabort = () => setAutosaveState(
+      "⚠ 自動存檔失敗" + (tx.error ? "：" + tx.error.message : ""));
+  } catch (error) {
+    setAutosaveState("⚠ 自動存檔失敗：" + error.message);
+  }
+}
+
+function validAutosave(record) {
+  return record && record.version === 1 &&
+    validSize(record.w, record.h) &&
+    record.pixels instanceof Uint8ClampedArray &&
+    record.pixels.length === record.w * record.h * 4;
+}
+
+async function restoreAutosave() {
+  try {
+    autosaveDb = await openAutosaveDb();
+  } catch (error) {
+    setAutosaveState("⚠ 此頁面不支援自動存檔，請手動儲存專案");
+    return;
+  }
+
+  let record = null;
+  try {
+    record = await new Promise((resolve, reject) => {
+      const request = autosaveDb.transaction(AUTOSAVE_STORE)
+        .objectStore(AUTOSAVE_STORE).get(AUTOSAVE_KEY);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.warn("讀取自動存檔失敗", error);
+  }
+
+  // 若使用者在讀取期間已開始編輯，以目前畫面為準
+  const untouched = !past.length && !gesture;
+  if (untouched && validAutosave(record)) {
+    W = record.w;
+    H = record.h;
+    pixels = record.pixels;
+    if (Array.isArray(record.palette)) {
+      workingPalette = [...new Set(
+        record.palette.map(normalizeHex).filter(Boolean))].slice(0, 32);
+    }
+    applySettings(record.settings);
+    setColor(normalizeHex(record.color) || currentColor);
+    draw();
+    inspect(`已還原 ${clockTime(record.savedAt)} 的自動存檔；復原紀錄不保存`);
+    viewport.scrollTo(0, 0);
+  }
+
+  autosaveReady = true;
+  setAutosaveState(untouched && validAutosave(record)
+    ? "已還原自動存檔" : "自動存檔已啟用");
+  if (!untouched) scheduleAutosave();
+}
+
+Object.keys(AUTOSAVE_SETTINGS).forEach(id =>
+  $(id).addEventListener("change", scheduleAutosave));
+
+// 切到背景或關閉分頁前，立刻寫入尚未送出的變更
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden" && autosaveTimer) writeAutosave();
+});
+window.addEventListener("pagehide", () => {
+  if (autosaveTimer) writeAutosave();
+});
+
 renderPalette();
 draw();
 inspect("新透明畫布；可匯入半成品或載入舊版 JSON 專案");
 updateHistory();
+restoreAutosave();
 </script>
 </body>
 </html>
