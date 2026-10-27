@@ -303,7 +303,7 @@ dialog::backdrop {
   background:#0005;
   backdrop-filter:blur(3px);
 }
-/* While the ratio slider is dragged the sheet steps aside, leaving only the slider over the canvas. */
+/* While a slider is dragged the sheet steps aside, leaving only that slider over the canvas. */
 #sheet.peek {
   visibility:hidden;
   background:transparent;
@@ -313,10 +313,14 @@ dialog::backdrop {
   background:transparent;
   backdrop-filter:none;
 }
-.ratio-slider {
+/* Colors are judged on the adjust sheet, so the canvas behind it stays sharp. */
+#sheet[data-view=adjust]::backdrop {
+  backdrop-filter:none;
+}
+.peek-slider {
   border-radius:16px;
 }
-#sheet.peek .ratio-slider {
+#sheet.peek .peek-slider.active {
   visibility:visible;
   background:#fffffff0;
   box-shadow:0 6px 24px #0003;

@@ -30,7 +30,7 @@
   }
   function closeSheet(){if($('sheet').open)$('sheet').close();$('sheet').style.transform='';}
   function openSheet(name){
-    cancelGesture();document.querySelectorAll('[data-sheet]').forEach(el=>el.hidden=el.dataset.sheet!==name);
+    cancelGesture();$('sheet').dataset.view=name;document.querySelectorAll('[data-sheet]').forEach(el=>el.hidden=el.dataset.sheet!==name);
     $('sheet-title').textContent={layout:'選擇版型',size:'畫布形狀',image:'選一張圖片',adjust:'調整',save:'儲存圖片'}[name];
     if(name==='image')window.prepareInvoiceArtworkGallery($('gallery'));
     syncForms();if(!$('sheet').open)$('sheet').showModal();placeToast();
@@ -153,8 +153,10 @@
     ['ratio-w','ratio-h'].forEach(id=>{$(id).oninput=()=>{const w=Number($('ratio-w').value),h=Number($('ratio-h').value);if(w>0&&h>0)applyRatio(w/h);};$(id).onchange=syncRatioFields;});
     $('ratio-range').min=Math.log(C.MIN_RATIO);$('ratio-range').max=Math.log(C.MAX_RATIO);
     $('ratio-ticks').append(...[9/16,2/3,3/4,1,4/3,3/2,16/9].map(r=>new Option('',Math.log(r))));
-    const peek=on=>$('sheet').classList.toggle('peek',on);
-    $('ratio-range').addEventListener('pointerdown',()=>peek(true));$('ratio-range').addEventListener('change',()=>peek(false));['pointerup','pointercancel'].forEach(type=>addEventListener(type,()=>peek(false)));
+    // While a slider is dragged the sheet steps aside so the canvas behind it stays visible.
+    const peek=slider=>{$('sheet').classList.toggle('peek',!!slider);document.querySelectorAll('.peek-slider').forEach(el=>el.classList.toggle('active',el===slider));};
+    document.querySelectorAll('.peek-slider input').forEach(input=>{input.addEventListener('pointerdown',()=>peek(input.parentElement));input.addEventListener('change',()=>peek(null));});
+    ['pointerup','pointercancel'].forEach(type=>addEventListener(type,()=>peek(null)));
     $('ratio-range').oninput=e=>{applyRatio(Math.exp(Number(e.target.value)),$('ratio-snap').checked);syncRatioFields();};
     $('swap').onclick=()=>{applyRatio(1/state.ratio);syncRatioFields();};
     $('resize-canvas').onclick=()=>{resizing=true;state.mode='ratio';closeSheet();requestRender();};
