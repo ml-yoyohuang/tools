@@ -21,9 +21,7 @@ body {
   color: var(--text);
   font: 14px/1.5 system-ui, sans-serif;
 }
-button, input, select {
-  font: inherit;
-}
+button, input, select { font: inherit; }
 button, select, input[type="number"], input[type="text"] {
   background: #2a3237;
   color: var(--text);
@@ -32,8 +30,8 @@ button, select, input[type="number"], input[type="text"] {
   padding: 6px 9px;
 }
 button { cursor: pointer; }
-button:hover { border-color: var(--accent); }
-button.active {
+button:hover:not(:disabled) { border-color: var(--accent); }
+button.active, button.primary {
   background: var(--accent);
   color: #18211c;
   border-color: var(--accent);
@@ -60,7 +58,7 @@ header strong { color: var(--accent); font-size: 17px; }
 .actions { display: flex; gap: 6px; flex-wrap: wrap; }
 main {
   display: grid;
-  grid-template-columns: 250px minmax(0, 1fr);
+  grid-template-columns: 260px minmax(0, 1fr);
   height: calc(100dvh - 105px);
   min-height: 420px;
 }
@@ -90,7 +88,7 @@ h3 {
   margin: 8px 0;
 }
 .small { font-size: 12px; color: var(--muted); }
-#hex { width: 104px; }
+#hex { width: 108px; }
 #palette {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
@@ -161,7 +159,9 @@ h3 {
   font-size: 12px;
 }
 dialog {
-  width: min(520px, calc(100vw - 32px));
+  width: min(540px, calc(100vw - 24px));
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
   background: var(--panel);
   color: var(--text);
   border: 1px solid var(--line);
@@ -169,7 +169,7 @@ dialog {
   padding: 22px;
 }
 dialog::backdrop { background: #000a; }
-dialog h2 { margin-top: 0; font-size: 20px; }
+dialog h2 { margin: 0 0 12px; font-size: 20px; }
 dialog p { color: var(--muted); }
 #thumb {
   display: block;
@@ -182,7 +182,7 @@ dialog p { color: var(--muted); }
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 20px;
+  margin-top: 18px;
 }
 kbd {
   border: 1px solid #4c5850;
@@ -190,10 +190,65 @@ kbd {
   padding: 0 4px;
   font-size: 11px;
 }
+#mergeDialog { width: min(760px, calc(100vw - 24px)); }
+.target-panel {
+  background: #18201d;
+  border: 1px solid #556348;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 12px 0;
+}
+#mergeTargetHex { width: 110px; }
+#mergeSearch { width: 155px; }
+#mergeList {
+  max-height: 340px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.color-item {
+  display: grid;
+  grid-template-columns: 28px 32px 1fr auto auto;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  border-bottom: 1px solid #303a3e;
+}
+.color-item:last-child { border-bottom: 0; }
+.color-item.chosen { background: #303d30; }
+.color-item.target-row { background: #273732; }
+.color-box {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #909b91;
+  border-radius: 4px;
+}
+.color-code {
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+}
+.color-count { font-size: 12px; color: var(--muted); }
+.color-item button { font-size: 12px; padding: 4px 8px; }
+.merge-summary {
+  padding: 10px 12px;
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #18201d;
+}
+.empty { padding: 24px; text-align: center; color: var(--muted); }
 @media (max-width: 700px) {
   main { grid-template-columns: 185px minmax(0, 1fr); }
   aside { padding: 10px; }
   header { padding: 9px; }
+  dialog { padding: 14px; }
+  .color-item {
+    grid-template-columns: 24px 24px 1fr auto;
+    gap: 5px;
+  }
+  .color-count { grid-column: 3; }
+  .color-item button { grid-column: 4; grid-row: span 2; }
+  .color-box { width: 22px; height: 22px; }
 }
 </style>
 </head>
@@ -233,19 +288,26 @@ kbd {
         </select>
       </div>
       <div class="row">
+        <label>
+          <input type="checkbox" id="pickerReturn" checked>
+          吸色後返回上一工具
+        </label>
+      </div>
+      <div class="row">
         <button id="undoBtn">復原</button>
         <button id="redoBtn">重做</button>
       </div>
       <div class="small">
-        填色採四方向、完全相同 RGBA 比對。<br>
-        橡皮擦清成完全透明，不會產生柔邊。
+        填色採四方向、精確 RGBA 比對。<br>
+        橡皮擦產生完全透明像素，不產生柔邊。<br>
+        Alt＋點擊：暫時吸色，不切換工具。
       </div>
     </section>
 
     <section>
       <h3>目前顏色</h3>
       <div class="row">
-        <input id="color" type="color" value="#264f49">
+        <input id="color" type="color" value="#264f49" aria-label="目前顏色">
         <input id="hex" type="text" value="#264f49" maxlength="7"
                aria-label="十六進位色碼">
       </div>
@@ -256,10 +318,13 @@ kbd {
       <h3>工作色盤</h3>
       <div id="palette"></div>
       <div class="row">
+        <button id="mergeBtn" class="primary">整理／手動合併顏色</button>
         <button id="extractBtn">擷取常用色</button>
       </div>
       <div class="small">
-        最多顯示 32 色；這不是圖片實際色數上限。
+        快速色票最多 32 色。<br>
+        「整理／合併」會列出全圖所有可見 RGB 色，
+        並實際替換圖片中的顏色。
       </div>
     </section>
 
@@ -280,7 +345,7 @@ kbd {
       <div class="small">
         量化採 weighted median-cut，不加 dithering。<br>
         硬化透明度：Alpha ≥ 128 變不透明，其餘變透明。
-        兩項皆可復原。
+        皆可復原。
       </div>
     </section>
 
@@ -296,9 +361,10 @@ kbd {
         </select>
       </div>
       <div class="small">
-        原尺寸 PNG 不含網格。<br>
-        放大 PNG 使用 nearest-neighbor。<br>
-        建議定期儲存專案；關閉分頁不會自動保存。
+        PNG 不含編輯網格。<br>
+        放大採 nearest-neighbor。<br>
+        請定期保存 JSON 專案，關閉分頁不會自動保存。<br>
+        復原保留最近操作，受記憶體上限限制。
       </div>
     </section>
 
@@ -310,7 +376,6 @@ kbd {
       <kbd>Ctrl / ⌘ Z</kbd> 復原<br>
       <kbd>Ctrl / ⌘ Shift Z</kbd> 重做<br>
       <kbd>Ctrl / ⌘ S</kbd> 儲存專案<br>
-      <kbd>Alt</kbd> 暫時吸色<br>
       空白＋拖曳／中鍵拖曳：平移<br>
       Ctrl / ⌘＋滾輪：縮放
     </section>
@@ -349,14 +414,78 @@ kbd {
     <label>高 <input id="importH" type="number" min="1" max="512"></label>
   </div>
   <p>
-    這裡填「原始邏輯像素數」，不是放大圖的尺寸。
-    匯入使用 nearest-neighbor 取樣，不模糊、不自動補色。
+    請填「原始邏輯像素數」，不是放大圖片的尺寸。
+    匯入使用 nearest-neighbor 取樣，不模糊、不自動补色。
     原圖若有錯位網格或漸層，仍需人工精修。
   </p>
-  <p class="small">每個方向最多 512 px。匯入會替換目前畫布，但可復原。</p>
+  <p class="small">
+    每個方向最多 512 px。匯入會替換目前畫布，但可復原。
+    預填尺寸只是起始建議，不是自動辨識結果。
+  </p>
   <div class="dialog-actions">
     <button id="cancelImport">取消</button>
-    <button id="confirmImport">匯入</button>
+    <button id="confirmImport" class="primary">匯入</button>
+  </div>
+</dialog>
+
+<dialog id="mergeDialog">
+  <h2>整理工作色盤／手動合併</h2>
+  <div id="mergeInfo" class="small"></div>
+
+  <div class="target-panel">
+    <strong>① 指定最後要保留的顏色</strong>
+    <div class="row">
+      <input id="mergeTargetColor" type="color" value="#264f49"
+             aria-label="合併保留色">
+      <input id="mergeTargetHex" type="text" value="#264f49"
+             maxlength="7" aria-label="保留色色碼">
+      <button id="useCurrentColor">使用目前筆刷色</button>
+    </div>
+    <div class="small">
+      可輸入新色碼，或點下方任一色的「保留此色」。
+      指定保留色本身不會立刻修改圖片。
+    </div>
+  </div>
+
+  <strong>② 勾選要被替換的來源顏色</strong>
+
+  <div class="row">
+    <input id="mergeSearch" type="text" placeholder="搜尋 HEX，例如 264f"
+           aria-label="搜尋色碼">
+    <select id="mergeSort" aria-label="顏色排序">
+      <option value="near">接近保留色優先</option>
+      <option value="count">使用像素多到少</option>
+      <option value="hue">依色相排列</option>
+      <option value="hex">依 HEX 排列</option>
+    </select>
+  </div>
+
+  <div class="row">
+    <button id="selectPage">勾選本頁</button>
+    <button id="clearSelection">清除全部勾選</button>
+    <span class="small">換頁／搜尋不會清除已勾選的來源色。</span>
+  </div>
+
+  <div id="mergeList"></div>
+
+  <div class="row">
+    <button id="previousPage">上一頁</button>
+    <span id="mergePageInfo" class="small"></span>
+    <button id="nextPage">下一頁</button>
+  </div>
+
+  <div id="mergeSummary" class="merge-summary" role="status"></div>
+  <p class="small">
+    精確比對來源 RGB，不會自動包含其他近似色。
+    「接近」排序使用加權 RGB 距離，僅供人工判斷。<br>
+    合併保留原本 Alpha，忽略完全透明像素。
+    一次合併算一次復原；成功後可繼續整理下一組。
+  </p>
+
+  <div class="dialog-actions">
+    <button id="mergeUndo">復原上一操作</button>
+    <button id="closeMerge">完成／關閉</button>
+    <button id="applyMerge" class="primary">合併所選顏色</button>
   </div>
 </dialog>
 
@@ -371,22 +500,43 @@ const stage = $("stage");
 
 let W = 128, H = 80, zoom = 8;
 let pixels = new Uint8ClampedArray(W * H * 4);
+
 let tool = "pencil";
+let previousDrawTool = "pencil";
 let currentColor = "#264f49";
 let workingPalette = [
   "#f8efd4", "#c5c9ad", "#b4b65d", "#8d9e55",
   "#64865b", "#426b57", "#264f49", "#183b3b"
 ];
+
 let past = [], future = [];
 let gesture = null;
 let spaceDown = false;
 let pendingImage = null;
-const HISTORY_LIMIT = 24;
+
+const HISTORY_LIMIT = 50;
+const HISTORY_BYTES = 32 * 1024 * 1024;
+const PAGE_SIZE = 64;
+
+let mergeColors = [];
+let mergeFiltered = [];
+let mergeCountMap = new Map();
+let mergeSelected = new Set();
+let mergeTarget = "#264f49";
+let mergePage = 0;
 
 function validSize(w, h) {
   return Number.isInteger(w) && Number.isInteger(h) &&
-         w >= 1 && h >= 1 && w <= 512 && h <= 512;
+    w >= 1 && h >= 1 && w <= 512 && h <= 512;
 }
+
+function normalizeHex(value) {
+  if (typeof value !== "string") return null;
+  let s = value.trim().toLowerCase();
+  if (!s.startsWith("#")) s = "#" + s;
+  return /^#[0-9a-f]{6}$/.test(s) ? s : null;
+}
+
 function rgb(hex) {
   return [
     parseInt(hex.slice(1, 3), 16),
@@ -395,41 +545,66 @@ function rgb(hex) {
     255
   ];
 }
+
 function toHex(r, g, b) {
-  return "#" + [r, g, b].map(v => v.toString(16).padStart(2, "0")).join("");
+  return "#" + [r, g, b]
+    .map(v => v.toString(16).padStart(2, "0")).join("");
 }
+
+function keyAt(i) {
+  return (pixels[i] << 16) | (pixels[i + 1] << 8) | pixels[i + 2];
+}
+
+function keyFromHex(hex) {
+  return parseInt(hex.slice(1), 16);
+}
+
 function setColor(value) {
-  if (!/^#[0-9a-f]{6}$/i.test(value)) return false;
-  currentColor = value.toLowerCase();
-  $("color").value = currentColor;
-  $("hex").value = currentColor;
+  const hex = normalizeHex(value);
+  if (!hex) return false;
+  currentColor = hex;
+  $("color").value = hex;
+  $("hex").value = hex;
   renderPalette();
   return true;
 }
+
 function renderPalette() {
   $("palette").replaceChildren();
-  workingPalette.forEach(color => {
+  for (const color of workingPalette) {
     const b = document.createElement("button");
-    b.className = "swatch" + (color === currentColor ? " selected" : "");
+    b.className = "swatch" +
+      (color === currentColor ? " selected" : "");
     b.style.backgroundColor = color;
     b.title = color;
     b.setAttribute("aria-label", "選取 " + color);
     b.onclick = () => setColor(color);
     $("palette").appendChild(b);
-  });
+  }
 }
+
 function snapshot() {
   return {
     w: W, h: H, pixels: pixels.slice(),
     palette: [...workingPalette], color: currentColor
   };
 }
+
+function trimHistory() {
+  let bytes = past.reduce((sum, s) => sum + s.pixels.byteLength, 0);
+  while (past.length > HISTORY_LIMIT ||
+         (bytes > HISTORY_BYTES && past.length > 1)) {
+    bytes -= past.shift().pixels.byteLength;
+  }
+}
+
 function remember(state = snapshot()) {
   past.push(state);
-  if (past.length > HISTORY_LIMIT) past.shift();
   future = [];
+  trimHistory();
   updateHistory();
 }
+
 function restore(state) {
   W = state.w;
   H = state.h;
@@ -439,22 +614,30 @@ function restore(state) {
   draw();
   inspect();
 }
+
 function updateHistory() {
   $("undoBtn").disabled = past.length === 0;
   $("redoBtn").disabled = future.length === 0;
+  $("mergeUndo").disabled = past.length === 0;
 }
+
 function undo() {
   if (gesture || !past.length) return;
   future.push(snapshot());
   restore(past.pop());
   updateHistory();
+  if ($("mergeDialog").open) refreshMergeData();
 }
+
 function redo() {
   if (gesture || !future.length) return;
   past.push(snapshot());
   restore(future.pop());
+  trimHistory();
   updateHistory();
+  if ($("mergeDialog").open) refreshMergeData();
 }
+
 function draw() {
   if (canvas.width !== W || canvas.height !== H) {
     canvas.width = W;
@@ -463,21 +646,40 @@ function draw() {
   ctx.putImageData(new ImageData(pixels, W, H), 0, 0);
   updateView();
 }
+
 function updateView() {
-  stage.style.width = canvas.style.width = (W * zoom) + "px";
-  stage.style.height = canvas.style.height = (H * zoom) + "px";
+  stage.style.width = canvas.style.width = W * zoom + "px";
+  stage.style.height = canvas.style.height = H * zoom + "px";
   $("grid").style.backgroundSize = `${zoom}px ${zoom}px`;
   $("grid").style.display =
     $("gridToggle").checked && zoom >= 4 ? "block" : "none";
   $("zoomLabel").textContent = zoom + "×";
   $("dimensions").textContent = `${W} × ${H} px`;
 }
+
+function histogram() {
+  const map = new Map();
+  for (let i = 0; i < pixels.length; i += 4) {
+    if (!pixels[i + 3]) continue;
+    const key = keyAt(i);
+    map.set(key, (map.get(key) || 0) + 1);
+  }
+  return [...map].map(([key, count]) => ({
+    key,
+    r: (key >> 16) & 255,
+    g: (key >> 8) & 255,
+    b: key & 255,
+    count,
+    hex: "#" + key.toString(16).padStart(6, "0")
+  }));
+}
+
 function inspect(note = "") {
   const colors = new Set();
   let partial = 0;
   for (let i = 0; i < pixels.length; i += 4) {
     const a = pixels[i + 3];
-    if (a > 0) colors.add(toHex(pixels[i], pixels[i + 1], pixels[i + 2]));
+    if (a > 0) colors.add(keyAt(i));
     if (a > 0 && a < 255) partial++;
   }
   $("status").textContent =
@@ -485,12 +687,34 @@ function inspect(note = "") {
     (partial ? `⚠ ${partial} 個半透明像素` : "沒有半透明像素") +
     (note ? " · " + note : "");
 }
+
+function extractPalette(preferred = null) {
+  const list = histogram().sort((a, b) => b.count - a.count);
+  if (!list.length) {
+    renderPalette();
+    return;
+  }
+  workingPalette = list.slice(0, 32).map(c => c.hex);
+  if (preferred && list.some(c => c.hex === preferred) &&
+      !workingPalette.includes(preferred)) {
+    workingPalette = [preferred, ...workingPalette.slice(0, 31)];
+  }
+  renderPalette();
+}
+
 function selectTool(value) {
+  if (gesture) return;
+  if (value === "picker") {
+    if (tool !== "picker") previousDrawTool = tool;
+  } else {
+    previousDrawTool = value;
+  }
   tool = value;
   document.querySelectorAll("[data-tool]").forEach(b => {
     b.classList.toggle("active", b.dataset.tool === tool);
   });
 }
+
 function point(event) {
   const r = canvas.getBoundingClientRect();
   return {
@@ -498,9 +722,11 @@ function point(event) {
     y: Math.floor((event.clientY - r.top) * H / r.height)
   };
 }
+
 function inBounds(x, y) {
   return x >= 0 && y >= 0 && x < W && y < H;
 }
+
 function putPixel(x, y, color) {
   if (!inBounds(x, y)) return;
   const i = (y * W + x) * 4;
@@ -509,8 +735,8 @@ function putPixel(x, y, color) {
   pixels[i + 2] = color[2];
   pixels[i + 3] = color[3];
 }
-function stamp(x, y, color) {
-  const size = Number($("brush").value);
+
+function stamp(x, y, color, size) {
   const offset = Math.floor((size - 1) / 2);
   for (let yy = 0; yy < size; yy++) {
     for (let xx = 0; xx < size; xx++) {
@@ -518,35 +744,40 @@ function stamp(x, y, color) {
     }
   }
 }
-function pixelLine(x0, y0, x1, y1, color) {
+
+function pixelLine(x0, y0, x1, y1, color, size) {
   const dx = Math.abs(x1 - x0);
   const dy = -Math.abs(y1 - y0);
   const sx = x0 < x1 ? 1 : -1;
   const sy = y0 < y1 ? 1 : -1;
   let err = dx + dy;
   while (true) {
-    stamp(x0, y0, color);
+    stamp(x0, y0, color, size);
     if (x0 === x1 && y0 === y1) break;
     const e2 = err * 2;
     if (e2 >= dy) { err += dy; x0 += sx; }
     if (e2 <= dx) { err += dx; y0 += sy; }
   }
 }
+
 function pick(x, y) {
-  if (!inBounds(x, y)) return;
+  if (!inBounds(x, y)) return false;
   const i = (y * W + x) * 4;
   if (pixels[i + 3] === 0) {
     inspect("透明像素沒有可吸取的可見顏色");
-    return;
+    return false;
   }
   setColor(toHex(pixels[i], pixels[i + 1], pixels[i + 2]));
+  inspect("已吸取 " + currentColor);
+  return true;
 }
+
 function floodFill(x, y, replacement) {
-  if (!inBounds(x, y)) return;
+  if (!inBounds(x, y)) return false;
   const start = y * W + x;
   const base = start * 4;
   const target = Array.from(pixels.slice(base, base + 4));
-  if (target.every((v, i) => v === replacement[i])) return;
+  if (target.every((v, i) => v === replacement[i])) return false;
 
   const queue = new Int32Array(W * H);
   const seen = new Uint8Array(W * H);
@@ -562,6 +793,7 @@ function floodFill(x, y, replacement) {
       queue[tail++] = n;
     }
   }
+
   while (head < tail) {
     const n = queue[head++];
     const px = n % W, py = Math.floor(n / W);
@@ -571,6 +803,7 @@ function floodFill(x, y, replacement) {
     if (py > 0) enqueue(n - W);
     if (py < H - 1) enqueue(n + W);
   }
+  return true;
 }
 
 canvas.addEventListener("pointerdown", event => {
@@ -590,34 +823,43 @@ canvas.addEventListener("pointerdown", event => {
 
   const p = point(event);
   if (!inBounds(p.x, p.y)) return;
-  const activeTool = event.altKey ? "picker" : tool;
+
+  const temporaryPicker = event.altKey;
+  const activeTool = temporaryPicker ? "picker" : tool;
 
   if (activeTool === "picker") {
-    pick(p.x, p.y);
-    return;
-  }
-  if (activeTool === "fill") {
-    remember();
-    floodFill(p.x, p.y, rgb(currentColor));
-    draw();
-    inspect();
+    const success = pick(p.x, p.y);
+    if (success && !temporaryPicker && $("pickerReturn").checked) {
+      selectTool(previousDrawTool);
+    }
     return;
   }
 
-  const before = snapshot();
-  remember(before);
+  if (activeTool === "fill") {
+    const before = snapshot();
+    if (floodFill(p.x, p.y, rgb(currentColor))) {
+      remember(before);
+      draw();
+      inspect();
+    }
+    return;
+  }
+
   gesture = {
-    type: activeTool, id: event.pointerId,
-    start: p, last: p, before,
+    type: activeTool,
+    id: event.pointerId,
+    start: p,
+    last: p,
+    before: snapshot(),
+    size: Number($("brush").value),
     color: activeTool === "eraser" ? [0, 0, 0, 0] : rgb(currentColor)
   };
-  stamp(p.x, p.y, gesture.color);
+  stamp(p.x, p.y, gesture.color, gesture.size);
   draw();
 });
 
 canvas.addEventListener("pointermove", event => {
-  if (!gesture) return;
-  if (event.pointerId !== gesture.id) return;
+  if (!gesture || event.pointerId !== gesture.id) return;
   if (gesture.type === "pan") {
     viewport.scrollLeft =
       gesture.left - (event.clientX - gesture.clientX);
@@ -627,32 +869,55 @@ canvas.addEventListener("pointermove", event => {
   }
 
   const p = point(event);
-  // 拖到畫布外時，端點限制於畫布範圍。
   p.x = Math.max(0, Math.min(W - 1, p.x));
   p.y = Math.max(0, Math.min(H - 1, p.y));
 
   if (gesture.type === "line") {
     pixels.set(gesture.before.pixels);
-    pixelLine(gesture.start.x, gesture.start.y, p.x, p.y, gesture.color);
+    pixelLine(
+      gesture.start.x, gesture.start.y, p.x, p.y,
+      gesture.color, gesture.size
+    );
   } else {
-    pixelLine(gesture.last.x, gesture.last.y, p.x, p.y, gesture.color);
+    pixelLine(
+      gesture.last.x, gesture.last.y, p.x, p.y,
+      gesture.color, gesture.size
+    );
   }
+
   gesture.last = p;
   draw();
 });
 
-function endGesture(event) {
-  if (!gesture || event.pointerId !== gesture.id) return;
+function finishGesture() {
+  if (!gesture) return;
+  const g = gesture;
   gesture = null;
+  if (g.type !== "pan") {
+    let changed = false;
+    for (let i = 0; i < pixels.length; i++) {
+      if (pixels[i] !== g.before.pixels[i]) {
+        changed = true;
+        break;
+      }
+    }
+    if (changed) remember(g.before);
+  }
   canvas.style.cursor = spaceDown ? "grab" : "crosshair";
   inspect();
 }
+
+function endGesture(event) {
+  if (gesture && event.pointerId === gesture.id) finishGesture();
+}
+
 canvas.addEventListener("pointerup", endGesture);
 canvas.addEventListener("pointercancel", endGesture);
 canvas.addEventListener("lostpointercapture", endGesture);
 canvas.addEventListener("contextmenu", e => e.preventDefault());
 
 function changeZoom(delta, clientX, clientY) {
+  if (gesture) return;
   const old = zoom;
   const next = Math.max(1, Math.min(32, zoom + delta));
   if (next === old) return;
@@ -669,31 +934,268 @@ function changeZoom(delta, clientX, clientY) {
   viewport.scrollLeft += logicalX * (next - old);
   viewport.scrollTop += logicalY * (next - old);
 }
+
 viewport.addEventListener("wheel", event => {
   if (!event.ctrlKey && !event.metaKey) return;
   event.preventDefault();
   changeZoom(event.deltaY < 0 ? 1 : -1, event.clientX, event.clientY);
 }, { passive: false });
 
-function histogram() {
-  const map = new Map();
+/* ---------- 手動合併色盤 ---------- */
+
+function hueOf(c) {
+  const r = c.r / 255, g = c.g / 255, b = c.b / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const delta = max - min;
+  if (!delta) return -1;
+  let h;
+  if (max === r) h = ((g - b) / delta) % 6;
+  else if (max === g) h = (b - r) / delta + 2;
+  else h = (r - g) / delta + 4;
+  return (h * 60 + 360) % 360;
+}
+
+function refreshMergeData() {
+  mergeColors = histogram();
+  mergeCountMap = new Map(mergeColors.map(c => [c.key, c.count]));
+
+  const targetKey = keyFromHex(mergeTarget);
+  mergeSelected = new Set(
+    [...mergeSelected].filter(key =>
+      mergeCountMap.has(key) && key !== targetKey)
+  );
+
+  $("mergeInfo").textContent =
+    `全圖 ${mergeColors.length.toLocaleString()} 個可見 RGB 色；` +
+    "不同透明度的相同 RGB 歸為同一列。快速色票的 32 色限制不適用於這裡。";
+
+  rebuildMergeList();
+  updateHistory();
+}
+
+function setMergeTarget(value) {
+  const hex = normalizeHex(value);
+  if (!hex) return false;
+  mergeTarget = hex;
+  $("mergeTargetColor").value = hex;
+  $("mergeTargetHex").value = hex;
+  mergeSelected.delete(keyFromHex(hex));
+  mergePage = 0;
+  rebuildMergeList();
+  return true;
+}
+
+function rebuildMergeList() {
+  const query = $("mergeSearch").value.trim().toLowerCase().replace(/^#/, "");
+  const sort = $("mergeSort").value;
+  const target = rgb(mergeTarget);
+
+  mergeFiltered = mergeColors.filter(c => c.hex.slice(1).includes(query));
+
+  if (sort === "near") {
+    for (const c of mergeFiltered) {
+      c.distance =
+        0.299 * (c.r - target[0]) ** 2 +
+        0.587 * (c.g - target[1]) ** 2 +
+        0.114 * (c.b - target[2]) ** 2;
+    }
+    mergeFiltered.sort((a, b) => a.distance - b.distance || b.count - a.count);
+  } else if (sort === "count") {
+    mergeFiltered.sort((a, b) => b.count - a.count || a.key - b.key);
+  } else if (sort === "hue") {
+    for (const c of mergeFiltered) c.hue = hueOf(c);
+    mergeFiltered.sort((a, b) =>
+      a.hue - b.hue ||
+      (a.r + a.g + a.b) - (b.r + b.g + b.b)
+    );
+  } else {
+    mergeFiltered.sort((a, b) => a.key - b.key);
+  }
+
+  const pages = Math.max(1, Math.ceil(mergeFiltered.length / PAGE_SIZE));
+  mergePage = Math.max(0, Math.min(pages - 1, mergePage));
+  renderMergePage();
+}
+
+function renderMergePage() {
+  const container = $("mergeList");
+  container.replaceChildren();
+
+  const start = mergePage * PAGE_SIZE;
+  const pageColors = mergeFiltered.slice(start, start + PAGE_SIZE);
+  const targetKey = keyFromHex(mergeTarget);
+
+  if (!pageColors.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = mergeColors.length
+      ? "沒有符合搜尋的顏色。"
+      : "畫布目前沒有可見顏色。";
+    container.appendChild(empty);
+  }
+
+  const fragment = document.createDocumentFragment();
+
+  for (const c of pageColors) {
+    const isTarget = c.key === targetKey;
+    const row = document.createElement("div");
+    row.className = "color-item" +
+      (isTarget ? " target-row" : "") +
+      (mergeSelected.has(c.key) ? " chosen" : "");
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = mergeSelected.has(c.key);
+    checkbox.disabled = isTarget;
+    checkbox.setAttribute("aria-label", "合併來源色 " + c.hex);
+    checkbox.onchange = () => {
+      if (checkbox.checked) mergeSelected.add(c.key);
+      else mergeSelected.delete(c.key);
+      row.classList.toggle("chosen", checkbox.checked);
+      updateMergeSummary();
+    };
+
+    const swatch = document.createElement("div");
+    swatch.className = "color-box";
+    swatch.style.backgroundColor = c.hex;
+    swatch.title = c.hex;
+
+    const code = document.createElement("div");
+    code.className = "color-code";
+    code.textContent = c.hex;
+
+    const count = document.createElement("span");
+    count.className = "color-count";
+    count.textContent = c.count.toLocaleString() + " px";
+
+    const keep = document.createElement("button");
+    keep.textContent = isTarget ? "保留色 ✓" : "保留此色";
+    keep.disabled = isTarget;
+    keep.onclick = () => setMergeTarget(c.hex);
+
+    row.append(checkbox, swatch, code, count, keep);
+    fragment.appendChild(row);
+  }
+
+  container.appendChild(fragment);
+  container.scrollTop = 0;
+
+  const pages = Math.max(1, Math.ceil(mergeFiltered.length / PAGE_SIZE));
+  $("mergePageInfo").textContent =
+    `${mergePage + 1} / ${pages} 頁 · ` +
+    `${mergeFiltered.length.toLocaleString()} 個符合顏色`;
+  $("previousPage").disabled = mergePage === 0;
+  $("nextPage").disabled = mergePage >= pages - 1;
+  $("selectPage").disabled = !pageColors.some(c => c.key !== targetKey);
+
+  updateMergeSummary();
+}
+
+function updateMergeSummary() {
+  let affected = 0;
+  for (const key of mergeSelected) {
+    affected += mergeCountMap.get(key) || 0;
+  }
+  $("mergeSummary").textContent =
+    `已勾選 ${mergeSelected.size.toLocaleString()} 個來源色，` +
+    `將把 ${affected.toLocaleString()} 個像素替換成 ${mergeTarget}。` +
+    " 此操作不改變透明度。";
+  $("applyMerge").disabled = affected === 0;
+  $("clearSelection").disabled = mergeSelected.size === 0;
+}
+
+function openMerge() {
+  finishGesture();
+  mergeSelected.clear();
+  mergePage = 0;
+  mergeTarget = currentColor;
+  $("mergeTargetColor").value = mergeTarget;
+  $("mergeTargetHex").value = mergeTarget;
+  $("mergeSearch").value = "";
+  refreshMergeData();
+  $("mergeDialog").showModal();
+}
+
+function applyMerge() {
+  if (!mergeSelected.size) return;
+  const targetHex = normalizeHex($("mergeTargetHex").value);
+  if (!targetHex) {
+    alert("請輸入有效的六位 HEX 色碼。");
+    return;
+  }
+  if (targetHex !== mergeTarget) setMergeTarget(targetHex);
+
+  const replacement = rgb(mergeTarget);
+  let affected = 0;
+  for (const key of mergeSelected) affected += mergeCountMap.get(key) || 0;
+  if (!affected) return;
+
+  remember();
+  const sourceCount = mergeSelected.size;
+
   for (let i = 0; i < pixels.length; i += 4) {
-    if (!pixels[i + 3]) continue;
-    const key = (pixels[i] << 16) | (pixels[i + 1] << 8) | pixels[i + 2];
-    map.set(key, (map.get(key) || 0) + 1);
+    if (pixels[i + 3] === 0) continue;
+    if (!mergeSelected.has(keyAt(i))) continue;
+    pixels[i] = replacement[0];
+    pixels[i + 1] = replacement[1];
+    pixels[i + 2] = replacement[2];
+    // Alpha 完全保留，不因整理色盘产生或消除半透明。
   }
-  return [...map].map(([key, count]) => ({
-    r: (key >> 16) & 255, g: (key >> 8) & 255,
-    b: key & 255, count
-  }));
+
+  setColor(mergeTarget);
+  extractPalette(mergeTarget);
+  mergeSelected.clear();
+  draw();
+  refreshMergeData();
+  inspect(
+    `已合併 ${sourceCount} 個來源色、${affected.toLocaleString()} 個像素 → ${mergeTarget}`
+  );
 }
-function extractPalette() {
-  const list = histogram().sort((a, b) => b.count - a.count).slice(0, 32);
-  if (list.length) {
-    workingPalette = list.map(c => toHex(c.r, c.g, c.b));
-    renderPalette();
+
+$("mergeBtn").onclick = openMerge;
+$("mergeTargetColor").oninput = event => setMergeTarget(event.target.value);
+$("mergeTargetHex").onchange = event => {
+  if (!setMergeTarget(event.target.value)) {
+    event.target.value = mergeTarget;
   }
-}
+};
+$("useCurrentColor").onclick = () => setMergeTarget(currentColor);
+$("mergeSearch").oninput = () => {
+  mergePage = 0;
+  rebuildMergeList();
+};
+$("mergeSort").onchange = () => {
+  mergePage = 0;
+  rebuildMergeList();
+};
+$("selectPage").onclick = () => {
+  const targetKey = keyFromHex(mergeTarget);
+  const list = mergeFiltered.slice(
+    mergePage * PAGE_SIZE, (mergePage + 1) * PAGE_SIZE
+  );
+  for (const c of list) {
+    if (c.key !== targetKey) mergeSelected.add(c.key);
+  }
+  renderMergePage();
+};
+$("clearSelection").onclick = () => {
+  mergeSelected.clear();
+  renderMergePage();
+};
+$("previousPage").onclick = () => {
+  mergePage--;
+  renderMergePage();
+};
+$("nextPage").onclick = () => {
+  mergePage++;
+  renderMergePage();
+};
+$("applyMerge").onclick = applyMerge;
+$("mergeUndo").onclick = undo;
+$("closeMerge").onclick = () => $("mergeDialog").close();
+
+/* ---------- 自動色量化 ---------- */
+
 function boxInfo(list) {
   let lo = [255, 255, 255], hi = [0, 0, 0], weight = 0;
   for (const c of list) {
@@ -712,12 +1214,13 @@ function boxInfo(list) {
     score: range * weight
   };
 }
+
 function quantize(limit) {
   const colors = histogram();
   if (!colors.length) return;
   remember();
-  let boxes = [boxInfo(colors)];
 
+  let boxes = [boxInfo(colors)];
   while (boxes.length < limit) {
     let index = -1, score = -1;
     boxes.forEach((box, i) => {
@@ -736,7 +1239,9 @@ function quantize(limit) {
       split = i + 1;
       if (total >= box.weight / 2) break;
     }
-    boxes.splice(index, 1,
+
+    boxes.splice(
+      index, 1,
       boxInfo(list.slice(0, split)),
       boxInfo(list.slice(split))
     );
@@ -765,22 +1270,24 @@ function quantize(limit) {
         best = candidate;
       }
     }
-    mapping.set((c.r << 16) | (c.g << 8) | c.b, best);
+    mapping.set(c.key, best);
   }
 
   for (let i = 0; i < pixels.length; i += 4) {
     if (!pixels[i + 3]) continue;
-    const key = (pixels[i] << 16) | (pixels[i + 1] << 8) | pixels[i + 2];
-    const c = mapping.get(key);
+    const c = mapping.get(keyAt(i));
     pixels[i] = c[0];
     pixels[i + 1] = c[1];
     pixels[i + 2] = c[2];
   }
+
   workingPalette = [...new Set(reduced.map(c => toHex(...c)))];
   renderPalette();
   draw();
   inspect("色量化完成；透明度維持原樣");
 }
+
+/* ---------- 檔案與輸出 ---------- */
 
 function download(blob, name) {
   const url = URL.createObjectURL(blob);
@@ -792,7 +1299,9 @@ function download(blob, name) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 30000);
 }
+
 function exportPNG(scale = 1) {
+  finishGesture();
   const output = document.createElement("canvas");
   output.width = W * scale;
   output.height = H * scale;
@@ -800,11 +1309,16 @@ function exportPNG(scale = 1) {
   outCtx.imageSmoothingEnabled = false;
   outCtx.drawImage(canvas, 0, 0, output.width, output.height);
   output.toBlob(blob => {
-    if (blob) download(blob, `pixel-art-${W}x${H}-${scale}x.png`);
-    else alert("PNG 匯出失敗，請嘗試較小倍數。");
+    if (blob) {
+      download(blob, `pixel-art-${W}x${H}-${scale}x.png`);
+    } else {
+      alert("PNG 匯出失敗，請嘗試較小倍數。");
+    }
   }, "image/png");
 }
+
 function saveProject() {
+  finishGesture();
   const project = {
     format: "pixel-workshop",
     version: 1,
@@ -825,34 +1339,38 @@ $("imageFile").addEventListener("change", event => {
   const file = event.target.files[0];
   event.target.value = "";
   if (!file) return;
+
   const url = URL.createObjectURL(file);
   const image = new Image();
+
   image.onload = () => {
-    URL.revokeObjectURL(url);
     pendingImage = image;
-    $("thumb").src = image.src;
-    // Blob URL 已載入於 image；預覽以獨立縮圖呈現。
+
     const preview = document.createElement("canvas");
     const ratio = Math.min(1, 440 / image.width, 200 / image.height);
     preview.width = Math.max(1, Math.round(image.width * ratio));
     preview.height = Math.max(1, Math.round(image.height * ratio));
-    preview.getContext("2d").drawImage(image, 0, 0, preview.width, preview.height);
+    const pctx = preview.getContext("2d");
+    pctx.imageSmoothingEnabled = false;
+    pctx.drawImage(image, 0, 0, preview.width, preview.height);
     $("thumb").src = preview.toDataURL();
 
+    URL.revokeObjectURL(url);
     $("sourceInfo").textContent =
       `來源：${image.width} × ${image.height} px`;
 
-    // 大圖僅提供「長邊128」起始建議，不宣稱自動辨識原生網格。
     const factor = image.width > 512 || image.height > 512
       ? 128 / Math.max(image.width, image.height) : 1;
     $("importW").value = Math.max(1, Math.round(image.width * factor));
     $("importH").value = Math.max(1, Math.round(image.height * factor));
     $("importDialog").showModal();
   };
+
   image.onerror = () => {
     URL.revokeObjectURL(url);
     alert("無法讀取這張圖片。");
   };
+
   image.src = url;
 });
 
@@ -863,6 +1381,7 @@ $("confirmImport").onclick = () => {
     alert("寬高必須是 1～512 的整數。");
     return;
   }
+
   const offscreen = document.createElement("canvas");
   offscreen.width = w;
   offscreen.height = h;
@@ -881,34 +1400,47 @@ $("confirmImport").onclick = () => {
   $("importDialog").close();
   viewport.scrollTo(0, 0);
 };
+
 $("cancelImport").onclick = () => $("importDialog").close();
-$("importDialog").addEventListener("close", () => { pendingImage = null; });
+$("importDialog").addEventListener("close", () => {
+  pendingImage = null;
+});
 
 $("projectFile").addEventListener("change", async event => {
   const file = event.target.files[0];
   event.target.value = "";
   if (!file) return;
+
   try {
-    if (file.size > 10 * 1024 * 1024) throw new Error("專案檔太大。");
+    if (file.size > 10 * 1024 * 1024) {
+      throw new Error("專案檔太大。");
+    }
+
     const p = JSON.parse(await file.text());
-    if (p.format !== "pixel-workshop" || p.version !== 1 ||
-        !validSize(p.width, p.height) ||
-        !Array.isArray(p.pixels) ||
-        p.pixels.length !== p.width * p.height * 4 ||
-        !p.pixels.every(v => Number.isInteger(v) && v >= 0 && v <= 255)) {
+    if (
+      p.format !== "pixel-workshop" ||
+      p.version !== 1 ||
+      !validSize(p.width, p.height) ||
+      !Array.isArray(p.pixels) ||
+      p.pixels.length !== p.width * p.height * 4 ||
+      !p.pixels.every(v => Number.isInteger(v) && v >= 0 && v <= 255)
+    ) {
       throw new Error("不是有效的 Pixel Workshop 專案。");
     }
+
+    finishGesture();
     remember();
     W = p.width;
     H = p.height;
     pixels = new Uint8ClampedArray(p.pixels);
+
     const palette = Array.isArray(p.palette)
-      ? p.palette.filter(c => typeof c === "string" &&
-          /^#[0-9a-f]{6}$/i.test(c)).slice(0, 32)
+      ? p.palette.map(normalizeHex).filter(Boolean).slice(0, 32)
       : [];
-    workingPalette = palette.map(c => c.toLowerCase());
+    workingPalette = [...new Set(palette)];
     if (!workingPalette.length) extractPalette();
-    setColor(typeof p.color === "string" ? p.color : "#264f49");
+
+    setColor(normalizeHex(p.color) || "#264f49");
     draw();
     renderPalette();
     inspect("專案已載入");
@@ -919,13 +1451,16 @@ $("projectFile").addEventListener("change", async event => {
 });
 
 $("newBtn").onclick = () => {
+  finishGesture();
   const answer = prompt("新畫布尺寸，例如 128x80、64x64：", "128x80");
   if (answer === null) return;
+
   const match = answer.trim().match(/^(\d+)\s*[x×,，]\s*(\d+)$/i);
   if (!match || !validSize(Number(match[1]), Number(match[2]))) {
     alert("請輸入 1～512 的整數寬高，例如 128x80。");
     return;
   }
+
   remember();
   W = Number(match[1]);
   H = Number(match[2]);
@@ -935,37 +1470,47 @@ $("newBtn").onclick = () => {
   viewport.scrollTo(0, 0);
 };
 
+/* ---------- 一般介面 ---------- */
+
 document.querySelectorAll("[data-tool]").forEach(b => {
   b.onclick = () => selectTool(b.dataset.tool);
 });
+
 $("color").oninput = event => setColor(event.target.value);
 $("hex").onchange = event => {
-  const value = event.target.value.trim();
-  if (!setColor(value.startsWith("#") ? value : "#" + value)) {
+  if (!setColor(event.target.value)) {
     event.target.value = currentColor;
   }
 };
+
 $("addColorBtn").onclick = () => {
+  finishGesture();
   if (workingPalette.includes(currentColor)) return;
   if (workingPalette.length >= 32) {
-    alert("工作色盤已滿 32 色。可重新擷取常用色或量化色盤。");
+    alert("快速色盤已滿 32 色。請使用整理／合併，或重新擷取常用色。");
     return;
   }
   remember();
   workingPalette.push(currentColor);
   renderPalette();
 };
+
 $("extractBtn").onclick = () => {
+  finishGesture();
   remember();
   extractPalette();
-  inspect("工作色盤已更新，圖片本身未改變");
+  inspect("快速色盤已更新，圖片本身未改變");
 };
+
 $("quantizeBtn").onclick = () => {
+  finishGesture();
   if (confirm("將全圖量化為有限色盤？細微色差會被合併，可復原。")) {
     quantize(Number($("colorLimit").value));
   }
 };
+
 $("binaryBtn").onclick = () => {
+  finishGesture();
   remember();
   for (let i = 0; i < pixels.length; i += 4) {
     if (pixels[i + 3] >= 128) {
@@ -977,25 +1522,48 @@ $("binaryBtn").onclick = () => {
   draw();
   inspect("透明度已硬化");
 };
+
 $("undoBtn").onclick = undo;
 $("redoBtn").onclick = redo;
 $("zoomIn").onclick = () => changeZoom(1);
 $("zoomOut").onclick = () => changeZoom(-1);
 $("gridToggle").onchange = updateView;
-$("importBtn").onclick = () => $("imageFile").click();
-$("loadBtn").onclick = () => $("projectFile").click();
+
+$("importBtn").onclick = () => {
+  finishGesture();
+  $("imageFile").click();
+};
+$("loadBtn").onclick = () => {
+  finishGesture();
+  $("projectFile").click();
+};
+
 $("saveBtn").onclick = saveProject;
 $("pngBtn").onclick = () => exportPNG(1);
 $("largeBtn").onclick = () => exportPNG(Number($("exportScale").value));
 
+/* ---------- 快捷鍵 ---------- */
+
 function typing(event) {
   return ["INPUT", "TEXTAREA", "SELECT"].includes(event.target.tagName) ||
-         event.target.isContentEditable;
+    event.target.isContentEditable;
 }
+
 window.addEventListener("keydown", event => {
-  if (typing(event) || $("importDialog").open) return;
   const key = event.key.toLowerCase();
   const modifier = event.ctrlKey || event.metaKey;
+
+  if ($("importDialog").open) return;
+
+  if ($("mergeDialog").open) {
+    if (!typing(event) && modifier && key === "z") {
+      event.preventDefault();
+      event.shiftKey ? redo() : undo();
+    }
+    return;
+  }
+
+  if (typing(event)) return;
 
   if (modifier && key === "s") {
     event.preventDefault();
@@ -1013,16 +1581,19 @@ window.addEventListener("keydown", event => {
     return;
   }
   if (modifier) return;
+
   if (event.code === "Space") {
     event.preventDefault();
     spaceDown = true;
-    canvas.style.cursor = "grab";
+    if (!gesture) canvas.style.cursor = "grab";
     return;
   }
+
   const keys = {
     b: "pencil", e: "eraser", i: "picker", g: "fill", l: "line"
   };
   if (keys[key]) selectTool(keys[key]);
+
   if (key === "h") {
     $("gridToggle").checked = !$("gridToggle").checked;
     updateView();
@@ -1030,24 +1601,25 @@ window.addEventListener("keydown", event => {
   if (key === "+" || key === "=") changeZoom(1);
   if (key === "-") changeZoom(-1);
 });
+
 window.addEventListener("keyup", event => {
   if (event.code === "Space") {
     spaceDown = false;
-    canvas.style.cursor = "crosshair";
+    if (!gesture || gesture.type !== "pan") {
+      canvas.style.cursor = "crosshair";
+    }
   }
 });
+
 window.addEventListener("blur", () => {
   spaceDown = false;
-  if (gesture) {
-    gesture = null;
-    inspect();
-  }
+  finishGesture();
   canvas.style.cursor = "crosshair";
 });
 
 renderPalette();
 draw();
-inspect("新透明畫布；可匯入你的半成品");
+inspect("新透明畫布；可匯入半成品或載入舊版 JSON 專案");
 updateHistory();
 </script>
 </body>
