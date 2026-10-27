@@ -23,11 +23,11 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://ml-yoyohuang.github.io/tools/invoice-gen/og-wizard.png?v=27dc58af6879">
   <link rel="stylesheet" href="wizard.css?v=7">
-  <script src="core.js?v=wizard1" defer></script>
+  <script src="core.js?v=wizard2" defer></script>
   <script src="artwork-study-shader.js" defer></script>
   <script src="artwork-renderer.js?v=18" defer></script>
   <script src="gallery.js?v=39" defer></script>
-  <script src="wizard.js?v=16" defer></script>
+  <script src="wizard.js?v=17" defer></script>
 </head>
 <body data-step="1">
   <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -70,8 +70,8 @@
       </section>
       <section data-sheet="image" hidden><div id="gallery" class="gallery"><label class="gallery-upload"><span class="upload-art"><svg aria-hidden="true"><use href="#i-upload"/></svg></span><span>自選圖片</span><input id="file" class="sr-only" type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/heic,image/heif"></label></div></section>
       <section data-sheet="adjust" hidden><div class="source-tabs" role="group" aria-label="調整對象"><button data-object="photo" aria-pressed="true">圖片</button><button data-object="barcode" aria-pressed="false">條碼</button></div>
-        <div id="photo-settings"><label for="zoom">縮放 <output id="zoom-value">100%</output></label><input id="zoom" type="range" min="100" max="400" value="100"><div class="row"><button id="rotate"><svg><use href="#i-rotate"/></svg>旋轉</button><button id="reset-photo">重置</button></div><label for="fit">圖片顯示</label><select id="fit"><option value="cover">填滿裁切</option><option value="contain">完整顯示</option></select></div>
-        <div id="barcode-settings" hidden><label for="card-scale">大小</label><input id="card-scale" type="range" min="64" max="94" value="84"><label for="radius">圓角</label><input id="radius" type="range" min="0" max="36" value="16"><label for="card-title">小標題</label><input id="card-title" maxlength="20" value="我的發票載具"></div>
+        <div id="photo-settings"><label for="zoom">縮放 <output id="zoom-value">100%</output></label><input id="zoom" type="range" min="100" max="400" value="100"><label for="tilt">角度 <output id="tilt-value">0°</output></label><input id="tilt" type="range" min="-45" max="45" step="1" value="0"><div class="row"><button id="rotate"><svg><use href="#i-rotate"/></svg>轉 90°</button><button id="reset-photo">重置</button></div><label for="fit">圖片顯示</label><select id="fit"><option value="cover">填滿裁切</option><option value="contain">完整顯示</option></select></div>
+        <div id="barcode-settings" hidden><label for="card-scale">大小</label><input id="card-scale" type="range" min="64" max="94" value="84"><div class="row"><button id="rotate-card"><svg><use href="#i-rotate"/></svg>轉 90°</button><button id="reset-card">重置</button></div><label for="radius">圓角</label><input id="radius" type="range" min="0" max="36" value="16"><label for="card-title">小標題</label><input id="card-title" maxlength="20" value="我的發票載具"></div>
         <label>底色</label><div id="swatches" class="swatches" role="group" aria-label="底色選項"></div><label class="custom-color">自選色<input id="color" type="color" value="#ff6633"></label><label class="check"><input id="align" type="checkbox" checked>吸附對齊參考線</label>
       </section>
       <section data-sheet="save" hidden><a id="result-link" target="_blank" rel="noopener"><img id="result" alt="你的載具卡面"></a><p id="result-info"></p><a id="download" class="primary" download>儲存圖片</a><button id="share" class="secondary" hidden><svg><use href="#i-share"/></svg>分享圖片</button><p class="save-hint">也可以長按圖片儲存。</p></section>

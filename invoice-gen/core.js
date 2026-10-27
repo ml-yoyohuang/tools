@@ -50,11 +50,15 @@
     const ratios = [1, 3/2, 2/3, 4/3, 3/4, 16/9, 9/16];
     return ratios.find(r => Math.abs(ratio-r)/r < .025) || ratio;
   }
+  // Returns the card's footprint on the canvas; a quarter turn swaps it while the card keeps its proportions.
   function cardRect(width, height, state) {
     const margin = Math.max(18, width * .035);
-    const maxWidth = Math.min(width - 2*margin, (height - 2*margin)/.40);
-    const w = Math.min(width * state.cardScale, maxWidth);
-    const h = w * .40;
+    const side = (state.cardRotation || 0) % 180 !== 0;
+    const across = side ? height : width, along = side ? width : height;
+    const maxWidth = Math.min(across - 2*margin, (along - 2*margin)/.40);
+    const long = Math.min(width * state.cardScale, maxWidth);
+    const w = side ? long * .40 : long;
+    const h = side ? long : long * .40;
     const x = clamp(state.cardX * width - w/2, margin, width-margin-w);
     const y = clamp(state.cardY * height - h/2, margin, height-margin-h);
     return {x, y, w, h};
@@ -64,20 +68,41 @@
     if (layout === 'side') return {x:0,y:0,w:width*.29,h:height};
     return {x:0,y:0,w:width,h:height};
   }
+  // Canvas ratio whose photo area, not the whole canvas, has the image's ratio.
+  function photoAreaRatio(imageRatio, layout) {
+    if (layout === 'bottom' || layout === 'contain') return imageRatio / (1 + .40*imageRatio);
+    if (layout === 'side') return imageRatio / .29;
+    return imageRatio;
+  }
+  // Exact values for quarter turns keep 90° steps identical to axis-aligned math.
+  function turn(degrees) {
+    const d = ((degrees % 360) + 360) % 360;
+    if (d % 90 === 0) return [[1,0],[0,1],[-1,0],[0,-1]][d/90];
+    const r = d * Math.PI / 180;
+    return [Math.cos(r), Math.sin(r)];
+  }
   // All editor geometry uses output pixels, independent of preview size or device DPR.
+  // rotation holds quarter turns; tilt is the optional free angle on top of it.
   function photoGeometry(width, height, state) {
     if (!state.image) return null;
     const area = photoRect(width, height, state.layout);
-    const rotated = state.rotation % 180 !== 0;
-    const iw = rotated ? state.image.height : state.image.width;
-    const ih = rotated ? state.image.width : state.image.height;
+    const [cos, sin] = turn((state.rotation || 0) + (state.tilt || 0)), c = Math.abs(cos), s = Math.abs(sin);
+    const iw = state.image.width, ih = state.image.height;
     const contain = state.layout === 'contain' || state.fit === 'contain';
-    const base = contain ? Math.min(area.w / iw, area.h / ih) : Math.max(area.w / iw, area.h / ih);
-    const scale = base * state.zoom, w = iw * scale, h = ih * scale;
-    const limitX = contain ? area.w : Math.max(0, (w - area.w) / 2);
-    const limitY = contain ? area.h : Math.max(0, (h - area.h) / 2);
-    const dx = clamp(state.panX * area.w, -limitX, limitX);
-    const dy = clamp(state.panY * area.h, -limitY, limitY);
+    // Cover keeps the whole area inside the turned image, measured along the image's own axes.
+    const ex = area.w*c + area.h*s, ey = area.w*s + area.h*c;
+    const base = contain ? Math.min(area.w / (iw*c + ih*s), area.h / (iw*s + ih*c)) : Math.max(ex / iw, ey / ih);
+    const scale = base * state.zoom, w = (iw*c + ih*s) * scale, h = (iw*s + ih*c) * scale;
+    let dx = state.panX * area.w, dy = state.panY * area.h;
+    if (contain) {
+      dx = clamp(dx, -area.w, area.w);
+      dy = clamp(dy, -area.h, area.h);
+    } else {
+      const limitU = Math.max(0, (iw*scale - ex) / 2), limitV = Math.max(0, (ih*scale - ey) / 2);
+      const u = clamp(dx*cos + dy*sin, -limitU, limitU), v = clamp(-dx*sin + dy*cos, -limitV, limitV);
+      dx = u*cos - v*sin;
+      dy = u*sin + v*cos;
+    }
     const cx = area.x + area.w / 2 + dx, cy = area.y + area.h / 2 + dy;
     return {area, x:cx-w/2, y:cy-h/2, w, h, cx, cy, scale, panX:dx/area.w, panY:dy/area.h};
   }
@@ -138,10 +163,15 @@
   }
   // Decode actual black/white pixels in the final composition, not the input string.
   // This verifies raster integrity; independent scanner tests are still necessary.
-  function decodeRow(ctx, box, fraction) {
-    const x = Math.floor(box.x), width = Math.floor(box.w), y = Math.round(box.y+box.h*fraction);
-    const pixels = ctx.getImageData(x,y,width,1).data;
+  // box is the barcode's footprint on the canvas. Quarter turns read columns; 180° and 270° read backwards.
+  function decodeRow(ctx, box, fraction, rotation=0) {
+    const vertical = rotation % 180 !== 0;
+    const pixels = vertical
+      ? ctx.getImageData(Math.round(box.x+box.w*fraction),Math.floor(box.y),1,Math.floor(box.h)).data
+      : ctx.getImageData(Math.floor(box.x),Math.round(box.y+box.h*fraction),Math.floor(box.w),1).data;
+    const width = pixels.length/4;
     const bits = Array.from({length:width},(_,i)=>pixels[i*4]<128 && pixels[i*4+1]<128 && pixels[i*4+2]<128);
+    if (rotation === 180 || rotation === 270) bits.reverse();
     const first=bits.indexOf(true),last=bits.lastIndexOf(true);
     if(first<0) throw new Error('找不到條碼');
     const runs=[];let previous=true, length=0;
@@ -165,11 +195,11 @@
     if(result[0]!=='*'||result.at(-1)!=='*') throw new Error('條碼起訖不完整');
     return result.slice(1,-1);
   }
-  function verifyCanvas(canvas, box, expected) {
+  function verifyCanvas(canvas, box, expected, rotation=0) {
     const ctx=canvas.getContext('2d',{willReadFrequently:true});
-    return [.2,.5,.8].every(f=>decodeRow(ctx,box,f)===expected);
+    return [.2,.5,.8].every(f=>decodeRow(ctx,box,f,rotation)===expected);
   }
-  const api={normalize,valid,dimensions,printCard,jpegAtDpi,EASY_CARD,ratioText,snapRatio,clamp,cardRect,photoRect,photoGeometry,zoomCenter,rectAnchors,snapRect,alignmentTargets,drawBarcode,verifyCanvas,MIN_RATIO,MAX_RATIO};
+  const api={normalize,valid,dimensions,printCard,jpegAtDpi,EASY_CARD,ratioText,snapRatio,clamp,cardRect,photoRect,photoAreaRatio,photoGeometry,zoomCenter,rectAnchors,snapRect,alignmentTargets,drawBarcode,verifyCanvas,MIN_RATIO,MAX_RATIO};
   root.InvoiceCore=api;
   if(typeof module!=='undefined'&&module.exports) module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:window);

@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const C=window.InvoiceCore,$=id=>document.getElementById(id),canvas=$('canvas'),ctx=canvas.getContext('2d');
-  const state={step:1,carrier:'',layout:'full',size:'phone',ratio:1080/2340,phone:[1080,2340],background:'#ff6633',image:null,imageId:null,rotation:0,zoom:1,panX:0,panY:0,cardX:.5,cardY:.74,cardScale:.84,radius:16,title:'我的發票載具',fit:'cover',mode:'photo'};
+  const state={step:1,carrier:'',layout:'full',size:'phone',ratio:1080/2340,phone:[1080,2340],background:'#ff6633',image:null,imageId:null,rotation:0,tilt:0,zoom:1,panX:0,panY:0,cardX:.5,cardY:.74,cardScale:.84,cardRotation:0,radius:16,title:'我的發票載具',fit:'cover',mode:'photo'};
   const colors=['#ff6633','#2446ff','#dfff00','#ff1688','#00c78b','#a737ff','#ffd000','#00c9ff','#ffffff','#111111'];
   const layoutBackgrounds={full:'#ff6633',bottom:'#ffffff',contain:'#ffd000',side:'#00c9ff'};
   const layoutPlaceholders={bottom:'#ff1688',contain:'#2446ff',side:'#dfff00'};
@@ -44,16 +44,29 @@
     requestRender();
   }
   function setMode(mode){if(state.mode!==mode)cancelGesture();state.mode=mode;syncForms();requestRender();}
-  function resetPhoto(){state.panX=state.panY=state.rotation=0;state.zoom=1;clearGuides();}
-  function resetCard(){state.cardScale=state.ratio>1?.66:.84;state.cardX=state.layout==='side'?.655:.5;state.cardY=state.layout==='side'?.5:state.layout==='bottom'||state.layout==='contain'?1:.74;if(state.layout==='side')state.cardScale=.64;}
+  function resetPhoto(){state.panX=state.panY=state.rotation=state.tilt=0;state.zoom=1;clearGuides();}
+  // Quarter turns stay in rotation so the 90° button and the original-ratio canvas keep working; tilt holds the rest.
+  function setTurn(total,snap=true){
+    const nearest=Math.round(total/90)*90;if(snap&&Math.abs(total-nearest)<4)total=nearest;
+    const quarter=Math.round(total/90);state.rotation=((quarter*90)%360+360)%360;state.tilt=total-quarter*90;return total;
+  }
+  // Fit the photo area, not the whole canvas, to the picture; pictures outside the ratio range switch to full display.
+  function matchOriginal(){
+    const turned=state.image&&state.rotation%180,r=state.image?(turned?state.image.height/state.image.width:state.image.width/state.image.height):1;
+    const ideal=C.photoAreaRatio(r,state.layout);state.ratio=C.clamp(ideal,state.layout==='side'?1.2:C.MIN_RATIO,C.MAX_RATIO);
+    const fits=Math.abs(state.ratio-ideal)<1e-9;if(state.image)state.fit=fits?'cover':'contain';return fits||!state.image;
+  }
+  const outOfRange='圖片比例超出可用範圍，已改為完整顯示。';
+  function resetCard(){state.cardRotation=0;state.cardScale=state.ratio>1?.66:.84;state.cardX=state.layout==='side'?.655:.5;state.cardY=state.layout==='side'?.5:state.layout==='bottom'||state.layout==='contain'?1:.74;if(state.layout==='side')state.cardScale=.64;}
   function setSize(size){
-    state.size=size;resizing=false;
+    // A new shape starts from an unturned, cover-fitted photo; the original ratio may switch it to full display.
+    state.size=size;resizing=false;resetPhoto();state.fit='cover';
     if(size==='phone')state.ratio=state.phone[0]/state.phone[1];
     else if(size==='portrait'||size==='landscape'){const dim=C.printCard(size);state.ratio=dim.width/dim.height;}
-    else if(size==='original')state.ratio=state.image?C.clamp(state.image.width/state.image.height,C.MIN_RATIO,C.MAX_RATIO):1;
+    else if(size==='original'){if(!matchOriginal())toast(outOfRange);}
     else if(size==='square')state.ratio=1;
     if(state.layout==='side'&&state.ratio<1.2)state.layout='bottom';
-    resetPhoto();resetCard();clearGuides();syncForms();requestRender();
+    resetCard();clearGuides();syncForms();requestRender();
   }
   function applyRatio(ratio,snap=false){
     if(!Number.isFinite(ratio)||ratio<=0)return;
@@ -67,7 +80,8 @@
     $('phone-options').hidden=state.size!=='phone';$('custom-options').hidden=state.size!=='custom';
     $('photo-settings').hidden=state.mode==='barcode';$('barcode-settings').hidden=state.mode!=='barcode';
     $('zoom').min=minZoom()*100;$('zoom').value=Math.round(state.zoom*100);$('zoom-value').textContent=Math.round(state.zoom*100)+'%';
-    $('zoom').disabled=$('rotate').disabled=$('reset-photo').disabled=!state.image;
+    const tilt=Math.round(state.tilt);$('tilt').value=tilt;$('tilt-value').textContent=(tilt>0?'+':'')+tilt+'°';
+    $('zoom').disabled=$('tilt').disabled=$('rotate').disabled=$('reset-photo').disabled=!state.image;
     $('fit').value=state.layout==='contain'?'contain':state.fit;$('fit').disabled=state.layout==='contain';
     $('card-scale').value=state.cardScale*100;$('radius').value=state.radius;$('card-title').value=state.title;$('color').value=state.background;
     document.querySelectorAll('[data-color]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.color===state.background)));
@@ -96,7 +110,7 @@
       const scale=Math.min(1,4096/Math.max(img.naturalWidth,img.naturalHeight)),small=document.createElement('canvas');
       small.width=Math.max(1,Math.round(img.naturalWidth*scale));small.height=Math.max(1,Math.round(img.naturalHeight*scale));small.getContext('2d').drawImage(img,0,0,small.width,small.height);
       state.image=small;state.imageId=id;if(!options.keepTransform)resetPhoto();if(color&&!colorChosen)state.background=color;
-      if(state.size==='original'&&!options.keepTransform){state.ratio=C.clamp(small.width/small.height,C.MIN_RATIO,C.MAX_RATIO);if(small.width/small.height!==state.ratio)state.layout='contain';resetCard();}
+      if(state.size==='original'&&!options.keepTransform){if(!matchOriginal())toast(outOfRange);resetCard();}
       state.mode='photo';if(!options.keepSheet)closeSheet();requestRender();
       const dim=outputSize(),geometry=C.photoGeometry(dim.width,dim.height,state);if(geometry.scale>1.5)toast('圖片較小，放大後可能模糊。');
     }catch{if(token===loadToken)toast(options.heic?'這個瀏覽器無法讀取 HEIC，請先轉成 JPG 再選取。':'無法讀取圖片，請改用 JPG、PNG 或 WebP。');}
@@ -112,7 +126,7 @@
       let blob=await new Promise((resolve,reject)=>out.toBlob(b=>b?resolve(b):reject(Error('圖片無法儲存，請再試一次。')),type,.96));
       if(print)blob=await C.jpegAtDpi(blob);url=URL.createObjectURL(blob);
       const decoded=new Image();decoded.src=url;await decoded.decode();context.clearRect(0,0,out.width,out.height);context.drawImage(decoded,0,0);
-      if(!C.verifyCanvas(out,box,state.carrier))throw Error('條碼檢查未通過，請重新調整。');
+      if(!C.verifyCanvas(out,box,state.carrier,box.rotation))throw Error('條碼檢查未通過，請重新調整。');
       if(result)URL.revokeObjectURL(result.url);result={url,file:new File([blob],print?'invoice-easycard.jpg':'invoice-wallpaper.png',{type})};
       $('result').src=url;$('result-link').href=url;$('download').href=url;$('download').download=result.file.name;
       $('result-info').textContent=print?'印刷 JPG · 405 萬畫素 · 750 dpi':'PNG · '+dim.width+' × '+dim.height;
@@ -131,7 +145,7 @@
     $('back').onclick=()=>{if(state.step===1)location.href='./index.html';else goStep(state.step-1);};
     $('next').onclick=()=>state.step<3?goStep(state.step+1):exportImage();
     document.querySelectorAll('[data-panel]').forEach(el=>el.onclick=()=>openSheet(el.dataset.panel));
-    document.querySelectorAll('[data-layout]').forEach(el=>el.onclick=()=>{state.layout=el.dataset.layout;if(!colorChosen)state.background=layoutBackgrounds[state.layout];if(state.layout==='side'&&state.ratio<1.2)setSize('landscape');resetPhoto();resetCard();closeSheet();requestRender();});
+    document.querySelectorAll('[data-layout]').forEach(el=>el.onclick=()=>{state.layout=el.dataset.layout;if(!colorChosen)state.background=layoutBackgrounds[state.layout];resetPhoto();if(state.size==='original'){if(!matchOriginal())toast(outOfRange);}else if(state.layout==='side'&&state.ratio<1.2)setSize('landscape');resetCard();closeSheet();requestRender();});
     document.querySelectorAll('[data-size]').forEach(el=>el.onclick=()=>{setSize(el.dataset.size);if(state.size==='custom')syncRatioFields();else if(state.size!=='phone')closeSheet();});
     $('device').onchange=()=>{if($('device').value==='current'){const ratio=C.clamp(Math.min(screen.width,screen.height)/Math.max(screen.width,screen.height),C.MIN_RATIO,1);state.phone=[Math.round(2340*ratio),2340];}else state.phone=$('device').value.split(',').map(Number);setSize('phone');closeSheet();};
     ['ratio-w','ratio-h'].forEach(id=>{$(id).oninput=()=>{const w=Number($('ratio-w').value),h=Number($('ratio-h').value);if(w>0&&h>0)applyRatio(w/h);};$(id).onchange=syncRatioFields;});
@@ -142,7 +156,9 @@
       const known=/\.(jpe?g|png|webp|avif|gif|heic|heif)$/i.test(file.name);if(file.type==='image/svg+xml'||/\.svg$/i.test(file.name)||file.type&&!file.type.startsWith('image/')&&!known){toast('請選擇 JPG、PNG、WebP 等圖片檔。');return;}
       picker.reset();loadImage(URL.createObjectURL(file),null,null,true,{heic:/hei[cf]/i.test(file.type)||/\.hei[cf]$/i.test(file.name)});};
     document.querySelectorAll('[data-object]').forEach(el=>el.onclick=()=>setMode(el.dataset.object));
-    $('zoom').oninput=()=>setZoom(Number($('zoom').value)/100);$('rotate').onclick=()=>{state.rotation=(state.rotation+90)%360;state.panX=state.panY=0;requestRender();};$('reset-photo').onclick=()=>{resetPhoto();requestRender();};
+    $('zoom').oninput=()=>setZoom(Number($('zoom').value)/100);$('tilt').oninput=()=>{state.tilt=Number($('tilt').value);requestRender();};
+    $('rotate').onclick=()=>{state.rotation=(state.rotation+90)%360;state.panX=state.panY=0;if(state.size==='original'){if(!matchOriginal())toast(outOfRange);resetCard();}requestRender();};$('reset-photo').onclick=()=>{resetPhoto();requestRender();};
+    $('rotate-card').onclick=()=>{state.cardRotation=(state.cardRotation+90)%360;clearGuides();requestRender();};$('reset-card').onclick=()=>{resetCard();clearGuides();requestRender();};
     $('fit').onchange=()=>{state.fit=$('fit').value;state.zoom=Math.max(minZoom(),state.zoom);state.panX=state.panY=0;requestRender();};
     $('card-scale').oninput=()=>{state.cardScale=Number($('card-scale').value)/100;requestRender();};$('radius').oninput=()=>{state.radius=Number($('radius').value);requestRender();};$('card-title').oninput=()=>{state.title=$('card-title').value;requestRender();};$('color').oninput=()=>{colorChosen=true;state.background=$('color').value;requestRender();};$('align').onchange=clearGuides;
     $('close-sheet').onclick=closeSheet;$('sheet').addEventListener('close',placeToast);$('sheet').addEventListener('click',e=>{if(e.target===$('sheet')){const r=$('sheet').getBoundingClientRect();if(e.clientY<r.top||e.clientY>r.bottom||e.clientX<r.left||e.clientX>r.right)closeSheet();}});
@@ -165,13 +181,17 @@
     if(!state.image)return;
     const image=state.image, geometry=C.photoGeometry(w,h,state), rect=geometry.area;
     context.save();context.beginPath();context.rect(rect.x,rect.y,rect.w,rect.h);context.clip();
-    context.translate(geometry.cx,geometry.cy);context.rotate(state.rotation*Math.PI/180);context.scale(geometry.scale,geometry.scale);
+    context.translate(geometry.cx,geometry.cy);context.rotate((state.rotation+state.tilt)*Math.PI/180);context.scale(geometry.scale,geometry.scale);
     context.drawImage(image,-image.width/2,-image.height/2);context.restore();
   }
   function drawCard(context,w,h,options={}){
-    const card=options.backup?{x:w*.05,y:h*.08,w:w*.9,h:h*.84}:C.cardRect(w,h,state);
+    const footprint=options.backup?{x:w*.05,y:h*.08,w:w*.9,h:h*.84}:C.cardRect(w,h,state),turn=options.backup?0:state.cardRotation;
+    // Quarter turns use an exact integer transform around a whole-pixel center, so bars stay on output pixels.
+    const matrix=[[1,0,0,1],[0,1,-1,0],[-1,0,0,-1],[0,-1,1,0]][turn/90],side=turn%180!==0;
+    const ox=turn?Math.round(footprint.x+footprint.w/2):0,oy=turn?Math.round(footprint.y+footprint.h/2):0;
+    const cw=side?footprint.h:footprint.w,ch=side?footprint.w:footprint.h,card=turn?{x:-cw/2,y:-ch/2,w:cw,h:ch}:footprint;
     const unit=card.w;
-    context.save();
+    context.save();context.transform(...matrix,ox,oy);
     context.fillStyle='#fff';
     if(!options.backup){context.shadowColor='#23352212';context.shadowBlur=unit*.025;context.shadowOffsetY=unit*.008;}
     roundRect(context,card.x,card.y,card.w,card.h,state.radius/100*unit*.2);
@@ -188,7 +208,11 @@
       context.fillStyle='#7b8472';context.textAlign='center';context.textBaseline='middle';context.font=`${Math.round(unit*.038)}px sans-serif`;context.fillText('示意圖・請輸入你的載具',card.x+unit/2,box.y+box.h*.5);
       context.font=`${Math.round(unit*.035)}px sans-serif`;context.fillText('YOUR MOBILE BARCODE',card.x+unit/2,card.y+card.h*.86);
     }
-    context.restore();return box;
+    context.restore();
+    // Report the barcode box in canvas pixels so the export check reads the turned bars.
+    const [a,b,c,d]=matrix,xs=[],ys=[];
+    for(const x of [box.x,box.x+box.w])for(const y of [box.y,box.y+box.h]){xs.push(a*x+c*y+ox);ys.push(b*x+d*y+oy);}
+    return {x:Math.min(...xs),y:Math.min(...ys),w:Math.max(...xs)-Math.min(...xs),h:Math.max(...ys)-Math.min(...ys),rotation:turn};
   }
   function draw(context,w,h,options={}){
     context.clearRect(0,0,w,h);context.fillStyle=options.backup?'#fff':state.background;context.fillRect(0,0,w,h);
@@ -280,6 +304,7 @@
   function beginPinch(){
     const [a,b]=[...pointers.values()],rect=$('frame').getBoundingClientRect(),{width,height}=outputSize();
     gesture={kind:'pinch',mode:'photo',rect,zoom:state.zoom,distance:Math.max(1,Math.hypot(b.x-a.x,b.y-a.y)),
+      angle:Math.atan2(b.y-a.y,b.x-a.x),turn:state.rotation+state.tilt,rotating:false,
       anchor:canvasPoint({x:(a.x+b.x)/2,y:(a.y+b.y)/2},rect),geometry:C.photoGeometry(width,height,state)};
   }
   function onPointerDown(event){
@@ -306,8 +331,13 @@
     if(gesture.kind==='pinch'){
       const [a,b]=[...pointers.values()];if(!a||!b)return;
       state.zoom=C.clamp(gesture.zoom*Math.hypot(b.x-a.x,b.y-a.y)/gesture.distance,minZoom(),4);
+      let delta=(Math.atan2(b.y-a.y,b.x-a.x)-gesture.angle)*180/Math.PI;delta=((delta+540)%360)-180;
+      // A dead zone keeps a plain pinch from tilting the photo; rotation then starts from zero without a jump.
+      if(!gesture.rotating&&Math.abs(delta)>8){gesture.rotating=true;gesture.angle+=Math.sign(delta)*8*Math.PI/180;delta-=Math.sign(delta)*8;}
+      const turned=gesture.rotating?setTurn(gesture.turn+delta,!event.altKey)-gesture.turn:0;
       const midpoint=canvasPoint({x:(a.x+b.x)/2,y:(a.y+b.y)/2},gesture.rect);
-      const center=C.zoomCenter(gesture.geometry,gesture.zoom,state.zoom,gesture.anchor,midpoint);
+      let center=C.zoomCenter(gesture.geometry,gesture.zoom,state.zoom,gesture.anchor,midpoint);
+      if(turned){const r=turned*Math.PI/180,x=center.x-midpoint.x,y=center.y-midpoint.y;center={x:midpoint.x+x*Math.cos(r)-y*Math.sin(r),y:midpoint.y+x*Math.sin(r)+y*Math.cos(r)};}
       movePhoto(center.x,center.y,true,event.altKey);updateEditorUI();return;
     }
     const dx=event.clientX-gesture.x,dy=event.clientY-gesture.y,{width,height}=outputSize();

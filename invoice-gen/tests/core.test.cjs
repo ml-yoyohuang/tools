@@ -55,6 +55,26 @@ const contained=C.photoGeometry(1800,1200,{...photoState,layout:'contain',fit:'c
 check(contained.w>0&&contained.h>0,'Contain layout can zoom out below 100%');
 const rotated=C.photoGeometry(1800,1200,{...photoState,rotation:90,zoom:1});
 check(rotated.w/rotated.h===1600/1200,'Alignment uses the rotated image bounds');
+for(const [width,height,layout] of [[1080,2340,'full'],[1800,1200,'bottom'],[2540,1595,'side']])for(const tilt of [-45,-20,5,17,33,45])for(const [panX,panY] of [[0,0],[9,9],[-9,4],[3,-9]]) {
+  const g=C.photoGeometry(width,height,{...photoState,layout,zoom:1,rotation:90,tilt,panX,panY}),r=(90+tilt)*Math.PI/180,a=g.area;
+  const inside=[[a.x,a.y],[a.x+a.w,a.y],[a.x,a.y+a.h],[a.x+a.w,a.y+a.h]].every(([px,py])=>{
+    const u=(px-g.cx)*Math.cos(r)+(py-g.cy)*Math.sin(r),v=-(px-g.cx)*Math.sin(r)+(py-g.cy)*Math.cos(r);
+    return Math.abs(u)<=1200*g.scale/2+1e-6&&Math.abs(v)<=1600*g.scale/2+1e-6;
+  });
+  check(inside,`Tilted cover never reveals blank corners ${layout} ${tilt}°`);
+}
+const tilted=C.photoGeometry(1000,1000,{...photoState,image:{width:1000,height:1000},zoom:1,tilt:45});
+check(Math.abs(tilted.scale-Math.SQRT2)<1e-9,'A 45° square must grow by √2 to keep covering');
+for(const [layout,r] of [['full',.75],['bottom',.75],['bottom',1.5],['contain',9/16],['side',9/16],['side',2/3]]) {
+  const ratio=C.photoAreaRatio(r,layout),area=C.photoRect(1000,1000/ratio,layout);
+  check(Math.abs(area.w/area.h-r)<1e-9,`Original ratio fits the ${layout} photo area`);
+}
+for(const ratio of [.42,9/19.5,1,1.5,2.4])for(const cardRotation of [90,270])for(const cardScale of [.64,.94]) {
+  const {width,height}=C.dimensions(ratio),flat=C.cardRect(width,height,{cardScale,cardX:.5,cardY:.5}),turned=C.cardRect(width,height,{cardScale,cardX:1,cardY:1,cardRotation});
+  check(turned.h>turned.w&&Math.abs(turned.w/turned.h-.4)<1e-9,'A quarter-turned card swaps its footprint');
+  check(turned.x>=0&&turned.y>=0&&turned.x+turned.w<=width&&turned.y+turned.h<=height,`Keep a turned card inside canvas ${ratio}`);
+  check(turned.h<=width*cardScale+1e-9&&(flat.w<width*cardScale||turned.h<=flat.w+1e-9),'Turning keeps the card within its size setting');
+}
 const targets={x:[500],y:[300]},almost={x:403,y:252,w:200,h:100};
 const snapped=C.snapRect(almost,targets,6);
 check(snapped.x===400&&snapped.y===250,'Pointer movement snaps to both axes');
@@ -83,6 +103,26 @@ check(!C.verifyCanvas(damaged,box,'/ABC+124'),'Detect wrong payload');
 damaged.fillStyle='#fff';damaged.fillRect(barcode.x,0,barcode.narrow,300);
 assert.throws(()=>C.verifyCanvas(damaged,box,'/ABC+123'));assertions++;
 assert.throws(()=>C.drawBarcode(new Raster(200,100),'/ABC+123',{x:0,y:0,w:200,h:100}));assertions++;
+// Quarter-turned rasters: pixels move exactly, so the check must read columns or read backwards.
+function turnRaster(source,turn){
+  const side=turn%180!==0,target=new Raster(side?source.height:source.width,side?source.width:source.height);
+  for(let y=0;y<source.height;y++)for(let x=0;x<source.width;x++){
+    const [X,Y]=turn===90?[source.height-1-y,x]:turn===180?[source.width-1-x,source.height-1-y]:[y,source.width-1-x];
+    target.pixels[Y*target.width+X]=source.pixels[y*source.width+x];
+  }
+  return target;
+}
+function turnBox(box,turn,width,height){
+  if(turn===90)return {x:height-box.y-box.h,y:box.x,w:box.h,h:box.w};
+  if(turn===180)return {x:width-box.x-box.w,y:height-box.y-box.h,w:box.w,h:box.h};
+  return {x:box.y,y:width-box.x-box.w,w:box.h,h:box.w};
+}
+const upright=new Raster(1000,300),uprightBox={x:20,y:50,w:960,h:150};C.drawBarcode(upright,'/ABC+123',uprightBox);
+for(const turn of [90,180,270]){
+  const raster=turnRaster(upright,turn),turnedBox=turnBox(uprightBox,turn,1000,300);
+  check(C.verifyCanvas(raster,turnedBox,'/ABC+123',turn),`Verify a barcode turned ${turn}°`);
+  check((()=>{try{return !C.verifyCanvas(raster,turnedBox,'/ABC+123',(turn+180)%360);}catch{return true;}})(),`Reading the wrong direction fails ${turn}°`);
+}
 
 const directory=process.argv[2]||fs.mkdtempSync(path.join(os.tmpdir(),'invoice-gen-test-'));
 fs.mkdirSync(directory,{recursive:true});
