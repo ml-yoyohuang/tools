@@ -13,10 +13,17 @@
   const outputSize=()=>state.size==='portrait'||state.size==='landscape'?C.printCard(state.size):C.dimensions(state.ratio,state.size==='phone'?state.phone:null);
   const minZoom=()=>state.layout==='contain'||state.fit==='contain'?.25:1;
   const picker=window.createInvoiceArtworkPicker({getImageId:()=>state.imageId,getOrientation:()=>state.ratio>1?'landscape':'portrait',begin:()=>{loadToken++;loading=true;syncForms();},load:art=>loadImage(art.src,art.id,art.color,false,art),error:message=>{loading=false;syncForms();toast(message);}});
-  function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>{$('toast').hidden=true;},3500);}
+  // A modal sheet sits in the top layer and makes the rest inert, so the toast lives inside it while open.
+  function placeToast(){($('sheet').open?$('sheet'):document.body).append($('toast'));}
+  function toast(message){placeToast();$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>{$('toast').hidden=true;},3500);}
   function pressed(selector,key,value){document.querySelectorAll(selector).forEach(el=>el.setAttribute('aria-pressed',String(el.dataset[key]===value)));}
   function validCarrier(){
-    const field=$('carrier'),text=C.normalize(field.value);state.carrier=text;if(text!==field.value)field.value=text;
+    const field=$('carrier'),text=C.normalize(field.value);state.carrier=text;
+    if(text!==field.value){
+      // Normalizing may add a leading slash or widen/narrow characters; map the caret through the same rules.
+      const head=field.value.slice(0,field.selectionStart??field.value.length),caret=head.trim()?C.normalize(head+'x').length-1:field.value.trim().startsWith('/')?0:1;
+      field.value=text;if(document.activeElement===field)field.setSelectionRange(Math.min(caret,text.length),Math.min(caret,text.length));
+    }
     const valid=C.valid(text);$('continue').disabled=!valid;field.setAttribute('aria-invalid',String(Boolean(text&&!valid)));
     $('carrier-error').textContent=text&&!valid?'請輸入 / 加 7 碼英文字母、數字或 . - +':'';
     requestRender();
@@ -26,7 +33,7 @@
     cancelGesture();document.querySelectorAll('[data-sheet]').forEach(el=>el.hidden=el.dataset.sheet!==name);
     $('sheet-title').textContent={layout:'選擇版型',size:'畫布形狀',image:'選一張圖片',adjust:'調整',save:'儲存圖片'}[name];
     if(name==='image')window.prepareInvoiceArtworkGallery($('gallery'));
-    syncForms();if(!$('sheet').open)$('sheet').showModal();
+    syncForms();if(!$('sheet').open)$('sheet').showModal();placeToast();
   }
   function goStep(step){
     closeSheet();cancelGesture();resizing=false;state.step=step;state.mode='photo';document.body.dataset.step=step;
@@ -92,7 +99,7 @@
       if(state.size==='original'&&!options.keepTransform){state.ratio=C.clamp(small.width/small.height,C.MIN_RATIO,C.MAX_RATIO);if(small.width/small.height!==state.ratio)state.layout='contain';resetCard();}
       state.mode='photo';if(!options.keepSheet)closeSheet();requestRender();
       const dim=outputSize(),geometry=C.photoGeometry(dim.width,dim.height,state);if(geometry.scale>1.5)toast('圖片較小，放大後可能模糊。');
-    }catch{if(token===loadToken)toast('無法讀取圖片，請改用 JPG、PNG 或 WebP。');}
+    }catch{if(token===loadToken)toast(options.heic?'這個瀏覽器無法讀取 HEIC，請先轉成 JPG 再選取。':'無法讀取圖片，請改用 JPG、PNG 或 WebP。');}
     finally{if(temporary)URL.revokeObjectURL(src);if(token===loadToken){loading=false;syncForms();}}
   }
   async function exportImage(){
@@ -130,12 +137,15 @@
     ['ratio-w','ratio-h'].forEach(id=>{$(id).oninput=()=>{const w=Number($('ratio-w').value),h=Number($('ratio-h').value);if(w>0&&h>0)applyRatio(w/h);};$(id).onchange=syncRatioFields;});
     $('swap').onclick=()=>{applyRatio(1/state.ratio);syncRatioFields();};
     $('resize-canvas').onclick=()=>{resizing=true;state.mode='ratio';closeSheet();requestRender();};
-    $('file').onchange=e=>{const file=e.target.files[0];e.target.value='';if(!file)return;if(file.size>30*1024*1024){toast('請選擇小於 30 MB 的圖片。');return;}if(file.type==='image/svg+xml'||!(/\.(jpe?g|png|webp|avif|gif|heic|heif)$/i.test(file.name))){toast('請選擇 JPG、PNG 或 WebP 圖片。');return;}picker.reset();loadImage(URL.createObjectURL(file),null,null,true);};
+    // Some pickers drop the extension or the MIME type, so either one is enough; files with neither still get a decode attempt.
+    $('file').onchange=e=>{const file=e.target.files[0];e.target.value='';if(!file)return;if(file.size>30*1024*1024){toast('請選擇小於 30 MB 的圖片。');return;}
+      const known=/\.(jpe?g|png|webp|avif|gif|heic|heif)$/i.test(file.name);if(file.type==='image/svg+xml'||/\.svg$/i.test(file.name)||file.type&&!file.type.startsWith('image/')&&!known){toast('請選擇 JPG、PNG、WebP 等圖片檔。');return;}
+      picker.reset();loadImage(URL.createObjectURL(file),null,null,true,{heic:/hei[cf]/i.test(file.type)||/\.hei[cf]$/i.test(file.name)});};
     document.querySelectorAll('[data-object]').forEach(el=>el.onclick=()=>setMode(el.dataset.object));
     $('zoom').oninput=()=>setZoom(Number($('zoom').value)/100);$('rotate').onclick=()=>{state.rotation=(state.rotation+90)%360;state.panX=state.panY=0;requestRender();};$('reset-photo').onclick=()=>{resetPhoto();requestRender();};
     $('fit').onchange=()=>{state.fit=$('fit').value;state.zoom=Math.max(minZoom(),state.zoom);state.panX=state.panY=0;requestRender();};
     $('card-scale').oninput=()=>{state.cardScale=Number($('card-scale').value)/100;requestRender();};$('radius').oninput=()=>{state.radius=Number($('radius').value);requestRender();};$('card-title').oninput=()=>{state.title=$('card-title').value;requestRender();};$('color').oninput=()=>{colorChosen=true;state.background=$('color').value;requestRender();};$('align').onchange=clearGuides;
-    $('close-sheet').onclick=closeSheet;$('sheet').addEventListener('click',e=>{if(e.target===$('sheet')){const r=$('sheet').getBoundingClientRect();if(e.clientY<r.top||e.clientY>r.bottom||e.clientX<r.left||e.clientX>r.right)closeSheet();}});
+    $('close-sheet').onclick=closeSheet;$('sheet').addEventListener('close',placeToast);$('sheet').addEventListener('click',e=>{if(e.target===$('sheet')){const r=$('sheet').getBoundingClientRect();if(e.clientY<r.top||e.clientY>r.bottom||e.clientX<r.left||e.clientX>r.right)closeSheet();}});
     let dragStart=null;$('sheet-grip').onpointerdown=e=>{dragStart=e.clientY;$('sheet-grip').setPointerCapture(e.pointerId);};$('sheet-grip').onpointermove=e=>{if(dragStart!==null)$('sheet').style.transform=`translateY(${Math.max(0,e.clientY-dragStart)}px)`;};$('sheet-grip').onpointerup=e=>{if(dragStart!==null&&e.clientY-dragStart>70)closeSheet();dragStart=null;$('sheet').style.transform='';};$('sheet-grip').onpointercancel=()=>{dragStart=null;$('sheet').style.transform='';};
     $('frame').addEventListener('pointerdown',e=>{
       if(state.step!==3&&!(state.step===2&&resizing))return;
