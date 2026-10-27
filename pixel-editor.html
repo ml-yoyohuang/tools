@@ -187,6 +187,14 @@ dialog p { color: var(--muted); }
   image-rendering: pixelated;
 }
 #importOffsetX, #importOffsetY { width: 70px; }
+#gbDialog { width: min(760px, calc(100vw - 24px)); }
+.gb-thresholds {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 36px;
+  align-items: center;
+  gap: 4px 10px;
+  margin: 8px 0;
+}
 .dialog-actions {
   display: flex;
   justify-content: flex-end;
@@ -275,6 +283,7 @@ kbd {
     <button id="saveBtn">儲存專案</button>
     <button id="pngBtn">原尺寸 PNG</button>
     <button id="largeBtn">放大 PNG</button>
+    <button id="viewBtn">畫面 PNG（含網格）</button>
   </div>
 </header>
 
@@ -352,10 +361,14 @@ kbd {
         <button id="quantizeBtn">量化色盤</button>
       </div>
       <div class="row">
+        <button id="gbBtn">轉 Game Boy 4 色</button>
+      </div>
+      <div class="row">
         <button id="binaryBtn">硬化透明度</button>
       </div>
       <div class="small">
         量化採 weighted median-cut，不加 dithering。<br>
+        Game Boy 轉換依亮度分 4 階，可調門檻與 Bayer 抖色。<br>
         硬化透明度：Alpha ≥ 128 變不透明，其餘變透明。
         皆可復原。
       </div>
@@ -372,8 +385,15 @@ kbd {
           <option value="16">16×</option>
         </select>
       </div>
+      <div class="row">
+        <label>
+          <input type="checkbox" id="viewChecker" checked>
+          畫面 PNG 透明處畫棋盤格
+        </label>
+      </div>
       <div class="small">
-        PNG 不含編輯網格。<br>
+        原尺寸／放大 PNG 不含編輯網格。<br>
+        「畫面 PNG」照目前倍率輸出整張畫布，網格與畫面顯示一致。<br>
         放大採 nearest-neighbor。<br>
         請定期保存 JSON 專案，關閉分頁不會自動保存。<br>
         復原保留最近操作，受記憶體上限限制。
@@ -525,6 +545,71 @@ kbd {
   </div>
 </dialog>
 
+<dialog id="gbDialog">
+  <h2>轉換為 Game Boy 4 色</h2>
+  <div class="import-previews">
+    <figure>
+      <figcaption class="small">目前畫布</figcaption>
+      <canvas id="gbBefore" class="preview checker"
+              aria-label="轉換前預覽"></canvas>
+    </figure>
+    <figure>
+      <figcaption class="small">轉換後</figcaption>
+      <canvas id="gbAfter" class="preview checker"
+              aria-label="轉換後預覽"></canvas>
+    </figure>
+  </div>
+
+  <div class="row">
+    <label for="gbPreset">色盤</label>
+    <select id="gbPreset">
+      <option value="pocket">Game Boy Pocket（灰）</option>
+      <option value="dmg">Game Boy 初代（綠）</option>
+    </select>
+    <input id="gbC0" type="color" aria-label="最暗色">
+    <input id="gbC1" type="color" aria-label="次暗色">
+    <input id="gbC2" type="color" aria-label="次亮色">
+    <input id="gbC3" type="color" aria-label="最亮色">
+  </div>
+
+  <div class="gb-thresholds">
+    <label for="gbT1">最暗｜次暗</label>
+    <input id="gbT1" type="range" min="1" max="255">
+    <span id="gbT1Value" class="small"></span>
+    <label for="gbT2">次暗｜次亮</label>
+    <input id="gbT2" type="range" min="1" max="255">
+    <span id="gbT2Value" class="small"></span>
+    <label for="gbT3">次亮｜最亮</label>
+    <input id="gbT3" type="range" min="1" max="255">
+    <span id="gbT3Value" class="small"></span>
+  </div>
+  <div class="row">
+    <button id="gbAuto">自動門檻（依亮度四等分）</button>
+  </div>
+
+  <div class="row">
+    <label for="gbDither">抖色</label>
+    <select id="gbDither">
+      <option value="0" selected>無</option>
+      <option value="2">Bayer 2×2</option>
+      <option value="4">Bayer 4×4</option>
+      <option value="8">Bayer 8×8</option>
+    </select>
+    <label>強度 <input id="gbStrength" type="range" min="0" max="100" value="50"></label>
+    <span id="gbStrengthValue" class="small"></span>
+  </div>
+
+  <div id="gbInfo" class="small"></div>
+  <p class="small">
+    亮度 = 0.299R＋0.587G＋0.114B，低於門檻歸入較暗一階。
+    透明度維持原樣，可復原。Pocket 灰沒有官方色碼，此為近似值，可直接改色。
+  </p>
+  <div class="dialog-actions">
+    <button id="cancelGb">取消</button>
+    <button id="applyGb" class="primary">轉換</button>
+  </div>
+</dialog>
+
 <dialog id="newDialog">
   <h2>新畫布</h2>
   <div class="row">
@@ -580,6 +665,7 @@ const ZOOM_STEPS = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32];
 const WHEEL_ZOOM_THRESHOLD = 40;
 let wheelZoomDelta = 0;
 const MAX_SOURCE_PIXELS = 40_000_000;
+const MAX_EXPORT_SIDE = 16384;
 
 let mergeColors = [];
 let mergeFiltered = [];
@@ -1356,6 +1442,186 @@ function quantize(limit) {
   inspect("色量化完成；透明度維持原樣");
 }
 
+/* ---------- Game Boy 4 色轉換 ---------- */
+
+// 由暗到亮；初代綠為常見的 BGB 模擬器色，Pocket 灰沒有官方色碼，取近似值
+const GB_PRESETS = {
+  pocket: ["#222320", "#5c5e57", "#9a9d93", "#cdd0c4"],
+  dmg: ["#081820", "#346856", "#88c070", "#e0f8d0"]
+};
+let gbPreviewFrame = 0;
+
+function luminance(d, i) {
+  return 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+}
+
+// 標準 Bayer 矩陣（遞迴：[[4M, 4M+2], [4M+3, 4M+1]]），值域 0…n²−1
+function bayer(n) {
+  if (n === 1) return [0];
+  const h = n / 2, m = bayer(h), out = new Array(n * n);
+  for (let y = 0; y < n; y++) {
+    for (let x = 0; x < n; x++) {
+      const quadrant = [0, 2, 3, 1][(y >= h) * 2 + (x >= h)];
+      out[y * n + x] = 4 * m[(y % h) * h + (x % h)] + quadrant;
+    }
+  }
+  return out;
+}
+
+function fitPreview(el, w, h) {
+  const fit = Math.min(340 / w, 240 / h);
+  el.style.width = Math.round(w * fit) + "px";
+  el.style.height = Math.round(h * fit) + "px";
+}
+
+function putPreview(el, data, w, h) {
+  el.width = w;
+  el.height = h;
+  el.getContext("2d").putImageData(new ImageData(data, w, h), 0, 0);
+  fitPreview(el, w, h);
+}
+
+function gbSettings() {
+  return {
+    colors: [0, 1, 2, 3].map(k => rgb($("gbC" + k).value)),
+    t: [1, 2, 3].map(k => Number($("gbT" + k).value)),
+    dither: Number($("gbDither").value),
+    strength: Number($("gbStrength").value) / 100
+  };
+}
+
+function gbConvert(s) {
+  const out = pixels.slice();
+  const counts = [0, 0, 0, 0];
+  const n = s.dither;
+  const matrix = n ? bayer(n) : null;
+  // 抖動幅度以平均階距為準：強度 100% 時剛好跨越一階
+  const spread = Math.max(16, (s.t[2] - s.t[0]) / 2) * s.strength;
+
+  for (let p = 0, i = 0; i < out.length; p++, i += 4) {
+    if (!out[i + 3]) continue;
+    let y = luminance(out, i);
+    if (matrix) {
+      const m = matrix[((p / W) | 0) % n * n + (p % W) % n];
+      y += ((m + 0.5) / (n * n) - 0.5) * spread;
+    }
+    const level = y < s.t[0] ? 0 : y < s.t[1] ? 1 : y < s.t[2] ? 2 : 3;
+    const c = s.colors[level];
+    out[i] = c[0];
+    out[i + 1] = c[1];
+    out[i + 2] = c[2];
+    counts[level]++;
+  }
+  return { pixels: out, counts };
+}
+
+// 門檻 t 的意義：亮度 < t 歸入較暗一階；取「累積像素達 1/4、2/4、3/4」的位置
+function gbAutoThresholds() {
+  const hist = new Uint32Array(256);
+  let total = 0;
+  for (let i = 0; i < pixels.length; i += 4) {
+    if (!pixels[i + 3]) continue;
+    hist[Math.round(luminance(pixels, i))]++;
+    total++;
+  }
+  const t = [];
+  let cum = 0;
+  for (let v = 0; v < 256 && t.length < 3; v++) {
+    cum += hist[v];
+    while (t.length < 3 && cum >= total * (t.length + 1) / 4) t.push(v + 1);
+  }
+  while (t.length < 3) t.push(255);
+  // 確保 1 ≤ t1 < t2 < t3 ≤ 255
+  for (let k = 0; k < 3; k++) {
+    t[k] = Math.min(253 + k, Math.max(t[k], k ? t[k - 1] + 1 : 1));
+  }
+  setGbThresholds(t);
+}
+
+function setGbThresholds(t) {
+  t.forEach((v, k) => {
+    $("gbT" + (k + 1)).value = v;
+    $("gbT" + (k + 1) + "Value").textContent = v;
+  });
+}
+
+function setGbPreset(name) {
+  GB_PRESETS[name].forEach((hex, k) => { $("gbC" + k).value = hex; });
+}
+
+function renderGbPreview() {
+  gbPreviewFrame = 0;
+  const s = gbSettings();
+  const { pixels: out, counts } = gbConvert(s);
+  putPreview($("gbAfter"), out, W, H);
+  $("gbStrengthValue").textContent = Math.round(s.strength * 100) + "%";
+  $("gbStrength").disabled = !s.dither;
+  const names = ["最暗", "次暗", "次亮", "最亮"];
+  $("gbInfo").textContent = "各階像素：" +
+    counts.map((n, k) => `${names[k]} ${n.toLocaleString()}`).join(" · ");
+}
+
+function scheduleGbPreview() {
+  if (!gbPreviewFrame) gbPreviewFrame = requestAnimationFrame(renderGbPreview);
+}
+
+function openGb() {
+  finishGesture();
+  if (!pixels.some((v, i) => i % 4 === 3 && v)) {
+    showMessage("畫布目前沒有可見像素。");
+    return;
+  }
+  if (!$("gbC0").dataset.ready) {
+    setGbPreset($("gbPreset").value);
+    $("gbC0").dataset.ready = "1";
+  }
+  gbAutoThresholds();
+  putPreview($("gbBefore"), pixels, W, H);
+  renderGbPreview();
+  $("gbDialog").showModal();
+}
+
+function applyGb() {
+  const s = gbSettings();
+  remember();
+  pixels = gbConvert(s).pixels;
+  workingPalette = [...new Set(s.colors.map(c => toHex(c[0], c[1], c[2])))];
+  renderPalette();
+  draw();
+  $("gbDialog").close();
+  inspect(
+    "已轉換為 Game Boy 4 色" +
+    (s.dither ? `（Bayer ${s.dither}×${s.dither} 抖色 ${Math.round(s.strength * 100)}%）` : "")
+  );
+}
+
+$("gbBtn").onclick = openGb;
+$("applyGb").onclick = applyGb;
+$("cancelGb").onclick = () => $("gbDialog").close();
+$("gbAuto").onclick = () => {
+  gbAutoThresholds();
+  scheduleGbPreview();
+};
+$("gbPreset").onchange = () => {
+  setGbPreset($("gbPreset").value);
+  scheduleGbPreview();
+};
+[0, 1, 2, 3].forEach(k =>
+  $("gbC" + k).addEventListener("input", scheduleGbPreview));
+$("gbDither").onchange = scheduleGbPreview;
+$("gbStrength").oninput = scheduleGbPreview;
+
+// 拖動某條門檻時推擠相鄰門檻，維持 t1 ≤ t2 ≤ t3
+[1, 2, 3].forEach(k => {
+  $("gbT" + k).oninput = () => {
+    const t = [1, 2, 3].map(j => Number($("gbT" + j).value));
+    for (let j = k; j < 3; j++) t[j] = Math.max(t[j], t[j - 1]);
+    for (let j = k - 2; j >= 0; j--) t[j] = Math.min(t[j], t[j + 1]);
+    setGbThresholds(t);
+    scheduleGbPreview();
+  };
+});
+
 /* ---------- 檔案與輸出 ---------- */
 
 function download(blob, name) {
@@ -1369,6 +1635,17 @@ function download(blob, name) {
   setTimeout(() => URL.revokeObjectURL(url), 30000);
 }
 
+function downloadCanvas(output, name, onDone) {
+  output.toBlob(blob => {
+    if (blob) {
+      download(blob, name);
+      if (onDone) onDone();
+    } else {
+      showMessage("PNG 匯出失敗，請嘗試較小倍數。");
+    }
+  }, "image/png");
+}
+
 function exportPNG(scale = 1) {
   finishGesture();
   const output = document.createElement("canvas");
@@ -1377,13 +1654,55 @@ function exportPNG(scale = 1) {
   const outCtx = output.getContext("2d");
   outCtx.imageSmoothingEnabled = false;
   outCtx.drawImage(canvas, 0, 0, output.width, output.height);
-  output.toBlob(blob => {
-    if (blob) {
-      download(blob, `pixel-art-${W}x${H}-${scale}x.png`);
-    } else {
-      showMessage("PNG 匯出失敗，請嘗試較小倍數。");
-    }
-  }, "image/png");
+  downloadCanvas(output, `pixel-art-${W}x${H}-${scale}x.png`);
+}
+
+// 照畫面輸出：目前倍率、棋盤格底、網格（顯示條件與畫面相同），右／下補一條收邊線
+function exportView() {
+  finishGesture();
+  const z = zoom;
+  const grid = $("gridToggle").checked && z >= 4;
+  const w = W * z + (grid ? 1 : 0);
+  const h = H * z + (grid ? 1 : 0);
+  if (w > MAX_EXPORT_SIDE || h > MAX_EXPORT_SIDE) {
+    showMessage(
+      `目前倍率 ${z}× 會輸出 ${w} × ${h} px，超過瀏覽器上限 ${MAX_EXPORT_SIDE} px。` +
+      "請先縮小倍率再匯出。"
+    );
+    return;
+  }
+
+  const output = document.createElement("canvas");
+  output.width = w;
+  output.height = h;
+  const c = output.getContext("2d");
+
+  if ($("viewChecker").checked) {
+    // 與 #stage 背景相同：8px 方格，#d0d0d0／#aaa 交錯
+    const tile = document.createElement("canvas");
+    tile.width = tile.height = 16;
+    const t = tile.getContext("2d");
+    t.fillStyle = "#d0d0d0";
+    t.fillRect(0, 0, 16, 16);
+    t.fillStyle = "#aaaaaa";
+    t.fillRect(0, 0, 8, 8);
+    t.fillRect(8, 8, 8, 8);
+    c.fillStyle = c.createPattern(tile, "repeat");
+    c.fillRect(0, 0, W * z, H * z);
+  }
+
+  c.imageSmoothingEnabled = false;
+  c.drawImage(canvas, 0, 0, W * z, H * z);
+
+  if (grid) {
+    c.fillStyle = "rgba(17, 17, 17, .4)";  // 與 #grid 的 #1116 相同
+    for (let x = 0; x <= W; x++) c.fillRect(x * z, 0, 1, h);
+    for (let y = 0; y <= H; y++) c.fillRect(0, y * z, w, 1);
+  }
+
+  downloadCanvas(output, `pixel-art-${W}x${H}-view-${z}x.png`, () =>
+    inspect(`已匯出畫面 PNG：${w} × ${h} px` + (grid ? "，含網格" : "，未含網格"))
+  );
 }
 
 function saveProject() {
@@ -1607,13 +1926,7 @@ function renderImportPreview() {
     tctx.stroke();
   }
 
-  result.width = s.w;
-  result.height = s.h;
-  result.getContext("2d")
-    .putImageData(new ImageData(sampleImage(src, s), s.w, s.h), 0, 0);
-  const fit = Math.min(340 / s.w, 240 / s.h);
-  result.style.width = Math.round(s.w * fit) + "px";
-  result.style.height = Math.round(s.h * fit) + "px";
+  putPreview(result, sampleImage(src, s), s.w, s.h);
 
   $("importInfo").textContent =
     `每格 ≈ ${cw.toFixed(2)} × ${ch.toFixed(2)} 原圖 px` +
@@ -1839,6 +2152,7 @@ $("loadBtn").onclick = () => {
 $("saveBtn").onclick = saveProject;
 $("pngBtn").onclick = () => exportPNG(1);
 $("largeBtn").onclick = () => exportPNG(Number($("exportScale").value));
+$("viewBtn").onclick = exportView;
 
 /* ---------- 快捷鍵 ---------- */
 
