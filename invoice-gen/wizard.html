@@ -22,12 +22,12 @@
   <meta property="og:image:alt" content="隨身一張簡易製作：白橘滿版波浪圖樣、藍色文字底色與『三步，做一張。』">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://ml-yoyohuang.github.io/tools/invoice-gen/og-wizard.png?v=27dc58af6879">
-  <link rel="stylesheet" href="wizard.css?v=7">
+  <link rel="stylesheet" href="wizard.css?v=8">
   <script src="core.js?v=wizard3" defer></script>
   <script src="artwork-study-shader.js" defer></script>
   <script src="artwork-renderer.js?v=18" defer></script>
   <script src="gallery.js?v=39" defer></script>
-  <script src="wizard.js?v=18" defer></script>
+  <script src="wizard.js?v=20" defer></script>
 </head>
 <body data-step="1">
   <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -66,7 +66,7 @@
       </div></section>
       <section data-sheet="size" hidden><div class="size-grid" role="group" aria-label="選擇形狀"><button data-size="phone">手機桌布</button><button data-size="square">正方形</button><button data-size="portrait">悠遊卡直式</button><button data-size="landscape">悠遊卡橫式</button><button data-size="original">原圖比例</button><button data-size="custom">自訂比例</button></div>
         <div id="phone-options"><label for="device">螢幕比例</label><select id="device"><option value="1080,2340">通用長螢幕</option><option value="current">目前手機</option><option value="1179,2556">iPhone 14 Pro／15／16</option><option value="1206,2622">iPhone 16 Pro</option><option value="1320,2868">iPhone 16 Pro Max</option><option value="1080,2400">Android 長螢幕</option><option value="750,1334">iPhone SE</option></select></div>
-        <div id="custom-options" hidden><div class="ratio-fields"><label>寬<input id="ratio-w" type="number" min="0.1" step="any" value="9"></label><span>:</span><label>高<input id="ratio-h" type="number" min="0.1" step="any" value="19.5"></label><button id="swap" aria-label="交換寬高">⇄</button></div><label class="check"><input id="ratio-snap" type="checkbox" checked>吸附常用比例</label><button id="resize-canvas" class="primary">在畫布上拖拉</button></div>
+        <div id="custom-options" hidden><div class="ratio-slider"><label for="ratio-range">比例 <output id="ratio-value">9 : 19.5 直式</output></label><input id="ratio-range" type="range" step="any" list="ratio-ticks"></div><datalist id="ratio-ticks"></datalist><div class="ratio-fields"><label>寬<input id="ratio-w" type="number" min="0.1" step="any" value="9"></label><span>:</span><label>高<input id="ratio-h" type="number" min="0.1" step="any" value="19.5"></label><button id="swap" aria-label="交換寬高">⇄</button></div><label class="check"><input id="ratio-snap" type="checkbox" checked>吸附常用比例</label><button id="resize-canvas" class="primary">在畫布上拖拉</button></div>
       </section>
       <section data-sheet="image" hidden><div id="gallery" class="gallery"><label class="gallery-upload"><span class="upload-art"><svg aria-hidden="true"><use href="#i-upload"/></svg></span><span>自選圖片</span><input id="file" class="sr-only" type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/heic,image/heif"></label></div></section>
       <section data-sheet="adjust" hidden><div class="source-tabs" role="group" aria-label="調整對象"><button data-object="photo" aria-pressed="true">圖片</button><button data-object="barcode" aria-pressed="false">條碼</button></div>

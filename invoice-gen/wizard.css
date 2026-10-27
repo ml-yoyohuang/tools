@@ -303,6 +303,26 @@ dialog::backdrop {
   background:#0005;
   backdrop-filter:blur(3px);
 }
+/* While the ratio slider is dragged the sheet steps aside, leaving only the slider over the canvas. */
+#sheet.peek {
+  visibility:hidden;
+  background:transparent;
+  box-shadow:none;
+}
+#sheet.peek::backdrop {
+  background:transparent;
+  backdrop-filter:none;
+}
+.ratio-slider {
+  border-radius:16px;
+}
+#sheet.peek .ratio-slider {
+  visibility:visible;
+  background:#fffffff0;
+  box-shadow:0 6px 24px #0003;
+  padding:1px 12px 6px;
+  margin:-1px -12px -6px;
+}
 #sheet-grip {
   height:22px;
   display:flex;

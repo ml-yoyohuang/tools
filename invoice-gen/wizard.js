@@ -74,10 +74,12 @@
     if(state.layout==='side'&&state.ratio<1.2){state.layout='bottom';resetCard();}
     requestRender();
   }
+  // The ratio slider runs on a log scale so 1:1 sits mid-track and swapped ratios mirror each other.
+  function ratioLabel(ratio){return C.ratioText(ratio)+(Math.abs(ratio-1)<.0005?' 正方形':ratio<1?' 直式':' 橫式');}
   function syncRatioFields(){const [w,h]=C.ratioText(state.ratio).split(' : ');$('ratio-w').value=w;$('ratio-h').value=h;}
   function syncForms(){
     pressed('[data-layout]','layout',state.layout);pressed('[data-size]','size',state.size);pressed('[data-object]','object',state.mode==='barcode'?'barcode':'photo');
-    $('phone-options').hidden=state.size!=='phone';$('custom-options').hidden=state.size!=='custom';
+    $('phone-options').hidden=state.size!=='phone';$('custom-options').hidden=state.size!=='custom';$('ratio-range').value=Math.log(state.ratio);$('ratio-value').textContent=ratioLabel(state.ratio);$('ratio-range').setAttribute('aria-valuetext',ratioLabel(state.ratio));
     $('photo-settings').hidden=state.mode==='barcode';$('barcode-settings').hidden=state.mode!=='barcode';
     $('zoom').min=minZoom()*100;$('zoom').value=Math.round(state.zoom*100);$('zoom-value').textContent=Math.round(state.zoom*100)+'%';
     const tilt=Math.round(state.tilt);$('tilt').value=tilt;$('tilt-value').textContent=(tilt>0?'+':'')+tilt+'°';
@@ -149,6 +151,11 @@
     document.querySelectorAll('[data-size]').forEach(el=>el.onclick=()=>{setSize(el.dataset.size);if(state.size==='custom')syncRatioFields();else if(state.size!=='phone')closeSheet();});
     $('device').onchange=()=>{if($('device').value==='current'){const ratio=C.clamp(Math.min(screen.width,screen.height)/Math.max(screen.width,screen.height),C.MIN_RATIO,1);state.phone=[Math.round(2340*ratio),2340];}else state.phone=$('device').value.split(',').map(Number);setSize('phone');closeSheet();};
     ['ratio-w','ratio-h'].forEach(id=>{$(id).oninput=()=>{const w=Number($('ratio-w').value),h=Number($('ratio-h').value);if(w>0&&h>0)applyRatio(w/h);};$(id).onchange=syncRatioFields;});
+    $('ratio-range').min=Math.log(C.MIN_RATIO);$('ratio-range').max=Math.log(C.MAX_RATIO);
+    $('ratio-ticks').append(...[9/16,2/3,3/4,1,4/3,3/2,16/9].map(r=>new Option('',Math.log(r))));
+    const peek=on=>$('sheet').classList.toggle('peek',on);
+    $('ratio-range').addEventListener('pointerdown',()=>peek(true));$('ratio-range').addEventListener('change',()=>peek(false));['pointerup','pointercancel'].forEach(type=>addEventListener(type,()=>peek(false)));
+    $('ratio-range').oninput=e=>{applyRatio(Math.exp(Number(e.target.value)),$('ratio-snap').checked);syncRatioFields();};
     $('swap').onclick=()=>{applyRatio(1/state.ratio);syncRatioFields();};
     $('resize-canvas').onclick=()=>{resizing=true;state.mode='ratio';closeSheet();requestRender();};
     // Some pickers drop the extension or the MIME type, so either one is enough; files with neither still get a decode attempt.
