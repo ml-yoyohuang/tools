@@ -188,6 +188,17 @@ dialog p { color: var(--muted); }
 }
 #importOffsetX, #importOffsetY { width: 70px; }
 #gbDialog { width: min(760px, calc(100vw - 24px)); }
+#gbHexInput {
+  flex: 1;
+  min-width: 200px;
+  resize: vertical;
+  background: #2a3237;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 9px;
+  font: 13px/1.4 ui-monospace, monospace;
+}
 .gb-thresholds {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) 36px;
@@ -562,15 +573,19 @@ kbd {
 
   <div class="row">
     <label for="gbPreset">色盤</label>
-    <select id="gbPreset">
-      <option value="pocket">Game Boy Pocket（灰）</option>
-      <option value="dmg">Game Boy 初代（綠）</option>
-    </select>
+    <select id="gbPreset"></select>
     <input id="gbC0" type="color" aria-label="最暗色">
     <input id="gbC1" type="color" aria-label="次暗色">
     <input id="gbC2" type="color" aria-label="次亮色">
     <input id="gbC3" type="color" aria-label="最亮色">
   </div>
+  <div class="row">
+    <textarea id="gbHexInput" rows="2"
+              placeholder="貼上 4 個色碼，例如 Lospec 的 .hex 內容（一行一個）"
+              aria-label="貼上自訂色盤 HEX"></textarea>
+    <button id="gbHexApply">套用色碼</button>
+  </div>
+  <div id="gbHexHint" class="small"></div>
 
   <div class="gb-thresholds">
     <label for="gbT1">最暗｜次暗</label>
@@ -602,7 +617,8 @@ kbd {
   <div id="gbInfo" class="small"></div>
   <p class="small">
     亮度 = 0.299R＋0.587G＋0.114B，低於門檻歸入較暗一階。
-    透明度維持原樣，可復原。Pocket 灰沒有官方色碼，此為近似值，可直接改色。
+    透明度維持原樣，可復原。Pocket 灰沒有官方色碼，此為近似值；
+    其餘色盤取自 Lospec。所有色盤套用時依亮度由暗到亮排序，可直接改色。
   </p>
   <div class="dialog-actions">
     <button id="cancelGb">取消</button>
@@ -1444,11 +1460,51 @@ function quantize(limit) {
 
 /* ---------- Game Boy 4 色轉換 ---------- */
 
-// 由暗到亮；初代綠為常見的 BGB 模擬器色，Pocket 灰沒有官方色碼，取近似值
-const GB_PRESETS = {
-  pocket: ["#222320", "#5c5e57", "#9a9d93", "#cdd0c4"],
-  dmg: ["#081820", "#346856", "#88c070", "#e0f8d0"]
-};
+// Pocket 灰沒有官方色碼，取近似值；其餘為 Lospec 原始色碼與順序，套用時再依亮度排序
+const GB_PRESETS = [
+  { group: "經典 Game Boy", id: "pocket", name: "Game Boy Pocket（灰，近似）",
+    colors: ["#222320", "#5c5e57", "#9a9d93", "#cdd0c4"] },
+  { group: "經典 Game Boy", id: "nintendo-gameboy-bgb", name: "Game Boy 初代綠（bgb）",
+    colors: ["#081820", "#346856", "#88c070", "#e0f8d0"] },
+  { group: "經典 Game Boy", id: "nostalgia", name: "Nostalgia",
+    colors: ["#d0d058", "#a0a840", "#708028", "#405010"] },
+  { group: "經典 Game Boy", id: "kirokaze-gameboy", name: "Kirokaze Gameboy",
+    colors: ["#332c50", "#46878f", "#94e344", "#e2f3e4"] },
+  { group: "經典 Game Boy", id: "pokemon-sgb", name: "Pokemon (SGB)",
+    colors: ["#181010", "#84739c", "#f7b58c", "#ffefff"] },
+  { group: "經典 Game Boy", id: "2-bit-grayscale", name: "2-bit Grayscale",
+    colors: ["#000000", "#676767", "#b6b6b6", "#ffffff"] },
+  { group: "經典 Game Boy", id: "2bit-demichrome", name: "2bit demichrome",
+    colors: ["#211e20", "#555568", "#a0a08b", "#e9efec"] },
+  { group: "暖色／甜系", id: "ice-cream-gb", name: "Ice Cream GB",
+    colors: ["#7c3f58", "#eb6b6f", "#f9a875", "#fff6d3"] },
+  { group: "暖色／甜系", id: "rustic-gb", name: "Rustic GB",
+    colors: ["#2c2137", "#764462", "#edb4a1", "#a96868"] },
+  { group: "暖色／甜系", id: "ayy4", name: "AYY4",
+    colors: ["#00303b", "#ff7777", "#ffce96", "#f1f2da"] },
+  { group: "暖色／甜系", id: "crimson", name: "Crimson",
+    colors: ["#eff9d6", "#ba5044", "#7a1c4b", "#1b0326"] },
+  { group: "暖色／甜系", id: "bittersweet", name: "bittersweet",
+    colors: ["#282328", "#545c7e", "#c56981", "#a3a29a"] },
+  { group: "冷色／夜景系", id: "mist-gb", name: "Mist GB",
+    colors: ["#2d1b00", "#1e606e", "#5ab9a8", "#c4f0c2"] },
+  { group: "冷色／夜景系", id: "moonlight-gb", name: "Moonlight GB",
+    colors: ["#0f052d", "#203671", "#36868f", "#5fc75d"] },
+  { group: "冷色／夜景系", id: "blk-aqu4", name: "BLK AQU4",
+    colors: ["#002b59", "#005f8c", "#00b9be", "#9ff4e5"] },
+  { group: "冷色／夜景系", id: "hollow", name: "Hollow",
+    colors: ["#0f0f1b", "#565a75", "#c6b7be", "#fafbf6"] },
+  { group: "冷色／夜景系", id: "arq4", name: "Arq4",
+    colors: ["#ffffff", "#6772a9", "#3a3277", "#000000"] },
+  { group: "冷色／夜景系", id: "wish-gb", name: "Wish GB",
+    colors: ["#622e4c", "#7550e8", "#608fcf", "#8be5ff"] },
+  { group: "紫／霓虹系", id: "lava-gb", name: "Lava-GB",
+    colors: ["#051f39", "#4a2480", "#c53a9d", "#ff8e80"] },
+  { group: "紫／霓虹系", id: "spacehaze", name: "SpaceHaze",
+    colors: ["#f8e3c4", "#cc3495", "#6b1fb1", "#0b0630"] },
+  { group: "紫／霓虹系", id: "velvet-cherry-gb", name: "Velvet Cherry GB",
+    colors: ["#2d162c", "#412752", "#683a68", "#9775a6"] }
+];
 let gbPreviewFrame = 0;
 
 function luminance(d, i) {
@@ -1545,8 +1601,50 @@ function setGbThresholds(t) {
   });
 }
 
-function setGbPreset(name) {
-  GB_PRESETS[name].forEach((hex, k) => { $("gbC" + k).value = hex; });
+function byLuminance(hexes) {
+  return [...hexes].sort((a, b) => luminance(rgb(a), 0) - luminance(rgb(b), 0));
+}
+
+function setGbColors(hexes) {
+  byLuminance(hexes).forEach((hex, k) => { $("gbC" + k).value = hex; });
+}
+
+function setGbPreset(id) {
+  const preset = GB_PRESETS.find(p => p.id === id);
+  if (preset) setGbColors(preset.colors);
+}
+
+function renderGbPresetOptions() {
+  const select = $("gbPreset");
+  const groups = new Map();
+  for (const p of GB_PRESETS) {
+    if (!groups.has(p.group)) {
+      const g = document.createElement("optgroup");
+      g.label = p.group;
+      groups.set(p.group, g);
+      select.appendChild(g);
+    }
+    groups.get(p.group).appendChild(new Option(p.name, p.id));
+  }
+  // 手動改色或貼上色碼後切到這一項，避免選單名稱與實際顏色不符
+  select.appendChild(new Option("自訂", "custom"));
+}
+
+// 從任意文字（Lospec .hex、逗號分隔、含或不含 #）擷取 6 位色碼
+function applyGbHex() {
+  const found = ($("gbHexInput").value.match(/#?\b[0-9a-f]{6}\b/gi) || [])
+    .map(normalizeHex);
+  const unique = [...new Set(found)];
+  if (unique.length !== 4) {
+    $("gbHexHint").textContent =
+      `需要剛好 4 個不重複的 6 位色碼，目前讀到 ${unique.length} 個。`;
+    return;
+  }
+  setGbColors(unique);
+  $("gbPreset").value = "custom";
+  $("gbHexHint").textContent = "已套用，並依亮度由暗到亮排序：" +
+    [0, 1, 2, 3].map(k => $("gbC" + k).value).join(" ");
+  scheduleGbPreview();
 }
 
 function renderGbPreview() {
@@ -1602,12 +1700,25 @@ $("gbAuto").onclick = () => {
   gbAutoThresholds();
   scheduleGbPreview();
 };
+renderGbPresetOptions();
 $("gbPreset").onchange = () => {
   setGbPreset($("gbPreset").value);
+  $("gbHexHint").textContent = "";
   scheduleGbPreview();
 };
 [0, 1, 2, 3].forEach(k =>
-  $("gbC" + k).addEventListener("input", scheduleGbPreview));
+  $("gbC" + k).addEventListener("input", () => {
+    $("gbPreset").value = "custom";
+    scheduleGbPreview();
+  }));
+$("gbHexApply").onclick = applyGbHex;
+// Enter 套用，Shift＋Enter 換行
+$("gbHexInput").addEventListener("keydown", event => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    applyGbHex();
+  }
+});
 $("gbDither").onchange = scheduleGbPreview;
 $("gbStrength").oninput = scheduleGbPreview;
 
