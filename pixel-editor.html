@@ -187,7 +187,7 @@ dialog p { color: var(--muted); }
   image-rendering: pixelated;
 }
 #importOffsetX, #importOffsetY { width: 70px; }
-#gbDialog { width: min(760px, calc(100vw - 24px)); }
+#gbDialog, #hhDialog { width: min(760px, calc(100vw - 24px)); }
 #gbHexInput {
   flex: 1;
   min-width: 200px;
@@ -199,7 +199,7 @@ dialog p { color: var(--muted); }
   padding: 6px 9px;
   font: 13px/1.4 ui-monospace, monospace;
 }
-.gb-thresholds {
+.slider-grid {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) 36px;
   align-items: center;
@@ -375,11 +375,15 @@ kbd {
         <button id="gbBtn">轉 Game Boy 4 色</button>
       </div>
       <div class="row">
+        <button id="hhBtn">掌機風格（GBC／GBA）</button>
+      </div>
+      <div class="row">
         <button id="binaryBtn">硬化透明度</button>
       </div>
       <div class="small">
         量化採 weighted median-cut，不加 dithering。<br>
         Game Boy 轉換依亮度分 4 階，可調門檻與 Bayer 抖色。<br>
+        掌機風格只追求 GBC／GBA 氛圍，不套用主機的 8×8 格色盤限制。<br>
         硬化透明度：Alpha ≥ 128 變不透明，其餘變透明。
         皆可復原。
       </div>
@@ -402,9 +406,17 @@ kbd {
           畫面 PNG 透明處畫棋盤格
         </label>
       </div>
+      <div class="row">
+        <label>
+          <input type="checkbox" id="viewLcd">
+          畫面 PNG 加 LCD 網點
+        </label>
+      </div>
       <div class="small">
         原尺寸／放大 PNG 不含編輯網格。<br>
         「畫面 PNG」照目前倍率輸出整張畫布，網格與畫面顯示一致。<br>
+        LCD 網點：每格右、下緣加一道同色壓暗的細縫，模擬掌機螢幕；
+        3× 以上才有效，建議關閉網格搭配使用。<br>
         放大採 nearest-neighbor。<br>
         畫布、色盤與設定會自動存到此瀏覽器，重新開啟時自動還原；
         復原紀錄不保存。換瀏覽器、清除網站資料前，請另存 JSON 專案。<br>
@@ -589,7 +601,7 @@ kbd {
   </div>
   <div id="gbHexHint" class="small"></div>
 
-  <div class="gb-thresholds">
+  <div class="slider-grid">
     <label for="gbT1">最暗｜次暗</label>
     <input id="gbT1" type="range" min="1" max="255">
     <span id="gbT1Value" class="small"></span>
@@ -625,6 +637,64 @@ kbd {
   <div class="dialog-actions">
     <button id="cancelGb">取消</button>
     <button id="applyGb" class="primary">轉換</button>
+  </div>
+</dialog>
+
+<dialog id="hhDialog">
+  <h2>掌機風格（GBC／GBA 氛圍）</h2>
+  <div class="import-previews">
+    <figure>
+      <figcaption class="small">目前畫布</figcaption>
+      <canvas id="hhBefore" class="preview checker"
+              aria-label="轉換前預覽"></canvas>
+    </figure>
+    <figure>
+      <figcaption class="small">轉換後</figcaption>
+      <canvas id="hhAfter" class="preview checker"
+              aria-label="轉換後預覽"></canvas>
+    </figure>
+  </div>
+
+  <div class="row">
+    <label for="hhPreset">風格</label>
+    <select id="hhPreset">
+      <option value="gbc">GBC 風：色少、偏淡</option>
+      <option value="gba">GBA 風：色多、明亮飽和</option>
+    </select>
+    <span class="small">切換風格會重設下方數值</span>
+  </div>
+
+  <div class="slider-grid">
+    <label for="hhColors">色數</label>
+    <input id="hhColors" type="range" min="2" max="128">
+    <span id="hhColorsValue" class="small"></span>
+    <label for="hhTone">LCD 色調</label>
+    <input id="hhTone" type="range" min="0" max="100">
+    <span id="hhToneValue" class="small"></span>
+  </div>
+
+  <div class="row">
+    <label for="hhDither">抖色</label>
+    <select id="hhDither">
+      <option value="0">無</option>
+      <option value="2">Bayer 2×2</option>
+      <option value="4">Bayer 4×4</option>
+      <option value="8">Bayer 8×8</option>
+    </select>
+    <label>強度 <input id="hhStrength" type="range" min="0" max="100"></label>
+    <span id="hhStrengthValue" class="small"></span>
+  </div>
+
+  <div id="hhInfo" class="small"></div>
+  <p class="small">
+    流程：LCD 色調 → median-cut 減色 → 對齊 15-bit 色（每色版 32 階）→ 抖色。
+    LCD 色調參考模擬器的螢幕色彩校正（近似值）：GBC 偏淡、略降飽和；
+    GBA 模擬初代無背光螢幕，偏暗。只追求氛圍，不套用 8×8 格色盤限制。
+    透明度維持原樣，可復原。
+  </p>
+  <div class="dialog-actions">
+    <button id="cancelHh">取消</button>
+    <button id="applyHh" class="primary">轉換</button>
   </div>
 </dialog>
 
@@ -684,6 +754,7 @@ const WHEEL_ZOOM_THRESHOLD = 40;
 let wheelZoomDelta = 0;
 const MAX_SOURCE_PIXELS = 40_000_000;
 const MAX_EXPORT_SIDE = 16384;
+const LCD_SEAM_SHADE = 0.55;
 
 let mergeColors = [];
 let mergeFiltered = [];
@@ -826,11 +897,11 @@ function updateView() {
   scheduleAutosave();
 }
 
-function histogram() {
+function histogram(data = pixels) {
   const map = new Map();
-  for (let i = 0; i < pixels.length; i += 4) {
-    if (!pixels[i + 3]) continue;
-    const key = keyAt(i);
+  for (let i = 0; i < data.length; i += 4) {
+    if (!data[i + 3]) continue;
+    const key = (data[i] << 16) | (data[i + 1] << 8) | data[i + 2];
     map.set(key, (map.get(key) || 0) + 1);
   }
   return [...map].map(([key, count]) => ({
@@ -1391,11 +1462,8 @@ function boxInfo(list) {
   };
 }
 
-function quantize(limit) {
-  const colors = histogram();
-  if (!colors.length) return;
-  remember();
-
+// weighted median-cut：回傳最多 limit 個 [r, g, b]（各箱加權平均色）
+function medianCut(colors, limit) {
   let boxes = [boxInfo(colors)];
   while (boxes.length < limit) {
     let index = -1, score = -1;
@@ -1423,7 +1491,7 @@ function quantize(limit) {
     );
   }
 
-  const reduced = boxes.map(box => {
+  return boxes.map(box => {
     const sum = [0, 0, 0];
     for (const c of box.list) {
       sum[0] += c.r * c.count;
@@ -1432,7 +1500,14 @@ function quantize(limit) {
     }
     return sum.map(v => Math.round(v / box.weight));
   });
+}
 
+function quantize(limit) {
+  const colors = histogram();
+  if (!colors.length) return;
+  remember();
+
+  const reduced = medianCut(colors, limit);
   const mapping = new Map();
   for (const c of colors) {
     let best = reduced[0], distance = Infinity;
@@ -1738,6 +1813,190 @@ $("gbStrength").oninput = scheduleGbPreview;
   };
 });
 
+/* ---------- 掌機風格（GBC／GBA 氛圍） ---------- */
+
+const HH_PRESETS = {
+  gbc: { colors: 24, tone: 50, dither: 0, strength: 50, screen: "160×144" },
+  gba: { colors: 48, tone: 0, dither: 0, strength: 50, screen: "240×160" }
+};
+let hhPreviewFrame = 0;
+
+// 8-bit → 15-bit（5-bit）→ 8-bit，與 GBC／GBA 的色深對齊
+function to555(v) {
+  const q = Math.round(v * 31 / 255);
+  return (q << 3) | (q >> 2);
+}
+
+// 模擬器常見的 LCD 色彩校正（近似）：輸入輸出皆為 8-bit [r, g, b]
+function lcdTone(r, g, b, style) {
+  r >>= 3; g >>= 3; b >>= 3;
+  if (style === "gbc") {
+    return [
+      Math.min(960, r * 26 + g * 4 + b * 2) >> 2,
+      Math.min(960, g * 24 + b * 8) >> 2,
+      Math.min(960, r * 6 + g * 4 + b * 22) >> 2
+    ];
+  }
+  // GBA：LCD gamma 4.0、輸出 gamma 2.2，並帶色版混合，重現初代螢幕的暗沉
+  const lr = (r / 31) ** 4, lg = (g / 31) ** 4, lb = (b / 31) ** 4;
+  const out = v => Math.round(Math.min(1, v / 255) ** (1 / 2.2) * 255 * 255 / 280);
+  return [
+    out(50 * lg + 255 * lr),
+    out(30 * lb + 230 * lg + 10 * lr),
+    out(220 * lb + 10 * lg + 50 * lr)
+  ];
+}
+
+function hhSettings() {
+  return {
+    style: $("hhPreset").value,
+    colors: Number($("hhColors").value),
+    tone: Number($("hhTone").value) / 100,
+    dither: Number($("hhDither").value),
+    strength: Number($("hhStrength").value) / 100
+  };
+}
+
+function setHhPreset(style) {
+  const p = HH_PRESETS[style];
+  $("hhColors").value = p.colors;
+  $("hhTone").value = p.tone;
+  $("hhDither").value = p.dither;
+  $("hhStrength").value = p.strength;
+}
+
+function hhConvert(s) {
+  // ① LCD 色調（依強度與原色混合）
+  const toned = pixels.slice();
+  if (s.tone) {
+    const cache = new Map();
+    for (let i = 0; i < toned.length; i += 4) {
+      if (!toned[i + 3]) continue;
+      const key = (toned[i] << 16) | (toned[i + 1] << 8) | toned[i + 2];
+      let t = cache.get(key);
+      if (!t) {
+        const lcd = lcdTone(toned[i], toned[i + 1], toned[i + 2], s.style);
+        t = lcd.map((v, k) => toned[i + k] + (v - toned[i + k]) * s.tone);
+        cache.set(key, t);
+      }
+      toned[i] = t[0];
+      toned[i + 1] = t[1];
+      toned[i + 2] = t[2];
+    }
+  }
+
+  // ② 減色 ③ 對齊 15-bit
+  const colors = histogram(toned);
+  if (!colors.length) return { pixels: toned, palette: [] };
+  const palette = [...new Map(medianCut(colors, s.colors).map(c => {
+    const q = c.map(to555);
+    return [toHex(q[0], q[1], q[2]), q];
+  })).values()];
+
+  // ④ 對應到色盤，可選 Bayer 有序抖色（以色盤平均間距為抖動幅度）
+  const out = toned;
+  const n = s.dither;
+  const matrix = n ? bayer(n) : null;
+  const spread = s.strength * 255 / Math.cbrt(palette.length);
+  const usage = new Array(palette.length).fill(0);
+  const cache = new Map();
+  const nearest = (r, g, b) => {
+    let best = 0, distance = Infinity;
+    for (let k = 0; k < palette.length; k++) {
+      const c = palette[k];
+      const d = (r - c[0]) ** 2 + (g - c[1]) ** 2 + (b - c[2]) ** 2;
+      if (d < distance) { distance = d; best = k; }
+    }
+    return best;
+  };
+
+  for (let p = 0, i = 0; i < out.length; p++, i += 4) {
+    if (!out[i + 3]) continue;
+    let k;
+    if (matrix) {
+      const m = matrix[((p / W) | 0) % n * n + (p % W) % n];
+      const offset = ((m + 0.5) / (n * n) - 0.5) * spread;
+      k = nearest(out[i] + offset, out[i + 1] + offset, out[i + 2] + offset);
+    } else {
+      const key = (out[i] << 16) | (out[i + 1] << 8) | out[i + 2];
+      k = cache.get(key);
+      if (k === undefined) cache.set(key, k = nearest(out[i], out[i + 1], out[i + 2]));
+    }
+    const c = palette[k];
+    out[i] = c[0];
+    out[i + 1] = c[1];
+    out[i + 2] = c[2];
+    usage[k]++;
+  }
+
+  const used = palette
+    .map((c, k) => ({ hex: toHex(c[0], c[1], c[2]), count: usage[k] }))
+    .filter(c => c.count)
+    .sort((a, b) => b.count - a.count)
+    .map(c => c.hex);
+  return { pixels: out, palette: used };
+}
+
+function renderHhPreview() {
+  hhPreviewFrame = 0;
+  const s = hhSettings();
+  const result = hhConvert(s);
+  putPreview($("hhAfter"), result.pixels, W, H);
+  $("hhColorsValue").textContent = s.colors;
+  $("hhToneValue").textContent = Math.round(s.tone * 100) + "%";
+  $("hhStrengthValue").textContent = Math.round(s.strength * 100) + "%";
+  $("hhStrength").disabled = !s.dither;
+  $("hhInfo").textContent =
+    `實際使用 ${result.palette.length} 色 · 15-bit 色 · ` +
+    `目前畫布 ${W}×${H}（${s.style.toUpperCase()} 螢幕 ${HH_PRESETS[s.style].screen}）`;
+}
+
+function scheduleHhPreview() {
+  if (!hhPreviewFrame) hhPreviewFrame = requestAnimationFrame(renderHhPreview);
+}
+
+function openHh() {
+  finishGesture();
+  if (!pixels.some((v, i) => i % 4 === 3 && v)) {
+    showMessage("畫布目前沒有可見像素。");
+    return;
+  }
+  if (!$("hhColors").dataset.ready) {
+    setHhPreset($("hhPreset").value);
+    $("hhColors").dataset.ready = "1";
+  }
+  putPreview($("hhBefore"), pixels, W, H);
+  renderHhPreview();
+  $("hhDialog").showModal();
+}
+
+function applyHh() {
+  const s = hhSettings();
+  const result = hhConvert(s);
+  remember();
+  pixels = result.pixels;
+  workingPalette = result.palette.slice(0, 32);
+  renderPalette();
+  draw();
+  $("hhDialog").close();
+  inspect(
+    `已轉為 ${s.style.toUpperCase()} 風格：${result.palette.length} 色` +
+    (s.tone ? `、LCD 色調 ${Math.round(s.tone * 100)}%` : "") +
+    (s.dither ? `、Bayer ${s.dither}×${s.dither} 抖色` : "")
+  );
+}
+
+$("hhBtn").onclick = openHh;
+$("applyHh").onclick = applyHh;
+$("cancelHh").onclick = () => $("hhDialog").close();
+$("hhPreset").onchange = () => {
+  setHhPreset($("hhPreset").value);
+  scheduleHhPreview();
+};
+["hhColors", "hhTone", "hhStrength"].forEach(id =>
+  $(id).addEventListener("input", scheduleHhPreview));
+$("hhDither").onchange = scheduleHhPreview;
+
 /* ---------- 檔案與輸出 ---------- */
 
 function download(blob, name) {
@@ -1810,14 +2069,36 @@ function exportView() {
   c.imageSmoothingEnabled = false;
   c.drawImage(canvas, 0, 0, W * z, H * z);
 
+  // LCD 網點：每格右、下緣一道細縫，用該格本身的顏色壓暗，而不是統一的灰線
+  const lcd = $("viewLcd").checked && z >= 3;
+  if (lcd) {
+    const gap = Math.max(1, Math.round(z / 8));
+    const rowW = W * z;
+    const img = c.getImageData(0, 0, rowW, H * z);
+    const d = img.data;
+    for (let y = 0; y < H * z; y++) {
+      const seamRow = y % z >= z - gap;
+      for (let x = 0; x < rowW; x++) {
+        if (!seamRow && x % z < z - gap) continue;
+        const i = (y * rowW + x) * 4;
+        d[i] *= LCD_SEAM_SHADE;
+        d[i + 1] *= LCD_SEAM_SHADE;
+        d[i + 2] *= LCD_SEAM_SHADE;
+      }
+    }
+    c.putImageData(img, 0, 0);
+  }
+
   if (grid) {
     c.fillStyle = "rgba(17, 17, 17, .4)";  // 與 #grid 的 #1116 相同
     for (let x = 0; x <= W; x++) c.fillRect(x * z, 0, 1, h);
     for (let y = 0; y <= H; y++) c.fillRect(0, y * z, w, 1);
   }
 
-  downloadCanvas(output, `pixel-art-${W}x${H}-view-${z}x.png`, () =>
-    inspect(`已匯出畫面 PNG：${w} × ${h} px` + (grid ? "，含網格" : "，未含網格"))
+  const name = `pixel-art-${W}x${H}-view-${z}x${lcd ? "-lcd" : ""}.png`;
+  downloadCanvas(output, name, () =>
+    inspect(`已匯出畫面 PNG：${w} × ${h} px` +
+      (grid ? "，含網格" : "，未含網格") + (lcd ? "、LCD 網點" : ""))
   );
 }
 
@@ -2357,7 +2638,8 @@ const AUTOSAVE_KEY = "current";
 const AUTOSAVE_DELAY = 500;
 const AUTOSAVE_SETTINGS = {
   brush: "value", pickerReturn: "checked", gridToggle: "checked",
-  exportScale: "value", viewChecker: "checked", colorLimit: "value"
+  exportScale: "value", viewChecker: "checked", viewLcd: "checked",
+  colorLimit: "value"
 };
 let autosaveDb = null;
 let autosaveReady = false;  // 還原完成前不寫入，避免空白畫布蓋掉舊存檔
