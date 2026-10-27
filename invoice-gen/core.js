@@ -51,8 +51,9 @@
     return ratios.find(r => Math.abs(ratio-r)/r < .025) || ratio;
   }
   // Returns the card's footprint on the canvas; a quarter turn swaps it while the card keeps its proportions.
+  function edge(width) { return Math.max(18, width * .035); }
   function cardRect(width, height, state) {
-    const margin = Math.max(18, width * .035);
+    const margin = edge(width);
     const side = (state.cardRotation || 0) % 180 !== 0;
     const across = side ? height : width, along = side ? width : height;
     const maxWidth = Math.min(across - 2*margin, (along - 2*margin)/.40);
@@ -63,13 +64,17 @@
     const y = clamp(state.cardY * height - h/2, margin, height-margin-h);
     return {x, y, w, h};
   }
-  function photoRect(width, height, layout) {
+  // framed: the wizard's full-image layout keeps a border as wide as the card's side margin.
+  function photoRect(width, height, layout, framed=false) {
+    if (layout === 'contain' && framed) { const m = edge(width); return {x:m,y:m,w:width-2*m,h:Math.max(height*.24,height-width*.40-m)}; }
     if (layout === 'bottom' || layout === 'contain') return {x:0,y:0,w:width,h:Math.max(height*.24,height-width*.40)};
     if (layout === 'side') return {x:0,y:0,w:width*.29,h:height};
     return {x:0,y:0,w:width,h:height};
   }
   // Canvas ratio whose photo area, not the whole canvas, has the image's ratio.
-  function photoAreaRatio(imageRatio, layout) {
+  // The framed border uses the proportional margin, exact once the canvas is at least 515px wide.
+  function photoAreaRatio(imageRatio, layout, framed=false) {
+    if (layout === 'contain' && framed) return 1 / ((1 - 2*.035)/imageRatio + .40 + .035);
     if (layout === 'bottom' || layout === 'contain') return imageRatio / (1 + .40*imageRatio);
     if (layout === 'side') return imageRatio / .29;
     return imageRatio;
@@ -85,7 +90,7 @@
   // rotation holds quarter turns; tilt is the optional free angle on top of it.
   function photoGeometry(width, height, state) {
     if (!state.image) return null;
-    const area = photoRect(width, height, state.layout);
+    const area = photoRect(width, height, state.layout, state.framed);
     const [cos, sin] = turn((state.rotation || 0) + (state.tilt || 0)), c = Math.abs(cos), s = Math.abs(sin);
     const iw = state.image.width, ih = state.image.height;
     const contain = state.layout === 'contain' || state.fit === 'contain';

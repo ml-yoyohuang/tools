@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const C=window.InvoiceCore,$=id=>document.getElementById(id),canvas=$('canvas'),ctx=canvas.getContext('2d');
-  const state={step:1,carrier:'',layout:'full',size:'phone',ratio:1080/2340,phone:[1080,2340],background:'#ff6633',image:null,imageId:null,rotation:0,tilt:0,zoom:1,panX:0,panY:0,cardX:.5,cardY:.74,cardScale:.84,cardRotation:0,radius:16,title:'我的發票載具',fit:'cover',mode:'photo'};
+  const state={step:1,carrier:'',layout:'full',size:'phone',ratio:1080/2340,phone:[1080,2340],background:'#ff6633',image:null,imageId:null,rotation:0,tilt:0,zoom:1,panX:0,panY:0,cardX:.5,cardY:.74,cardScale:.84,cardRotation:0,framed:true,radius:16,title:'我的發票載具',fit:'cover',mode:'photo'};
   const colors=['#ff6633','#2446ff','#dfff00','#ff1688','#00c78b','#a737ff','#ffd000','#00c9ff','#ffffff','#111111'];
   const layoutBackgrounds={full:'#ff6633',bottom:'#ffffff',contain:'#ffd000',side:'#00c9ff'};
   const layoutPlaceholders={bottom:'#ff1688',contain:'#2446ff',side:'#dfff00'};
@@ -53,7 +53,7 @@
   // Fit the photo area, not the whole canvas, to the picture; pictures outside the ratio range switch to full display.
   function matchOriginal(){
     const turned=state.image&&state.rotation%180,r=state.image?(turned?state.image.height/state.image.width:state.image.width/state.image.height):1;
-    const ideal=C.photoAreaRatio(r,state.layout);state.ratio=C.clamp(ideal,state.layout==='side'?1.2:C.MIN_RATIO,C.MAX_RATIO);
+    const ideal=C.photoAreaRatio(r,state.layout,state.framed);state.ratio=C.clamp(ideal,state.layout==='side'?1.2:C.MIN_RATIO,C.MAX_RATIO);
     const fits=Math.abs(state.ratio-ideal)<1e-9;if(state.image)state.fit=fits?'cover':'contain';return fits||!state.image;
   }
   const outOfRange='圖片比例超出可用範圍，已改為完整顯示。';
@@ -218,7 +218,7 @@
     context.clearRect(0,0,w,h);context.fillStyle=options.backup?'#fff':state.background;context.fillRect(0,0,w,h);
     if(!options.backup){
       if(!state.image&&state.step===2&&layoutPlaceholders[state.layout]){
-        const area=C.photoRect(w,h,state.layout);
+        const area=C.photoRect(w,h,state.layout,state.framed);
         context.fillStyle=layoutPlaceholders[state.layout];context.fillRect(area.x,area.y,area.w,area.h);
       }
       drawPhoto(context,w,h);
@@ -249,7 +249,7 @@
   }
   function alignedRect(rect,kind,magnetic=true,alt=false){
     if(!$('align').checked||alt)return {...rect,guides:{x:null,y:null}};
-    const {width,height}=outputSize(),area=C.photoRect(width,height,state.layout);
+    const {width,height}=outputSize(),area=C.photoRect(width,height,state.layout,state.framed);
     const other=kind==='photo'?C.cardRect(width,height,state):C.photoGeometry(width,height,state);
     const targets=C.alignmentTargets(width,height,area,other);
     // Screen-pixel threshold gives the same magnetic feel on a phone and desktop.
@@ -259,7 +259,7 @@
   }
   function movePhoto(cx,cy,magnetic=true,alt=false){
     if(!state.image)return;
-    const {width,height}=outputSize(),area=C.photoRect(width,height,state.layout);
+    const {width,height}=outputSize(),area=C.photoRect(width,height,state.layout,state.framed);
     state.panX=(cx-area.x-area.w/2)/area.w;state.panY=(cy-area.y-area.h/2)/area.h;
     const candidate=C.photoGeometry(width,height,state),snapped=alignedRect(candidate,'photo',magnetic,alt);
     state.panX=candidate.panX+(snapped.x-candidate.x)/area.w;

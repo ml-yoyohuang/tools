@@ -29,6 +29,8 @@ run.onclick=async()=>{run.disabled=true;log.textContent='';count=0;try{
  $('back').click();click('[data-panel="layout"]');click('[data-layout="bottom"]');click('[data-panel="size"]');click('[data-size="original"]');$('next').click();await upload(600,400);await canvasRatio(1.5/1.6);check(true,'下方留白的原圖比例讓圖片區域符合 3:2');
  $('back').click();click('[data-panel="layout"]');click('[data-layout="side"]');await canvasRatio(2.4);check($('toast').textContent.includes('超出')&&!$('toast').hidden,'左右分欄放不下橫式原圖時提示並限制比例');check(d.querySelector('[data-layout="side"]').getAttribute('aria-pressed')==='true','超出比例時保留使用者選的版型');$('next').click();click('[data-panel="adjust"]');click('[data-object="photo"]');check($('fit').value==='contain','超出比例時改為完整顯示');$('close-sheet').click();
  await upload(400,700);await canvasRatio(4/7/.29);check(true,'左右分欄的原圖比例讓圖片欄符合直式原圖');
+ $('back').click();click('[data-panel="layout"]');click('[data-layout="contain"]');await canvasRatio(1/(.93*7/4+.435));check(true,'完整圖片的原圖比例把四周留邊算進去');
+ {await tick();const c=$('canvas'),m=Math.max(18,c.width*.035),dark=(x,y)=>c.getContext('2d').getImageData(Math.round(x),Math.round(y),1,1).data.slice(0,3).every(v=>v<20);check(!dark(m/2,m/2)&&!dark(c.width/2,m/2)&&!dark(c.width-m/2,c.height/3)&&!dark(m/2,c.height/3),'完整圖片四周露出底色邊框');check(dark(m+3,m+3)&&dark(c.width-m-3,m+3)&&dark(c.width/2,c.height/3),'完整圖片的照片填滿留邊內的區域');}
  for(const width of [320,390,768]){frame.style.width=width+'px';await tick();check(d.documentElement.scrollWidth<=d.documentElement.clientWidth+1,'寬度 '+width+' 無橫向溢出');}
  log.textContent+='\nPASS '+count+' 項檢查。實體手機手勢與相簿分享仍需實機確認。';
 }catch(e){log.textContent+='\nFAIL '+e.message;}finally{run.disabled=false;}};

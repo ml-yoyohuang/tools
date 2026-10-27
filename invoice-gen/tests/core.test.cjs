@@ -69,6 +69,13 @@ for(const [layout,r] of [['full',.75],['bottom',.75],['bottom',1.5],['contain',9
   const ratio=C.photoAreaRatio(r,layout),area=C.photoRect(1000,1000/ratio,layout);
   check(Math.abs(area.w/area.h-r)<1e-9,`Original ratio fits the ${layout} photo area`);
 }
+for(const r of [9/16,.75,1,1.5]) {
+  const ratio=C.photoAreaRatio(r,'contain',true),width=1080,height=width/ratio,area=C.photoRect(width,height,'contain',true),card=C.cardRect(width,height,{cardScale:1,cardX:.5,cardY:1});
+  check(Math.abs(area.w/area.h-r)<1e-9,`Original ratio fits the framed contain area ${r}`);
+  check(Math.abs(area.x-card.x)<1e-9&&Math.abs(area.y-card.x)<1e-9&&Math.abs(width-area.x-area.w-card.x)<1e-9,'The frame matches the card side margin');
+}
+const framedState={...photoState,layout:'contain',framed:true,image:{width:400,height:700},zoom:1};
+check(C.photoGeometry(1080,2340,framedState).area.x>0&&C.photoGeometry(1080,2340,{...framedState,framed:false}).area.x===0,'Only framed callers inset the contain area');
 for(const ratio of [.42,9/19.5,1,1.5,2.4])for(const cardRotation of [90,270])for(const cardScale of [.64,.94]) {
   const {width,height}=C.dimensions(ratio),flat=C.cardRect(width,height,{cardScale,cardX:.5,cardY:.5}),turned=C.cardRect(width,height,{cardScale,cardX:1,cardY:1,cardRotation});
   check(turned.h>turned.w&&Math.abs(turned.w/turned.h-.4)<1e-9,'A quarter-turned card swaps its footprint');
