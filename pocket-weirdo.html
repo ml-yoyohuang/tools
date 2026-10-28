@@ -7,217 +7,88 @@
 <meta name="theme-color" content="#cdc7bc">
 <title>POCKET WEIRDO 02｜怪怪口袋相機</title>
 <style>
-:root{
-  --shell:#cdc7bc;--ink:#30382e;--line:#8d8d7d;
-  --screen:#d5dfa8;--dark:#26352d;--accent:#a44665;
-  --paper:#e6e1d5;
-}
+:root{--shell:#cdc7bc;--ink:#30382e;--line:#8d8d7d;--screen:#d5dfa8;--dark:#26352d;--accent:#a44665;--paper:#e6e1d5}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-body{
-  margin:0;min-height:100dvh;background:#a9aca0;color:var(--ink);
-  background-image:
-    linear-gradient(90deg,#ffffff08 1px,transparent 1px),
-    linear-gradient(#ffffff08 1px,transparent 1px);
-  background-size:8px 8px;
-  font-family:system-ui,-apple-system,sans-serif;
-  overscroll-behavior-y:none;
-}
+body{margin:0;min-height:100dvh;background:#a9aca0;color:var(--ink);background-image:linear-gradient(90deg,#ffffff08 1px,transparent 1px),linear-gradient(#ffffff08 1px,transparent 1px);background-size:8px 8px;font-family:system-ui,-apple-system,sans-serif}
 button,input{font:inherit}
-button{
-  min-height:46px;padding:9px 12px;border:2px solid var(--line);
-  border-radius:5px;background:var(--paper);color:var(--ink);
-  box-shadow:0 3px 0 #898a7a;cursor:pointer;
-  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
-}
-button:active:not(:disabled){
-  transform:translateY(2px);box-shadow:0 1px 0 #898a7a;
-}
+button{min-height:44px;padding:8px 10px;border:2px solid var(--line);border-radius:5px;background:var(--paper);color:var(--ink);box-shadow:0 3px 0 #898a7a;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 #898a7a}
 button:disabled{opacity:.45;cursor:default}
-button.active{
-  background:var(--dark);color:#e1e9b9;border-color:var(--dark);
-}
-button:focus-visible,input:focus-visible,summary:focus-visible{
-  outline:3px solid var(--accent);outline-offset:3px;
-}
-input[type=range]{width:100%;accent-color:var(--accent);min-height:32px}
-input[type=text]{
-  width:100%;padding:12px;border:2px solid var(--line);
-  border-radius:4px;background:#f3efdf;font-size:16px;color:var(--ink);
-}
-#machine{
-  width:min(100%,480px);min-height:100dvh;margin:auto;
-  padding:14px 16px calc(22px + env(safe-area-inset-bottom));
-  padding-top:calc(14px + env(safe-area-inset-top));
-  background:var(--shell);box-shadow:0 0 45px #0002;
-}
-.top{
-  display:flex;align-items:center;justify-content:space-between;
-  gap:8px;margin-bottom:12px;
-}
-.brand{
-  font:900 17px/1.1 ui-monospace,monospace;letter-spacing:-.8px;
-  text-shadow:1px 1px #f4f0e2;
-}
-.brand small{
-  display:block;font:10px/1.6 system-ui,sans-serif;
-  letter-spacing:2px;color:#666d60;
-}
-.top-actions{display:flex;gap:7px}
-.top button{padding:7px 10px}
-.bezel{
-  padding:15px 11px 8px;background:#62685e;
-  border:2px solid #4e554c;border-radius:8px 8px 27px 8px;
-  box-shadow:inset 2px 2px #ffffff20;
-}
-.screen-wrap{
-  position:relative;aspect-ratio:8/7;background:var(--screen);
-  border:3px solid #303e2f;overflow:hidden;touch-action:none;
-}
-#screen{
-  display:block;width:100%;height:100%;image-rendering:pixelated;
-  touch-action:none;
-}
-#selectionBox{
-  position:absolute;border:2px dashed white;
-  box-shadow:0 0 0 1px #26352d;pointer-events:none;
-}
-#startOverlay{
-  position:absolute;inset:0;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:12px;
-  padding:16px;background:#d5dfa8ed;text-align:center;
-}
-#startOverlay h1{margin:0;font:900 23px ui-monospace,monospace}
-#startOverlay p{margin:0;font-size:12px;line-height:1.7}
+button.active{background:var(--dark);color:#e1e9b9;border-color:var(--dark)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+input[type=range]{width:100%;accent-color:var(--dark);min-height:32px;margin:0}
+input[type=text]{width:100%;min-width:0;padding:10px;border:2px solid #526b3b;border-radius:2px;background:#e3e9bc;font-size:16px;color:var(--dark)}
+#machine{width:min(100%,440px);margin:auto;padding:14px 16px calc(14px + env(safe-area-inset-bottom));padding-top:calc(14px + env(safe-area-inset-top));background:linear-gradient(110deg,#ddd8ce,var(--shell) 45%,#c0bbae);border:2px solid #96988b;border-radius:16px 16px 55px 16px;box-shadow:inset 2px 2px 0 #f1eee3,inset -3px -3px 0 #a9aa9c,6px 12px 0 #73796c35,0 20px 48px #28342533}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.brand{font:900 18px/1.1 ui-monospace,monospace;letter-spacing:-.8px;text-shadow:1px 1px #f4f0e2}
+.brand small{display:block;font:9px/1.8 system-ui,sans-serif;letter-spacing:2px;color:#666d60}
+.top-actions{display:flex;gap:7px}.top button{padding:4px 8px;font-size:12px;background:#bbb9ad;border-color:#8c9181;border-radius:7px}
+.bezel{padding:12px 10px 0;background:#62685e;border:2px solid #4e554c;border-radius:9px 9px 25px 9px;box-shadow:inset 2px 2px #ffffff20}
+.screen-wrap{position:relative;aspect-ratio:8/7;width:100%;max-width:calc(max(190px,100svh - 500px)*8/7);margin:auto;background:var(--screen);border:3px solid #303e2f;overflow:hidden;touch-action:none}
+#machine.is-settings .screen-wrap{max-width:calc(max(170px,100svh - 610px)*8/7)}
+#machine.is-review .screen-wrap{max-width:calc(max(170px,100svh - 610px)*8/7)}
+#screen{display:block;width:100%;height:100%;image-rendering:pixelated;touch-action:none}
+#selectionBox{position:absolute;border:2px dashed white;box-shadow:0 0 0 1px #26352d;pointer-events:none}
+#startOverlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:12px;background:#d5dfa8ed;text-align:center}
+#startOverlay h1{margin:0;font:900 clamp(17px,5vw,23px)/1 ui-monospace,monospace}
+#startOverlay p{margin:0;font-size:11px;line-height:1.6}
+#startOverlay button{min-height:40px;padding:6px 12px;font-size:12px}
 #startBtn{background:var(--dark);color:#e1e9b9;border-color:var(--dark)}
-#countdown{
-  position:absolute;inset:0;display:grid;place-items:center;
-  font:900 80px ui-monospace,monospace;
-  color:#e8edc8;text-shadow:5px 5px #24362c;
-  background:#26352d22;pointer-events:none;
-}
-.bezel-bottom{
-  display:flex;align-items:center;gap:4px;color:#d5dacb;
-  font:10px ui-monospace,monospace;margin-top:3px;
-}
-.led{width:7px;height:7px;background:#824652;flex-shrink:0}
-.led.on{background:#ee7495}
-#powerText{font-size:9px;white-space:nowrap;margin-right:auto}
-.secret{
-  min-height:44px;padding:6px 4px;border:0;background:transparent;
-  box-shadow:none;color:#e0e5d7;font:10px ui-monospace,monospace;
-  white-space:nowrap;
-}
-.secret:disabled{opacity:.7}
-.secret:active:not(:disabled){box-shadow:none}
-#message{
-  min-height:40px;padding:7px 0;text-align:center;
-  display:flex;justify-content:center;align-items:center;
-  font-size:12px;font-weight:600;
-}
-.strip{
-  display:flex;gap:8px;overflow-x:auto;
-  padding:5px 2px 9px;scrollbar-width:thin;
-}
-.choice{
-  min-width:78px;max-width:104px;flex-shrink:0;
-  padding:7px 8px;font-size:11px;
-}
-.choice canvas{
-  display:block;width:54px;height:36px;margin:0 auto 5px;
-  image-rendering:pixelated;object-fit:contain;
-}
-.controls{
-  display:flex;align-items:center;justify-content:space-around;
-  gap:12px;padding:9px 4px;
-}
-.control-col{
-  display:flex;flex-direction:column;align-items:center;
-  gap:7px;width:80px;
-}
-.control-col small{font-size:11px}
-.round{width:54px;height:54px;border-radius:50%;padding:0;font-size:23px}
-#shutter{
-  position:relative;width:82px;height:82px;border-radius:50%;
-  border:5px solid #81374f;background:var(--accent);
-  box-shadow:0 5px 0 #75334a,inset 0 0 0 5px #c96785;
-}
-#shutter::after{
-  content:"";position:absolute;left:50%;top:50%;
-  transform:translate(-50%,-50%);width:25px;height:25px;
-  border-radius:50%;background:#f1d6de;
-}
-.actions{
-  display:flex;justify-content:center;align-items:center;
-  gap:8px;flex-wrap:wrap;margin-top:8px;
-}
-.actions button{font-size:12px}
-details{
-  border-top:2px solid #aaa99a;margin-top:13px;padding-top:8px;
-}
-summary{
-  cursor:pointer;min-height:44px;display:flex;align-items:center;
-  font-size:13px;font-weight:700;
-}
-.settings{padding:0 3px}
-.setting{margin:11px 0}
-.setting-head{
-  display:flex;justify-content:space-between;gap:8px;
-  font-size:12px;align-items:center;
-}
-.setting-head output{
-  font:11px ui-monospace,monospace;color:#58654e;
-}
-.note{font-size:11px;line-height:1.6;color:#646e5d;margin:6px 0}
-#ramp{display:block;width:100%;height:22px;image-rendering:pixelated}
-.setting-buttons{display:flex;gap:8px;flex-wrap:wrap}
-.setting-buttons button{flex:1;font-size:12px}
-.tabs{display:flex;gap:8px;margin:8px 0}
-.tabs button{flex:1}
-#toolPanel{min-height:74px}
-.sticker-btn{
-  min-width:66px;display:flex;flex-direction:column;
-  align-items:center;gap:4px;font-size:11px;
-}
-.sticker-btn canvas{
-  width:36px;height:30px;image-rendering:pixelated;object-fit:contain;
-}
-#textPanel{display:flex;gap:8px;padding:7px 0}
-#textPanel input{min-width:0}
-#textPanel button{flex-shrink:0}
-#objectControls{display:flex;justify-content:center;gap:7px;margin:8px 0}
-#objectControls button{font-size:12px}
-#reviewHint{font-size:11px;text-align:center;color:#636b5d;min-height:20px}
-.save-row{display:flex;gap:10px;margin-top:13px}
-.save-row button{flex:1;font-weight:700}
-#saveBtn{background:var(--dark);color:#e1e9b9;border-color:var(--dark)}
-.footnote{text-align:center;color:#69705f;font-size:10px;margin-top:17px}
-dialog{
-  width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;
-  padding:20px;border:3px solid #53634c;border-radius:7px;
-  background:var(--paper);color:var(--ink);
-}
-dialog::backdrop{background:#17221bb0}
-dialog h2{font-size:19px;margin:0 0 12px}
-dialog p,dialog li{font-size:13px;line-height:1.75}
-dialog button{margin-top:10px}
-#savedImage{
-  display:block;width:100%;image-rendering:pixelated;
-  background:#d5dfa8;border:2px solid #53634c;
-}
-#video{
-  position:fixed;left:-10px;top:-10px;width:1px;height:1px;
-  opacity:0;pointer-events:none;
-}
-@media(min-width:600px){
-  #machine{
-    min-height:0;margin:24px auto;border:3px solid #909384;
-    border-radius:16px 16px 65px 16px;
-  }
-}
-@media(prefers-reduced-motion:reduce){
-  button:active:not(:disabled){transform:none}
-}
+#countdown{position:absolute;inset:0;display:grid;place-items:center;font:900 80px ui-monospace,monospace;color:#e8edc8;text-shadow:5px 5px #24362c;background:#26352d22;pointer-events:none}
+.lcd-ui{margin-top:7px;padding:0 8px;background:var(--screen);border:2px solid #303e2f;box-shadow:inset 1px 1px #ecf2c8;color:var(--dark)}
+.lcd-ui button{border:1px solid #526b3b;border-radius:2px;background:transparent;box-shadow:none;color:var(--dark);font-size:11px}
+.lcd-ui button.active{background:var(--dark);color:var(--screen)}
+.style-readout{display:flex;align-items:center;gap:7px;width:100%;text-align:left;border:0!important;padding:4px 0;font-weight:700}
+.lcd-kicker{font:9px/1.5 ui-monospace,monospace;color:#526b3b}.lcd-kicker span{display:block}
+#styleName{font-size:13px;flex:1}#styleColors{display:flex}#styleColors i{width:10px;height:17px}
+#message{min-height:32px;padding:5px 0;border-top:1px dashed #526b3b60;font-size:10px;line-height:1.6}
+.bezel-bottom{display:flex;align-items:center;gap:5px;color:#d5dacb;font:9px ui-monospace,monospace}
+.power{display:flex;align-items:center;gap:5px;margin-right:auto;white-space:nowrap}
+.led{width:6px;height:6px;background:#824652;border-radius:50%;box-shadow:inset 1px 1px #0004}.led.on{background:#ee7495;box-shadow:0 0 4px #ee7495}
+.secret{min-height:34px;padding:4px 2px;border:0;background:transparent;box-shadow:none;color:#e0e5d7;font:9px ui-monospace,monospace;white-space:nowrap}.secret:disabled{opacity:.7}
+.strip{display:flex;gap:6px;overflow-x:auto;padding:3px 1px 7px;scrollbar-width:thin;scrollbar-color:#526b3b transparent}
+.choice{min-width:66px;flex-shrink:0;padding:4px 6px}
+.choice canvas{display:block;width:48px;height:32px;margin:0 auto 3px;image-rendering:pixelated;object-fit:contain}
+.setting-nav{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #526b3b40;font-size:11px;font-weight:700}
+.setting-nav button{width:44px;min-height:32px;border:0}.setting{min-height:52px}
+.setting-head{display:flex;justify-content:space-between;gap:8px;font-size:11px;align-items:center}.setting-head output{font:11px ui-monospace,monospace}
+#ramp{display:block;width:100%;height:8px;image-rendering:pixelated;margin-bottom:5px}
+.setting-buttons{display:flex;gap:6px;padding-bottom:6px}.setting-buttons button{flex:1;min-height:32px}.lcd-option{min-height:28px;margin-bottom:5px}
+.tabs{display:flex;gap:5px;margin:5px 0}.tabs button{flex:1;min-height:34px}
+#toolPanel{min-height:73px}.sticker-btn{min-width:72px;white-space:nowrap;display:flex;flex-direction:column;align-items:center;gap:4px}
+.sticker-btn canvas{width:36px;height:30px;image-rendering:pixelated;object-fit:contain}
+#textPanel{display:flex;gap:6px;padding:10px 0}#textPanel button{flex-shrink:0}
+#objectControls{display:flex;gap:6px;margin:3px 0}#objectControls button{flex:1;min-height:34px}
+#reviewHint{font-size:10px;margin:4px 0 7px;line-height:1.5}
+.hardware{margin:13px -4px 0;padding:0 4px;border-top:1px solid #a5a699;box-shadow:0 -1px #e9e5d8}
+.deck{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 5px 7px}
+.direction-unit{display:flex;flex-direction:column;align-items:center;gap:8px}
+.direction-unit small{font-size:9px;color:#656c5f;text-align:center;max-width:150px}
+.dpad{display:grid;grid-template-columns:repeat(3,34px);grid-template-rows:repeat(3,34px);filter:drop-shadow(0 4px 0 #343a34);position:relative}
+.dpad::before{content:'';position:absolute;inset:-8px;border-radius:50%;background:#aaa99c;box-shadow:inset 1px 2px 4px #0002;z-index:-1}
+.pad,.pad-center{min-height:0;padding:0;border:0;border-radius:0;background:#454b43;color:#9a9f8e;box-shadow:inset 1px 1px #676d60;font-size:13px}
+.pad:active:not(:disabled){background:#30382e;box-shadow:inset 1px 1px #202820;transform:none}
+.up{grid-area:1/2;border-radius:4px 4px 0 0}.left{grid-area:2/1;border-radius:4px 0 0 4px}.right{grid-area:2/3;border-radius:0 4px 4px 0}.down{grid-area:3/2;border-radius:0 0 4px 4px}.pad-center{grid-area:2/2;box-shadow:none;position:relative}.pad-center::after{content:'';position:absolute;inset:9px;border-radius:50%;box-shadow:inset 1px 2px 2px #252c25}
+.action-unit{display:flex;align-items:center;gap:12px;padding:6px 2px 5px 10px;border-radius:50px;background:#b8b4a8;box-shadow:inset 1px 2px 3px #0002;transform:rotate(-13deg)}
+.hardware-key{display:flex;flex-direction:column;align-items:center;gap:6px}.hardware-key>span{font-size:9px;font-weight:700;letter-spacing:.4px;color:#656c5f}
+.action-unit .hardware-key{transform:rotate(13deg)}.key-b{margin-top:19px}.key-a{margin-bottom:12px}
+.round{width:52px;height:52px;padding:0;border-radius:50%;font-size:25px;background:#8c445a;border:3px solid #703449;color:#ead8d5;box-shadow:0 4px #643342,inset 1px 2px #bb7387}
+#shutter{position:relative;width:72px;height:72px;padding:0;border-radius:50%;border:4px solid #81374f;background:var(--accent);box-shadow:0 5px 0 #75334a,inset 0 0 0 4px #c96785}
+#shutter::after{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:23px;height:23px;border-radius:50%;background:#f1d6de}
+#shutter.review-action::after{content:'✓';width:auto;height:auto;color:#f1d6de;background:none;font-size:28px;font-weight:900}
+.utility-keys{display:flex;justify-content:center;gap:13px;margin:8px 0 0}.utility-keys button{min-height:30px;min-width:47px;padding:5px 7px;border:1px solid #666f62;border-radius:14px;background:#8d9385;color:#f4f0e2;box-shadow:0 3px #656d5f,inset 0 1px #b8bdac;font:10px ui-monospace,monospace}
+.utility-keys button.active{background:#3f5141;color:#e0edaf;box-shadow:0 3px #2b3c2c,inset 0 1px #718367}
+.review-keys{gap:20px}.review-keys button{min-width:53px}
+.export-options{margin:14px 0 0;text-align:center;font-size:11px}.export-options summary{cursor:pointer;min-height:32px}.actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}.actions button{font-size:11px}
+.shell-bottom{display:flex;justify-content:space-between;align-items:center;padding:8px 13px 0 3px}.shell-bottom>span{font:8px/1.8 ui-monospace,monospace;color:#777d6e;letter-spacing:1px}
+.speaker{display:flex;gap:6px;transform:rotate(-20deg)}.speaker i{width:5px;height:24px;border-radius:4px;background:#92978a;box-shadow:inset 1px 2px #71786b,1px 1px #e9e5d8}
+dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;padding:20px;border:3px solid #53634c;border-radius:7px;background:var(--paper);color:var(--ink)}dialog::backdrop{background:#17221bb0}dialog h2{font-size:19px;margin:0 0 12px}dialog p,dialog li{font-size:13px;line-height:1.75}dialog button{margin-top:10px}
+#savedImage{display:block;width:100%;image-rendering:pixelated;background:var(--screen);border:2px solid #53634c}
+#video{position:fixed;left:-10px;top:-10px;width:1px;height:1px;opacity:0;pointer-events:none}
+@media(min-width:600px){#machine{margin:22px auto}}
+@media(max-width:360px){#machine{padding-left:10px;padding-right:10px}.utility-keys{gap:9px}.deck{padding-left:0;padding-right:0}.action-unit{gap:8px}#shutter{width:64px;height:64px}.round{width:46px;height:46px}.direction-unit small{max-width:125px}}
+@media(prefers-reduced-motion:reduce){button:active:not(:disabled){transform:none}}
 </style>
 </head>
 <body>
@@ -247,148 +118,122 @@ dialog button{margin-top:10px}
       </div>
       <div id="countdown" hidden></div>
     </div>
+    <div class="lcd-ui">
+      <section id="liveUI" aria-label="拍照前設定">
+        <button id="styleMenuBtn" class="style-readout" aria-expanded="false" aria-controls="styleStrip">
+          <span class="lcd-kicker">FILM <span id="styleNumber">01 / 06</span></span>
+          <span id="styleName">老掌機</span><span id="styleColors" aria-hidden="true"></span>
+          <span aria-hidden="true">▾</span>
+        </button>
+        <div class="strip" id="styleStrip" aria-label="相機風格" hidden></div>
+        <section id="settingsPanel" aria-label="拍前調整" hidden>
+          <div class="setting-nav">
+            <button id="settingPrevBtn" aria-label="上一個設定">◀</button>
+            <span id="settingTitle">明暗 · 1 / 5</span>
+            <button id="settingNextBtn" aria-label="下一個設定">▶</button>
+          </div>
+          <div class="setting" data-setting="明暗">
+            <div class="setting-head"><label for="brightness">暗一點 ↔ 亮一點</label><output id="brightnessValue">0</output></div>
+            <input id="brightness" type="range" min="-80" max="80" value="0">
+          </div>
+          <div class="setting" data-setting="細節" hidden>
+            <div class="setting-head"><label for="smooth">原本的我 ↔ 簡化成角色</label><output id="smoothValue">0</output></div>
+            <input id="smooth" type="range" min="0" max="100" value="0">
+          </div>
+          <div class="setting" data-setting="顆粒" hidden>
+            <div class="setting-head"><label for="dither">少一點 ↔ 多一點</label><output id="ditherValue">36</output></div>
+            <input id="dither" type="range" min="0" max="100" value="36">
+            <button id="matrixBtn" class="lcd-option">BAYER 4×4</button>
+          </div>
+          <div class="setting" data-setting="進階：次暗分界" hidden>
+            <div class="setting-head"><label for="darkPoint">最暗色的範圍</label><output id="darkValue">25%</output></div>
+            <input id="darkPoint" type="range" min="3" max="94" value="25">
+          </div>
+          <div class="setting" data-setting="進階：次亮分界" hidden>
+            <div class="setting-head"><label for="lightPoint">最亮色的起點</label><output id="lightValue">75%</output></div>
+            <input id="lightPoint" type="range" min="6" max="97" value="75">
+          </div>
+          <canvas id="ramp" width="256" height="12" aria-label="明暗色階分布" hidden></canvas>
+          <div class="setting-buttons" id="settingPresets" hidden>
+            <button id="smoothPresetBtn">平滑角色</button>
+            <button id="resetBtn">還原配方</button>
+          </div>
+        </section>
+      </section>
+      <section id="reviewUI" aria-label="照片裝飾" hidden>
+        <div class="tabs" role="group" aria-label="裝飾工具">
+          <button data-tab="frame" class="active" aria-pressed="true">相框</button>
+          <button data-tab="sticker" aria-pressed="false">貼紙</button>
+          <button data-tab="text" aria-pressed="false">文字</button>
+        </div>
+        <div id="toolPanel">
+          <div class="strip" id="framePanel" aria-label="相框款式"></div>
+          <div class="strip" id="stickerPanel" aria-label="彩色貼紙" hidden></div>
+          <div id="textPanel" hidden>
+            <input id="textInput" type="text" maxlength="20" placeholder="輸入奇怪的一句話" aria-label="照片文字">
+            <button id="addTextBtn">加入</button>
+          </div>
+        </div>
+        <div id="objectControls" hidden>
+          <button id="smallerBtn" aria-label="縮小裝飾">−</button>
+          <button id="largerBtn" aria-label="放大裝飾">＋</button>
+          <button id="deleteObjectBtn">刪除</button>
+          <button id="deselectBtn">完成</button>
+        </div>
+        <p id="reviewHint">貼紙可以直接拖移。</p>
+      </section>
+      <div id="message" role="status" aria-live="polite">左右選風格。拍下去，就定案。</div>
+    </div>
     <div class="bezel-bottom">
-      <i class="led" id="led"></i>
-      <span id="powerText">STANDBY</span>
-      <button id="sizeBtn" class="secret"
-              title="點一下切換像素尺寸" aria-label="切換像素尺寸">
-        128 × 112
-      </button>
-      <span>/</span>
-      <button id="tonesBtn" class="secret"
-              title="點一下切換色階" aria-label="切換色階">
-        4 TONES
-      </button>
+      <span class="power"><i class="led" id="led"></i><span id="powerText">STANDBY</span></span>
+      <button id="sizeBtn" class="secret" title="點一下切換像素尺寸" aria-label="切換像素尺寸">經典 · 128 × 112</button>
+      <button id="tonesBtn" class="secret" title="點一下切換色階" aria-label="切換色階">4 TONES</button>
     </div>
   </div>
 
-  <div id="message" role="status" aria-live="polite">
-    小秘密：點尺寸與 TONES，可以換模式。
-  </div>
-
-  <section id="liveUI">
-    <div class="strip" id="styleStrip" aria-label="相機風格"></div>
-
-    <div class="controls">
-      <div class="control-col">
-        <button class="round" id="diceBtn" aria-label="隨機風格">⚄</button>
-        <small>驚喜一下</small>
+  <section class="hardware" aria-label="掌機操作鍵">
+    <div class="deck">
+      <div class="direction-unit">
+        <div class="dpad" role="group" aria-label="方向鍵">
+          <button id="padUp" class="pad up" aria-label="方向鍵：上">▲</button>
+          <button id="padLeft" class="pad left" aria-label="方向鍵：左">◀</button>
+          <span class="pad-center" aria-hidden="true"></span>
+          <button id="padRight" class="pad right" aria-label="方向鍵：右">▶</button>
+          <button id="padDown" class="pad down" aria-label="方向鍵：下">▼</button>
+        </div>
+        <small id="dpadHint">左右換風格 · 上下調明暗</small>
       </div>
-      <div class="control-col" style="width:90px">
-        <button id="shutter" aria-label="拍照" disabled></button>
-        <small>拍照</small>
-      </div>
-      <div class="control-col">
-        <button class="round" id="timerBtn"
-                aria-label="切換三秒倒數" aria-pressed="false">3s</button>
-        <small id="timerLabel">倒數關閉</small>
+      <div class="action-unit">
+        <div class="hardware-key key-b">
+          <button id="diceBtn" class="round" aria-label="隨機風格">⚄</button>
+          <span id="diceLabel">B · 驚喜</span>
+        </div>
+        <div class="hardware-key key-a">
+          <button id="shutter" aria-label="拍照" disabled></button>
+          <span id="shutterLabel">A · 拍照</span>
+        </div>
       </div>
     </div>
-
-    <div class="actions">
-      <button id="previousStyleBtn" disabled>↶ 上一組</button>
-      <button id="importBtn">匯入照片</button>
-      <button id="mirrorBtn" class="active" aria-pressed="true">自拍鏡像 ✓</button>
+    <div id="liveHardware" class="utility-keys">
+      <div class="hardware-key"><button id="settingsBtn" aria-label="拍前調整" aria-expanded="false" aria-controls="settingsPanel">TUNE</button><span>調一調</span></div>
+      <div class="hardware-key"><button id="previousStyleBtn" disabled>BACK</button><span>上一組</span></div>
+      <div class="hardware-key"><button id="timerBtn" aria-label="切換三秒倒數" aria-pressed="false">3s</button><span id="timerLabel">倒數關閉</span></div>
+      <div class="hardware-key"><button id="importBtn">PHOTO</button><span>匯入</span></div>
+      <div class="hardware-key"><button id="mirrorBtn" class="active" aria-label="自拍鏡像" aria-pressed="true">↔</button><span>鏡像</span></div>
     </div>
-
-    <details id="settingsDetails">
-      <summary>偷偷調一下 · 平滑角色實驗室</summary>
-      <div class="settings">
-        <div class="setting-buttons">
-          <button id="smoothPresetBtn">✧ 平滑角色</button>
-          <button id="resetBtn">恢復這個風格</button>
-        </div>
-        <p class="note">
-          想藏細紋？先按「平滑角色」，再試次暗／次亮。
-          四色、粗像素和低抖動通常比較容易把陰影合併。
-        </p>
-
-        <div class="setting">
-          <div class="setting-head">
-            <label for="brightness">明暗</label><output id="brightnessValue">0</output>
-          </div>
-          <input id="brightness" type="range" min="-80" max="80" value="0">
-        </div>
-
-        <div class="setting">
-          <div class="setting-head">
-            <label for="darkPoint">次暗分界</label><output id="darkValue">25%</output>
-          </div>
-          <input id="darkPoint" type="range" min="3" max="94" value="25">
-        </div>
-        <div class="setting">
-          <div class="setting-head">
-            <label for="lightPoint">次亮分界</label><output id="lightValue">75%</output>
-          </div>
-          <input id="lightPoint" type="range" min="6" max="97" value="75">
-        </div>
-        <canvas id="ramp" width="256" height="12" aria-label="明暗色階分布"></canvas>
-        <p class="note">
-          兩個分界之間會排列其餘分界。把皮膚與陰影分進同一階，
-          紋路就可能淡掉；不是越往某一邊拉越有效。
-        </p>
-
-        <div class="setting">
-          <div class="setting-head">
-            <label for="smooth">平滑</label><output id="smoothValue">0</output>
-          </div>
-          <input id="smooth" type="range" min="0" max="100" value="0">
-          <p class="note">柔化小陰影；太高會連五官與頭髮一起變簡單。</p>
-        </div>
-
-        <div class="setting">
-          <div class="setting-head">
-            <label for="dither">抖動紋理</label><output id="ditherValue">36</output>
-          </div>
-          <input id="dither" type="range" min="0" max="100" value="36">
-        </div>
-        <div class="actions">
-          <button id="matrixBtn">BAYER 4×4</button>
-        </div>
+    <div id="reviewHardware" hidden>
+      <div class="utility-keys review-keys">
+        <div class="hardware-key"><button id="retakeBtn">NEXT</button><span id="nextLabel">拍下一張</span></div>
+        <div class="hardware-key"><button id="undoBtn" disabled>UNDO</button><span>復原裝飾</span></div>
+        <div class="hardware-key"><button id="shareBtn" disabled>準備中</button><span>分享</span></div>
+        <div class="hardware-key"><button id="saveBtn">SAVE</button><span>保存 PNG</span></div>
       </div>
-    </details>
+      <details class="export-options"><summary>其他保存方式</summary><div class="actions">
+        <button id="originalBtn">下載原始尺寸</button><button id="viewImageBtn">開圖／長按保存</button>
+      </div></details>
+    </div>
+    <div class="shell-bottom"><span>PW—02<br>解析度有限。怪度不限。</span><div class="speaker" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>
   </section>
-
-  <section id="reviewUI" hidden>
-    <div class="actions" style="justify-content:space-between">
-      <button id="retakeBtn">← 重拍</button>
-      <button id="undoBtn" disabled>↶ 復原</button>
-    </div>
-    <div class="tabs">
-      <button data-tab="frame" class="active">相框</button>
-      <button data-tab="sticker">貼紙</button>
-      <button data-tab="text">文字</button>
-    </div>
-    <div id="toolPanel">
-      <div class="strip" id="framePanel"></div>
-      <div class="strip" id="stickerPanel" hidden></div>
-      <div id="textPanel" hidden>
-        <input id="textInput" type="text" maxlength="20"
-               placeholder="輸入奇怪的一句話" aria-label="照片文字">
-        <button id="addTextBtn">加入</button>
-      </div>
-    </div>
-    <div id="objectControls" hidden>
-      <button id="smallerBtn">縮小 −</button>
-      <button id="largerBtn">放大 ＋</button>
-      <button id="deleteObjectBtn">刪除</button>
-      <button id="deselectBtn">完成</button>
-    </div>
-    <p id="reviewHint">貼紙可以直接拖移。</p>
-    <div class="save-row">
-      <button id="saveBtn">保存 PNG</button>
-      <button id="shareBtn" disabled>準備分享…</button>
-    </div>
-    <div class="actions">
-      <button id="originalBtn">下載原始尺寸</button>
-      <button id="viewImageBtn">開圖／長按保存</button>
-    </div>
-  </section>
-
-  <div class="footnote">
-    ORIGINAL PIXEL TOY · NO PHOTO UPLOAD<br>
-    解析度有限。怪度不限。
-  </div>
 </main>
 
 <video id="video" autoplay muted playsinline></video>
@@ -398,15 +243,15 @@ dialog button{margin-top:10px}
   <h2>怪怪口袋相機 02</h2>
   <p><strong>開相機 → 拍照 → 保存。</strong><br>其他功能，都是偷偷變奇怪的小機關。</p>
   <ul>
-    <li>拍照前點螢幕下方尺寸：64×56、128×112、160×144。</li>
+    <li>拍照前點螢幕下方尺寸：粗粗 64×56、經典 128×112、細細 160×144。</li>
     <li>點 TONES：4、8、12、16 階明暗。增加色階時，色盤會生成過渡色。</li>
     <li>128×112 呼應 Game Boy Camera 照片；Game Boy、Pocket、Color 的螢幕都是 160×144。</li>
     <li>這些是風格選項，不是完整的原機顯色模擬。</li>
-    <li>展開「偷偷調一下」，使用平滑、分界與抖動合併小陰影。</li>
-    <li>次暗／次亮調整的是亮度分界，不是局部修皺紋，也不是原本編輯器程式的逐字移植。</li>
+    <li>按 TUNE 調一調：上下選設定，左右調數值。也可以直接拖動滑桿；預覽會一直留在上方。</li>
+    <li>一般模式左右換風格、上下調明暗。點螢幕上的風格名稱，可以展開所有配方。</li>
     <li>骰子改風格參數，不改尺寸與色階。「上一組」可以找回之前的設定。</li>
-    <li>匯入照片後可以先調風格，再按快門。匯入圖不套自拍鏡像。</li>
-    <li>拍完尺寸與色階鎖定，避免裝飾位置改變。點貼紙加入，再直接拖移。</li>
+    <li>匯入照片會自動中央裁切，不套自拍鏡像。先選好風格，再按快門定案。</li>
+    <li>按快門後影像就定案，只能加裝飾。貼紙可直接拖移，或用十字鍵一格一格移動；A 完成、B 復原裝飾。</li>
     <li>保存預設 4 倍放大，也能下載原始像素 PNG。</li>
   </ul>
   <p>
@@ -494,6 +339,72 @@ let countGeneration=0,lastProcess=0,lastVideoTime=-1;
 let frameStyle="none",objects=[],selectedId=null,objectId=1;
 let editHistory=[],drag=null,captureColors=palettes[0].colors.slice();
 let imageURL=null,exportVersion=0,exportTimer=null,exportCache=null;
+let settingsOpen=false,settingIndex=0,captureSource="camera",activeTab="frame";
+const settingInputs=["brightness","smooth","dither","darkPoint","lightPoint"];
+
+/* ---------- 固定機殼、螢幕內選單 ---------- */
+function showSetting(index){
+  settingIndex=(index+settingInputs.length)%settingInputs.length;
+  document.querySelectorAll("[data-setting]").forEach((pane,i)=>{
+    pane.hidden=i!==settingIndex;
+    if(i===settingIndex)$("settingTitle").textContent=pane.dataset.setting+" · "+(i+1)+" / 5";
+  });
+  $("ramp").hidden=settingIndex<3;
+  $("settingPresets").hidden=settingIndex!==1;
+}
+function toggleSettings(){
+  if(previewLocked()||!hasFrame)return;
+  settingsOpen=!settingsOpen;
+  $("settingsPanel").hidden=!settingsOpen;
+  $("settingsBtn").setAttribute("aria-expanded",String(settingsOpen));
+  $("settingsBtn").classList.toggle("active",settingsOpen);
+  $("styleStrip").hidden=true;
+  $("styleMenuBtn").setAttribute("aria-expanded","false");
+  showSetting(settingIndex);updateUI();
+}
+function stepSetting(direction){
+  if(previewLocked())return;
+  showSetting(settingIndex+direction);
+}
+function adjustSetting(key,delta){
+  if(previewLocked())return;
+  const input=$(key),value=clamp(Number(input.value)+delta,Number(input.min),Number(input.max));
+  if(value===Number(input.value))return;
+  rememberConfig();input.value=value;
+  input.dispatchEvent(new Event("input",{bubbles:true}));
+}
+function directionKey(direction){
+  if(counting||cameraStarting||importing||drag)return;
+  if(review){
+    const o=selectedObject();
+    if(o){
+      const old=snapshot(),x=o.x,y=o.y;
+      if(direction==="left")o.x--;if(direction==="right")o.x++;
+      if(direction==="up")o.y--;if(direction==="down")o.y++;
+      keepInside(o);
+      if(o.x!==x||o.y!==y){rememberEdit(old);renderReview()}
+    }else{
+      const tabs=["frame","sticker","text"];
+      const delta=direction==="left"||direction==="up"?-1:1;
+      selectTab(tabs[(tabs.indexOf(activeTab)+delta+tabs.length)%tabs.length]);
+    }
+    return;
+  }
+  if(settingsOpen){
+    if(direction==="up"||direction==="down")stepSetting(direction==="up"?-1:1);
+    else adjustSetting(settingInputs[settingIndex],direction==="left"?-3:3);
+  }else if(direction==="left"||direction==="right"){
+    useProfile((config.palette+(direction==="left"?-1:1)+profiles.length)%profiles.length);
+  }else{
+    adjustSetting("brightness",direction==="up"?4:-4);
+    message("明暗 "+(config.brightness>0?"+":"")+config.brightness+"。按 TUNE 還有小機關。");
+  }
+}
+function finishDecoration(){
+  if(!review||drag)return;
+  selectedId=null;renderReview(false);
+  message("裝飾完成。按 SAVE 帶走這隻低解析度生物。");
+}
 
 /* ---------- Bayer 矩陣 ---------- */
 function makeBayer(n){
@@ -607,12 +518,13 @@ function processSample(){
 }
 function refreshPreview(){
   if(review||importing)return;
+  const hadFrame=hasFrame;
   if(sourceImage){
     if(drawSource(sourceImage,false))processSample();
   }else if(stream&&video.readyState>=2){
     if(drawSource(video,mirror))processSample();
   }
-  updateUI();
+  if(hasFrame!==hadFrame)updateUI();
 }
 function loop(now){
   if(!review&&!sourceImage&&!importing&&stream&&!document.hidden&&
@@ -701,12 +613,12 @@ function textBitmap(text,dark,light){
   }
   return c;
 }
-function centeredLabel(c,text,y,dark,light,maxWidth=W-8){
+function centeredLabel(c,text,y,dark,light,maxWidth=W-8,canvasWidth=W){
   const img=textBitmap(text,dark,light);
   const scale=Math.min(1,maxWidth/img.width);
   const w=Math.round(img.width*scale),h=Math.round(img.height*scale);
   c.imageSmoothingEnabled=false;
-  c.drawImage(img,Math.floor((W-w)/2),y,w,h);
+  c.drawImage(img,Math.floor((canvasWidth-w)/2),y,w,h);
 }
 function standby(){
   ctx.fillStyle="#d5dfa8";ctx.fillRect(0,0,W,H);
@@ -752,7 +664,7 @@ function rememberConfig(){
 }
 function syncSettings(){
   rebuildConversion();
-  $("sizeBtn").textContent=W+" × "+H;
+  $("sizeBtn").textContent=["粗粗","經典","細細"][sizeIndex]+" · "+W+" × "+H;
   $("tonesBtn").textContent=tones+" TONES";
   $("brightness").value=config.brightness;
   $("darkPoint").value=config.dark;$("lightPoint").value=config.light;
@@ -768,6 +680,11 @@ function syncSettings(){
     b.setAttribute("aria-pressed",config.palette===i?"true":"false");
   });
   $("previousStyleBtn").disabled=!configHistory.length||previewLocked();
+  $("styleName").textContent=palettes[config.palette].name;
+  $("styleNumber").textContent=String(config.palette+1).padStart(2,"0")+" / 06";
+  $("styleColors").replaceChildren(...palettes[config.palette].colors.map(color=>{
+    const chip=document.createElement("i");chip.style.backgroundColor=color;return chip;
+  }));
   drawRamp();updateUI();
 }
 function drawRamp(){
@@ -816,7 +733,7 @@ function smoothPreset(){
     dark:18,light:82,smooth:75,dither:8,matrix:4,invert:false
   };
   syncSettings();refreshPreview();
-  message("平滑角色配方！再調分界，試著把皮膚與小陰影合併。");
+  message("角色簡化完成。五官、頭髮和小陰影都會一起變簡單。");
 }
 function resetProfile(){
   if(previewLocked())return;
@@ -846,28 +763,56 @@ function bindRange(id,key){
 /* ---------- 相機與來源 ---------- */
 function updateUI(){
   const locked=previewLocked();
+  $("machine").classList.toggle("is-settings",settingsOpen&&!review);
+  $("machine").classList.toggle("is-review",review);
+  $("liveHardware").hidden=review;$("reviewHardware").hidden=!review;
+  $("reviewUI").inert=importing;
+  $("retakeBtn").disabled=importing||!!drag;
+  $("undoBtn").disabled=importing||!!drag||!editHistory.length;
+  $("saveBtn").disabled=importing||!!drag;
+  $("settingsBtn").disabled=locked||!hasFrame;$("styleMenuBtn").disabled=locked;
+  $("settingPrevBtn").disabled=locked;$("settingNextBtn").disabled=locked;
+  for(const id of ["padUp","padDown","padLeft","padRight"]){
+    $(id).disabled=counting||cameraStarting||importing||!!drag;
+  }
+  $("dpadHint").textContent=review
+    ?(selectedObject()?"十字鍵微移 · 也可以直接拖":"方向鍵切換裝飾工具")
+    :settingsOpen?"上下選設定 · 左右調數值":"左右換風格 · 上下調明暗";
+  $("diceLabel").textContent=review?"B · 復原":"B · 驚喜";
+  $("diceBtn").textContent=review?"↶":"⚄";
+  $("diceBtn").setAttribute("aria-label",review?"復原裝飾":"隨機風格");
+  $("shutterLabel").textContent=review?"A · 完成":"A · 拍照";
+  $("shutter").setAttribute("aria-label",review?"完成裝飾":"拍照");
+  $("shutter").classList.toggle("review-action",review);
   $("led").classList.toggle("on",!!stream&&!review);
-  $("powerText").textContent=review?"SAVED":sourceImage?"PHOTO":stream?"LIVE":"OFF";
+  $("powerText").textContent=review?"CAPTURED":sourceImage?"PHOTO":stream?"LIVE":"OFF";
   $("startBtn").disabled=cameraStarting||importing||counting;
   $("startImportBtn").disabled=importing||cameraStarting||counting;
   $("flipBtn").disabled=locked;
-  $("shutter").disabled=review||counting||importing||cameraStarting||!hasFrame;
+  $("shutter").disabled=review?(importing||!!drag):counting||importing||cameraStarting||!hasFrame;
   $("sizeBtn").disabled=locked;$("tonesBtn").disabled=locked;
   for(const id of [
-    "diceBtn","smoothPresetBtn","resetBtn","matrixBtn",
+    "smoothPresetBtn","resetBtn","matrixBtn",
     "brightness","darkPoint","lightPoint","smooth","dither","importBtn"
   ])$(id).disabled=locked;
+  $("diceBtn").disabled=review?(!editHistory.length||importing||!!drag):locked;
   $("previousStyleBtn").disabled=locked||!configHistory.length;
   $("mirrorBtn").disabled=locked||!!sourceImage;
   $("mirrorBtn").classList.toggle("active",mirror);
   $("mirrorBtn").setAttribute("aria-pressed",mirror?"true":"false");
-  $("mirrorBtn").textContent=mirror?"自拍鏡像 ✓":"自拍鏡像";
+  $("mirrorBtn").setAttribute("aria-label",mirror?"自拍鏡像：開啟":"自拍鏡像：關閉");
   $("timerBtn").disabled=locked;
   [...$("styleStrip").children].forEach(b=>b.disabled=locked);
 }
 function showStart(text,label="重新開啟相機"){
+  settingsOpen=false;
+  $("settingsPanel").hidden=true;
+  $("settingsBtn").setAttribute("aria-expanded","false");
+  $("settingsBtn").classList.remove("active");
+  $("machine").classList.remove("is-settings");
   $("startOverlay").hidden=false;
   $("startDescription").textContent=text;$("startBtn").textContent=label;
+  updateUI();
 }
 function stopCamera(){
   cameraGeneration++;
@@ -961,7 +906,7 @@ function chooseFile(){
   $("fileInput").click();
 }
 async function importPhoto(file){
-  if(!file||previewLocked())return;
+  if(!file||importing||counting||cameraStarting||drag||(review&&captureSource!=="photo"))return;
   if(file.size>35*1024*1024){
     alert("請使用小於 35 MB 的圖片。");return;
   }
@@ -975,9 +920,10 @@ async function importPhoto(file){
     // 留一份靜態來源，避免動畫圖片在預覽裡自行播放。
     const staticImage=canvas(img.naturalWidth,img.naturalHeight);
     staticImage.getContext("2d").drawImage(img,0,0);
+    if(review)leaveReview();
     stopCamera();sourceImage=staticImage;
     $("startOverlay").hidden=true;
-    message("照片已匯入。可以先調平滑與分界，再按快門。");
+    message("照片已匯入。選好風格，按快門就定案。");
   }catch(e){
     alert(e.message);message("換一張照片試試看。");
   }finally{
@@ -1004,12 +950,15 @@ async function takePhoto(){
   // 複製當下已處理畫面：不在快門時偷偷改解析度。
   bctx.clearRect(0,0,W,H);bctx.drawImage(screen,0,0);
   captureColors=palettes[config.palette].colors.slice();
+  captureSource=sourceImage?"photo":"camera";
   review=true;cancelCountdown();stopCamera();
   sourceImage=null;
   frameStyle="none";objects=[];selectedId=null;editHistory=[];drag=null;
   $("liveUI").hidden=true;$("reviewUI").hidden=false;
   $("startOverlay").hidden=true;
   $("undoBtn").disabled=true;
+  $("nextLabel").textContent=captureSource==="photo"?"換照片":"拍下一張";
+  $("retakeBtn").setAttribute("aria-label",captureSource==="photo"?"換照片":"拍下一張");
   $("originalBtn").textContent="下載原始 "+W+"×"+H;
   selectTab("frame");renderReview();renderFrameSelection();updateUI();
   message(pick([
@@ -1017,13 +966,21 @@ async function takePhoto(){
     "低解析度角色誕生！","這張照片需要一根香蕉。"
   ]));
 }
-function retake(){
-  if(drag)return;
+function leaveReview(){
   cancelCountdown();review=false;sourceImage=null;
   objects=[];selectedId=null;editHistory=[];
   invalidateExport();revokeImageURL();
   $("selectionBox").hidden=true;
   $("reviewUI").hidden=true;$("liveUI").hidden=false;
+  document.querySelector(".export-options").open=false;
+}
+function retake(){
+  if(drag||importing)return;
+  if(captureSource==="photo"){
+    // Only replace this finished photo after the next file has decoded successfully.
+    $("fileInput").click();return;
+  }
+  leaveReview();
   standby();showStart("再捕獲一隻低解析度生物。");
   syncSettings();startCamera();
 }
@@ -1093,20 +1050,22 @@ const frameDefs=[
   {key:"sighting",name:"神秘目擊"},
   {key:"print",name:"玩具印章"}
 ];
-function drawFrame(c,key,colors=captureColors){
+function drawFrame(c,key,colors=captureColors,width=W,height=H){
+  const W=width,H=height;
+  const label=(text,y,dark,light,maxWidth=W-8)=>centeredLabel(c,text,y,dark,light,maxWidth,W);
   const dark=colors[0],light=colors[3];
   c.save();c.imageSmoothingEnabled=false;
   const band=H<80?10:14;
   if(key==="passport"){
     c.strokeStyle=dark;c.lineWidth=2;c.strokeRect(1,1,W-2,H-2);
     c.fillStyle=light;c.fillRect(2,2,W-4,band);
-    centeredLabel(c,"ALIEN ENTRY",3,light,dark,W-8);
+    label("ALIEN ENTRY",3,light,dark,W-8);
     c.fillStyle=dark;c.fillRect(2,H-band-2,W-4,band);
-    centeredLabel(c,"SPECIMEN 001",H-band-1,dark,light,W-8);
+    label("SPECIMEN 001",H-band-1,dark,light,W-8);
   }else if(key==="wanted"){
     c.fillStyle=light;c.fillRect(0,0,W,band);c.fillRect(0,H-band,W,band);
-    centeredLabel(c,"WANTED!",1,light,dark,W-8);
-    centeredLabel(c,"ONE POTATO",H-band+1,light,dark,W-8);
+    label("WANTED!",1,light,dark,W-8);
+    label("ONE POTATO",H-band+1,light,dark,W-8);
     c.fillStyle=dark;
     for(let y=band;y<H-band;y+=4){
       c.fillRect(0,y,2,2);c.fillRect(W-2,y,2,2);
@@ -1116,7 +1075,7 @@ function drawFrame(c,key,colors=captureColors){
     pixelText(c,"REC",4,2,light);
     c.fillStyle=light;c.fillRect(W-8,4,3,3);
     c.fillStyle=dark;c.fillRect(0,H-band,W,band);
-    centeredLabel(c,"UNKNOWN LIFE",H-band+1,dark,light,W-8);
+    label("UNKNOWN LIFE",H-band+1,dark,light,W-8);
     c.strokeStyle=light;c.lineWidth=1;
     for(const [x,y,sx,sy] of [
       [7,band+5,1,1],[W-8,band+5,-1,1],
@@ -1132,20 +1091,23 @@ function drawFrame(c,key,colors=captureColors){
     for(let x=4;x<W-4;x+=4){
       c.fillStyle=(x/4)%2?dark:colors[1];c.fillRect(x,0,2,2);
     }
-    centeredLabel(c,"VERY WEIRD",H-band+1,light,dark,W-8);
+    label("VERY WEIRD",H-band+1,light,dark,W-8);
   }
   c.restore();
 }
 function renderFrameSelection(){
   [...$("framePanel").children].forEach(b=>{
     b.classList.toggle("active",b.dataset.frame===frameStyle);
+    b.setAttribute("aria-pressed",String(b.dataset.frame===frameStyle));
   });
 }
 
 /* ---------- 裝飾編輯 ---------- */
 function selectTab(tab){
+  activeTab=tab;
   document.querySelectorAll("[data-tab]").forEach(b=>{
     b.classList.toggle("active",b.dataset.tab===tab);
+    b.setAttribute("aria-pressed",String(b.dataset.tab===tab));
   });
   $("framePanel").hidden=tab!=="frame";
   $("stickerPanel").hidden=tab!=="sticker";
@@ -1157,7 +1119,7 @@ function snapshot(){
 function rememberEdit(old=snapshot()){
   editHistory.push(old);
   if(editHistory.length>40)editHistory.shift();
-  $("undoBtn").disabled=false;
+  $("undoBtn").disabled=false;updateUI();
 }
 function undoEdit(){
   if(!review||drag||!editHistory.length)return;
@@ -1202,8 +1164,9 @@ function updateSelection(){
     });
   }
   $("reviewHint").textContent=o
-    ?"直接拖移。也可以放大、縮小或刪除。"
-    :"點贴紙加入；點照片上的裝飾可以移動。";
+    ?"直接拖移或用十字鍵微移。A 完成，B 復原。"
+    :"照片已定案。選相框、貼紙或文字，繼續惡搞。";
+  updateUI();
 }
 function renderReview(changed=true){
   if(!review)return;
@@ -1277,6 +1240,7 @@ screen.addEventListener("pointerdown",e=>{
     dx:p.x-hit.x,dy:p.y-hit.y,
     startX:hit.x,startY:hit.y,before:snapshot()
   };
+  updateUI();
 });
 screen.addEventListener("pointermove",e=>{
   if(!drag||drag.pointer!==e.pointerId)return;
@@ -1291,6 +1255,7 @@ function endDrag(e){
   const old=drag,o=objects.find(o=>o.id===old.id);drag=null;
   if(o&&(o.x!==old.startX||o.y!==old.startY))rememberEdit(old.before);
   if(screen.hasPointerCapture(e.pointerId))screen.releasePointerCapture(e.pointerId);
+  updateUI();
 }
 screen.addEventListener("pointerup",endDrag);
 screen.addEventListener("pointercancel",endDrag);
@@ -1320,7 +1285,7 @@ function filename(){
 }
 function invalidateExport(){
   exportVersion++;clearTimeout(exportTimer);exportCache=null;
-  $("shareBtn").disabled=true;$("shareBtn").textContent="準備分享…";
+  $("shareBtn").disabled=true;$("shareBtn").textContent="準備中";
 }
 function queueExport(){
   invalidateExport();
@@ -1332,11 +1297,11 @@ function queueExport(){
       const file=typeof File==="function"
         ?new File([blob],filename(),{type:"image/png"}):null;
       exportCache={blob,file,version};
-      $("shareBtn").disabled=false;$("shareBtn").textContent="分享";
+      $("shareBtn").disabled=false;$("shareBtn").textContent="SHARE";
     }catch(e){
       console.warn(e);
       if(version===exportVersion){
-        $("shareBtn").textContent="請用保存";
+        $("shareBtn").textContent="用 SAVE";
       }
     }
   },180);
@@ -1413,15 +1378,12 @@ function buildFrameButtons(){
   frameDefs.forEach(d=>{
     const b=document.createElement("button");
     b.className="choice";b.dataset.frame=d.key;
-    const c=canvas(54,36),cc=c.getContext("2d");
-    cc.fillStyle="#9bac65";cc.fillRect(0,0,54,36);
-    cc.fillStyle="#526b3b";cc.fillRect(18,7,18,23);
-    cc.fillStyle="#d9e6a1";cc.fillRect(21,12,3,3);cc.fillRect(30,12,3,3);
-    if(d.key!=="none"){
-      cc.strokeStyle="#20382b";cc.lineWidth=2;cc.strokeRect(1,1,52,34);
-      cc.fillStyle=d.key==="sighting"?"#20382b":"#d9e6a1";
-      cc.fillRect(0,0,54,5);cc.fillRect(0,31,54,5);
-    }
+    const w=128,h=112,c=canvas(w,h),cc=c.getContext("2d");
+    cc.fillStyle="#9bac65";cc.fillRect(0,0,w,h);
+    cc.fillStyle="#526b3b";cc.fillRect(40,20,48,78);
+    cc.fillStyle="#d9e6a1";cc.fillRect(48,38,8,8);cc.fillRect(73,38,8,8);
+    cc.fillRect(54,64,20,4);
+    drawFrame(cc,d.key,palettes[0].colors,w,h);
     const label=document.createElement("span");label.textContent=d.name;
     b.append(c,label);
     b.onclick=()=>{
@@ -1455,7 +1417,7 @@ $("mirrorBtn").onclick=()=>{
   mirror=!mirror;refreshPreview();updateUI();
 };
 $("sizeBtn").onclick=cycleSize;$("tonesBtn").onclick=cycleTones;
-$("diceBtn").onclick=dice;$("previousStyleBtn").onclick=previousConfig;
+$("diceBtn").onclick=()=>review?undoEdit():dice;$("previousStyleBtn").onclick=previousConfig;
 $("smoothPresetBtn").onclick=smoothPreset;$("resetBtn").onclick=resetProfile;
 $("matrixBtn").onclick=()=>{
   if(previewLocked())return;
@@ -1475,7 +1437,20 @@ $("timerBtn").onclick=()=>{
   $("timerBtn").setAttribute("aria-pressed",timerEnabled?"true":"false");
   $("timerLabel").textContent=timerEnabled?"倒數 3 秒":"倒數關閉";
 };
-$("shutter").onclick=takePhoto;
+$("settingsBtn").onclick=toggleSettings;
+$("settingPrevBtn").onclick=()=>stepSetting(-1);
+$("settingNextBtn").onclick=()=>stepSetting(1);
+$("styleMenuBtn").onclick=()=>{
+  if(previewLocked())return;
+  const open=$("styleStrip").hidden;
+  if(settingsOpen)toggleSettings();
+  $("styleStrip").hidden=!open;
+  $("styleMenuBtn").setAttribute("aria-expanded",String(open));
+};
+for(const [id,direction] of [["padUp","up"],["padDown","down"],["padLeft","left"],["padRight","right"]]){
+  $(id).onclick=()=>directionKey(direction);
+}
+$("shutter").onclick=()=>review?finishDecoration():takePhoto();
 $("importBtn").onclick=chooseFile;$("startImportBtn").onclick=chooseFile;
 $("fileInput").onchange=e=>{
   const file=e.target.files[0];e.target.value="";importPhoto(file);
@@ -1491,7 +1466,7 @@ $("textInput").onkeydown=e=>{
 $("smallerBtn").onclick=()=>scaleObject(.8);
 $("largerBtn").onclick=()=>scaleObject(1.25);
 $("deleteObjectBtn").onclick=deleteObject;
-$("deselectBtn").onclick=()=>{selectedId=null;renderReview(false)};
+$("deselectBtn").onclick=finishDecoration;
 $("saveBtn").onclick=()=>savePNG(4);
 $("originalBtn").onclick=()=>savePNG(1);
 $("shareBtn").onclick=sharePNG;$("viewImageBtn").onclick=viewImage;
@@ -1501,8 +1476,12 @@ $("helpBtn").onclick=()=>{cancelCountdown();$("helpDialog").showModal()};
 $("closeHelp").onclick=()=>$("helpDialog").close();
 
 window.addEventListener("keydown",e=>{
-  if(["INPUT","TEXTAREA","SELECT","BUTTON","SUMMARY"].includes(e.target.tagName)||
-    $("helpDialog").open||$("imageDialog").open)return;
+  if($("helpDialog").open||$("imageDialog").open)return;
+  const isPad=e.target.closest?.(".dpad");
+  if(["INPUT","TEXTAREA","SELECT","SUMMARY"].includes(e.target.tagName)||
+    (e.target.tagName==="BUTTON"&&!isPad))return;
+  const arrows={ArrowUp:"up",ArrowDown:"down",ArrowLeft:"left",ArrowRight:"right"};
+  if(arrows[e.key]){e.preventDefault();directionKey(arrows[e.key]);return}
   if(e.code==="Space"&&!review){e.preventDefault();takePhoto()}
   else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"&&review){
     e.preventDefault();undoEdit();
@@ -1510,7 +1489,7 @@ window.addEventListener("keydown",e=>{
 });
 
 buildStyleButtons();buildFrameButtons();buildStickerButtons();
-syncSettings();standby();requestAnimationFrame(loop);
+showSetting(0);syncSettings();standby();requestAnimationFrame(loop);
 if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia){
   $("startDescription").textContent=
     "這個開啟方式可能無法使用相機。請放上 HTTPS 網站，或先匯入照片玩。";
