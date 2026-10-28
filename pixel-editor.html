@@ -1012,7 +1012,18 @@ kbd {
     <label>寬 <input id="newW" type="number" min="1" max="512"></label>
     <label>高 <input id="newH" type="number" min="1" max="512"></label>
   </div>
-  <p class="small">每個方向 1～512 px。會替換目前畫布，但可復原。</p>
+  <div class="row">
+    <label for="newPalette">色盤</label>
+    <select id="newPalette">
+      <option value="default" selected>預設色盤</option>
+      <option value="keep">保留目前色盤</option>
+      <option value="empty">空白色盤</option>
+    </select>
+  </div>
+  <p class="small">
+    每個方向 1～512 px。會替換目前畫布，但可復原。<br>
+    同系列作品要沿用同一組顏色時，選「保留目前色盤」；選擇會記住。
+  </p>
   <div class="dialog-actions">
     <button id="cancelNew">取消</button>
     <button id="confirmNew" class="primary">建立</button>
@@ -1055,11 +1066,13 @@ let pixels = new Uint8ClampedArray(W * H * 4);
 
 let tool = "pencil";
 let previousDrawTool = "pencil";
-let currentColor = "#264f49";
-let workingPalette = [
+const DEFAULT_PALETTE = [
   "#f8efd4", "#c5c9ad", "#b4b65d", "#8d9e55",
   "#64865b", "#426b57", "#264f49", "#183b3b"
 ];
+const DEFAULT_COLOR = "#264f49";
+let currentColor = DEFAULT_COLOR;
+let workingPalette = [...DEFAULT_PALETTE];
 
 let past = [], future = [];
 let gesture = null;
@@ -2978,7 +2991,7 @@ $("confirmImport").onclick = () => {
     "；請檢查輪廓與邏輯網格"
   );
   $("importDialog").close();
-  viewport.scrollTo(0, 0);
+  fitZoom();
 };
 
 $("cancelImport").onclick = () => $("importDialog").close();
@@ -3021,11 +3034,11 @@ $("projectFile").addEventListener("change", async event => {
     workingPalette = [...new Set(palette)];
     if (!workingPalette.length) extractPalette();
 
-    setColor(normalizeHex(p.color) || "#264f49");
+    setColor(normalizeHex(p.color) || DEFAULT_COLOR);
     draw();
     renderPalette();
     inspect("專案已載入");
-    viewport.scrollTo(0, 0);
+    fitZoom();
   } catch (error) {
     showMessage("載入失敗：" + error.message);
   }
@@ -3035,6 +3048,8 @@ $("newBtn").onclick = () => {
   finishGesture();
   $("newW").value = W;
   $("newH").value = H;
+  $("newPalette").querySelector('[value="keep"]').textContent =
+    `保留目前色盤（${workingPalette.length} 色）`;
   $("newDialog").showModal();
   $("newW").select();
 };
@@ -3047,14 +3062,27 @@ function confirmNewCanvas() {
     return;
   }
 
+  // 色盤跟著作品走：新作品預設換回預設色盤，系列作可選擇保留
+  const paletteMode = $("newPalette").value;
   remember();
   W = w;
   H = h;
   pixels = new Uint8ClampedArray(W * H * 4);
+  if (paletteMode === "default") {
+    workingPalette = [...DEFAULT_PALETTE];
+    setColor(DEFAULT_COLOR);
+  } else if (paletteMode === "empty") {
+    workingPalette = [];
+    renderPalette();
+  }
   draw();
-  inspect("新透明畫布");
+  inspect(
+    "新透明畫布" +
+    (paletteMode === "keep" ? "，沿用目前色盤" :
+     paletteMode === "empty" ? "，色盤已清空" : "，已換回預設色盤")
+  );
   $("newDialog").close();
-  viewport.scrollTo(0, 0);
+  fitZoom();
 }
 
 $("confirmNew").onclick = confirmNewCanvas;
@@ -3355,7 +3383,7 @@ const AUTOSAVE_DELAY = 500;
 const AUTOSAVE_SETTINGS = {
   brush: "value", pickerReturn: "checked", gridToggle: "checked",
   exportScale: "value", viewChecker: "checked", viewLcd: "checked",
-  colorLimit: "value", penOnly: "checked"
+  colorLimit: "value", penOnly: "checked", newPalette: "value"
 };
 let autosaveDb = null;
 let autosaveReady = false;  // 還原完成前不寫入，避免空白畫布蓋掉舊存檔
