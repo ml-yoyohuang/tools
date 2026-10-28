@@ -1,0 +1,1761 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixel Motion｜輕量點陣動畫工具</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#15191f;--panel:#202731;--field:#2a3440;
+  --line:#3b4858;--text:#edf1f6;--muted:#a7b2c1;
+  --accent:#a1cfb1;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font:13px/1.5 system-ui,sans-serif;height:100dvh;overflow:hidden;
+}
+button,input,select{font:inherit}
+button,select,input[type=number],input[type=text]{
+  background:var(--field);color:var(--text);
+  border:1px solid var(--line);border-radius:5px;padding:6px 8px;
+}
+button{cursor:pointer}
+button:hover:not(:disabled){border-color:var(--accent)}
+button:disabled{opacity:.4;cursor:default}
+button.primary{background:var(--accent);color:#17251c}
+input[type=checkbox],input[type=range]{accent-color:var(--accent)}
+input[type=number]{width:85px}
+input[type=color]{width:35px;height:29px;border:0;padding:0}
+header{
+  display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+  padding:9px 12px;border-bottom:1px solid var(--line);
+}
+header strong{font-size:17px;color:var(--accent);margin-right:10px}
+#app{height:100%;display:flex;flex-direction:column}
+#content{flex:1;display:flex;min-height:0}
+#workspace{flex:1;display:flex;flex-direction:column;min-width:0}
+#previewArea{
+  flex:1;position:relative;min-height:100px;overflow:auto;
+  display:flex;align-items:center;justify-content:center;
+  padding:30px;background:#10151b;
+}
+#preview{
+  image-rendering:pixelated;flex-shrink:0;
+  box-shadow:0 4px 25px #0008;
+  background-color:#d4d7dc;
+  background-image:
+    linear-gradient(45deg,#adb4bd 25%,transparent 25%),
+    linear-gradient(-45deg,#adb4bd 25%,transparent 25%),
+    linear-gradient(45deg,transparent 75%,#adb4bd 75%),
+    linear-gradient(-45deg,transparent 75%,#adb4bd 75%);
+  background-size:16px 16px;
+  background-position:0 0,0 8px,8px -8px,-8px 0;
+}
+#empty{
+  position:absolute;text-align:center;color:var(--muted);
+  pointer-events:none;
+}
+#empty strong{font-size:20px;color:var(--accent)}
+.bar{
+  display:flex;align-items:center;flex-wrap:wrap;gap:7px;
+  padding:8px 10px;border-top:1px solid var(--line);
+  background:var(--panel);
+}
+#timeline{
+  height:150px;min-height:150px;overflow:auto;
+  display:flex;align-items:flex-start;gap:8px;padding:12px;
+  background:#18202a;user-select:none;
+}
+.frame{
+  width:94px;min-width:94px;padding:6px;
+  border:2px solid var(--line);border-radius:7px;
+  background:#26313e;cursor:pointer;position:relative;
+}
+.frame.selected{border-color:var(--accent);background:#30453b}
+.frame.current{box-shadow:inset 0 0 0 2px #e6c477}
+.frame.dragging{opacity:.45}
+.frame.drop-before::before,.frame.drop-after::after{
+  content:"";position:absolute;top:-5px;bottom:-5px;width:4px;
+  background:var(--accent);border-radius:4px;
+}
+.frame.drop-before::before{left:-7px}
+.frame.drop-after::after{right:-7px}
+.thumb{
+  display:block;width:78px;height:64px;object-fit:contain;
+  image-rendering:pixelated;background:#141b23;
+}
+.frame-title{
+  overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+  font-size:11px;margin-top:4px;
+}
+.frame-time{color:var(--accent);font-size:11px}
+aside{
+  width:250px;min-width:250px;background:var(--panel);
+  border-left:1px solid var(--line);padding:12px;overflow:auto;
+}
+section+section{margin-top:19px}
+h3{font-size:12px;color:var(--muted);margin:0 0 8px}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:7px 0}
+.small{font-size:11px;color:var(--muted)}
+.full{width:100%}
+label{cursor:pointer}
+#status{
+  padding:6px 12px;height:31px;min-height:31px;
+  border-top:1px solid var(--line);color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+dialog{
+  color:var(--text);background:var(--panel);
+  border:1px solid var(--line);border-radius:10px;padding:20px;
+  width:min(580px,calc(100vw - 24px));max-height:90dvh;overflow:auto;
+}
+dialog::backdrop{background:#000a}
+dialog h2{margin:0 0 12px;font-size:19px}
+dialog p,dialog li{color:var(--muted)}
+.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+#askMessage,#documentInfo{white-space:pre-line}
+#busy{
+  position:fixed;inset:0;display:none;place-items:center;
+  background:#000a;z-index:100;
+}
+#busyBox{
+  background:var(--panel);border:1px solid var(--line);
+  padding:25px;border-radius:10px;max-width:90vw;
+}
+#busyText{font-size:16px}
+progress{width:260px;max-width:70vw;accent-color:var(--accent)}
+@media(max-width:800px){
+  aside{width:210px;min-width:210px;padding:9px}
+  header strong{font-size:14px}
+  header{gap:4px;padding:6px}
+  button{padding:5px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+  <strong>✦ Pixel Motion</strong>
+  <button id="importBtn" class="primary">匯入圖片</button>
+  <button id="newBtn">清空／新動畫</button>
+  <button id="loadBtn">載入專案</button>
+  <button id="saveBtn">保存專案</button>
+  <button id="exportBtn">匯出 GIF</button>
+  <button id="draftBtn">上一件作品</button>
+  <button id="helpBtn">說明</button>
+</header>
+
+<div id="content">
+  <div id="workspace">
+    <div id="previewArea">
+      <canvas id="preview" width="64" height="64"></canvas>
+      <div id="empty">
+        <strong>把圖片拖進來，開始排動畫</strong><br>
+        支援多選圖片、檔名自然排序<br>
+        原始圖片不會自動縮放
+      </div>
+    </div>
+
+    <div class="bar">
+      <button id="prevBtn">◀ 上一格</button>
+      <button id="playBtn" class="primary">▶ 播放</button>
+      <button id="stopBtn">■ 停止</button>
+      <button id="nextBtn">下一格 ▶</button>
+      <select id="playMode">
+        <option value="loop">循環預覽／GIF</option>
+        <option value="once">單次預覽／GIF</option>
+      </select>
+      <label><input id="selectionOnly" type="checkbox">只預覽選取</label>
+      <span id="playInfo" class="small"></span>
+    </div>
+
+    <div class="bar">
+      <span>整體速度</span>
+      <select id="speed">
+        <option value="0.25">0.25×</option>
+        <option value="0.5">0.5×</option>
+        <option value="0.75">0.75×</option>
+        <option value="1" selected>1×</option>
+        <option value="1.5">1.5×</option>
+        <option value="2">2×</option>
+        <option value="3">3×</option>
+        <option value="4">4×</option>
+      </select>
+      <span class="small">同時影響預覽與 GIF，不改寫影格原始時間</span>
+      <span style="flex:1"></span>
+      <button id="zoomOut">−</button>
+      <span id="zoomInfo">4×</span>
+      <button id="zoomIn">＋</button>
+      <button id="fitBtn">適合視窗</button>
+      <button id="actualBtn">1:1</button>
+    </div>
+
+    <div id="timeline" aria-label="影格時間軸"></div>
+
+    <div class="bar">
+      <button id="selectAllBtn">全選</button>
+      <button id="copyBtn">複製</button>
+      <button id="pasteBtn">貼上</button>
+      <button id="duplicateBtn">直接複製一段</button>
+      <button id="deleteBtn">刪除</button>
+      <button id="reverseBtn">反轉順序</button>
+      <button id="undoBtn">復原</button>
+      <button id="redoBtn">重做</button>
+    </div>
+  </div>
+
+  <aside>
+    <section>
+      <h3>選取影格</h3>
+      <div id="selectionInfo">尚未選取</div>
+      <div class="row">
+        <input id="duration" type="number" min="20" max="60000" step="10"
+               placeholder="毫秒">
+        <span>ms</span>
+        <button id="applyDuration">套用</button>
+      </div>
+      <div id="durationInfo" class="small"></div>
+      <div class="row">
+        <button data-duration="50">50</button>
+        <button data-duration="100">100</button>
+        <button data-duration="200">200</button>
+        <button data-duration="500">500 ms</button>
+      </div>
+      <div class="row">
+        <button id="slowerBtn">段落慢一倍</button>
+        <button id="fasterBtn">段落快一倍</button>
+      </div>
+      <button id="allDurationBtn" class="full">全部設為目前輸入時間</button>
+      <div class="row">
+        <button id="thinBtn" class="full">選取段落隔格抽格，保留總時間</button>
+      </div>
+      <div class="small">
+        Shift 選連續範圍；Ctrl／⌘ 增減選取。<br>
+        拖曳已選取的影格，可整段移動。
+      </div>
+    </section>
+
+    <section>
+      <h3>匯入設定</h3>
+      <div class="row">
+        <label>位置
+          <select id="importPosition">
+            <option value="end">追加末端</option>
+            <option value="after">插入目前格後</option>
+          </select>
+        </label>
+      </div>
+      <div class="row">
+        <label>對齊
+          <select id="alignment">
+            <option value="center">置中</option>
+            <option value="topLeft">左上</option>
+          </select>
+        </label>
+      </div>
+      <div class="row">
+        <label>新格時間
+          <input id="defaultDuration" type="number"
+                 min="20" max="60000" step="10" value="100">
+        </label>
+        <span>ms</span>
+      </div>
+      <div class="small">
+        空動畫依匯入圖片的最大寬高建立畫布。<br>
+        後續圖片大於畫布時，會詢問是否擴大。
+      </div>
+    </section>
+
+    <section>
+      <h3>畫布</h3>
+      <div class="row">
+        <input id="canvasW" type="number" min="1" max="1024" value="64">
+        <span>×</span>
+        <input id="canvasH" type="number" min="1" max="1024" value="64">
+      </div>
+      <button id="resizeBtn" class="full">套用畫布尺寸</button>
+      <div class="small">
+        不缩放圖片；較小畫布會裁切顯示。<br>
+        原圖仍保留於專案，可再次擴大畫布。
+      </div>
+    </section>
+
+    <section>
+      <h3>GIF 匯出</h3>
+      <div class="row">
+        <label>放大
+          <select id="exportScale">
+            <option value="1">1×</option>
+            <option value="2">2×</option>
+            <option value="3">3×</option>
+            <option value="4">4×</option>
+            <option value="6">6×</option>
+            <option value="8">8×</option>
+          </select>
+        </label>
+        <span id="exportSize" class="small"></span>
+      </div>
+      <select id="alphaMode" class="full">
+        <option value="threshold">透明：Alpha 小於 128 視為透明</option>
+        <option value="background">合成至背景色</option>
+      </select>
+      <div class="row">
+        <span>背景色</span>
+        <input id="backgroundColor" type="color" value="#ffffff">
+      </div>
+      <div class="small">
+        放大以最近鄰保持像素清晰。<br>
+        GIF 不支援半透明。透明模式會保留原 RGB，
+        但抗鋸齒邊緣可能不如 PNG。<br>
+        全片超過 255 色時，先改用每格各自的色盤；
+        單格仍超過才以 median cut 減色，不使用抖色。
+      </div>
+    </section>
+
+    <section>
+      <h3>動畫資訊</h3>
+      <div id="documentInfo" class="small"></div>
+      <div id="draftStatus" class="small" style="margin-top:8px"></div>
+      <p class="small">本機草稿不等於備份，請定期保存 JSON。</p>
+    </section>
+  </aside>
+</div>
+
+<div id="status" role="status">準備就緒。</div>
+</div>
+
+<input id="imageFiles" type="file" accept="image/*" multiple hidden>
+<input id="projectFile" type="file" accept=".json,application/json" hidden>
+
+<div id="busy">
+  <div id="busyBox">
+    <div id="busyText">正在處理…</div>
+    <progress id="progress" max="1" value="0"></progress>
+  </div>
+</div>
+
+<dialog id="helpDialog">
+  <h2>Pixel Motion 使用方式</h2>
+  <ul>
+    <li>多選圖片匯入，依自然檔名順序排列，例如 1、2、10。</li>
+    <li>點一下選一格；Shift 選範圍；Ctrl／⌘ 增減個別選取。</li>
+    <li>拖曳已選影格整段搬移；複製貼上包含每格停留時間。</li>
+    <li>空白播放／暫停，左右方向鍵換格。</li>
+    <li>Ctrl／⌘ C、V 使用工具內部影格剪貼簿，不讀寫系統剪貼簿。</li>
+    <li>Ctrl／⌘ Z 復原，Shift Z 重做，Ctrl／⌘ S 保存專案。</li>
+    <li>抽格保留每段第一格，移除第二格、第四格……，
+        被移除的時間加到前面的保留格。每個不連續選取段落分別處理。</li>
+  </ul>
+  <p>
+    整體速度影響預覽與匯出；「只預覽選取」不影響匯出，
+    匯出仍包含全部影格。單次 GIF 不寫入循環擴充，但外部播放器
+    或網站仍可能自行循環。
+  </p>
+  <p>
+    GIF 時間以 10ms 為單位，本工具匯出最短 20ms。
+    其他播放器可能對極短延遲作不同處理。
+    動畫圖片匯入只取瀏覽器解碼後的靜態畫面，不拆解既有 GIF。
+  </p>
+  <p>
+    限制：畫布長寬最多 1024 px、最多 300 格，放大匯出後最多 4096 px；
+    大動畫仍可能占用很多記憶體。內建編碼器只寫入每格有變化的範圍，
+    不變的部分沿用上一格。
+  </p>
+  <p>
+    草稿依賴 IndexedDB，開啟頁面時會自動恢復。
+    清空動畫或載入專案前，原本的作品會留在「上一件作品」，可以換回來。
+    私密模式、file URL 儲存政策、清除網站資料及更換 HTML 位置都可能影響草稿。
+  </p>
+  <div class="actions"><button id="closeHelp">關閉</button></div>
+</dialog>
+
+<dialog id="askDialog">
+  <form method="dialog">
+    <h2 id="askTitle"></h2>
+    <p id="askMessage"></p>
+    <div class="actions">
+      <button id="askCancel" type="button">取消</button>
+      <button id="askOk" value="ok" class="primary">確定</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+const preview = $("preview");
+const pctx = preview.getContext("2d");
+const timeline = $("timeline");
+const MAX_SIZE = 1024, MAX_FRAMES = 300;
+const MAX_OUTPUT = 4096;             // 放大匯出後的長寬上限
+const SCALES = [1,2,3,4,6,8];
+const THUMB_W = 78, THUMB_H = 64;    // 與 .thumb 的 CSS 尺寸一致
+const collator = new Intl.Collator(undefined, {
+  numeric:true, sensitivity:"base"
+});
+
+let frames = [];
+let width = 64, height = 64;
+let alignment = "center", speed = 1, mode = "loop";
+let alphaMode = "threshold", background = "#ffffff", exportScale = 1;
+
+let selected = new Set();
+let currentId = null, anchorId = null;
+let nextId = 1, clipboard = [];
+let undoStack = [], redoStack = [];
+let zoom = 4, busy = false, dragIds = null;
+
+let playing = false, playIds = [], playDurations = [];
+let playPosition = 0, playElapsed = 0, lastTick = 0;
+let playTotal = 0;
+
+let revision = 0, draftTimer = null, draftSaving = false;
+let draftAgain = false, dbPromise = null, savedRevision = 0;
+let imageCounter = 0;
+
+const sleep = () => new Promise(r => setTimeout(r,0));
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+function status(s){ $("status").textContent = s; }
+function newCanvas(w,h){
+  const c=document.createElement("canvas");
+  c.width=w;c.height=h;return c;
+}
+function currentIndex(){
+  return frames.findIndex(f => f.id===currentId);
+}
+function selectedFrames(){
+  return frames.filter(f => selected.has(f.id));
+}
+function durationValue(value){
+  const n=Number(value);
+  return Number.isFinite(n) ? clamp(Math.round(n),20,60000) : 100;
+}
+function effectiveDuration(f){
+  return Math.max(1,f.duration/speed);
+}
+function gifDelay(f){
+  return clamp(Math.round(effectiveDuration(f)/10),2,65535);
+}
+function checkSize(w,h){
+  return Number.isInteger(w)&&Number.isInteger(h)&&
+    w>=1&&h>=1&&w<=MAX_SIZE&&h<=MAX_SIZE;
+}
+
+/* ---------- 頁內對話框 ---------- */
+// 取代 alert／confirm：系統視窗會卡住播放，手機上也很突兀。
+// 一次只顯示一個，後來的排隊等前一個關閉。
+
+let askQueue=Promise.resolve(),askFinish=null;
+
+function showAsk({title="",message="",ok="確定",cancel="取消"}){
+  $("askTitle").textContent=title;$("askTitle").hidden=!title;
+  $("askMessage").textContent=message;
+  $("askOk").textContent=ok;
+  $("askCancel").textContent=cancel||"";$("askCancel").hidden=!cancel;
+  $("askDialog").showModal();
+  return new Promise(resolve=>{
+    askFinish=okay=>{askFinish=null;resolve(okay)};
+  });
+}
+// 回傳 true（確定）或 false（取消、Esc）
+function ask(options){
+  const result=askQueue.then(()=>showAsk(options));
+  askQueue=result.catch(()=>{});
+  return result;
+}
+function notify(message,title=""){
+  return ask({title,message,cancel:null});
+}
+// 按鈕與 Esc（cancel）當下就回覆；close 事件是非同步的，只當保險。
+// 若對話框已被下一個詢問重新打開，那就是上一次遲到的事件，略過。
+$("askDialog").querySelector("form").onsubmit=()=>askFinish?.(true);
+$("askDialog").oncancel=()=>askFinish?.(false);
+$("askCancel").onclick=()=>{$("askDialog").close();askFinish?.(false)};
+$("askDialog").onclose=()=>{if(!$("askDialog").open)askFinish?.(false)};
+
+
+/* ---------- 歷史：影格圖片使用共享引用 ---------- */
+
+function snapshot(){
+  return {
+    frames:frames.map(f=>({...f})),
+    width,height,alignment,speed,mode,alphaMode,background,exportScale,
+    selected:[...selected],currentId,anchorId
+  };
+}
+function restore(s){
+  frames=s.frames.map(f=>({...f}));
+  ({width,height,alignment,speed,mode,alphaMode,background,exportScale}=s);
+  selected=new Set(s.selected);
+  currentId=s.currentId;anchorId=s.anchorId;
+  refresh();
+}
+function pushHistory(before){
+  undoStack.push({before,after:snapshot()});
+  if(undoStack.length>40) undoStack.shift();
+  redoStack=[];
+}
+function mutate(action){
+  if(busy)return;
+  pause();
+  const before=snapshot();
+  action();
+  normalizeSelection();
+  pushHistory(before);
+  refresh();
+  changed();
+}
+function normalizeSelection(){
+  const ids=new Set(frames.map(f=>f.id));
+  selected=new Set([...selected].filter(id=>ids.has(id)));
+  if(!ids.has(currentId)) currentId=frames[0]?.id??null;
+  if(!ids.has(anchorId)) anchorId=currentId;
+}
+function undo(){
+  if(busy||!undoStack.length)return;
+  pause();
+  const h=undoStack.pop();
+  redoStack.push(h);
+  restore(h.before);
+  changed();status("已復原");
+}
+function redo(){
+  if(busy||!redoStack.length)return;
+  pause();
+  const h=redoStack.pop();
+  undoStack.push(h);
+  restore(h.after);
+  changed();status("已重做");
+}
+
+/* ---------- 圖像與畫布 ---------- */
+
+function drawFrame(ctx,f,w=width,h=height){
+  ctx.clearRect(0,0,w,h);
+  if(!f)return;
+  const x=alignment==="center"?Math.floor((w-f.image.width)/2):0;
+  const y=alignment==="center"?Math.floor((h-f.image.height)/2):0;
+  ctx.drawImage(f.image,x,y);
+}
+function drawPreview(){
+  if(preview.width!==width)preview.width=width;
+  if(preview.height!==height)preview.height=height;
+  drawFrame(pctx,frames.find(f=>f.id===currentId));
+  preview.style.width=width*zoom+"px";
+  preview.style.height=height*zoom+"px";
+  preview.style.visibility=frames.length?"visible":"hidden";
+  $("empty").hidden=!!frames.length;
+  $("zoomInfo").textContent=zoom+"×";
+  const i=currentIndex();
+  $("playInfo").textContent=frames.length
+    ? `${i+1} / ${frames.length} 格`
+    : "沒有影格";
+}
+function fit(){
+  const area=$("previewArea");
+  const value=Math.min(
+    (area.clientWidth-60)/width,
+    (area.clientHeight-60)/height
+  );
+  zoom=value>=1?clamp(Math.floor(value),1,32):
+    value>=.5?.5:.25;
+  drawPreview();
+}
+function loadImage(src){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>resolve(img);
+    img.onerror=()=>reject(new Error("圖片讀取失敗"));
+    img.src=src;
+  });
+}
+function canonicalImage(img){
+  // 畫成靜態畫面，確保動畫圖片不會在影格內自行播放。
+  const c=newCanvas(img.naturalWidth||img.width,img.naturalHeight||img.height);
+  c.getContext("2d").drawImage(img,0,0);
+  return c;
+}
+function canvasBlob(canvas){
+  return new Promise((resolve,reject)=>{
+    canvas.toBlob(b=>b?resolve(b):reject(new Error("圖片轉換失敗")),"image/png");
+  });
+}
+async function blobImage(blob){
+  const url=URL.createObjectURL(blob);
+  try{return await loadImage(url)}
+  finally{URL.revokeObjectURL(url)}
+}
+function blobToDataURL(blob){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(reader.result);
+    reader.onerror=()=>reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+function dataURLToBlob(url){
+  const bytes=atob(url.slice(url.indexOf(",")+1));
+  const array=new Uint8Array(bytes.length);
+  for(let i=0;i<bytes.length;i++)array[i]=bytes.charCodeAt(i);
+  return new Blob([array],{type:"image/png"});
+}
+// 影格圖片的代號：草稿用它辨識哪些圖片已經存過
+function newImageKey(){
+  return Date.now().toString(36)+"-"+(imageCounter++).toString(36)+"-"+
+    Math.random().toString(36).slice(2,6);
+}
+
+/* ---------- 時間軸與選取 ---------- */
+
+// 時間軸節點依影格 id 沿用，重繪時只更新文字、順序和有變的縮圖
+const frameItems=new Map();   // id → { node, thumb, label, time, image, key }
+
+function drawThumb(item,f){
+  const key=`${width}x${height}:${alignment}`;
+  if(item.image===f.image&&item.key===key)return;
+  item.image=f.image;item.key=key;
+  // 縮圖只建顯示需要的大小；用原尺寸的話，大畫布多影格會吃掉上 GB 記憶體
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  const scale=Math.min(1,THUMB_W*dpr/width,THUMB_H*dpr/height);
+  const c=item.thumb;
+  c.width=Math.max(1,Math.round(width*scale));
+  c.height=Math.max(1,Math.round(height*scale));
+  const ctx=c.getContext("2d");
+  ctx.setTransform(scale,0,0,scale,0,0);
+  ctx.imageSmoothingEnabled=scale<1;
+  ctx.imageSmoothingQuality="high";
+  drawFrame(ctx,f);
+}
+function selectFrame(id,e){
+  if(busy)return;
+  pause();
+  const i=frames.findIndex(x=>x.id===id);
+  if(i<0)return;
+  if(e.shiftKey){
+    const a=frames.findIndex(x=>x.id===anchorId);
+    const lo=Math.min(a<0?i:a,i),hi=Math.max(a<0?i:a,i);
+    if(!e.ctrlKey&&!e.metaKey)selected.clear();
+    for(let k=lo;k<=hi;k++)selected.add(frames[k].id);
+  }else if(e.ctrlKey||e.metaKey){
+    if(selected.has(id))selected.delete(id);
+    else selected.add(id);
+    anchorId=id;
+  }else{
+    selected=new Set([id]);anchorId=id;
+  }
+  currentId=id;
+  refreshSelection();
+  drawPreview();
+}
+function frameItem(id){
+  let item=frameItems.get(id);
+  if(item)return item;
+
+  const node=document.createElement("div");
+  node.className="frame";
+  node.dataset.id=id;
+  node.draggable=true;
+  const thumb=newCanvas(1,1);
+  thumb.className="thumb";
+  const label=document.createElement("div");
+  label.className="frame-title";
+  const time=document.createElement("div");
+  time.className="frame-time";
+  node.append(thumb,label,time);
+
+  node.onclick=e=>selectFrame(id,e);
+  node.ondragstart=e=>{
+    if(busy){e.preventDefault();return}
+    pause();
+    if(!selected.has(id)){
+      selected=new Set([id]);currentId=id;anchorId=id;
+      refreshSelection();
+    }
+    dragIds=frames.filter(x=>selected.has(x.id)).map(x=>x.id);
+    e.dataTransfer.effectAllowed="move";
+    e.dataTransfer.setData("text/plain","pixel-motion-frames");
+    document.querySelectorAll(".frame").forEach(n=>{
+      n.classList.toggle("dragging",dragIds.includes(Number(n.dataset.id)));
+    });
+  };
+  node.ondragover=e=>{
+    if(!dragIds)return;
+    e.preventDefault();e.dataTransfer.dropEffect="move";
+    clearDropMarks();
+    const r=node.getBoundingClientRect();
+    node.classList.add(e.clientX<r.left+r.width/2?"drop-before":"drop-after");
+  };
+  node.ondrop=e=>{
+    if(!dragIds)return;
+    e.preventDefault();e.stopPropagation();
+    const r=node.getBoundingClientRect();
+    moveDragged(id,e.clientX>=r.left+r.width/2);
+  };
+  node.ondragend=()=>{
+    dragIds=null;clearDropMarks();
+    document.querySelectorAll(".dragging").forEach(n=>n.classList.remove("dragging"));
+  };
+
+  item={node,thumb,label,time,image:null,key:""};
+  frameItems.set(id,item);
+  return item;
+}
+function renderTimeline(){
+  const ids=new Set(frames.map(f=>f.id));
+  for(const id of frameItems.keys())if(!ids.has(id))frameItems.delete(id);
+
+  const nodes=frames.map((f,i)=>{
+    const item=frameItem(f.id);
+    item.node.title=`${i+1}. ${f.name}\n${f.duration} ms`;
+    item.label.textContent=String(i+1).padStart(2,"0")+" · "+f.name;
+    item.time.textContent=f.duration+" ms";
+    drawThumb(item,f);
+    return item.node;
+  });
+  const children=timeline.children;
+  const same=children.length===nodes.length&&nodes.every((n,i)=>children[i]===n);
+  if(!same)timeline.replaceChildren(...nodes);
+}
+function clearDropMarks(){
+  document.querySelectorAll(".drop-before,.drop-after").forEach(n=>{
+    n.classList.remove("drop-before","drop-after");
+  });
+}
+function moveDragged(targetId,after){
+  const ids=dragIds;
+  dragIds=null;clearDropMarks();
+  if(!ids?.length)return;
+  const targetIndex=frames.findIndex(f=>f.id===targetId);
+  const originalBoundary=targetIndex<0?frames.length:targetIndex+(after?1:0);
+  const moving=new Set(ids);
+  const insertionIndex=frames.slice(0,originalBoundary)
+    .filter(f=>!moving.has(f.id)).length;
+
+  mutate(()=>{
+    const chunk=frames.filter(f=>moving.has(f.id));
+    const rest=frames.filter(f=>!moving.has(f.id));
+    rest.splice(insertionIndex,0,...chunk);
+    frames=rest;
+    selected=new Set(ids);
+  });
+  status("已移動選取影格");
+}
+timeline.addEventListener("dragover",e=>{
+  if(dragIds)e.preventDefault();
+});
+timeline.addEventListener("drop",e=>{
+  if(dragIds){e.preventDefault();moveDragged(null,true)}
+});
+
+function refreshSelection(){
+  document.querySelectorAll(".frame").forEach(n=>{
+    const id=Number(n.dataset.id);
+    n.classList.toggle("selected",selected.has(id));
+    n.classList.toggle("current",currentId===id);
+  });
+  const chosen=selectedFrames();
+  $("selectionInfo").textContent=chosen.length
+    ? `已選取 ${chosen.length} 格`
+    : "尚未選取";
+
+  const values=new Set(chosen.map(f=>f.duration));
+  if(values.size===1){
+    $("duration").value=chosen[0].duration;
+    $("duration").placeholder="毫秒";
+    $("durationInfo").textContent=(chosen[0].duration/1000).toFixed(3)+" 秒";
+  }else{
+    $("duration").value="";
+    $("duration").placeholder=values.size?"多種時間":"毫秒";
+    $("durationInfo").textContent=values.size?"選取影格有不同停留時間":"";
+  }
+  ["copyBtn","duplicateBtn","deleteBtn","reverseBtn","applyDuration",
+   "slowerBtn","fasterBtn","thinBtn"].forEach(id=>$(id).disabled=!chosen.length);
+  $("pasteBtn").disabled=!clipboard.length;
+}
+function updateInfo(){
+  const total=frames.reduce((s,f)=>s+f.duration,0);
+  $("documentInfo").textContent=
+    `${width}×${height} px · ${frames.length} 格\n`+
+    `原始總時間 ${(total/1000).toFixed(2)} 秒 · `+
+    `目前速度 ${(total/speed/1000).toFixed(2)} 秒`;
+  const outW=width*exportScale,outH=height*exportScale;
+  $("exportSize").textContent=`輸出 ${outW}×${outH}`+
+    (outW>MAX_OUTPUT||outH>MAX_OUTPUT?"（超過上限）":"");
+  $("undoBtn").disabled=!undoStack.length;
+  $("redoBtn").disabled=!redoStack.length;
+  $("playBtn").disabled=!frames.length;
+  $("exportBtn").disabled=!frames.length;
+}
+function refresh(){
+  $("canvasW").value=width;$("canvasH").value=height;
+  $("alignment").value=alignment;
+  $("speed").value=speed;$("playMode").value=mode;
+  $("alphaMode").value=alphaMode;$("backgroundColor").value=background;
+  $("exportScale").value=exportScale;
+  for(const option of $("exportScale").options){
+    const v=Number(option.value);
+    option.disabled=width*v>MAX_OUTPUT||height*v>MAX_OUTPUT;
+  }
+  renderTimeline();refreshSelection();drawPreview();updateInfo();
+}
+function setCurrent(id,scroll=false){
+  currentId=id;
+  document.querySelectorAll(".frame.current").forEach(n=>n.classList.remove("current"));
+  const node=timeline.querySelector(`[data-id="${id}"]`);
+  node?.classList.add("current");
+  if(scroll)node?.scrollIntoView({block:"nearest",inline:"nearest"});
+  drawPreview();
+}
+
+/* ---------- 影格操作 ---------- */
+
+function copy(){
+  if(busy)return;
+  clipboard=selectedFrames().map(f=>({...f}));
+  $("pasteBtn").disabled=!clipboard.length;
+  status(`已複製 ${clipboard.length} 格到工具內部剪貼簿`);
+}
+function paste(){
+  if(busy||!clipboard.length)return;
+  if(frames.length+clipboard.length>MAX_FRAMES){
+    notify(`最多 ${MAX_FRAMES} 格`);return;
+  }
+  mutate(()=>{
+    const chunk=clipboard.map(f=>({...f,id:nextId++}));
+    const i=currentIndex();
+    frames.splice(i<0?frames.length:i+1,0,...chunk);
+    selected=new Set(chunk.map(f=>f.id));
+    currentId=chunk[0].id;anchorId=currentId;
+  });
+}
+function deleteSelected(){
+  if(!selected.size)return;
+  const i=currentIndex();
+  mutate(()=>{
+    frames=frames.filter(f=>!selected.has(f.id));
+    selected.clear();
+    currentId=frames[Math.min(Math.max(i,0),frames.length-1)]?.id??null;
+    if(currentId!==null)selected.add(currentId);
+  });
+}
+function applyDuration(value,all=false){
+  if(value===""||!Number.isFinite(Number(value))){
+    status("請先輸入停留時間");$("duration").focus();return;
+  }
+  const duration=durationValue(value);
+  if(!all&&!selected.size)return;
+  mutate(()=>{
+    frames=frames.map(f=>(all||selected.has(f.id))?{...f,duration}:f);
+  });
+}
+function scaleSelection(factor){
+  if(!selected.size)return;
+  mutate(()=>{
+    frames=frames.map(f=>selected.has(f.id)
+      ? {...f,duration:Math.max(20,Math.round(f.duration*factor))}
+      : f);
+  });
+}
+function reverseSelected(){
+  if(selected.size<2)return;
+  mutate(()=>{
+    const reversed=selectedFrames().reverse();
+    let n=0;
+    frames=frames.map(f=>selected.has(f.id)?reversed[n++]:f);
+  });
+}
+function thinSelected(){
+  if(selected.size<2)return;
+  mutate(()=>{
+    const result=[];
+    let runIndex=0,lastKept=null;
+    const keepIds=[];
+    for(const f of frames){
+      if(!selected.has(f.id)){
+        result.push(f);runIndex=0;lastKept=null;continue;
+      }
+      if(runIndex%2===0){
+        lastKept={...f};
+        result.push(lastKept);keepIds.push(lastKept.id);
+      }else{
+        lastKept.duration+=f.duration;
+      }
+      runIndex++;
+    }
+    frames=result;selected=new Set(keepIds);
+    if(!frames.some(f=>f.id===currentId))currentId=keepIds[0]??frames[0]?.id??null;
+  });
+  status("已隔格抽格，選取段落原始總時間保持不變");
+}
+
+/* ---------- 播放：依實際經過時間推進 ---------- */
+
+function pause(){
+  playing=false;
+  $("playBtn").textContent="▶ 播放";
+}
+function buildPlayback(){
+  const chosen=$("selectionOnly").checked?selectedFrames():frames;
+  playIds=chosen.map(f=>f.id);
+  playDurations=chosen.map(effectiveDuration);
+  playTotal=playDurations.reduce((a,b)=>a+b,0);
+}
+function startPlay(){
+  if(busy||!frames.length)return;
+  buildPlayback();
+  if(!playIds.length){status("請先選取要預覽的影格");return}
+  playPosition=playIds.indexOf(currentId);
+  if(playPosition<0)playPosition=0;
+  playElapsed=playDurations.slice(0,playPosition).reduce((a,b)=>a+b,0);
+  lastTick=performance.now();
+  playing=true;$("playBtn").textContent="Ⅱ 暫停";
+  setCurrent(playIds[playPosition],true);
+}
+function stop(){
+  pause();
+  const chosen=$("selectionOnly").checked?selectedFrames():frames;
+  if(chosen.length)setCurrent(chosen[0].id,true);
+}
+function step(direction){
+  if(busy||!frames.length)return;
+  pause();
+  const i=clamp(currentIndex()+direction,0,frames.length-1);
+  selected=new Set([frames[i].id]);anchorId=frames[i].id;
+  setCurrent(frames[i].id,true);refreshSelection();
+}
+function tick(now){
+  if(playing){
+    playElapsed+=Math.max(0,now-lastTick);
+    lastTick=now;
+    if(mode==="once"&&playElapsed>=playTotal){
+      setCurrent(playIds[playIds.length-1],true);
+      pause();
+    }else{
+      const t=playElapsed%playTotal;
+      let sum=0,index=playDurations.length-1;
+      for(let i=0;i<playDurations.length;i++){
+        sum+=playDurations[i];
+        if(t<sum){index=i;break}
+      }
+      if(index!==playPosition){
+        playPosition=index;setCurrent(playIds[index],true);
+      }
+      if(mode==="loop")playElapsed=t;
+    }
+  }
+  requestAnimationFrame(tick);
+}
+// 切到背景或關閉分頁時，立刻寫入還沒存的草稿
+function flushDraft(){
+  if(revision!==savedRevision&&!busy)saveDraft();
+}
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden){pause();flushDraft()}
+});
+window.addEventListener("pagehide",flushDraft);
+
+/* ---------- 匯入 ---------- */
+
+async function withBusy(task){
+  if(busy)return;
+  pause();busy=true;
+  clearTimeout(draftTimer);
+  $("busy").style.display="grid";
+  $("progress").value=0;
+  try{await task()}
+  catch(error){console.error(error);notify(error.message,"處理失敗")}
+  finally{
+    busy=false;$("busy").style.display="none";
+    if(revision>0)scheduleDraft();
+  }
+}
+function progress(text,value){
+  $("busyText").textContent=text;$("progress").value=value;
+}
+async function importFiles(list){
+  const files=[...list].filter(f=>
+    f.type.startsWith("image/")||/\.(png|jpe?g|webp|gif|bmp|avif)$/i.test(f.name)
+  ).sort((a,b)=>collator.compare(a.name,b.name));
+  if(!files.length){status("沒有可匯入的圖片");return}
+  if(frames.length+files.length>MAX_FRAMES){
+    notify(`最多 ${MAX_FRAMES} 格：目前 ${frames.length} 格，這次選了 ${files.length} 張。`);
+    return;
+  }
+
+  await withBusy(async()=>{
+    const imported=[];
+    const duration=durationValue($("defaultDuration").value);
+    let maxW=0,maxH=0;
+    for(let i=0;i<files.length;i++){
+      progress(`匯入 ${i+1} / ${files.length}`,i/files.length);
+      const url=URL.createObjectURL(files[i]);
+      try{
+        const decoded=await loadImage(url);
+        if(decoded.width>MAX_SIZE||decoded.height>MAX_SIZE){
+          throw new Error(files[i].name+" 超過 1024×1024 限制");
+        }
+        const image=canonicalImage(decoded);
+        const blob=await canvasBlob(image);
+        imported.push({
+          id:nextId++,name:files[i].name,duration,
+          image,blob,imageKey:newImageKey()
+        });
+        maxW=Math.max(maxW,image.width);maxH=Math.max(maxH,image.height);
+      }finally{URL.revokeObjectURL(url)}
+      await sleep();
+    }
+    const before=snapshot();
+    if(!frames.length){width=maxW;height=maxH}
+    else if(maxW>width||maxH>height){
+      const w=Math.max(width,maxW),h=Math.max(height,maxH);
+      if(await ask({
+        title:"擴大畫布？",
+        message:`新圖片比畫布大。要把畫布擴大為 ${w}×${h} 嗎？\n保留尺寸的話，超出部分會裁切顯示。`,
+        ok:"擴大",cancel:"保留尺寸"
+      })){
+        width=Math.max(width,maxW);height=Math.max(height,maxH);
+      }
+    }
+    const i=currentIndex();
+    const position=$("importPosition").value==="after"&&i>=0?i+1:frames.length;
+    frames.splice(position,0,...imported);
+    selected=new Set(imported.map(f=>f.id));
+    currentId=imported[0].id;anchorId=currentId;
+    pushHistory(before);refresh();fit();changed();
+    status(`已依檔名自然排序匯入 ${imported.length} 格`);
+  });
+}
+
+/* ---------- JSON 專案 ---------- */
+
+function projectMeta(){
+  return {
+    format:"pixel-motion",version:1,width,height,alignment,speed,mode,
+    alphaMode,background,exportScale
+  };
+}
+function download(blob,name){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;a.download=name;document.body.appendChild(a);
+  a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
+function saveProject(){
+  withBusy(async()=>{
+    const p={...projectMeta(),frames:[]};
+    const urls=new Map();   // 同一張圖只轉一次
+    for(let i=0;i<frames.length;i++){
+      const f=frames[i];
+      progress(`準備專案 ${i+1} / ${frames.length}`,i/frames.length);
+      if(!urls.has(f.imageKey))urls.set(f.imageKey,await blobToDataURL(f.blob));
+      p.frames.push({name:f.name,duration:f.duration,image:urls.get(f.imageKey)});
+    }
+    download(new Blob([JSON.stringify(p)],{type:"application/json"}),
+      "pixel-motion.json");
+    status("已下載專案；請保留 JSON 備份");
+  });
+}
+// JSON 專案的影格是 data URL；本機草稿是 PNG Blob 加圖片代號
+async function loadProject(p){
+  if(!p||p.format!=="pixel-motion"||p.version!==1||
+    !checkSize(p.width,p.height)||!Array.isArray(p.frames)||
+    p.frames.length>MAX_FRAMES)throw new Error("專案格式或尺寸不符");
+  const loaded=[];
+  const decoded=new Map();  // 重複的影格共用同一張圖
+  for(let i=0;i<p.frames.length;i++){
+    const f=p.frames[i];
+    const fromDraft=f?.blob instanceof Blob&&typeof f.imageKey==="string";
+    if(!f||(!fromDraft&&(typeof f.image!=="string"||
+      !f.image.startsWith("data:image/png;base64,")))||
+      typeof f.duration!=="number"||!Number.isFinite(f.duration)||
+      f.duration<20||f.duration>18000000){
+      throw new Error("影格資料不完整");
+    }
+    progress(`載入 ${i+1} / ${p.frames.length}`,i/Math.max(1,p.frames.length));
+    const source=fromDraft?f.imageKey:f.image;
+    let entry=decoded.get(source);
+    if(!entry){
+      const blob=fromDraft?f.blob:dataURLToBlob(f.image);
+      const image=await blobImage(blob);
+      if(image.width>MAX_SIZE||image.height>MAX_SIZE)throw new Error("原圖尺寸過大");
+      entry={image,blob,imageKey:fromDraft?f.imageKey:newImageKey()};
+      decoded.set(source,entry);
+    }
+    loaded.push({
+      id:nextId++,name:String(f.name||"影格").slice(0,150),
+      duration:Math.round(f.duration),...entry
+    });
+  }
+  frames=loaded;width=p.width;height=p.height;
+  alignment=p.alignment==="topLeft"?"topLeft":"center";
+  speed=[.25,.5,.75,1,1.5,2,3,4].includes(p.speed)?p.speed:1;
+  mode=p.mode==="once"?"once":"loop";
+  alphaMode=p.alphaMode==="background"?"background":"threshold";
+  background=/^#[0-9a-f]{6}$/i.test(p.background||"")?p.background:"#ffffff";
+  exportScale=SCALES.includes(p.exportScale)?p.exportScale:1;
+  selected=new Set(frames.length?[frames[0].id]:[]);
+  currentId=frames[0]?.id??null;anchorId=currentId;
+  clipboard=[];undoStack=[];redoStack=[];
+  refresh();fit();changed();status("專案已載入，復原歷史已重設");
+}
+
+/* ---------- 本機草稿 ---------- */
+// 影格圖片匯入後就不會再變，所以圖片另外存在 images，
+// 草稿只記影格清單與圖片代號；存檔時只寫入還沒存過的圖片。
+// latest 是目前作品；previous 是清空或載入前留下的上一件作品。
+
+function database(){
+  if(dbPromise)return dbPromise;
+  dbPromise=new Promise((resolve,reject)=>{
+    if(!window.indexedDB){reject(new Error("不支援 IndexedDB"));return}
+    const r=indexedDB.open("pixel-motion-storage",2);
+    r.onupgradeneeded=()=>{
+      for(const name of ["drafts","images"]){
+        if(!r.result.objectStoreNames.contains(name)){
+          r.result.createObjectStore(name);
+        }
+      }
+    };
+    r.onsuccess=()=>{
+      const db=r.result;
+      db.onversionchange=()=>db.close();
+      resolve(db);
+    };
+    r.onerror=()=>reject(r.error);
+    r.onblocked=()=>reject(new Error("儲存庫被其他分頁阻擋"));
+  });
+  return dbPromise;
+}
+// 讀回的影格會補上 blob
+async function readDraft(key="latest"){
+  const db=await database();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(["drafts","images"],"readonly");
+    let record=null;
+    const r=tx.objectStore("drafts").get(key);
+    r.onsuccess=()=>{
+      record=r.result??null;
+      const images=tx.objectStore("images");
+      for(const f of record?.project?.frames??[]){
+        if(typeof f.imageKey!=="string")continue;
+        const g=images.get(f.imageKey);
+        g.onsuccess=()=>{f.blob=g.result};
+      }
+    };
+    tx.oncomplete=()=>resolve(record);
+    tx.onerror=()=>reject(tx.error);
+  });
+}
+async function writeDraft(key,record,source){
+  const db=await database();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(["drafts","images"],"readwrite");
+    const drafts=tx.objectStore("drafts"),images=tx.objectStore("images");
+    const unique=new Map(source.map(f=>[f.imageKey,f.blob]));
+    for(const [imageKey,blob] of unique){
+      const r=images.getKey(imageKey);
+      r.onsuccess=()=>{if(r.result===undefined)images.put(blob,imageKey)};
+    }
+    drafts.put(record,key);
+    // 刪掉兩份草稿都用不到的圖片
+    const other=drafts.get(key==="latest"?"previous":"latest");
+    other.onsuccess=()=>{
+      const keep=new Set(unique.keys());
+      for(const f of other.result?.project?.frames??[])keep.add(f.imageKey);
+      const all=images.getAllKeys();
+      all.onsuccess=()=>{
+        for(const k of all.result)if(!keep.has(k))images.delete(k);
+      };
+    };
+    tx.oncomplete=()=>resolve();
+    tx.onerror=()=>reject(tx.error);
+    tx.onabort=()=>reject(tx.error||new Error("草稿保存中止"));
+  });
+}
+function draftProject(){
+  return {
+    ...projectMeta(),
+    frames:frames.map(f=>({name:f.name,duration:f.duration,imageKey:f.imageKey}))
+  };
+}
+function scheduleDraft(){
+  clearTimeout(draftTimer);draftTimer=setTimeout(saveDraft,2500);
+}
+function changed(){
+  revision++;
+  $("draftStatus").textContent="有變更，準備保存本機草稿…";
+  scheduleDraft();
+}
+async function saveDraft(){
+  clearTimeout(draftTimer);
+  if(busy){scheduleDraft();return}
+  if(draftSaving){draftAgain=true;return}
+  draftSaving=true;
+  const rev=revision;
+  try{
+    $("draftStatus").textContent="正在保存本機草稿…";
+    const time=Date.now();
+    await writeDraft("latest",{time,project:draftProject()},[...frames]);
+    savedRevision=rev;
+    if(revision===rev){
+      $("draftStatus").textContent="草稿已保存 "+new Date(time).toLocaleTimeString();
+    }else draftAgain=true;
+  }catch(error){
+    $("draftStatus").textContent="草稿保存失敗，請下載 JSON 備份。";
+    console.warn(error);
+  }finally{
+    draftSaving=false;
+    if(draftAgain){draftAgain=false;scheduleDraft()}
+  }
+}
+// 換作品前留一份，誤按清空或載入時還能換回來
+function keepPrevious(){
+  if(!frames.length)return Promise.resolve();
+  return writeDraft("previous",{time:Date.now(),project:draftProject()},[...frames])
+    .catch(error=>console.warn(error));
+}
+async function restoreDraft(){
+  let draft;
+  try{draft=await readDraft()}
+  catch(error){
+    if(revision===0)$("draftStatus").textContent="此環境無法使用草稿，請保存 JSON。";
+    return;
+  }
+  if(!draft)return;
+  // 讀取期間已開始操作，以目前畫面為準；舊草稿改留為上一件作品
+  if(revision>0||busy){
+    const list=draft.project?.frames??[];
+    if(list.length&&list.every(f=>f.blob instanceof Blob)){
+      writeDraft("previous",draft,list).catch(error=>console.warn(error));
+    }
+    return;
+  }
+  const time=new Date(draft.time).toLocaleString();
+  busy=true;$("busy").style.display="grid";
+  try{
+    await loadProject(draft.project);
+    clearTimeout(draftTimer);
+    revision=savedRevision=0;
+    $("draftStatus").textContent="已恢復 "+time+" 的草稿";
+    status("已恢復上次的草稿 · "+time);
+  }catch(error){
+    console.warn(error);
+    $("draftStatus").textContent="上次的草稿無法讀取；開始修改後會覆蓋它。";
+  }finally{
+    busy=false;$("busy").style.display="none";
+  }
+}
+
+/* ---------- GIF 編碼 ---------- */
+
+// 內建原創 GIF 編碼器：
+// · LZW 從色盤需要的最小碼長開始，字典滿 4096 才 clear（標準作法）
+// · 每格只寫入和目前畫面不同的範圍，沒變的像素寫成透明，沿用上一格
+// · 全片不超過 255 色時共用一個色盤；否則每格各自不超過 255 色就用
+//   該格自己的色盤；單格仍超過才用全片的 median cut 色盤（不抖色）
+// · 色盤 index 0 一律保留給透明
+
+class ByteWriter{
+  constructor(){this.parts=[];this.buffer=new Uint8Array(65536);this.position=0}
+  byte(v){
+    if(this.position===this.buffer.length){
+      this.parts.push(this.buffer);
+      this.buffer=new Uint8Array(65536);this.position=0;
+    }
+    this.buffer[this.position++]=v;
+  }
+  word(v){this.byte(v&255);this.byte((v>>8)&255)}
+  text(s){for(let i=0;i<s.length;i++)this.byte(s.charCodeAt(i))}
+  blob(){
+    return new Blob([...this.parts,this.buffer.slice(0,this.position)],
+      {type:"image/gif"});
+  }
+}
+function writeLZW(writer,pixels,minCodeSize){
+  writer.byte(minCodeSize);
+  const block=new Uint8Array(255);
+  let blockLength=0,bits=0,bitCount=0;
+  function flush(){
+    if(!blockLength)return;
+    writer.byte(blockLength);
+    for(let i=0;i<blockLength;i++)writer.byte(block[i]);
+    blockLength=0;
+  }
+  const CLEAR=1<<minCodeSize,END=CLEAR+1;
+  let size=minCodeSize+1,dict=new Map(),next=END+1;
+  function code(v){
+    bits|=v<<bitCount;bitCount+=size;
+    while(bitCount>=8){
+      block[blockLength++]=bits&255;
+      if(blockLength===255)flush();
+      bits>>>=8;bitCount-=8;
+    }
+  }
+
+  code(CLEAR);
+  let prefix=pixels[0];
+  for(let i=1;i<pixels.length;i++){
+    const k=pixels[i],key=prefix<<8|k;
+    const found=dict.get(key);
+    if(found!==undefined){prefix=found;continue}
+    code(prefix);
+    if(next===4096){
+      code(CLEAR);dict=new Map();next=END+1;size=minCodeSize+1;
+    }else{
+      // 解碼器讀完這個碼後，字典也會長到需要多一位元
+      if(next>=1<<size)size++;
+      dict.set(key,next++);
+    }
+    prefix=k;
+  }
+  code(prefix);code(END);
+  if(bitCount>0){block[blockLength++]=bits&255}
+  flush();writer.byte(0);
+}
+
+function backgroundRGB(){
+  return [
+    parseInt(background.slice(1,3),16),
+    parseInt(background.slice(3,5),16),
+    parseInt(background.slice(5,7),16)
+  ];
+}
+// 影格轉成顏色碼：0 是透明，其餘是 0x1000000|RGB
+function frameColors(ctx,f,bg,out){
+  drawFrame(ctx,f);
+  const data=ctx.getImageData(0,0,width,height).data;
+  for(let i=0,n=0;i<data.length;i+=4,n++){
+    let r=data[i],g=data[i+1],b=data[i+2];
+    const a=data[i+3];
+    if(alphaMode==="background"){
+      const t=a/255;
+      r=Math.round(r*t+bg[0]*(1-t));
+      g=Math.round(g*t+bg[1]*(1-t));
+      b=Math.round(b*t+bg[2]*(1-t));
+    }else if(a<128){out[n]=0;continue}
+    out[n]=0x1000000|r<<16|g<<8|b;
+  }
+}
+// RGB 各取高 5 位元，作為 median cut 直方圖的格子
+function bin15(c){
+  return (c>>9&0x7c00)|(c>>6&0x3e0)|(c>>3&0x1f);
+}
+function medianCut(hist,maxColors){
+  function makeBox(bins){
+    const lo=[31,31,31],hi=[0,0,0];
+    let count=0;
+    for(const i of bins){
+      const c=[i>>10,i>>5&31,i&31];
+      for(let k=0;k<3;k++){lo[k]=Math.min(lo[k],c[k]);hi[k]=Math.max(hi[k],c[k])}
+      count+=hist.count[i];
+    }
+    const ranges=hi.map((h,k)=>h-lo[k]);
+    const axis=ranges.indexOf(Math.max(...ranges));
+    return {bins,count,axis,score:bins.length>1?count*ranges[axis]:0};
+  }
+  const all=[];
+  for(let i=0;i<32768;i++)if(hist.count[i])all.push(i);
+  const boxes=[makeBox(all)];
+  // 每次切開「像素多又跨度大」的盒子，從加權中位數切
+  while(boxes.length<maxColors){
+    let best=0;
+    for(let i=1;i<boxes.length;i++)if(boxes[i].score>boxes[best].score)best=i;
+    const box=boxes[best];
+    if(!box.score)break;
+    const shift=[10,5,0][box.axis];
+    const sorted=box.bins.slice().sort((a,b)=>(a>>shift&31)-(b>>shift&31));
+    let sum=0,cut=sorted.length-1;
+    for(let i=0;i<sorted.length-1;i++){
+      sum+=hist.count[sorted[i]];
+      if(sum>=box.count/2){cut=i+1;break}
+    }
+    boxes.splice(best,1,makeBox(sorted.slice(0,cut)),makeBox(sorted.slice(cut)));
+  }
+  return boxes.map(box=>{
+    let r=0,g=0,b=0;
+    for(const i of box.bins){r+=hist.r[i];g+=hist.g[i];b+=hist.b[i]}
+    return 0x1000000|Math.round(r/box.count)<<16|
+      Math.round(g/box.count)<<8|Math.round(b/box.count);
+  });
+}
+// 顏色碼 → 最接近的色盤 index（依直方圖格子快取）
+function nearestIndex(palette){
+  const table=new Int16Array(32768).fill(-1);
+  return c=>{
+    const k=bin15(c);
+    if(table[k]<0){
+      const r=(k>>10)<<3|4,g=(k>>5&31)<<3|4,b=(k&31)<<3|4;
+      let best=0,bestDistance=Infinity;
+      palette.forEach((p,i)=>{
+        const d=((p>>16&255)-r)**2+((p>>8&255)-g)**2+((p&255)-b)**2;
+        if(d<bestDistance){bestDistance=d;best=i}
+      });
+      table[k]=best+1;
+    }
+    return table[k];
+  };
+}
+// 色盤長度必須是 2 的次方；count 已含透明的 index 0
+function paletteBits(count){
+  let bits=1;
+  while(1<<bits<count)bits++;
+  return bits;
+}
+function writePalette(writer,colors,bits){
+  writer.byte(0);writer.byte(0);writer.byte(0);
+  for(const c of colors){writer.byte(c>>16&255);writer.byte(c>>8&255);writer.byte(c&255)}
+  for(let i=colors.length+1;i<1<<bits;i++){writer.byte(0);writer.byte(0);writer.byte(0)}
+}
+
+async function exportGIF(){
+  if(busy||!frames.length)return;
+  const s=exportScale,outW=width*s,outH=height*s;
+  if(outW>MAX_OUTPUT||outH>MAX_OUTPUT){
+    notify(`放大後是 ${outW}×${outH}，超過 ${MAX_OUTPUT} px 的匯出上限。請降低放大倍率。`);
+    return;
+  }
+  if(outW*outH*frames.length>30000000&&!await ask({
+    title:"匯出較大的 GIF",
+    message:"這個動畫較大，匯出可能耗時並占用較多記憶體。",
+    ok:"繼續匯出"
+  }))return;
+
+  await withBusy(async()=>{
+    const n=width*height;
+    const c=newCanvas(width,height);
+    const ctx=c.getContext("2d",{willReadFrequently:true});
+    const bg=backgroundRGB();
+    let cur=new Int32Array(n),next=new Int32Array(n);
+    const shown=new Int32Array(n);   // 解碼器在這格之前顯示的畫面
+
+    // 第一輪：統計全片顏色
+    const exact=new Map();
+    let useExact=true;
+    const hist={
+      count:new Uint32Array(32768),r:new Float64Array(32768),
+      g:new Float64Array(32768),b:new Float64Array(32768)
+    };
+    for(let f=0;f<frames.length;f++){
+      progress(`分析色彩 ${f+1} / ${frames.length}`,f/frames.length*.3);
+      frameColors(ctx,frames[f],bg,cur);
+      for(let p=0;p<n;p++){
+        const v=cur[p];
+        if(!v)continue;
+        if(useExact&&!exact.has(v)){
+          if(exact.size===255)useExact=false;
+          else exact.set(v,exact.size+1);
+        }
+        const k=bin15(v);
+        hist.count[k]++;
+        hist.r[k]+=v>>16&255;hist.g[k]+=v>>8&255;hist.b[k]+=v&255;
+      }
+      await sleep();
+    }
+    const globalColors=useExact?[...exact.keys()]:medianCut(hist,255);
+    const globalBits=paletteBits(globalColors.length+1);
+    const globalIndex=useExact?v=>exact.get(v):nearestIndex(globalColors);
+
+    const writer=new ByteWriter();
+    writer.text("GIF89a");
+    writer.word(outW);writer.word(outH);
+    writer.byte(0xF0|globalBits-1); // 有全域色盤、8-bit 色彩解析度
+    writer.byte(0);writer.byte(0);
+    writePalette(writer,globalColors,globalBits);
+
+    if(mode==="loop"){
+      writer.byte(0x21);writer.byte(0xFF);writer.byte(11);
+      writer.text("NETSCAPE2.0");
+      writer.byte(3);writer.byte(1);writer.word(0);writer.byte(0);
+    }
+
+    // 第二輪：逐格寫入；先看下一格，才知道這格之後要不要清回透明
+    let timeAdjusted=false,localFrames=0;
+    frameColors(ctx,frames[0],bg,cur);
+    for(let f=0;f<frames.length;f++){
+      progress(`編碼 GIF ${f+1} / ${frames.length}`,.3+f/frames.length*.7);
+      const hasNext=f+1<frames.length;
+      if(hasNext)frameColors(ctx,frames[f+1],bg,next);
+
+      // 寫入範圍：和目前畫面不同的像素，加上下一格要變透明的像素
+      let x0=width,y0=height,x1=-1,y1=-1,clear=false;
+      for(let y=0,p=0;y<height;y++){
+        for(let x=0;x<width;x++,p++){
+          const v=cur[p];
+          const vanish=hasNext&&v!==0&&next[p]===0;
+          if(v!==shown[p]||vanish){
+            if(vanish)clear=true;
+            if(x<x0)x0=x;
+            if(x>x1)x1=x;
+            if(y<y0)y0=y;
+            y1=y;
+          }
+        }
+      }
+      if(x1<0)x0=y0=x1=y1=0;   // 和上一格完全相同：只寫一個透明像素
+      const rw=x1-x0+1,rh=y1-y0+1;
+
+      // 沒變的像素寫成透明，交給上一格的畫面
+      const rect=new Int32Array(rw*rh);
+      for(let y=0;y<rh;y++){
+        for(let x=0;x<rw;x++){
+          const p=(y0+y)*width+x0+x,v=cur[p];
+          rect[y*rw+x]=v===shown[p]?0:v;
+        }
+      }
+
+      let index=globalIndex,local=null;
+      if(!useExact){
+        const colors=new Map();
+        let fits=true;
+        for(let i=0;i<rect.length&&fits;i++){
+          const v=rect[i];
+          if(v&&!colors.has(v)){
+            if(colors.size===255)fits=false;
+            else colors.set(v,colors.size+1);
+          }
+        }
+        if(fits){local=[...colors.keys()];index=v=>colors.get(v);localFrames++}
+      }
+      const bits=local?paletteBits(local.length+1):globalBits;
+
+      // 放大：每個像素重複 s×s
+      const ow=rw*s,oh=rh*s;
+      const indices=new Uint8Array(ow*oh);
+      for(let y=0;y<rh;y++){
+        const row=y*s*ow;
+        for(let x=0;x<rw;x++){
+          const v=rect[y*rw+x],k=v?index(v):0;
+          if(s===1)indices[row+x]=k;
+          else indices.fill(k,row+x*s,row+x*s+s);
+        }
+        for(let r=1;r<s;r++)indices.copyWithin(row+r*ow,row,row+ow);
+      }
+
+      const delay=gifDelay(frames[f]);
+      if(Math.abs(delay*10-effectiveDuration(frames[f]))>.01)timeAdjusted=true;
+
+      // Disposal 1 保留畫面給下一格疊加；下一格有像素要變透明時用 2，
+      // 把這格的範圍清回透明（範圍已包含那些像素）
+      writer.byte(0x21);writer.byte(0xF9);writer.byte(4);
+      writer.byte((clear?2:1)<<2|1);
+      writer.word(delay);writer.byte(0);writer.byte(0);
+
+      writer.byte(0x2C);
+      writer.word(x0*s);writer.word(y0*s);
+      writer.word(ow);writer.word(oh);
+      if(local){
+        writer.byte(0x80|bits-1);
+        writePalette(writer,local,bits);
+      }else writer.byte(0);
+      writeLZW(writer,indices,Math.max(2,bits));
+
+      shown.set(cur);
+      if(clear)for(let y=y0;y<=y1;y++)shown.fill(0,y*width+x0,y*width+x1+1);
+      [cur,next]=[next,cur];
+      await sleep();
+    }
+    writer.byte(0x3B);
+    progress("完成",1);
+    const blob=writer.blob();
+    download(blob,`pixel-motion-${outW}x${outH}.gif`);
+    const palette=useExact?"精確色盤":
+      localFrames===frames.length?"每格精確色盤":
+      localFrames?`${localFrames} 格精確色盤，其餘減色`:"median cut 減色";
+    status(
+      `GIF 已輸出 · ${outW}×${outH} · ${(blob.size/1024).toFixed(1)} KB · `+
+      palette+(timeAdjusted?" · 部分時間已轉為 GIF 單位":"")
+    );
+  });
+}
+
+/* ---------- UI ---------- */
+
+$("importBtn").onclick=()=>{if(!busy)$("imageFiles").click()};
+$("imageFiles").onchange=e=>{
+  const files=[...e.target.files];e.target.value="";
+  importFiles(files);
+};
+$("newBtn").onclick=()=>{
+  if(busy)return;
+  // 可以復原，另外也留成上一件作品，所以不再詢問
+  const kept=frames.length>0;
+  keepPrevious();
+  mutate(()=>{
+    frames=[];selected.clear();currentId=anchorId=null;
+    width=height=64;speed=1;mode="loop";
+  });
+  fit();
+  status(kept?"已建立空動畫；可復原，原作品也留在「上一件作品」":"已建立空動畫");
+};
+$("loadBtn").onclick=()=>{if(!busy)$("projectFile").click()};
+$("projectFile").onchange=async e=>{
+  const file=e.target.files[0];e.target.value="";
+  if(!file||busy)return;
+  if(frames.length&&!await ask({
+    title:"載入專案",
+    message:"載入會替換目前作品並清除復原歷史。\n目前作品會留在「上一件作品」，可以換回來。",
+    ok:"載入"
+  }))return;
+  withBusy(async()=>{
+    if(file.size>150*1024*1024)throw new Error("專案檔超過 150 MB");
+    progress("讀取專案",0);
+    const p=JSON.parse(await file.text());
+    await keepPrevious();
+    await loadProject(p);
+  });
+};
+$("saveBtn").onclick=saveProject;
+$("exportBtn").onclick=exportGIF;
+$("draftBtn").onclick=async()=>{
+  if(busy)return;
+  pause();
+  let previous;
+  try{previous=await readDraft("previous")}
+  catch(error){notify(error.message,"無法讀取本機儲存");return}
+  if(!previous){
+    notify("清空動畫或載入專案時，原本的作品會留在這裡。","還沒有上一件作品");
+    return;
+  }
+  const time=new Date(previous.time).toLocaleString();
+  if(!await ask({
+    title:"換回上一件作品",
+    message:`換回 ${time} 的作品？\n目前作品會改留為上一件作品，可以再換回來。`,
+    ok:"換回"
+  }))return;
+  // 兩件互換：目前作品存成上一件，再載入原本的上一件
+  withBusy(async()=>{
+    await keepPrevious();
+    await loadProject(previous.project);
+    status("已換回 "+time+" 的作品");
+  });
+};
+
+$("playBtn").onclick=()=>playing?pause():startPlay();
+$("stopBtn").onclick=stop;
+$("prevBtn").onclick=()=>step(-1);
+$("nextBtn").onclick=()=>step(1);
+$("selectionOnly").onchange=pause;
+
+$("speed").onchange=e=>{
+  const value=Number(e.target.value);
+  mutate(()=>speed=value);
+};
+$("playMode").onchange=e=>{
+  const value=e.target.value;
+  mutate(()=>mode=value);
+};
+$("alignment").onchange=e=>{
+  const value=e.target.value;
+  mutate(()=>alignment=value);
+};
+$("alphaMode").onchange=e=>{
+  const value=e.target.value;
+  mutate(()=>alphaMode=value);
+};
+$("backgroundColor").onchange=e=>{
+  const value=e.target.value;
+  mutate(()=>background=value);
+};
+$("exportScale").onchange=e=>{
+  const value=Number(e.target.value);
+  mutate(()=>exportScale=value);
+};
+
+$("zoomIn").onclick=()=>{
+  zoom=zoom<1?1:clamp(zoom+1,1,32);drawPreview();
+};
+$("zoomOut").onclick=()=>{
+  zoom=zoom>1?zoom-1:zoom>.5?.5:.25;drawPreview();
+};
+$("fitBtn").onclick=fit;
+$("actualBtn").onclick=()=>{zoom=1;drawPreview()};
+
+$("resizeBtn").onclick=()=>{
+  const w=Number($("canvasW").value),h=Number($("canvasH").value);
+  if(!checkSize(w,h)){notify("長寬必須是 1～1024 的整數");return}
+  mutate(()=>{width=w;height=h});
+  fit();
+};
+$("selectAllBtn").onclick=()=>{
+  if(busy)return;
+  pause();selected=new Set(frames.map(f=>f.id));refreshSelection();
+};
+$("copyBtn").onclick=copy;
+$("pasteBtn").onclick=paste;
+$("duplicateBtn").onclick=()=>{copy();paste()};
+$("deleteBtn").onclick=deleteSelected;
+$("reverseBtn").onclick=reverseSelected;
+$("thinBtn").onclick=thinSelected;
+$("undoBtn").onclick=undo;$("redoBtn").onclick=redo;
+$("applyDuration").onclick=()=>applyDuration($("duration").value);
+$("duration").onkeydown=e=>{
+  if(e.key==="Enter")applyDuration($("duration").value);
+};
+$("allDurationBtn").onclick=()=>applyDuration($("duration").value,true);
+$("slowerBtn").onclick=()=>scaleSelection(2);
+$("fasterBtn").onclick=()=>scaleSelection(.5);
+document.querySelectorAll("[data-duration]").forEach(b=>{
+  b.onclick=()=>applyDuration(Number(b.dataset.duration));
+});
+
+$("helpBtn").onclick=()=>{
+  if(busy)return;
+  pause();$("helpDialog").showModal();
+};
+$("closeHelp").onclick=()=>$("helpDialog").close();
+
+/* ---------- 外部圖片拖入 ---------- */
+
+document.addEventListener("dragover",e=>{
+  if([...e.dataTransfer.types].includes("Files"))e.preventDefault();
+});
+document.addEventListener("drop",e=>{
+  if(e.dataTransfer.files.length){
+    e.preventDefault();
+    if(!busy)importFiles(e.dataTransfer.files);
+  }
+});
+
+/* ---------- 快捷鍵 ---------- */
+
+function typing(e){
+  return ["INPUT","TEXTAREA","SELECT"].includes(e.target.tagName)||
+    e.target.isContentEditable;
+}
+window.addEventListener("keydown",e=>{
+  if(typing(e)||busy||document.querySelector("dialog[open]"))return;
+  const key=e.key.toLowerCase(),mod=e.ctrlKey||e.metaKey;
+  if(mod){
+    const actions={
+      s:saveProject,c:copy,v:paste,
+      a:()=>{selected=new Set(frames.map(f=>f.id));refreshSelection()},
+      z:()=>e.shiftKey?redo():undo(),
+      y:redo
+    };
+    if(actions[key]){e.preventDefault();actions[key]()}
+    return;
+  }
+  if(e.code==="Space"){
+    e.preventDefault();playing?pause():startPlay();
+  }else if(e.key==="ArrowLeft"){e.preventDefault();step(-1)}
+  else if(e.key==="ArrowRight"){e.preventDefault();step(1)}
+  else if(e.key==="Delete"||e.key==="Backspace"){
+    e.preventDefault();deleteSelected();
+  }
+});
+window.addEventListener("blur",pause);
+
+/* ---------- 初始化 ---------- */
+
+refresh();
+requestAnimationFrame(tick);
+$("draftStatus").textContent="修改後會自動保存本機草稿。";
+status("匯入多張圖片即可開始 · Shift 多選 · 拖曳整段移動");
+restoreDraft();
+</script>
+</body>
+</html>
