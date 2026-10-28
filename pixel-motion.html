@@ -58,10 +58,13 @@ header strong{font-size:17px;color:var(--accent);margin-right:10px}
 #workspace{flex:1;display:flex;flex-direction:column;min-width:0}
 #previewArea{
   flex:1;position:relative;min-height:100px;overflow:auto;
-  display:flex;align-items:center;justify-content:center;
+  display:flex;
   padding:30px;background:#10151b;
+  touch-action:none;   /* 觸控的平移與縮放由程式處理 */
 }
 #preview{
+  /* 用 margin:auto 置中：比預覽區大時從左上開始捲動，不會被切掉一半 */
+  margin:auto;
   image-rendering:pixelated;flex-shrink:0;
   box-shadow:0 4px 25px #0008;
   background-color:#d4d7dc;
@@ -74,9 +77,11 @@ header strong{font-size:17px;color:var(--accent);margin-right:10px}
   background-position:0 0,0 8px,8px -8px,-8px 0;
 }
 #empty{
-  position:absolute;text-align:center;color:var(--muted);
+  position:absolute;inset:0;display:grid;place-content:center;
+  padding:16px;text-align:center;color:var(--muted);
   pointer-events:none;
 }
+#empty[hidden]{display:none}
 #empty strong{font-size:20px;color:var(--accent)}
 .bar{
   display:flex;align-items:center;flex-wrap:wrap;gap:7px;
@@ -160,10 +165,122 @@ progress{width:260px;max-width:70vw;accent-color:var(--accent)}
   header{gap:4px;padding:6px}
   button{padding:5px}
 }
+.icon{
+  width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;
+}
+#mTop,#mTimelineBar,#mTools,#mScrim,#mMenu,#frameSheet,#toast,
+.phone-only,.phone-section{display:none}
+#toast.show{
+  display:block;position:fixed;z-index:30;left:50%;
+  top:calc(env(safe-area-inset-top) + 64px);transform:translateX(-50%);
+  width:max-content;max-width:calc(100vw - 32px);padding:8px 14px;border-radius:8px;
+  background:#000d;font-size:13px;pointer-events:none;
+}
+#shareWrap{
+  display:grid;place-items:center;padding:12px;border-radius:6px;
+  background:repeating-conic-gradient(#adb4bd 0 25%,#d4d7dc 0 50%) 0 0/16px 16px;
+}
+#shareImg{display:block;max-width:100%;max-height:45dvh;image-rendering:pixelated}
+#shareInfo{white-space:pre-line}
+
+/* 觸控裝置（含平板桌機版面）：放大點擊範圍；16px 以上 iOS 聚焦時才不會自動放大頁面 */
+@media(pointer:coarse){
+  button,select,input[type=text],input[type=number]{min-height:44px}
+  input,select{font-size:16px}
+  input[type=checkbox]{width:20px;height:20px}
+}
+
+/* ---------- 手機版面（≤700px）：上方列＋預覽＋播放列＋時間軸＋工具列，設定改為底部抽屜 ---------- */
+@media(max-width:700px){
+  header,#status,#viewBar,#playInfo,.desktop-only{display:none!important}
+  .phone-only{display:inline}
+  .phone-section{display:block}
+
+  #mTop{
+    display:flex;align-items:center;gap:6px;
+    padding:6px 8px;padding-top:max(6px,env(safe-area-inset-top));
+    border-bottom:1px solid var(--line);background:var(--panel);
+  }
+  #mTop button{width:44px;height:44px;padding:0;display:grid;place-items:center}
+  #mTop #mInfo{
+    flex:1;width:auto;min-width:0;background:none;border:0;
+    color:var(--muted);font-size:13px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  #mTop #mExport{width:auto;padding:0 14px;display:flex;gap:6px;align-items:center}
+
+  #previewArea{padding:12px}
+  #playBar{justify-content:center;gap:6px;padding:6px 8px}
+  #playBar button{flex:1;max-width:110px;padding:6px 4px}
+
+  #mTimelineBar{
+    display:flex;align-items:center;gap:8px;padding:4px 10px;
+    background:var(--panel);border-top:1px solid var(--line);
+  }
+  #mTimelineBar button{padding:4px 12px}
+  #multiBtn[aria-pressed="true"]{background:var(--accent);color:#17251c}
+  #mSelInfo{margin-left:auto}
+  #timeline{height:116px;min-height:116px;padding:8px 10px;gap:6px}
+  .frame{width:76px;min-width:76px;padding:4px}
+  .thumb{width:64px;height:52px}
+
+  #mTools{
+    display:grid;grid-template-columns:repeat(6,1fr);
+    background:var(--panel);border-top:1px solid var(--line);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  #mTools button{
+    min-height:54px;padding:6px 0;display:flex;flex-direction:column;
+    align-items:center;gap:2px;border:0;border-radius:0;background:none;
+    color:var(--muted);font-size:12px;
+  }
+  #mTools button.active{color:var(--accent)}
+
+  aside,#frameSheet{
+    display:block;position:fixed;z-index:20;left:0;right:0;bottom:0;
+    width:auto;min-width:0;max-height:70dvh;overflow:auto;
+    background:var(--panel);border:1px solid var(--line);border-bottom:0;
+    border-radius:14px 14px 0 0;
+    padding:8px 16px calc(16px + env(safe-area-inset-bottom));
+    transform:translateY(100%);visibility:hidden;
+    transition:transform .2s ease,visibility 0s .2s;
+  }
+  aside.open,#frameSheet.open{transform:none;visibility:visible;transition:transform .2s ease}
+  aside::before,#frameSheet::before{
+    content:"";display:block;width:36px;height:4px;margin:0 auto 10px;
+    border-radius:2px;background:var(--line);
+  }
+  #editBar{padding:12px 0 0;border:0;background:none}
+  #editBar #undoBtn,#editBar #redoBtn{display:none}
+  #mScrim.open{display:block;position:fixed;z-index:15;inset:0;background:#0006}
+  #mMenu.open{
+    display:block;position:fixed;z-index:20;
+    top:calc(max(6px,env(safe-area-inset-top)) + 52px);left:8px;
+    min-width:210px;padding:4px 0;background:var(--panel);
+    border:1px solid var(--line);border-radius:10px;
+  }
+  #mMenu button{
+    display:block;width:100%;padding:11px 14px;border:0;border-radius:0;
+    background:none;text-align:left;
+  }
+  dialog{padding:14px}
+}
+@media(prefers-reduced-motion:reduce){
+  aside,#frameSheet{transition:none!important}
+}
 </style>
 </head>
 <body>
 <div id="app">
+<div id="mTop">
+  <button id="mMenuBtn" data-panel="mMenu" aria-label="選單"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <button id="mUndo" aria-label="復原"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+  <button id="mRedo" aria-label="重做"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
+  <button id="mInfo" aria-label="符合畫面"></button>
+  <button id="mSettingsBtn" data-panel="sidebar" aria-label="設定"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h8M16 6h4M4 12h2M10 12h10M4 18h11M19 18h1"/><path d="M12 6a2 2 0 1 0 4 0a2 2 0 1 0-4 0M6 12a2 2 0 1 0 4 0a2 2 0 1 0-4 0M15 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0"/></svg></button>
+  <button id="mExport" data-proxy="exportBtn" class="primary">GIF</button>
+</div>
 <header>
   <strong>✦ Pixel Motion</strong>
   <button id="importBtn" class="primary">匯入圖片</button>
@@ -180,13 +297,14 @@ progress{width:260px;max-width:70vw;accent-color:var(--accent)}
     <div id="previewArea">
       <canvas id="preview" width="64" height="64"></canvas>
       <div id="empty">
-        <strong>把圖片拖進來，開始排動畫</strong><br>
+        <strong class="desktop-only">把圖片拖進來，開始排動畫</strong>
+        <strong class="phone-only">點下方「匯入」開始排動畫</strong><br>
         支援多選圖片、檔名自然排序；GIF 會拆成影格<br>
         原始圖片不會自動縮放
       </div>
     </div>
 
-    <div class="bar">
+    <div class="bar" id="playBar">
       <button id="prevBtn">← 上一格</button>
       <button id="playBtn" class="primary">▶ 播放</button>
       <button id="stopBtn">■ 停止</button>
@@ -195,12 +313,12 @@ progress{width:260px;max-width:70vw;accent-color:var(--accent)}
         <option value="loop">循環預覽／GIF</option>
         <option value="once">單次預覽／GIF</option>
       </select>
-      <label><input id="selectionOnly" type="checkbox">只預覽選取</label>
+      <label id="selectionOnlyLabel"><input id="selectionOnly" type="checkbox">只預覽選取</label>
       <span id="playInfo" class="small"></span>
     </div>
 
-    <div class="bar">
-      <span>整體速度</span>
+    <div class="bar" id="viewBar">
+      <label id="speedGroup">整體速度
       <select id="speed">
         <option value="0.25">0.25×</option>
         <option value="0.5">0.5×</option>
@@ -211,6 +329,7 @@ progress{width:260px;max-width:70vw;accent-color:var(--accent)}
         <option value="3">3×</option>
         <option value="4">4×</option>
       </select>
+      </label>
       <span class="small">同時影響預覽與 GIF，不改寫影格原始時間</span>
       <span style="flex:1"></span>
       <button id="zoomOut">−</button>
@@ -220,9 +339,14 @@ progress{width:260px;max-width:70vw;accent-color:var(--accent)}
       <button id="actualBtn">1:1</button>
     </div>
 
+    <div id="mTimelineBar">
+      <button id="multiBtn" aria-pressed="false">多選</button>
+      <button data-proxy="selectAllBtn">全選</button>
+      <span id="mSelInfo" class="small"></span>
+    </div>
     <div id="timeline" aria-label="影格時間軸"></div>
 
-    <div class="bar">
+    <div class="bar" id="editBar">
       <button id="selectAllBtn">全選</button>
       <button id="copyBtn">複製</button>
       <button id="pasteBtn">貼上</button>
@@ -234,8 +358,8 @@ progress{width:260px;max-width:70vw;accent-color:var(--accent)}
     </div>
   </div>
 
-  <aside>
-    <section>
+  <aside id="sidebar">
+    <section id="selectionSection">
       <h3>選取影格</h3>
       <div id="selectionInfo">尚未選取</div>
       <div class="row">
@@ -259,10 +383,16 @@ progress{width:260px;max-width:70vw;accent-color:var(--accent)}
       <div class="row">
         <button id="thinBtn" class="full">選取段落隔格抽格，保留總時間</button>
       </div>
-      <div class="small">
+      <div class="small desktop-only">
         Shift 選連續範圍；Ctrl／⌘ 增減選取。<br>
         拖曳已選取的影格，可整段移動。
       </div>
+    </section>
+
+    <section id="playSection" class="phone-section">
+      <h3>播放</h3>
+      <div id="mPlaySlot" class="row"></div>
+      <div class="small">整體速度同時影響預覽與 GIF，不改寫影格原始時間。</div>
     </section>
 
     <section>
@@ -352,8 +482,28 @@ progress{width:260px;max-width:70vw;accent-color:var(--accent)}
   </aside>
 </div>
 
+<div id="mTools">
+  <button data-proxy="importBtn"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>匯入</button>
+  <button id="mFrameBtn" data-panel="frameSheet"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM8 4v16M16 4v16M4 9h4M4 15h4M16 9h4M16 15h4"/></svg>影格</button>
+  <button id="mEarlier"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6l-6 6 6 6M4 12h16"/></svg>往前</button>
+  <button id="mLater"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6l6 6-6 6M20 12H4"/></svg>往後</button>
+  <button data-proxy="duplicateBtn"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8h12v12H8z"/><path d="M4 16V4h12"/></svg>複製</button>
+  <button data-proxy="deleteBtn"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>刪除</button>
+</div>
 <div id="status" role="status">準備就緒。</div>
 </div>
+<div id="mScrim"></div>
+<div id="mMenu">
+  <button data-proxy="newBtn">清空／新動畫</button>
+  <button data-proxy="loadBtn">載入專案</button>
+  <button data-proxy="saveBtn">保存專案</button>
+  <button data-proxy="draftBtn">上一件作品</button>
+  <button data-proxy="sheetBtn">切割 sprite sheet…</button>
+  <button data-proxy="helpBtn">說明</button>
+</div>
+<div id="frameSheet"></div>
+<div id="toast" aria-hidden="true"></div>
+
 
 <input id="imageFiles" type="file" accept="image/*" multiple hidden>
 <input id="sheetFile" type="file" accept="image/*" hidden>
@@ -378,6 +528,11 @@ progress{width:260px;max-width:70vw;accent-color:var(--accent)}
     <li>空白播放／暫停，左右方向鍵換格。</li>
     <li>Ctrl／⌘ C、V 使用工具內部影格剪貼簿，不讀寫系統剪貼簿。</li>
     <li>Ctrl／⌘ Z 復原，Shift Z 重做，Ctrl／⌘ S 保存專案。</li>
+    <li>手機：點一下選一格；開啟時間軸上方的「多選」後，點選可增減選取。
+        用下方「往前」「往後」移動選取的影格。</li>
+    <li>手機預覽區：單指拖曳平移，兩指捏合縮放，輕點播放／暫停；
+        點上方的格數會符合畫面。</li>
+    <li>手機或平板匯出 GIF 後，可用「分享」直接傳到 LINE 等 App。</li>
     <li>抽格保留每段第一格，移除第二格、第四格……，
         被移除的時間加到前面的保留格。每個不連續選取段落分別處理。</li>
   </ul>
@@ -429,6 +584,20 @@ progress{width:260px;max-width:70vw;accent-color:var(--accent)}
   </div>
 </dialog>
 
+<dialog id="shareDialog">
+  <h2>GIF 完成</h2>
+  <div id="shareWrap"><img id="shareImg" alt="匯出的 GIF"></div>
+  <p id="shareInfo" class="small"></p>
+  <p class="small">
+    選「分享」可直接傳到 LINE 等 App；iPhone 也可以長按上面的圖片「加入照片」。
+  </p>
+  <div class="actions">
+    <button id="shareClose">關閉</button>
+    <button id="shareSave">下載</button>
+    <button id="shareBtn" class="primary">分享…</button>
+  </div>
+</dialog>
+
 <dialog id="askDialog">
   <form method="dialog">
     <h2 id="askTitle"></h2>
@@ -451,6 +620,9 @@ const MAX_SIZE = 1024, MAX_FRAMES = 300;
 const MAX_OUTPUT = 4096;             // 放大匯出後的長寬上限
 const MAX_SHEET = 4096;              // sprite sheet 原圖的長寬上限
 const SCALES = [1,2,3,4,6,8];
+const ZOOMS = [.25,.5,...Array.from({length:32},(_,i)=>i+1)];
+const mobileQuery = matchMedia("(max-width: 700px)");
+const coarseQuery = matchMedia("(pointer: coarse)");
 const THUMB_W = 78, THUMB_H = 64;    // 與 .thumb 的 CSS 尺寸一致
 const collator = new Intl.Collator(undefined, {
   numeric:true, sensitivity:"base"
@@ -474,10 +646,11 @@ let playTotal = 0;
 let revision = 0, draftTimer = null, draftSaving = false;
 let draftAgain = false, dbPromise = null, savedRevision = 0;
 let imageCounter = 0;
+let multiSelect = false, toastTimer = 0, shareFile = null;
 
 const sleep = () => new Promise(r => setTimeout(r,0));
 function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
-function status(s){ $("status").textContent = s; }
+function status(s){ $("status").textContent = s; toast(s); }
 function newCanvas(w,h){
   const c=document.createElement("canvas");
   c.width=w;c.height=h;return c;
@@ -612,12 +785,16 @@ function drawPreview(){
   $("playInfo").textContent=frames.length
     ? `${i+1} / ${frames.length} 格`
     : "沒有影格";
+  $("mInfo").textContent=frames.length
+    ? `${i+1} / ${frames.length} 格 · ${zoom}×`
+    : "沒有影格";
 }
 function fit(){
   const area=$("previewArea");
+  const pad=mobileQuery.matches?24:60;   // 與 #previewArea 的內距一致
   const value=Math.min(
-    (area.clientWidth-60)/width,
-    (area.clientHeight-60)/height
+    (area.clientWidth-pad)/width,
+    (area.clientHeight-pad)/height
   );
   zoom=value>=1?clamp(Math.floor(value),1,32):
     value>=.5?.5:.25;
@@ -698,7 +875,7 @@ function selectFrame(id,e){
     const lo=Math.min(a<0?i:a,i),hi=Math.max(a<0?i:a,i);
     if(!e.ctrlKey&&!e.metaKey)selected.clear();
     for(let k=lo;k<=hi;k++)selected.add(frames[k].id);
-  }else if(e.ctrlKey||e.metaKey){
+  }else if(e.ctrlKey||e.metaKey||multiSelect){
     if(selected.has(id))selected.delete(id);
     else selected.add(id);
     anchorId=id;
@@ -716,7 +893,8 @@ function frameItem(id){
   const node=document.createElement("div");
   node.className="frame";
   node.dataset.id=id;
-  node.draggable=true;
+  // 觸控拖曳會和時間軸捲動打架，手機改用「往前／往後」移動
+  node.draggable=!mobileQuery.matches;
   const thumb=newCanvas(1,1);
   thumb.className="thumb";
   const label=document.createElement("div");
@@ -833,6 +1011,9 @@ function refreshSelection(){
   ["copyBtn","duplicateBtn","deleteBtn","reverseBtn","applyDuration",
    "slowerBtn","fasterBtn","thinBtn"].forEach(id=>$(id).disabled=!chosen.length);
   $("pasteBtn").disabled=!clipboard.length;
+  $("mSelInfo").textContent=$("selectionInfo").textContent;
+  $("mEarlier").disabled=$("mLater").disabled=!chosen.length;
+  syncProxies();
 }
 function updateInfo(){
   const total=frames.reduce((s,f)=>s+f.duration,0);
@@ -847,6 +1028,9 @@ function updateInfo(){
   $("redoBtn").disabled=!redoStack.length;
   $("playBtn").disabled=!frames.length;
   $("exportBtn").disabled=!frames.length;
+  $("mUndo").disabled=!undoStack.length;
+  $("mRedo").disabled=!redoStack.length;
+  syncProxies();
 }
 function refresh(){
   $("canvasW").value=width;$("canvasH").value=height;
@@ -1797,7 +1981,7 @@ async function exportGIF(){
     writer.byte(0x3B);
     progress("完成",1);
     const blob=writer.blob();
-    download(blob,`pixel-motion-${outW}x${outH}.gif`);
+    deliverGIF(blob,`pixel-motion-${outW}x${outH}.gif`,outW,outH);
     const palette=useExact?"精確色盤":
       localFrames===frames.length?"每格精確色盤":
       localFrames?`${localFrames} 格精確色盤，其餘減色`:"median cut 減色";
@@ -2094,6 +2278,195 @@ $("helpBtn").onclick=()=>{
 };
 $("closeHelp").onclick=()=>$("helpDialog").close();
 
+/* ---------- 手機版面 ---------- */
+// ≤700px 時把部分區塊搬進手機介面，回到寬螢幕再搬回原位；元素本身不變，id 與事件都照舊。
+
+const MOBILE_MOVES=[
+  ["selectionSection","frameSheet"],["editBar","frameSheet"],
+  ["speedGroup","mPlaySlot"],["playMode","mPlaySlot"],["selectionOnlyLabel","mPlaySlot"]
+];
+const PANEL_IDS=["mMenu","sidebar","frameSheet"];
+const mobileHomes=new Map();   // 元素 → 原位置的標記
+
+function closePanels(){
+  for(const id of PANEL_IDS)$(id).classList.remove("open");
+  $("mScrim").classList.remove("open");
+  document.querySelectorAll("[data-panel]").forEach(b=>b.classList.remove("active"));
+}
+function togglePanel(button){
+  const panel=$(button.dataset.panel);
+  const wasOpen=panel.classList.contains("open");
+  closePanels();
+  if(wasOpen||busy)return;
+  pause();
+  panel.classList.add("open");
+  button.classList.add("active");
+  $("mScrim").classList.add("open");
+}
+// 手機按鈕代按原本的按鈕，停用狀態跟著原按鈕
+function syncProxies(){
+  document.querySelectorAll("[data-proxy]").forEach(b=>{
+    b.disabled=$(b.dataset.proxy).disabled;
+  });
+}
+function applyLayout(){
+  closePanels();
+  for(const [id,slot] of MOBILE_MOVES){
+    const el=$(id);
+    if(mobileQuery.matches){
+      if(mobileHomes.has(el))continue;
+      const mark=document.createComment(id);
+      el.before(mark);
+      mobileHomes.set(el,mark);
+      $(slot).append(el);
+    }else if(mobileHomes.has(el)){
+      mobileHomes.get(el).replaceWith(el);
+      mobileHomes.delete(el);
+    }
+  }
+  for(const item of frameItems.values())item.node.draggable=!mobileQuery.matches;
+  if(frames.length)fit();
+}
+function toast(text){
+  if(!mobileQuery.matches)return;
+  $("toast").textContent=text;
+  $("toast").classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>$("toast").classList.remove("show"),2500);
+}
+// 選取的影格各自和旁邊一格未選取的影格交換；連續選取的段落整段移動，順序不變
+function moveSelection(direction){
+  if(busy||!selected.size)return;
+  const order=frames.map(f=>f.id);
+  let moved=false;
+  if(direction<0){
+    for(let i=1;i<order.length;i++){
+      if(selected.has(order[i])&&!selected.has(order[i-1])){
+        [order[i-1],order[i]]=[order[i],order[i-1]];moved=true;
+      }
+    }
+  }else{
+    for(let i=order.length-2;i>=0;i--){
+      if(selected.has(order[i])&&!selected.has(order[i+1])){
+        [order[i],order[i+1]]=[order[i+1],order[i]];moved=true;
+      }
+    }
+  }
+  if(!moved){status(direction<0?"已經在最前面":"已經在最後面");return}
+  const byId=new Map(frames.map(f=>[f.id,f]));
+  mutate(()=>{frames=order.map(id=>byId.get(id))});
+  timeline.querySelector(`[data-id="${currentId}"]`)
+    ?.scrollIntoView({block:"nearest",inline:"nearest"});
+}
+// 觸控裝置可直接用系統分享選單傳到 LINE 等 App。
+// 分享必須由使用者再點一次觸發，所以先顯示結果，再由「分享」按鈕送出。
+function deliverGIF(blob,name,w,h){
+  const file=new File([blob],name,{type:"image/gif"});
+  if(!(mobileQuery.matches||coarseQuery.matches)||!navigator.canShare?.({files:[file]})){
+    download(blob,name);return;
+  }
+  shareFile=file;
+  if($("shareImg").src.startsWith("blob:"))URL.revokeObjectURL($("shareImg").src);
+  $("shareImg").src=URL.createObjectURL(blob);
+  // 小圖用整數倍放大顯示，保持像素清晰
+  $("shareImg").style.width=w*Math.max(1,Math.floor(Math.min(240/w,200/h)))+"px";
+  $("shareInfo").textContent=`${w}×${h} px · ${(blob.size/1024).toFixed(1)} KB`+
+    (Math.max(w,h)<240
+      ? "\n尺寸較小，傳到聊天 App 可能被縮放而變糊；可在設定的「GIF 匯出」調高放大倍數。"
+      : "");
+  $("shareDialog").showModal();
+}
+$("shareBtn").onclick=async()=>{
+  try{await navigator.share({files:[shareFile],title:shareFile.name})}
+  catch(error){if(error.name!=="AbortError")notify("無法分享："+error.message)}
+};
+$("shareSave").onclick=()=>download(shareFile,shareFile.name);
+$("shareClose").onclick=()=>$("shareDialog").close();
+
+document.querySelectorAll("[data-panel]").forEach(b=>{
+  b.onclick=()=>togglePanel(b);
+});
+document.querySelectorAll("[data-proxy]").forEach(b=>{
+  b.onclick=()=>{closePanels();$(b.dataset.proxy).click()};
+});
+$("mScrim").onclick=closePanels;
+$("mUndo").onclick=undo;
+$("mRedo").onclick=redo;
+$("mInfo").onclick=fit;
+$("mEarlier").onclick=()=>moveSelection(-1);
+$("mLater").onclick=()=>moveSelection(1);
+$("multiBtn").onclick=()=>{
+  multiSelect=!multiSelect;
+  $("multiBtn").setAttribute("aria-pressed",multiSelect);
+  status(multiSelect?"多選：點影格可增減選取":"已關閉多選");
+};
+mobileQuery.addEventListener("change",applyLayout);
+applyLayout();
+
+/* ---------- 預覽區觸控：單指拖曳平移、兩指捏合縮放、輕點播放／暫停 ---------- */
+
+const area=$("previewArea");
+const touches=new Map();      // pointerId → { x, y }
+let touchStart=null, pinch=null;
+
+function touchPair(){
+  const [a,b]=touches.values();
+  return {x:(a.x+b.x)/2,y:(a.y+b.y)/2,distance:Math.hypot(b.x-a.x,b.y-a.y)||1};
+}
+function nearestZoom(value){
+  return ZOOMS.reduce((best,z)=>
+    Math.abs(Math.log(z/value))<Math.abs(Math.log(best/value))?z:best);
+}
+// 換倍率時，兩指中點下的那個像素留在原位
+function zoomAround(next,x,y){
+  if(next===zoom)return;
+  const r=preview.getBoundingClientRect();
+  const px=(x-r.left)/zoom,py=(y-r.top)/zoom;
+  zoom=next;drawPreview();
+  const r2=preview.getBoundingClientRect();
+  area.scrollLeft+=r2.left+px*zoom-x;
+  area.scrollTop+=r2.top+py*zoom-y;
+}
+area.addEventListener("pointerdown",e=>{
+  if(e.pointerType!=="touch"||busy)return;
+  area.setPointerCapture(e.pointerId);
+  touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(touches.size===1){
+    touchStart={x:e.clientX,y:e.clientY,time:performance.now(),
+      left:area.scrollLeft,top:area.scrollTop,moved:false};
+    pinch=null;
+  }else if(touches.size===2){
+    touchStart=null;
+    pinch={...touchPair(),zoom};
+  }
+});
+area.addEventListener("pointermove",e=>{
+  const t=touches.get(e.pointerId);
+  if(!t)return;
+  t.x=e.clientX;t.y=e.clientY;
+  if(pinch&&touches.size>=2){
+    const pair=touchPair();
+    zoomAround(nearestZoom(pinch.zoom*pair.distance/pinch.distance),pair.x,pair.y);
+  }else if(touchStart){
+    const dx=e.clientX-touchStart.x,dy=e.clientY-touchStart.y;
+    if(Math.hypot(dx,dy)>10)touchStart.moved=true;
+    area.scrollLeft=touchStart.left-dx;
+    area.scrollTop=touchStart.top-dy;
+  }
+});
+function touchEnd(e){
+  if(!touches.delete(e.pointerId))return;
+  const s=touchStart;
+  if(touches.size<2)pinch=null;
+  if(touches.size)return;
+  touchStart=null;
+  if(s&&e.type==="pointerup"&&!s.moved&&performance.now()-s.time<300&&frames.length){
+    playing?pause():startPlay();
+  }
+}
+area.addEventListener("pointerup",touchEnd);
+area.addEventListener("pointercancel",touchEnd);
+
 /* ---------- 外部圖片拖入 ---------- */
 
 document.addEventListener("dragover",e=>{
@@ -2140,7 +2513,9 @@ window.addEventListener("blur",pause);
 refresh();
 requestAnimationFrame(tick);
 $("draftStatus").textContent="修改後會自動保存本機草稿。";
-status("匯入多張圖片即可開始 · Shift 多選 · 拖曳整段移動");
+status(mobileQuery.matches
+  ? "點下方「匯入」選擇圖片開始"
+  : "匯入多張圖片即可開始 · Shift 多選 · 拖曳整段移動");
 restoreDraft();
 </script>
 </body>
