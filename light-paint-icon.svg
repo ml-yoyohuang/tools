@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <title>Light Paint</title>
+  <rect width="16" height="16" rx="3" fill="#263b46"/>
+  <path fill="#f3ead9" d="M2.6 13.4Q4 5 13.4 2.6Q8.4 8.4 2.6 13.4Z"/>
+  <circle cx="11.7" cy="11.7" r="1.8" fill="#e3876b"/>
+</svg>
