@@ -40,6 +40,8 @@ body {
   height: 100dvh;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
+  /* 欄寬固定為畫面寬：色盤條等可捲動內容的最小寬度不會把整個介面撐寬 */
+  grid-template-columns: minmax(0, 1fr);
   background: var(--bg);
   color: var(--text);
   font: 14px/1.5 system-ui, sans-serif;
