@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Light Paint｜漫畫沾水筆版</title>
 <style>
 :root {
@@ -20,6 +20,12 @@ body {
   margin:0;
   height:100dvh;
   overflow:hidden;
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr) auto;
+  /* 欄寬固定為畫面寬，色盤條等可捲動內容不會把介面撐寬 */
+  grid-template-columns:minmax(0,1fr);
+  overscroll-behavior:none;
+  -webkit-tap-highlight-color:transparent;
   background:var(--bg);
   color:var(--text);
   font:13px/1.5 system-ui,sans-serif;
@@ -33,7 +39,9 @@ button,select,input[type=number],input[type=text] {
   padding:5px 8px;
 }
 button { cursor:pointer; }
-button:hover:not(:disabled) { border-color:var(--accent); }
+@media (hover:hover) {
+  button:hover:not(:disabled) { border-color:var(--accent); }
+}
 button.active,button.primary {
   background:var(--accent);
   border-color:var(--accent);
@@ -58,7 +66,7 @@ header strong {
 main {
   display:grid;
   grid-template-columns:220px minmax(0,1fr) 220px;
-  height:calc(100dvh - 82px);
+  min-height:0;
 }
 aside { background:var(--panel); overflow:auto; padding:12px; }
 .left { border-right:1px solid var(--line); }
@@ -185,11 +193,130 @@ dialog input[type=number] { width:90px; }
   main { grid-template-columns:180px minmax(0,1fr) 180px; }
   aside { padding:9px; }
 }
-@media(max-width:650px) {
-  main { grid-template-columns:145px minmax(0,1fr) 150px; }
-  header { gap:4px; padding:5px; }
-  header strong { font-size:13px; }
-  button { padding:5px; }
+.icon {
+  width:22px; height:22px; fill:none; stroke:currentColor;
+  stroke-width:2; stroke-linecap:round; stroke-linejoin:round;
+}
+#mTop, #mBottom, #mScrim, #mMenu, #colorSheet, #toast { display:none; }
+#toast.show {
+  display:block; position:fixed; z-index:60;
+  left:50%; top:calc(env(safe-area-inset-top) + 64px);
+  transform:translateX(-50%); max-width:calc(100vw - 32px);
+  padding:8px 14px; border-radius:8px; background:#000d;
+  font-size:13px; pointer-events:none;
+}
+
+/* 觸控裝置（含 iPad 桌機版面）：放大點擊範圍；16px 以上 iOS 聚焦時才不會自動放大頁面 */
+@media (pointer:coarse) {
+  button:not(.swatch), select,
+  input[type=text], input[type=number] { min-height:44px; }
+  input, select { font-size:16px; }
+  input[type=checkbox] { width:20px; height:20px; }
+  input[type=range] { height:32px; }
+}
+
+/* ---------- 手機版面（≤700px）：上方列＋畫布＋大小滑桿＋色盤條＋工具列，側欄改為底部抽屜 ---------- */
+@media (max-width:700px) {
+  header, .viewbar, #status, .desktop-only,
+  #brushPanel .small:not(#pressureInfo) { display:none !important; }
+  main { grid-template-columns:minmax(0,1fr); }
+
+  #mTop {
+    display:flex; align-items:center; gap:6px;
+    padding:6px 8px; padding-top:max(6px,env(safe-area-inset-top));
+    border-bottom:1px solid var(--line);
+  }
+  #mTop button {
+    width:44px; height:44px; padding:0;
+    display:grid; place-items:center;
+  }
+  #mTop #mZoom {
+    flex:1; width:auto; background:none; border:0;
+    color:var(--muted); font-size:13px;
+  }
+
+  #mBottom {
+    display:block; background:var(--panel);
+    border-top:1px solid var(--line);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  #mSizeBar { padding:4px 12px; border-bottom:1px solid var(--line); }
+  #mSizeBar .setting {
+    display:flex; align-items:center; gap:10px; margin:0;
+  }
+  #mSizeBar .setting label { flex:none; align-items:center; }
+  #mPaletteBar {
+    display:flex; align-items:center; gap:8px;
+    padding:6px 8px; border-bottom:1px solid var(--line);
+  }
+  #mColorBtn {
+    flex:none; width:44px; height:44px; padding:0;
+    border:2px solid #fff; border-radius:8px;
+  }
+  #swatches {
+    display:flex; flex:1; min-width:0; gap:6px; padding:4px;
+    overflow-x:auto; scrollbar-width:none;
+  }
+  #swatches .swatch { flex:none; width:34px; height:34px; }
+  #mTools { display:grid; grid-template-columns:repeat(5,1fr); }
+  #mTools button {
+    min-height:54px; padding:6px 0;
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    border:0; border-radius:0; background:none;
+    color:var(--muted); font-size:12px;
+  }
+  #mTools button.active { color:var(--accent); background:none; }
+
+  #brushPanel, #layerPanel, #colorSheet {
+    display:block; position:fixed; z-index:20;
+    left:0; right:0; bottom:0; max-height:62dvh; overflow:auto;
+    background:var(--panel); border:1px solid var(--line); border-bottom:0;
+    border-radius:14px 14px 0 0;
+    padding:8px 16px calc(16px + env(safe-area-inset-bottom));
+    transform:translateY(100%); visibility:hidden;
+    transition:transform .2s ease, visibility 0s .2s;
+  }
+  #brushPanel.open, #layerPanel.open, #colorSheet.open {
+    transform:none; visibility:visible; transition:transform .2s ease;
+  }
+  #brushPanel::before, #layerPanel::before, #colorSheet::before {
+    content:""; display:block; width:36px; height:4px;
+    margin:0 auto 10px; border-radius:2px; background:var(--line);
+  }
+  #mScrim.open {
+    display:block; position:fixed; z-index:15; inset:0; background:#0006;
+  }
+  #mMenu.open {
+    display:block; position:fixed; z-index:20;
+    top:calc(max(6px,env(safe-area-inset-top)) + 52px); left:8px;
+    min-width:210px; padding:4px 0;
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  }
+  #mInfo {
+    padding:8px 14px; border-bottom:1px solid var(--line);
+    color:var(--muted); font-size:12px;
+  }
+  #mMenu button {
+    display:block; width:100%; padding:11px 14px;
+    border:0; border-radius:0; background:none; text-align:left;
+  }
+
+  dialog { padding:14px; }
+  dialog.full {
+    width:100vw !important; max-width:100vw;
+    height:100dvh; max-height:100dvh; margin:0;
+    border:0; border-radius:0;
+    padding:max(14px,env(safe-area-inset-top)) 16px 0;
+  }
+  dialog.full .dialog-actions {
+    position:sticky; bottom:0; margin:12px -16px 0;
+    padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    background:var(--panel); border-top:1px solid var(--line);
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  #brushPanel, #layerPanel, #colorSheet { transition:none !important; }
 }
 </style>
 </head>
@@ -206,18 +333,27 @@ dialog input[type=number] { width:90px; }
   <button id="helpBtn">說明</button>
 </header>
 
+<div id="mTop">
+  <button id="mMenuBtn" data-panel="mMenu" aria-label="選單"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <button id="mUndo" aria-label="復原"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+  <button id="mRedo" aria-label="重做"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
+  <button id="mZoom" aria-label="適合視窗"></button>
+  <button id="mLayersBtn" data-panel="layerPanel" aria-label="圖層"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4L4 8l8 4 8-4-8-4"/><path d="M4 12l8 4 8-4"/><path d="M4 16l8 4 8-4"/></svg></button>
+  <button id="mBrushBtn" data-panel="brushPanel" aria-label="筆刷設定"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h8M16 6h4M4 12h2M10 12h10M4 18h11M19 18h1"/><path d="M12 6a2 2 0 1 0 4 0a2 2 0 1 0-4 0M6 12a2 2 0 1 0 4 0a2 2 0 1 0-4 0M15 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0"/></svg></button>
+</div>
+
 <main>
-  <aside class="left">
+  <aside class="left" id="brushPanel">
     <section>
-      <h3>工具</h3>
-      <div class="tools">
+      <h3 class="desktop-only">工具</h3>
+      <div class="tools desktop-only">
         <button data-tool="brush" class="active">筆刷 B</button>
         <button data-tool="eraser">橡皮擦 E</button>
         <button data-tool="picker">吸色 I</button>
         <button data-tool="fill">填色 G</button>
         <button data-tool="move">移動 H</button>
       </div>
-      <div class="row">
+      <div class="row desktop-only">
         <button id="undoBtn">復原</button>
         <button id="redoBtn">重做</button>
       </div>
@@ -237,7 +373,7 @@ dialog input[type=number] { width:90px; }
         <option value="soft">柔圓筆／上色</option>
       </select>
 
-      <div class="setting">
+      <div class="setting" id="sizeSetting">
         <label>大小
           <input id="sizeNumber" type="number" min="1" max="300" value="12">
         </label>
@@ -363,8 +499,8 @@ dialog input[type=number] { width:90px; }
     </div>
   </div>
 
-  <aside class="right">
-    <section>
+  <aside class="right" id="layerPanel">
+    <section id="colorSection">
       <h3>顏色</h3>
       <div class="row">
         <input id="color" type="color" value="#263b46" aria-label="筆刷色">
@@ -402,7 +538,7 @@ dialog input[type=number] { width:90px; }
       <div id="layers"></div>
     </section>
 
-    <section>
+    <section id="pressureSection">
       <h3>筆壓測試</h3>
       <canvas id="testPad" width="190" height="62"></canvas>
       <div id="pressureMeter"><div id="pressureBar"></div></div>
@@ -410,7 +546,7 @@ dialog input[type=number] { width:90px; }
       <button id="clearTest">清除測試</button>
     </section>
 
-    <section class="small">
+    <section class="small desktop-only">
       <h3>保存狀態</h3>
       <div id="draftStatus">草稿尚未保存。</div>
       <p>本機草稿不等於備份。請定期下載 JSON 專案。</p>
@@ -418,7 +554,36 @@ dialog input[type=number] { width:90px; }
   </aside>
 </main>
 
+<div id="mBottom">
+  <div id="mSizeBar"></div>
+  <div id="mPaletteBar">
+    <button id="mColorBtn" data-panel="colorSheet" aria-label="目前顏色"
+            style="background:#263b46"></button>
+  </div>
+  <div id="mTools">
+    <button data-tool="brush" class="active"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21v-4a4 4 0 1 1 4 4H3"/><path d="M21 3a16 16 0 0 0-12.8 10.2"/><path d="M21 3a16 16 0 0 1-10.2 12.8"/><path d="M10.6 9a9 9 0 0 1 4.4 4.4"/></svg>筆刷</button>
+    <button data-tool="eraser"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 20H8.5l-4.2-4.3a1 1 0 0 1 0-1.4l10-10a1 1 0 0 1 1.4 0l5 5a1 1 0 0 1 0 1.4L11.5 20"/><path d="M18 13.3L11.7 7"/></svg>橡皮</button>
+    <button data-tool="picker"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 7l6 6"/><path d="M4 16L15.7 4.3a1 1 0 0 1 1.4 0l2.6 2.6a1 1 0 0 1 0 1.4L8 20H4v-4z"/></svg>吸色</button>
+    <button data-tool="fill"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 13.5L11 6l7.5 7.5L11 21z"/><path d="M11 6V3"/><path d="M20 16.5c0 1.5-1 2.3-1 3a1 1 0 0 0 2 0c0-.7-1-1.5-1-3z"/></svg>填色</button>
+    <button data-tool="move"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></svg>移動</button>
+  </div>
+</div>
+
 <div id="status" role="status">準備就緒。</div>
+<div id="mScrim"></div>
+<div id="mMenu">
+  <div id="mInfo"></div>
+  <button data-proxy="newBtn">新畫布</button>
+  <button data-proxy="importBtn">匯入圖層</button>
+  <button data-proxy="loadBtn">載入專案</button>
+  <button data-proxy="saveBtn">保存專案</button>
+  <button data-proxy="exportBtn">輸出 PNG</button>
+  <button data-proxy="draftBtn">恢復草稿</button>
+  <button data-proxy="flipBtn">水平翻轉</button>
+  <button data-proxy="helpBtn">說明</button>
+</div>
+<div id="colorSheet"></div>
+<div id="toast" role="status"></div>
 <div id="pickRing"></div>
 <div id="busy">正在處理檔案，請稍候…</div>
 
@@ -450,7 +615,7 @@ dialog input[type=number] { width:90px; }
   </div>
 </dialog>
 
-<dialog id="helpDialog">
+<dialog id="helpDialog" class="full">
   <h2>Light Paint｜漫畫筆版</h2>
   <p>
     B 筆刷、E 橡皮擦、I 吸色、G 填色、H 移動。<br>
@@ -509,6 +674,8 @@ const work = $("work");
 const display = $("display");
 const dctx = display.getContext("2d");
 const scene = $("scene");
+const mobileQuery = matchMedia("(max-width:700px)");
+let toastTimer = 0;
 
 const MAX_LAYERS = 16;
 const MAX_SIZE = 2048;
@@ -550,8 +717,17 @@ function clearCanvas(c) {
 function clamp(v,a,b) {
   return Math.max(a,Math.min(b,v));
 }
-function status(text) {
+// quiet：每一筆都會出現的例行訊息，手機上不跳提示
+function status(text,quiet=false) {
   $("status").textContent = text;
+  if (!quiet) toast(text);
+}
+function toast(text) {
+  if (!mobileQuery.matches) return;
+  $("toast").textContent = text;
+  $("toast").classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $("toast").classList.remove("show"),2500);
 }
 function invalidate() {
   renderNeeded = true;
@@ -566,6 +742,7 @@ function setColor(value) {
   const s = normalizeHex(value);
   if (!s) return false;
   color = s;
+  $("mColorBtn").style.background = s;
   $("color").value = s;
   $("hex").value = s;
   return true;
@@ -584,8 +761,8 @@ function makeLayer(name) {
 /* ---------- 復原歷史 ---------- */
 
 function updateHistoryButtons() {
-  $("undoBtn").disabled = !undoStack.length;
-  $("redoBtn").disabled = !redoStack.length;
+  $("undoBtn").disabled = $("mUndo").disabled = !undoStack.length;
+  $("redoBtn").disabled = $("mRedo").disabled = !redoStack.length;
 }
 function pushCommand(command) {
   undoStack.push(command);
@@ -694,6 +871,9 @@ function updateTransform() {
     `translate(-50%,-50%) translate(${panX}px,${panY}px) `+
     `rotate(${rotation}deg) scale(${flipped?-zoom:zoom},${zoom})`;
   $("zoomLabel").textContent = Math.round(zoom*100)+"%";
+  $("mZoom").textContent = Math.round(zoom*100)+"%"+
+    (Math.round(rotation) ? ` · ${Math.round(rotation)}°`:"")+
+    (flipped ? " · 翻轉":"");
   $("viewInfo").textContent =
     `${W}×${H} · ${Math.round(rotation)}°${flipped?" · 已翻轉":""}`;
 }
@@ -1053,7 +1233,7 @@ function finishStroke(cancel=false) {
         changed();
       }
     }
-    status(g.manga ? "漫畫筆畫已完成" : "筆畫已完成");
+    status(g.manga ? "漫畫筆畫已完成" : "筆畫已完成",true);
   } else if (cancel) {
     status("已取消未完成筆畫");
   }
@@ -2344,6 +2524,69 @@ window.addEventListener("keyup",event => {
   }
 });
 window.addEventListener("resize",updateTransform);
+
+/* ---------- 手機版面 ---------- */
+// ≤700px 時把部分區塊搬進手機介面，回到寬螢幕再搬回原位；元素本身不變，id 與事件都照舊。
+
+const MOBILE_MOVES=[
+  ["sizeSetting","mSizeBar"],
+  ["swatches","mPaletteBar"],
+  ["colorSection","colorSheet"],
+  ["pressureSection","brushPanel"],
+  ["draftStatus","mInfo"]
+];
+const PANEL_IDS=["mMenu","brushPanel","layerPanel","colorSheet"];
+const mobileHomes=new Map();  // 元素 → 原位置的標記
+
+function closePanels() {
+  for (const id of PANEL_IDS) $(id).classList.remove("open");
+  $("mScrim").classList.remove("open");
+  document.querySelectorAll("[data-panel]").forEach(b => {
+    b.classList.remove("active");
+  });
+}
+function togglePanel(button) {
+  const panel=$(button.dataset.panel);
+  const wasOpen=panel.classList.contains("open");
+  closePanels();
+  if (wasOpen) return;
+  panel.classList.add("open");
+  button.classList.add("active");
+  $("mScrim").classList.add("open");
+}
+function applyLayout() {
+  closePanels();
+  for (const [id,slot] of MOBILE_MOVES) {
+    const el=$(id);
+    if (mobileQuery.matches) {
+      if (mobileHomes.has(el)) continue;
+      const mark=document.createComment(id);
+      el.before(mark);
+      mobileHomes.set(el,mark);
+      $(slot).append(el);
+    } else if (mobileHomes.has(el)) {
+      mobileHomes.get(el).replaceWith(el);
+      mobileHomes.delete(el);
+    }
+  }
+  updateTransform();
+}
+
+document.querySelectorAll("[data-panel]").forEach(b => {
+  b.onclick=() => togglePanel(b);
+});
+document.querySelectorAll("[data-proxy]").forEach(b => {
+  b.onclick=() => {
+    closePanels();
+    $(b.dataset.proxy).click();
+  };
+});
+$("mScrim").onclick=closePanels;
+$("mUndo").onclick=undo;
+$("mRedo").onclick=redo;
+$("mZoom").onclick=fitView;
+mobileQuery.addEventListener("change",applyLayout);
+applyLayout();
 
 /* ---------- 初始化 ---------- */
 
