@@ -116,6 +116,14 @@ dialog h2{margin:0 0 12px;font-size:19px}
 dialog p,dialog li{color:var(--muted)}
 .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 #askMessage,#documentInfo{white-space:pre-line}
+#sheetPreviewWrap{
+  max-height:50dvh;overflow:auto;padding:8px;
+  background:#10151b;border-radius:6px;text-align:center;
+}
+#sheetPreview{
+  display:inline-block;vertical-align:top;image-rendering:pixelated;
+  background:repeating-conic-gradient(#adb4bd 0 25%,#d4d7dc 0 50%) 0 0/16px 16px;
+}
 #busy{
   position:fixed;inset:0;display:none;place-items:center;
   background:#000a;z-index:100;
@@ -153,16 +161,16 @@ progress{width:260px;max-width:70vw;accent-color:var(--accent)}
       <canvas id="preview" width="64" height="64"></canvas>
       <div id="empty">
         <strong>把圖片拖進來，開始排動畫</strong><br>
-        支援多選圖片、檔名自然排序<br>
+        支援多選圖片、檔名自然排序；GIF 會拆成影格<br>
         原始圖片不會自動縮放
       </div>
     </div>
 
     <div class="bar">
-      <button id="prevBtn">◀ 上一格</button>
+      <button id="prevBtn">← 上一格</button>
       <button id="playBtn" class="primary">▶ 播放</button>
       <button id="stopBtn">■ 停止</button>
-      <button id="nextBtn">下一格 ▶</button>
+      <button id="nextBtn">下一格 →</button>
       <select id="playMode">
         <option value="loop">循環預覽／GIF</option>
         <option value="once">單次預覽／GIF</option>
@@ -239,6 +247,7 @@ progress{width:260px;max-width:70vw;accent-color:var(--accent)}
 
     <section>
       <h3>匯入設定</h3>
+      <button id="sheetBtn" class="full">切割 sprite sheet…</button>
       <div class="row">
         <label>位置
           <select id="importPosition">
@@ -327,6 +336,7 @@ progress{width:260px;max-width:70vw;accent-color:var(--accent)}
 </div>
 
 <input id="imageFiles" type="file" accept="image/*" multiple hidden>
+<input id="sheetFile" type="file" accept="image/*" hidden>
 <input id="projectFile" type="file" accept=".json,application/json" hidden>
 
 <div id="busy">
@@ -340,6 +350,9 @@ progress{width:260px;max-width:70vw;accent-color:var(--accent)}
   <h2>Pixel Motion 使用方式</h2>
   <ul>
     <li>多選圖片匯入，依自然檔名順序排列，例如 1、2、10。</li>
+    <li>動畫 GIF 匯入時拆成影格，保留原本每格時間。</li>
+    <li>「切割 sprite sheet」把一張大圖依格線切成多格，
+        由左到右、由上到下排列，可略過完全透明的格子。</li>
     <li>點一下選一格；Shift 選範圍；Ctrl／⌘ 增減個別選取。</li>
     <li>拖曳已選影格整段搬移；複製貼上包含每格停留時間。</li>
     <li>空白播放／暫停，左右方向鍵換格。</li>
@@ -356,7 +369,7 @@ progress{width:260px;max-width:70vw;accent-color:var(--accent)}
   <p>
     GIF 時間以 10ms 為單位，本工具匯出最短 20ms。
     其他播放器可能對極短延遲作不同處理。
-    動畫圖片匯入只取瀏覽器解碼後的靜態畫面，不拆解既有 GIF。
+    APNG、動畫 WebP 等其他動畫格式只取第一格。
   </p>
   <p>
     限制：畫布長寬最多 1024 px、最多 300 格，放大匯出後最多 4096 px；
@@ -369,6 +382,31 @@ progress{width:260px;max-width:70vw;accent-color:var(--accent)}
     私密模式、file URL 儲存政策、清除網站資料及更換 HTML 位置都可能影響草稿。
   </p>
   <div class="actions"><button id="closeHelp">關閉</button></div>
+</dialog>
+
+<dialog id="sheetDialog">
+  <h2>切割 sprite sheet <span id="sheetSize" class="small"></span></h2>
+  <div id="sheetPreviewWrap"><canvas id="sheetPreview"></canvas></div>
+  <div class="row">
+    <label>欄 <input id="sheetCols" type="number" min="1" max="4096"></label>
+    <label>列 <input id="sheetRows" type="number" min="1" max="4096"></label>
+  </div>
+  <div class="row">
+    <label>每格 <input id="sheetCellW" type="number" min="1" max="4096"></label>
+    <span>×</span>
+    <input id="sheetCellH" type="number" min="1" max="4096" aria-label="每格高度">
+    <span>px</span>
+  </div>
+  <div class="row">
+    <label>間距 <input id="sheetGap" type="number" min="0" max="512"></label>
+    <label>外框 <input id="sheetMargin" type="number" min="0" max="512"></label>
+  </div>
+  <label><input id="sheetSkipEmpty" type="checkbox" checked> 略過完全透明的格子</label>
+  <p id="sheetInfo" class="small"></p>
+  <div class="actions">
+    <button id="sheetCancel">取消</button>
+    <button id="sheetOk" class="primary">匯入</button>
+  </div>
 </dialog>
 
 <dialog id="askDialog">
@@ -391,6 +429,7 @@ const pctx = preview.getContext("2d");
 const timeline = $("timeline");
 const MAX_SIZE = 1024, MAX_FRAMES = 300;
 const MAX_OUTPUT = 4096;             // 放大匯出後的長寬上限
+const MAX_SHEET = 4096;              // sprite sheet 原圖的長寬上限
 const SCALES = [1,2,3,4,6,8];
 const THUMB_W = 78, THUMB_H = 64;    // 與 .thumb 的 CSS 尺寸一致
 const collator = new Intl.Collator(undefined, {
@@ -975,6 +1014,9 @@ async function withBusy(task){
 function progress(text,value){
   $("busyText").textContent=text;$("progress").value=value;
 }
+function isGIF(file){
+  return file.type==="image/gif"||/\.gif$/i.test(file.name);
+}
 async function importFiles(list){
   const files=[...list].filter(f=>
     f.type.startsWith("image/")||/\.(png|jpe?g|webp|gif|bmp|avif)$/i.test(f.name)
@@ -986,47 +1028,221 @@ async function importFiles(list){
   }
 
   await withBusy(async()=>{
-    const imported=[];
+    const pieces=[];
     const duration=durationValue($("defaultDuration").value);
-    let maxW=0,maxH=0;
+    let gifFrames=0;
     for(let i=0;i<files.length;i++){
-      progress(`匯入 ${i+1} / ${files.length}`,i/files.length);
-      const url=URL.createObjectURL(files[i]);
-      try{
-        const decoded=await loadImage(url);
-        if(decoded.width>MAX_SIZE||decoded.height>MAX_SIZE){
-          throw new Error(files[i].name+" 超過 1024×1024 限制");
-        }
-        const image=canonicalImage(decoded);
-        const blob=await canvasBlob(image);
-        imported.push({
-          id:nextId++,name:files[i].name,duration,
-          image,blob,imageKey:newImageKey()
-        });
-        maxW=Math.max(maxW,image.width);maxH=Math.max(maxH,image.height);
-      }finally{URL.revokeObjectURL(url)}
+      const file=files[i];
+      progress(`讀取 ${i+1} / ${files.length}`,i/files.length);
+      // 動畫 GIF 拆成影格並保留原本時間；解不開就交給瀏覽器，只取第一格
+      let gif=null;
+      if(isGIF(file)){
+        try{
+          gif=decodeGIF(new Uint8Array(await file.arrayBuffer()),
+            MAX_FRAMES-frames.length-pieces.length);
+        }catch(error){console.warn(error)}
+      }
+      if(gif&&gif.frames.length>1){
+        const digits=String(gif.frames.length).length;
+        gif.frames.forEach((f,k)=>pieces.push({
+          name:`${file.name} #${String(k+1).padStart(digits,"0")}`,
+          canvas:f.canvas,duration:f.duration
+        }));
+        gifFrames+=gif.frames.length;
+      }else{
+        const url=URL.createObjectURL(file);
+        try{
+          const decoded=await loadImage(url);
+          if(decoded.width>MAX_SIZE||decoded.height>MAX_SIZE){
+            throw new Error(file.name+" 超過 1024×1024 限制");
+          }
+          pieces.push({name:file.name,canvas:canonicalImage(decoded),duration});
+        }finally{URL.revokeObjectURL(url)}
+      }
+      if(frames.length+pieces.length>MAX_FRAMES){
+        throw new Error(`GIF 拆開後超過 ${MAX_FRAMES} 格上限，這次沒有匯入。`);
+      }
       await sleep();
     }
-    const before=snapshot();
-    if(!frames.length){width=maxW;height=maxH}
-    else if(maxW>width||maxH>height){
-      const w=Math.max(width,maxW),h=Math.max(height,maxH);
-      if(await ask({
-        title:"擴大畫布？",
-        message:`新圖片比畫布大。要把畫布擴大為 ${w}×${h} 嗎？\n保留尺寸的話，超出部分會裁切顯示。`,
-        ok:"擴大",cancel:"保留尺寸"
-      })){
-        width=Math.max(width,maxW);height=Math.max(height,maxH);
-      }
-    }
-    const i=currentIndex();
-    const position=$("importPosition").value==="after"&&i>=0?i+1:frames.length;
-    frames.splice(position,0,...imported);
-    selected=new Set(imported.map(f=>f.id));
-    currentId=imported[0].id;anchorId=currentId;
-    pushHistory(before);refresh();fit();changed();
-    status(`已依檔名自然排序匯入 ${imported.length} 格`);
+    await addFrames(pieces);
+    status(gifFrames
+      ? `已匯入 ${pieces.length} 格；GIF 拆成 ${gifFrames} 格並保留原本時間`
+      : `已依檔名自然排序匯入 ${pieces.length} 格`);
   });
+}
+// 把切好的畫面加進時間軸；畫布比較小時詢問是否擴大
+async function addFrames(pieces){
+  const imported=[];
+  let maxW=0,maxH=0;
+  for(let i=0;i<pieces.length;i++){
+    const {name,canvas,duration}=pieces[i];
+    progress(`準備影格 ${i+1} / ${pieces.length}`,i/pieces.length);
+    imported.push({
+      id:nextId++,name,duration,
+      image:canvas,blob:await canvasBlob(canvas),imageKey:newImageKey()
+    });
+    maxW=Math.max(maxW,canvas.width);maxH=Math.max(maxH,canvas.height);
+  }
+  const before=snapshot();
+  if(!frames.length){width=maxW;height=maxH}
+  else if(maxW>width||maxH>height){
+    const w=Math.max(width,maxW),h=Math.max(height,maxH);
+    if(await ask({
+      title:"擴大畫布？",
+      message:`新圖片比畫布大。要把畫布擴大為 ${w}×${h} 嗎？\n保留尺寸的話，超出部分會裁切顯示。`,
+      ok:"擴大",cancel:"保留尺寸"
+    })){
+      width=w;height=h;
+    }
+  }
+  const i=currentIndex();
+  const position=$("importPosition").value==="after"&&i>=0?i+1:frames.length;
+  frames.splice(position,0,...imported);
+  selected=new Set(imported.map(f=>f.id));
+  currentId=imported[0].id;anchorId=currentId;
+  pushHistory(before);refresh();fit();changed();
+}
+
+/* ---------- GIF 解碼 ---------- */
+// 依 GIF89a 規格合成每格完整畫面：透明色、交錯掃描、disposal 0～3。
+// 不靠瀏覽器的 ImageDecoder，Safari 也能用。
+
+function lzwDecode(data,minCodeSize,count){
+  const out=new Uint8Array(count);
+  const CLEAR=1<<minCodeSize,END=CLEAR+1;
+  const prefix=new Uint16Array(4096),suffix=new Uint8Array(4096);
+  const stack=new Uint8Array(4097);
+  for(let i=0;i<CLEAR;i++)suffix[i]=i;
+  let size=minCodeSize+1,mask=(1<<size)-1,next=END+1,old=-1,first=0;
+  let bits=0,bitCount=0,p=0,o=0;
+  while(o<count){
+    while(bitCount<size){
+      if(p>=data.length)return out;  // 資料不足：其餘像素維持 index 0
+      bits|=data[p++]<<bitCount;bitCount+=8;
+    }
+    const code=bits&mask;
+    bits>>>=size;bitCount-=size;
+    if(code===CLEAR){
+      size=minCodeSize+1;mask=(1<<size)-1;next=END+1;old=-1;
+      continue;
+    }
+    if(code===END||code>next)break;
+    if(old<0){
+      out[o++]=suffix[code];old=first=code;
+      continue;
+    }
+    // 依字典反向展開字串；code 剛好是下一個新碼時，字串是 old＋old 的首字
+    let c=code,sp=0;
+    if(code===next){stack[sp++]=first;c=old}
+    while(c>=CLEAR){stack[sp++]=suffix[c];c=prefix[c]}
+    first=c;stack[sp++]=c;
+    while(sp&&o<count)out[o++]=stack[--sp];
+    if(next<4096){
+      prefix[next]=old;suffix[next]=first;next++;
+      if(next>mask&&size<12){size++;mask=(1<<size)-1}
+    }
+    old=code;
+  }
+  return out;
+}
+function decodeGIF(bytes,maxFrames){
+  let pos=0;
+  const byte=()=>{
+    if(pos>=bytes.length)throw new Error("GIF 檔案不完整");
+    return bytes[pos++];
+  };
+  const word=()=>byte()|byte()<<8;
+  const table=size=>{
+    if(pos+size*3>bytes.length)throw new Error("GIF 檔案不完整");
+    pos+=size*3;
+    return bytes.subarray(pos-size*3,pos);
+  };
+  const subBlocks=()=>{
+    const parts=[];
+    let total=0,size;
+    while((size=byte())){
+      if(pos+size>bytes.length)throw new Error("GIF 檔案不完整");
+      parts.push(bytes.subarray(pos,pos+size));pos+=size;total+=size;
+    }
+    const data=new Uint8Array(total);
+    let offset=0;
+    for(const part of parts){data.set(part,offset);offset+=part.length}
+    return data;
+  };
+
+  const signature=String.fromCharCode(...bytes.subarray(0,6));
+  if(signature!=="GIF87a"&&signature!=="GIF89a")throw new Error("不是 GIF 檔");
+  pos=6;
+  const w=word(),h=word(),packed=byte();
+  byte();byte();
+  if(!w||!h||w>MAX_SIZE||h>MAX_SIZE){
+    throw new Error(`GIF 尺寸 ${w}×${h} 超過 1024×1024 限制`);
+  }
+  const globalTable=packed&0x80?table(2<<(packed&7)):null;
+
+  const screen=new Uint8ClampedArray(w*h*4);  // 目前合成的畫面
+  const result=[];
+  let control={disposal:0,delay:0,transparent:-1};
+  while(pos<bytes.length&&result.length<=maxFrames){
+    const block=byte();
+    if(block===0x3B)break;
+    if(block===0x21){
+      const label=byte();
+      if(label===0xF9){
+        const data=subBlocks();
+        if(data.length>=4){
+          control={
+            disposal:data[0]>>2&7,delay:data[1]|data[2]<<8,
+            transparent:data[0]&1?data[3]:-1
+          };
+        }
+      }else subBlocks();
+      continue;
+    }
+    if(block!==0x2C)throw new Error("GIF 格式錯誤");
+
+    const x=word(),y=word(),fw=word(),fh=word(),fp=byte();
+    const colors=fp&0x80?table(2<<(fp&7)):globalTable;
+    if(!colors)throw new Error("GIF 缺少色盤");
+    const minCodeSize=byte();
+    if(minCodeSize<2||minCodeSize>11)throw new Error("GIF 格式錯誤");
+    const indices=lzwDecode(subBlocks(),minCodeSize,fw*fh);
+
+    // disposal 3：這格顯示完要還原成畫之前的樣子
+    const saved=control.disposal===3?screen.slice():null;
+    // 交錯掃描依序存放第 0、8、16…列，再第 4、12…列，再第 2、6…列，最後奇數列
+    const rows=[];
+    if(fp&0x40){
+      for(const [start,step] of [[0,8],[4,8],[2,4],[1,2]]){
+        for(let r=start;r<fh;r+=step)rows.push(r);
+      }
+    }else for(let r=0;r<fh;r++)rows.push(r);
+    rows.forEach((row,n)=>{
+      const py=y+row;
+      if(py>=h)return;
+      for(let col=0;col<fw&&x+col<w;col++){
+        const k=indices[n*fw+col];
+        if(k===control.transparent||k*3+2>=colors.length)continue;
+        const j=(py*w+x+col)*4;
+        screen[j]=colors[k*3];screen[j+1]=colors[k*3+1];screen[j+2]=colors[k*3+2];
+        screen[j+3]=255;
+      }
+    });
+    const canvas=newCanvas(w,h);
+    canvas.getContext("2d").putImageData(new ImageData(screen.slice(),w,h),0,0);
+    // 延遲 0 或 10ms 時，瀏覽器一律當 100ms 播放
+    result.push({canvas,duration:control.delay<=1?100:durationValue(control.delay*10)});
+
+    if(control.disposal===2){
+      for(let r=0;r<fh&&y+r<h;r++){
+        const start=((y+r)*w+x)*4;
+        screen.fill(0,start,start+Math.min(fw,w-x)*4);
+      }
+    }else if(saved)screen.set(saved);
+    control={disposal:0,delay:0,transparent:-1};
+  }
+  if(!result.length)throw new Error("GIF 沒有影格");
+  return {width:w,height:h,frames:result};
 }
 
 /* ---------- JSON 專案 ---------- */
@@ -1579,6 +1795,156 @@ $("imageFiles").onchange=e=>{
   const files=[...e.target.files];e.target.value="";
   importFiles(files);
 };
+
+/* ---------- sprite sheet ---------- */
+// 一張大圖依格線切成多格，由左到右、由上到下排列。
+// 欄列數與每格尺寸互相換算；改間距或外框時保留欄列數。
+
+const SHEET_FIELDS=[
+  ["sheetCols","cols"],["sheetRows","rows"],
+  ["sheetCellW","cellW"],["sheetCellH","cellH"],
+  ["sheetGap","gap"],["sheetMargin","margin"]
+];
+let sheet=null;        // { name, canvas, data }
+let sheetGrid=null;    // { cols, rows, cellW, cellH, gap, margin }
+
+function cellSize(total,count,gap,margin){
+  return Math.floor((total-2*margin-(count-1)*gap)/count);
+}
+function cellCount(total,size,gap,margin){
+  return Math.floor((total-2*margin+gap)/(size+gap));
+}
+// 橫條或直條且長邊是短邊的整數倍時，猜它是正方形影格
+function guessGrid(w,h){
+  let cols=1,rows=1;
+  if(w>h&&w%h===0)cols=w/h;
+  else if(h>w&&h%w===0)rows=h/w;
+  return {cols,rows,cellW:Math.floor(w/cols),cellH:Math.floor(h/rows),gap:0,margin:0};
+}
+function cellEmpty(x,y,w,h){
+  const W=sheet.canvas.width,d=sheet.data;
+  for(let yy=y;yy<y+h;yy++){
+    for(let i=(yy*W+x)*4+3,end=i+w*4;i<end;i+=4)if(d[i])return false;
+  }
+  return true;
+}
+function sheetCells(){
+  const g=sheetGrid,list=[];
+  if(g.cols<1||g.rows<1||g.cellW<1||g.cellH<1)return list;
+  for(let r=0;r<g.rows;r++){
+    for(let c=0;c<g.cols;c++){
+      const x=g.margin+c*(g.cellW+g.gap),y=g.margin+r*(g.cellH+g.gap);
+      if(x+g.cellW>sheet.canvas.width||y+g.cellH>sheet.canvas.height)continue;
+      list.push({x,y,empty:cellEmpty(x,y,g.cellW,g.cellH)});
+    }
+  }
+  return list;
+}
+function writeSheetInputs(except){
+  for(const [id,key] of SHEET_FIELDS)if(id!==except)$(id).value=sheetGrid[key];
+}
+function drawSheet(){
+  const g=sheetGrid,img=sheet.canvas,c=$("sheetPreview");
+  const maxW=$("sheetPreviewWrap").clientWidth-16||480;
+  const maxH=Math.min(360,innerHeight*.45);
+  const fitScale=Math.min(maxW/img.width,maxH/img.height);
+  const z=fitScale>=1?Math.min(8,Math.floor(fitScale)):fitScale;
+  c.width=Math.max(1,Math.round(img.width*z));
+  c.height=Math.max(1,Math.round(img.height*z));
+  const ctx=c.getContext("2d");
+  ctx.imageSmoothingEnabled=z<1;
+  ctx.drawImage(img,0,0,c.width,c.height);
+
+  const skip=$("sheetSkipEmpty").checked;
+  const cells=sheetCells();
+  ctx.strokeStyle="#a1cfb1";ctx.lineWidth=1;
+  for(const cell of cells){
+    const x=Math.round(cell.x*z),y=Math.round(cell.y*z);
+    const w=Math.max(1,Math.round(g.cellW*z)),h=Math.max(1,Math.round(g.cellH*z));
+    if(skip&&cell.empty){ctx.fillStyle="#000a";ctx.fillRect(x,y,w,h)}
+    ctx.strokeRect(x+.5,y+.5,w-1,h-1);
+  }
+
+  const count=cells.filter(cell=>!(skip&&cell.empty)).length;
+  const skipped=skip?cells.length-count:0;
+  const room=MAX_FRAMES-frames.length;
+  let info;
+  if(!cells.length)info="格線超出圖片範圍，請調整欄列數或每格尺寸。";
+  else if(g.cellW>MAX_SIZE||g.cellH>MAX_SIZE)info=`每格最大 ${MAX_SIZE}×${MAX_SIZE} px。`;
+  else if(count>room)info=`共 ${count} 格，超過剩餘的 ${room} 格空間。`;
+  else info=`每格 ${g.cellW}×${g.cellH} px · 共 ${count} 格`+
+    (skipped?`（略過 ${skipped} 個空白格）`:"");
+  $("sheetInfo").textContent=info;
+  $("sheetOk").textContent=count?`匯入 ${count} 格`:"匯入";
+  $("sheetOk").disabled=!count||count>room||g.cellW>MAX_SIZE||g.cellH>MAX_SIZE;
+}
+for(const [id,key] of SHEET_FIELDS){
+  $(id).oninput=()=>{
+    if(!sheet)return;
+    const v=Number($(id).value);
+    // 還沒輸入完的值先不換算
+    if(!Number.isInteger(v)||v<(key==="gap"||key==="margin"?0:1))return;
+    const g=sheetGrid,W=sheet.canvas.width,H=sheet.canvas.height;
+    g[key]=v;
+    if(key==="cols")g.cellW=cellSize(W,g.cols,g.gap,g.margin);
+    else if(key==="rows")g.cellH=cellSize(H,g.rows,g.gap,g.margin);
+    else if(key==="cellW")g.cols=cellCount(W,g.cellW,g.gap,g.margin);
+    else if(key==="cellH")g.rows=cellCount(H,g.cellH,g.gap,g.margin);
+    else{
+      g.cellW=cellSize(W,g.cols,g.gap,g.margin);
+      g.cellH=cellSize(H,g.rows,g.gap,g.margin);
+    }
+    writeSheetInputs(id);
+    drawSheet();
+  };
+}
+$("sheetSkipEmpty").onchange=drawSheet;
+$("sheetBtn").onclick=()=>{if(!busy)$("sheetFile").click()};
+$("sheetFile").onchange=async e=>{
+  const file=e.target.files[0];e.target.value="";
+  if(!file||busy)return;
+  pause();
+  const url=URL.createObjectURL(file);
+  let img;
+  try{img=await loadImage(url)}
+  catch(error){notify(error.message);return}
+  finally{URL.revokeObjectURL(url)}
+  if(img.width>MAX_SHEET||img.height>MAX_SHEET){
+    notify(`sprite sheet 最大 ${MAX_SHEET}×${MAX_SHEET} px。`);
+    return;
+  }
+  const canvas=canonicalImage(img);
+  sheet={
+    name:file.name,canvas,
+    data:canvas.getContext("2d").getImageData(0,0,canvas.width,canvas.height).data
+  };
+  sheetGrid=guessGrid(canvas.width,canvas.height);
+  writeSheetInputs();
+  $("sheetSize").textContent=`${canvas.width}×${canvas.height} px`;
+  $("sheetDialog").showModal();
+  drawSheet();
+};
+$("sheetCancel").onclick=()=>$("sheetDialog").close();
+$("sheetDialog").onclose=()=>{sheet=null};
+$("sheetOk").onclick=()=>{
+  const g={...sheetGrid},source=sheet,skip=$("sheetSkipEmpty").checked;
+  const cells=sheetCells().filter(cell=>!(skip&&cell.empty));
+  $("sheetDialog").close();
+  if(!cells.length)return;
+  const duration=durationValue($("defaultDuration").value);
+  const digits=String(cells.length).length;
+  withBusy(async()=>{
+    const pieces=cells.map((cell,i)=>{
+      const c=newCanvas(g.cellW,g.cellH);
+      c.getContext("2d").drawImage(source.canvas,
+        cell.x,cell.y,g.cellW,g.cellH,0,0,g.cellW,g.cellH);
+      return {name:`${source.name} #${String(i+1).padStart(digits,"0")}`,canvas:c,duration};
+    });
+    await addFrames(pieces);
+    status(`已從 sprite sheet 切出 ${pieces.length} 格`);
+  });
+};
+
 $("newBtn").onclick=()=>{
   if(busy)return;
   // 可以復原，另外也留成上一件作品，所以不再詢問
