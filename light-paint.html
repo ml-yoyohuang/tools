@@ -118,6 +118,16 @@ h3 { margin:0 0 8px; color:var(--muted); font-size:12px; }
   position:absolute; inset:0; width:100%; height:100%;
   pointer-events:none;
 }
+#pickRing {
+  position:fixed; z-index:50; display:none;
+  width:88px; height:88px; border:14px solid; border-radius:50%;
+  /* 轉 -45° 後上、右框成為上半圈：上半新色、下半原色 */
+  border-color:var(--pick-new) var(--pick-new) var(--pick-old) var(--pick-old);
+  transform:rotate(-45deg);
+  box-shadow:0 0 0 2px #000a,inset 0 0 0 2px #000a;
+  pointer-events:none;
+}
+#pickRing.show { display:block; }
 #ropeLine { stroke:#a9d8bc; stroke-width:1; stroke-dasharray:4 3; }
 #tipDot { fill:#a9d8bc; }
 #status {
@@ -210,6 +220,12 @@ dialog input[type=number] { width:90px; }
       <div class="row">
         <button id="undoBtn">復原</button>
         <button id="redoBtn">重做</button>
+      </div>
+      <div id="penOnlyRow" hidden>
+        <label>
+          <input id="penOnly" type="checkbox" checked>
+          只用觸控筆畫，手指調整視圖
+        </label>
       </div>
     </section>
 
@@ -403,6 +419,7 @@ dialog input[type=number] { width:90px; }
 </main>
 
 <div id="status" role="status">準備就緒。</div>
+<div id="pickRing"></div>
 <div id="busy">正在處理檔案，請稍候…</div>
 
 <input id="imageFile" type="file" accept="image/*" hidden>
@@ -442,6 +459,12 @@ dialog input[type=number] { width:90px; }
     Ctrl／⌘ Z 復原；Ctrl／⌘ Shift Z 重做；Ctrl／⌘ S 保存。
   </p>
   <p>
+    觸控：單指使用目前工具，在畫布外拖曳平移。
+    兩指捏合縮放、拖曳平移、轉動旋轉（接近直角時自動吸附）。
+    兩指輕點復原、三指輕點重做；長按吸色，按住拖曳可換色。
+    用過觸控筆後，可設定只有筆能畫、手指調整視圖。
+  </p>
+  <p>
     漫畫沾水筆使用硬邊墨線，可結合真實筆壓與自動頭尾漸尖。
     滑鼠也可使用自動漸尖。起筆或收筆長度設為 0，
     可以只保留另一端的效果。
@@ -473,7 +496,7 @@ dialog input[type=number] { width:90px; }
   <p>
     漫畫筆目前每個更新畫面會重建當次筆畫。
     很長的連續筆畫、大筆徑及大畫布可能增加負擔。
-    尚未包含選取變形、PSD／SAI 相容、水彩混色或完整手機手勢。
+    尚未包含選取變形、PSD／SAI 相容或水彩混色。
   </p>
   <div class="dialog-actions"><button id="closeHelp">關閉</button></div>
 </dialog>
@@ -672,7 +695,7 @@ function updateTransform() {
     `rotate(${rotation}deg) scale(${flipped?-zoom:zoom},${zoom})`;
   $("zoomLabel").textContent = Math.round(zoom*100)+"%";
   $("viewInfo").textContent =
-    `${W}×${H} · ${rotation}°${flipped?" · 已翻轉":""}`;
+    `${W}×${H} · ${Math.round(rotation)}°${flipped?" · 已翻轉":""}`;
 }
 function toDocument(clientX,clientY) {
   const r = work.getBoundingClientRect();
@@ -746,8 +769,8 @@ function showCursor(event) {
   const size = Number($("size").value)*zoom;
   c.style.width = Math.max(3,size)+"px";
   c.style.height = Math.max(3,size)+"px";
-  c.style.display = ["brush","eraser"].includes(tool) && !spaceDown
-    ? "block":"none";
+  c.style.display = ["brush","eraser"].includes(tool) && !spaceDown &&
+    event.pointerType !== "touch" ? "block":"none";
 }
 
 /* ---------- 筆刷印章與筆壓 ---------- */
@@ -1074,17 +1097,24 @@ function frame() {
 
 /* ---------- 吸色與填色 ---------- */
 
-function pickColor(p) {
+// 畫布外回傳 null，透明處回傳空字串
+function sampleColor(p) {
   const x = Math.floor(p.x), y = Math.floor(p.y);
-  if (x<0 || y<0 || x>=W || y>=H) return false;
+  if (x<0 || y<0 || x>=W || y>=H) return null;
   render();
   const data = dctx.getImageData(x,y,1,1).data;
-  if (!data[3]) {
+  if (!data[3]) return "";
+  return "#"+[data[0],data[1],data[2]]
+    .map(v => v.toString(16).padStart(2,"0")).join("");
+}
+function pickColor(p) {
+  const hex = sampleColor(p);
+  if (hex === null) return false;
+  if (!hex) {
     status("透明處沒有可吸取的可見顏色");
     return false;
   }
-  setColor("#"+[data[0],data[1],data[2]]
-    .map(v => v.toString(16).padStart(2,"0")).join(""));
+  setColor(hex);
   status("已吸取 "+color);
   return true;
 }
@@ -1202,48 +1232,39 @@ function selectTool(value) {
   document.querySelectorAll("[data-tool]").forEach(b => {
     b.classList.toggle("active",b.dataset.tool===tool);
   });
-  work.style.cursor=value==="move"?"grab":"crosshair";
+  work.style.cursor=idleCursor();
 }
-work.addEventListener("pointerdown",event => {
-  if (gesture || fileBusy || ![0,1].includes(event.button)) return;
-  event.preventDefault();
-  commitLayerOpacity();
-  work.setPointerCapture(event.pointerId);
-  updatePressure(event);
-
-  if (spaceDown || tool==="move" || event.button===1) {
-    gesture={
-      type:"pan",id:event.pointerId,
-      x:event.clientX,y:event.clientY,px:panX,py:panY
-    };
-    work.style.cursor="grabbing";
-    return;
+function idleCursor() {
+  return tool==="move"?"grab":"crosshair";
+}
+function startPan(event) {
+  gesture={
+    type:"pan",id:event.pointerId,
+    x:event.clientX,y:event.clientY,px:panX,py:panY
+  };
+  work.style.cursor="grabbing";
+}
+function pickAt(p,temporary) {
+  const success=pickColor(p);
+  if (success && !temporary && $("pickerReturn").checked) {
+    selectTool(previousTool);
   }
-
-  const p=toDocument(event.clientX,event.clientY);
-
-  if (event.altKey || tool==="picker") {
-    const success=pickColor(p);
-    if (success && !event.altKey && $("pickerReturn").checked) {
-      selectTool(previousTool);
-    }
-    return;
-  }
-
+}
+function paintableLayer() {
   const layer=activeLayer();
   if (!layer || !layer.visible || layer.opacity===0) {
     status("請選擇可見且不透明度大於 0 的圖層");
-    return;
+    return null;
   }
-  if (tool==="fill") {
-    fillAt(p);
-    return;
-  }
-  if (!["brush","eraser"].includes(tool)) return;
-  if (p.x<0 || p.y<0 || p.x>=W || p.y>=H) return;
+  return layer;
+}
+function beginStroke(event,p) {
+  const layer=paintableLayer();
+  if (!layer || !["brush","eraser"].includes(tool)) return false;
+  if (p.x<0 || p.y<0 || p.x>=W || p.y>=H) return false;
   if (tool==="eraser" && layer.alphaLock) {
     status("請解除透明鎖定，再使用橡皮擦");
-    return;
+    return false;
   }
 
   clearCanvas(strokeCanvas);
@@ -1252,9 +1273,16 @@ work.addEventListener("pointerdown",event => {
     drawDab(gesture,p.x,p.y,pressureDiameter(gesture,gesture.pressure));
   }
   invalidate();
-});
-work.addEventListener("pointermove",event => {
-  showCursor(event);
+  return true;
+}
+// 不留狀態訊息的取消：捏合、長按吸色時丟掉剛開始的筆畫
+function cancelStroke() {
+  gesture=null;
+  clearCanvas(strokeCanvas);
+  hideGuide();
+  invalidate();
+}
+function moveGesture(event) {
   if (!gesture || event.pointerId!==gesture.id) return;
   event.preventDefault();
 
@@ -1262,6 +1290,14 @@ work.addEventListener("pointermove",event => {
     panX=gesture.px+event.clientX-gesture.x;
     panY=gesture.py+event.clientY-gesture.y;
     updateTransform();
+    return;
+  }
+  if (gesture.type==="tap" || gesture.type==="pick") {
+    gesture.last=toDocument(event.clientX,event.clientY);
+    if (gesture.type==="pick") pickColor(gesture.last);
+    if (gesture.type==="pick" || tool==="picker") {
+      showRing(event.clientX,event.clientY,sampleColor(gesture.last));
+    }
     return;
   }
 
@@ -1273,20 +1309,255 @@ work.addEventListener("pointermove",event => {
   } else {
     processSample(event);
   }
+}
+
+/* ---------- 觸控 ---------- */
+// 單指在畫布上使用目前工具、畫布外平移；第二指放下時取消這一筆，
+// 改為兩指縮放＋平移＋旋轉。兩指輕點復原、三指輕點重做；長按吸色。
+// 填色與吸色工具在手指離開時才執行，避免捏合開頭先誤觸。
+// 用過觸控筆後可設為「只有筆能畫」，手指一律調整視圖。
+
+const touches=new Map();      // pointerId → { x, y, startX, startY }
+let touchSession=null, pinch=null, longPressTimer=0;
+let penSeen=false, penNotice=false, ringBase=color;
+
+const TAP_MAX_MS=400;
+const TAP_SLOP=10;
+const LONG_PRESS_MS=500;
+const ROTATE_START=10;        // 兩指轉超過此角度才開始旋轉，避免捏合時誤轉
+const ROTATE_SNAP=6;          // 接近 0／90／180／270° 時吸附
+const RING_OFFSET=70;         // 吸色色環放在手指上方
+
+function penOnly() {
+  return penSeen && $("penOnly").checked;
+}
+function showRing(clientX,clientY,sample) {
+  const ring=$("pickRing");
+  ring.style.setProperty("--pick-new",sample || "var(--panel)");
+  ring.style.setProperty("--pick-old",ringBase);
+  ring.classList.add("show");
+  const half=ring.offsetWidth/2;
+  const x=clamp(clientX,half+4,innerWidth-half-4);
+  let y=clientY-RING_OFFSET-half;
+  if (y-half<4) y=clientY+RING_OFFSET+half;
+  ring.style.left=x-half+"px";
+  ring.style.top=y-half+"px";
+}
+function hideRing() {
+  $("pickRing").classList.remove("show");
+}
+function cancelTouchGesture() {
+  clearTimeout(longPressTimer);
+  hideRing();
+  if (gesture?.type==="stroke") cancelStroke();
+  else gesture=null;
+  work.style.cursor=idleCursor();
+}
+function startLongPressPick() {
+  if (gesture?.type!=="stroke") return;
+  const id=gesture.id, t=touches.get(id);
+  cancelStroke();
+  ringBase=color;
+  gesture={type:"pick",id,last:toDocument(t.x,t.y)};
+  pickColor(gesture.last);
+  showRing(t.x,t.y,sampleColor(gesture.last));
+  navigator.vibrate?.(10);
+}
+function touchStart(event) {
+  const p=toDocument(event.clientX,event.clientY);
+  const inside=p.x>=0 && p.y>=0 && p.x<W && p.y<H;
+  if (!inside || tool==="move" || penOnly()) {
+    startPan(event);
+    return;
+  }
+  if (tool==="picker" || tool==="fill") {
+    gesture={type:"tap",id:event.pointerId,last:p};
+    if (tool==="picker") {
+      ringBase=color;
+      showRing(event.clientX,event.clientY,sampleColor(p));
+    }
+    return;
+  }
+  if (beginStroke(event,p)) {
+    longPressTimer=setTimeout(startLongPressPick,LONG_PRESS_MS);
+  }
+}
+function touchPair() {
+  const [a,b]=touches.values();
+  return {
+    x:(a.x+b.x)/2, y:(a.y+b.y)/2,
+    distance:Math.hypot(b.x-a.x,b.y-a.y) || 1,
+    angle:Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI
+  };
+}
+function startPinch() {
+  const pair=touchPair();
+  pinch={
+    ...pair, zoom, rotation,
+    anchor:toDocument(pair.x,pair.y),
+    rotating:false, offset:0
+  };
+}
+function updatePinch() {
+  const pair=touchPair();
+  zoom=clamp(pinch.zoom*pair.distance/pinch.distance,.05,8);
+
+  const turn=(pair.angle-pinch.angle+540)%360-180;
+  if (!pinch.rotating && Math.abs(turn)>ROTATE_START) {
+    pinch.rotating=true;
+    pinch.offset=turn;
+  }
+  if (pinch.rotating) {
+    let r=pinch.rotation+turn-pinch.offset;
+    const snap=Math.round(r/90)*90;
+    if (Math.abs(r-snap)<ROTATE_SNAP) r=snap;
+    rotation=(r%360+540)%360-180;
+  }
+
+  // 兩指中點下的畫布位置保持不動
+  const rect=work.getBoundingClientRect();
+  const q=toScreen(pinch.anchor.x,pinch.anchor.y);
+  panX+=pair.x-rect.left-q.x;
+  panY+=pair.y-rect.top-q.y;
+  updateTransform();
+}
+function touchDown(event) {
+  // 觸控筆或滑鼠作畫中，忽略手掌觸碰
+  if (fileBusy || (gesture && !touches.has(gesture.id))) return;
+  event.preventDefault();
+  work.setPointerCapture(event.pointerId);
+  touches.set(event.pointerId,{
+    x:event.clientX,y:event.clientY,
+    startX:event.clientX,startY:event.clientY
+  });
+
+  if (touches.size===1) {
+    commitLayerOpacity();
+    updatePressure(event);
+    touchSession={start:performance.now(),maxTouches:1,moved:false};
+    touchStart(event);
+    return;
+  }
+  touchSession.maxTouches=Math.max(touchSession.maxTouches,touches.size);
+  cancelTouchGesture();
+  if (touches.size===2) startPinch();
+}
+function touchMove(event) {
+  const t=touches.get(event.pointerId);
+  if (!t) return;
+  t.x=event.clientX;
+  t.y=event.clientY;
+  if (Math.hypot(t.x-t.startX,t.y-t.startY)>TAP_SLOP) {
+    touchSession.moved=true;
+    clearTimeout(longPressTimer);
+  }
+  if (pinch) updatePinch();
+  else moveGesture(event);
+}
+function touchUp(event) {
+  if (!touches.has(event.pointerId)) return;
+  touches.delete(event.pointerId);
+  clearTimeout(longPressTimer);
+  const lifted=event.type==="pointerup";
+  if (!lifted) touchSession.moved=true;
+
+  if (gesture && event.pointerId===gesture.id) {
+    const g=gesture;
+    if (g.type==="stroke") finishStroke(!lifted);
+    else gesture=null;
+    hideRing();
+    work.style.cursor=idleCursor();
+    if (g.type==="tap" && lifted) {
+      if (tool==="picker") pickAt(g.last,false);
+      else if (paintableLayer()) fillAt(g.last);
+    }
+  }
+
+  // 剩下的手指不接續作畫，等全部離開才重新開始
+  if (touches.size>=2) startPinch();
+  else pinch=null;
+  if (touches.size) return;
+
+  const s=touchSession;
+  touchSession=null;
+  if (s.moved || performance.now()-s.start>TAP_MAX_MS) return;
+  if (s.maxTouches===2) undo();
+  else if (s.maxTouches===3) redo();
+}
+function resetTouches() {
+  touches.clear();
+  pinch=null;
+  touchSession=null;
+  clearTimeout(longPressTimer);
+  hideRing();
+}
+
+/* ---------- 指標事件 ---------- */
+
+work.addEventListener("pointerdown",event => {
+  if (event.pointerType==="touch") {
+    touchDown(event);
+    return;
+  }
+  if (event.pointerType==="pen" && !penSeen) {
+    penSeen=true;
+    $("penOnlyRow").hidden=false;
+    penNotice=$("penOnly").checked;
+  }
+  if (gesture || fileBusy || ![0,1].includes(event.button)) return;
+  event.preventDefault();
+  commitLayerOpacity();
+  work.setPointerCapture(event.pointerId);
+  updatePressure(event);
+
+  if (spaceDown || tool==="move" || event.button===1) {
+    startPan(event);
+    return;
+  }
+
+  const p=toDocument(event.clientX,event.clientY);
+
+  if (event.altKey || tool==="picker") {
+    pickAt(p,event.altKey);
+    return;
+  }
+  if (tool==="fill") {
+    if (paintableLayer()) fillAt(p);
+    return;
+  }
+  beginStroke(event,p);
+});
+work.addEventListener("pointermove",event => {
+  showCursor(event);
+  if (event.pointerType==="touch") touchMove(event);
+  else moveGesture(event);
 });
 work.addEventListener("pointerup",event => {
+  if (event.pointerType==="touch") {
+    touchUp(event);
+    return;
+  }
   if (!gesture || event.pointerId!==gesture.id) return;
 
   // 不把放開時的零壓力當成筆跡，也不強迫補正筆尖追到游標。
   if (gesture.type==="stroke") finishStroke();
   else gesture=null;
-  work.style.cursor=tool==="move"?"grab":"crosshair";
+  work.style.cursor=idleCursor();
+  // 第一筆結束後才提示，免得被 finishStroke 的狀態列蓋掉
+  if (penNotice) {
+    penNotice=false;
+    status("偵測到觸控筆：手指改為平移、縮放與旋轉，可在「工具」區關閉");
+  }
 });
 function cancelPointer(event) {
+  if (event.pointerType==="touch") {
+    touchUp(event);
+    return;
+  }
   if (!gesture || event.pointerId!==gesture.id) return;
   if (gesture.type==="stroke") finishStroke(true);
   else gesture=null;
-  work.style.cursor=tool==="move"?"grab":"crosshair";
+  work.style.cursor=idleCursor();
 }
 work.addEventListener("pointercancel",cancelPointer);
 work.addEventListener("lostpointercapture",cancelPointer);
@@ -1307,8 +1578,9 @@ function settle() {
 window.addEventListener("blur",() => {
   spaceDown=false;
   settle();
+  resetTouches();
   $("cursor").style.display="none";
-  work.style.cursor=tool==="move"?"grab":"crosshair";
+  work.style.cursor=idleCursor();
 });
 
 /* ---------- 圖層 ---------- */
@@ -2068,7 +2340,7 @@ window.addEventListener("keydown",event => {
 window.addEventListener("keyup",event => {
   if (event.code==="Space") {
     spaceDown=false;
-    work.style.cursor=tool==="move"?"grab":"crosshair";
+    work.style.cursor=idleCursor();
   }
 });
 window.addEventListener("resize",updateTransform);
