@@ -67,12 +67,18 @@ input[type=text]{width:100%;min-width:0;padding:10px;border:2px solid #526b3b;bo
 .direction-unit small{font-size:9px;color:#656c5f;text-align:center;max-width:150px}
 .dpad{display:grid;grid-template-columns:29px 52px 29px;grid-template-rows:29px 52px 29px;position:relative}
 .pad,.pad-center{min-height:0;padding:0;border:0;border-radius:0;background:#454b43;color:#9a9f8e;box-shadow:none;font-size:13px}
-.pad:active:not(:disabled){background:#30382e;box-shadow:none;transform:none}
+.pad:active:not(:disabled){background:#454b43;color:#ef9ab5;box-shadow:none;transform:none}
+.pad span{display:block;pointer-events:none}
+.up span{transform:translateY(5px)}.down span{transform:translateY(-5px)}
+.left span{transform:translateX(5px)}.right span{transform:translateX(-5px)}
 .up{grid-area:1/2;border-radius:10px 10px 0 0}.left{grid-area:2/1;border-radius:10px 0 0 10px}.right{grid-area:2/3;border-radius:0 10px 10px 0}.down{grid-area:3/2;border-radius:0 0 10px 10px}.pad-center{grid-area:2/2;box-shadow:none;position:relative}
 .action-unit{display:flex;align-items:center;gap:12px;padding:6px 2px 5px 10px;transform:rotate(-13deg)}
 .hardware-key{display:flex;flex-direction:column;align-items:center;gap:6px}.hardware-key>span{font-size:9px;font-weight:700;letter-spacing:.4px;color:#656c5f}
 .action-unit .hardware-key{transform:rotate(13deg)}.key-b{margin-top:19px}.key-a{margin-bottom:12px}
 .round{width:52px;height:52px;padding:0;border-radius:50%;font-size:25px;background:#8c445a;border:0;color:#ead8d5;box-shadow:none}
+.round svg{display:block;width:30px;height:30px;margin:auto;pointer-events:none}
+.round .undo-icon{display:none}
+.round.is-review .dice-icon{display:none}.round.is-review .undo-icon{display:block}
 #shutter{position:relative;width:72px;height:72px;padding:0;border-radius:50%;border:4px solid #81374f;background:var(--accent);box-shadow:0 5px 0 #75334a,inset 0 0 0 4px #c96785}
 #shutter::after{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:23px;height:23px;border-radius:50%;background:#f1d6de}
 #shutter.review-action::after{content:'✓';width:auto;height:auto;color:#f1d6de;background:none;font-size:28px;font-weight:900}
@@ -196,17 +202,25 @@ dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;paddin
     <div class="deck">
       <div class="direction-unit">
         <div class="dpad" role="group" aria-label="方向鍵">
-          <button id="padUp" class="pad up" aria-label="方向鍵：上">▲</button>
-          <button id="padLeft" class="pad left" aria-label="方向鍵：左">◀</button>
+          <button id="padUp" class="pad up" aria-label="方向鍵：上"><span aria-hidden="true">▲</span></button>
+          <button id="padLeft" class="pad left" aria-label="方向鍵：左"><span aria-hidden="true">◀</span></button>
           <span class="pad-center" aria-hidden="true"></span>
-          <button id="padRight" class="pad right" aria-label="方向鍵：右">▶</button>
-          <button id="padDown" class="pad down" aria-label="方向鍵：下">▼</button>
+          <button id="padRight" class="pad right" aria-label="方向鍵：右"><span aria-hidden="true">▶</span></button>
+          <button id="padDown" class="pad down" aria-label="方向鍵：下"><span aria-hidden="true">▼</span></button>
         </div>
         <small id="dpadHint">左右換風格 · 上下調明暗</small>
       </div>
       <div class="action-unit">
         <div class="hardware-key key-b">
-          <button id="diceBtn" class="round" aria-label="隨機風格">⚄</button>
+          <button id="diceBtn" class="round" aria-label="隨機風格">
+            <svg class="dice-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+              <rect x="4" y="4" width="24" height="24" rx="3" fill="none" stroke="currentColor" stroke-width="3"/>
+              <g fill="currentColor"><circle cx="10" cy="10" r="2.3"/><circle cx="22" cy="10" r="2.3"/><circle cx="16" cy="16" r="2.3"/><circle cx="10" cy="22" r="2.3"/><circle cx="22" cy="22" r="2.3"/></g>
+            </svg>
+            <svg class="undo-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+              <path d="M12 6L5 13L12 20M6 13H20A7 7 0 0 1 20 27H16" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
           <span id="diceLabel">B · 驚喜</span>
         </div>
         <div class="hardware-key key-a">
@@ -299,7 +313,7 @@ const palettes=[
   {name:"外星人",colors:["#202947","#356b75","#69c99a","#e3f4ba"]},
   {name:"壞糖果",colors:["#392244","#9b386b","#e68a64","#ffe5a5"]},
   {name:"便利商店",colors:["#302c4c","#65778d","#9dc5b5","#f0dce2"]},
-  {name:"火星土豆",colors:["#35282c","#805342","#c58c50","#f3db9a"]}
+  {name:"火星洋芋",colors:["#35282c","#805342","#c58c50","#f3db9a"]}
 ];
 const profiles=[
   {palette:0,contrast:1.65,bias:0,dither:36,matrix:4,invert:false},
@@ -785,7 +799,7 @@ function updateUI(){
     ?(selectedObject()?"十字鍵微移 · 也可以直接拖":"方向鍵切換裝飾工具")
     :settingsOpen?"上下選設定 · 左右調數值":"左右換風格 · 上下調明暗";
   $("diceLabel").textContent=review?"B · 復原":"B · 驚喜";
-  $("diceBtn").textContent=review?"↶":"⚄";
+  $("diceBtn").classList.toggle("is-review",review);
   $("diceBtn").setAttribute("aria-label",review?"復原裝飾":"隨機風格");
   $("diceBtn").title=review?"復原上一步裝飾":"隨機換色盤、明暗與顆粒；BACK 可還原";
   $("shutterLabel").textContent=review?"A · 完成":"A · 拍照";
@@ -997,10 +1011,11 @@ const stickerDefs=[
   {
     key:"banana",name:"香蕉",
     rows:[
-      "...........22.","..........212.",".........211..",
-      "........211...",".......211....","......211.....",
-      ".....211......","...2211.......","..21112.......",
-      ".21112........",".2112.........","..22.........."
+      "................22","...............212","...............212",
+      "...............212","..............2112","..22.........21112",
+      "..212.......211112","..2112.....2111112","..211122222111112.",
+      "..21111111111112..","...211111111112...","...21111111112....",
+      "....211111122.....",".....222222......."
     ],
     colors:{"1":"#f8de6b","2":"#53402a"}
   },
@@ -1053,7 +1068,7 @@ for(const d of stickerDefs){
 const frameDefs=[
   {key:"none",name:"不要框"},
   {key:"passport",name:"外星入境"},
-  {key:"wanted",name:"土豆通緝"},
+  {key:"wanted",name:"洋芋通緝"},
   {key:"sighting",name:"神秘目擊"},
   {key:"print",name:"玩具印章"}
 ];
