@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" shape-rendering="crispEdges">
+  <title>POCKET WEIRDO 口袋相機</title>
+  <path fill="#cdc7bc" d="M2 0h28v28h-4v4H2z"/>
+  <path fill="#20382b" d="M4 3h24v17H4z"/>
+  <path fill="#d5dfa8" d="M7 7h7v9H7zm11 0h7v9h-7z"/>
+  <path fill="#20382b" d="M10 9h2v5h-2zm11 0h2v5h-2zM8 22h4v2h2v4h-2v2H8v-2H6v-4h2z"/>
+  <path fill="#a44665" d="M22 23h4v2h2v4h-2v2h-4v-2h-2v-4h2z"/>
+</svg>
