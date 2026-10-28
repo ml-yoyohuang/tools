@@ -141,11 +141,11 @@ dialog h2{margin:0 0 12px;font-size:19px}
 dialog p,dialog li{color:var(--muted)}
 .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 #askMessage,#documentInfo{white-space:pre-line}
-#sheetPreviewWrap{
+#sheetPreviewWrap,#outPreviewWrap{
   max-height:50dvh;overflow:auto;padding:8px;
   background:#10151b;border-radius:6px;text-align:center;
 }
-#sheetPreview{
+#sheetPreview,#outPreview{
   display:inline-block;vertical-align:top;image-rendering:pixelated;
   background:repeating-conic-gradient(#adb4bd 0 25%,#d4d7dc 0 50%) 0 0/16px 16px;
 }
@@ -288,6 +288,7 @@ progress{width:260px;max-width:70vw;accent-color:var(--accent)}
   <button id="loadBtn">載入專案</button>
   <button id="saveBtn">保存專案</button>
   <button id="exportBtn">匯出 GIF</button>
+  <button id="sheetExportBtn">匯出 sprite sheet…</button>
   <button id="draftBtn">上一件作品</button>
   <button id="helpBtn">說明</button>
 </header>
@@ -499,6 +500,7 @@ progress{width:260px;max-width:70vw;accent-color:var(--accent)}
   <button data-proxy="saveBtn">保存專案</button>
   <button data-proxy="draftBtn">上一件作品</button>
   <button data-proxy="sheetBtn">切割 sprite sheet…</button>
+  <button data-proxy="sheetExportBtn">匯出 sprite sheet…</button>
   <button data-proxy="helpBtn">說明</button>
 </div>
 <div id="frameSheet"></div>
@@ -533,6 +535,8 @@ progress{width:260px;max-width:70vw;accent-color:var(--accent)}
     <li>手機預覽區：單指拖曳平移，兩指捏合縮放，輕點播放／暫停；
         點上方的格數會符合畫面。</li>
     <li>手機或平板匯出 GIF 後，可用「分享」直接傳到 LINE 等 App。</li>
+    <li>「匯出 sprite sheet」把影格排成一張 PNG，可選排列、間距、外框、放大與背景，
+        並附 Aseprite 格式 JSON 記錄每格位置與時間（已套用整體速度）。</li>
     <li>抽格保留每段第一格，移除第二格、第四格……，
         被移除的時間加到前面的保留格。每個不連續選取段落分別處理。</li>
   </ul>
@@ -584,13 +588,67 @@ progress{width:260px;max-width:70vw;accent-color:var(--accent)}
   </div>
 </dialog>
 
+<dialog id="outDialog">
+  <h2>匯出 sprite sheet <span id="outSize" class="small"></span></h2>
+  <div id="outPreviewWrap"><canvas id="outPreview"></canvas></div>
+  <div class="row">
+    <label>排列
+      <select id="outLayout">
+        <option value="auto">自動（接近正方形）</option>
+        <option value="strip">橫條</option>
+        <option value="cols">指定欄數</option>
+      </select>
+    </label>
+    <label id="outColsLabel">欄 <input id="outCols" type="number" min="1" max="300" value="4"></label>
+  </div>
+  <div class="row">
+    <label>間距 <input id="outGap" type="number" min="0" max="64" value="0"></label>
+    <label>外框 <input id="outMargin" type="number" min="0" max="64" value="0"></label>
+  </div>
+  <div class="row">
+    <label>放大
+      <select id="outScale">
+        <option value="1">1×</option>
+        <option value="2">2×</option>
+        <option value="3">3×</option>
+        <option value="4">4×</option>
+        <option value="6">6×</option>
+        <option value="8">8×</option>
+      </select>
+    </label>
+    <label>背景
+      <select id="outBackground">
+        <option value="transparent">透明</option>
+        <option value="color">背景色</option>
+      </select>
+    </label>
+    <input id="outColor" type="color" value="#ffffff" aria-label="背景色">
+  </div>
+  <div class="row">
+    <label>範圍
+      <select id="outRange">
+        <option value="all">全部影格</option>
+        <option value="selected">只匯出選取</option>
+      </select>
+    </label>
+  </div>
+  <label><input id="outJson" type="checkbox"> 同時輸出 JSON（Aseprite 格式，含每格時間）</label>
+  <p id="outInfo" class="small"></p>
+  <p class="small">
+    每格大小等於畫布尺寸，對齊方式照目前設定。間距與外框以輸出像素計；
+    在「切割 sprite sheet」填相同的欄數、間距與外框，就能切回原樣。
+  </p>
+  <div class="actions">
+    <button id="outCancel">取消</button>
+    <button id="outOk" class="primary">匯出</button>
+  </div>
+</dialog>
+
 <dialog id="shareDialog">
-  <h2>GIF 完成</h2>
+  <h2 id="shareTitle">GIF 完成</h2>
   <div id="shareWrap"><img id="shareImg" alt="匯出的 GIF"></div>
   <p id="shareInfo" class="small"></p>
-  <p class="small">
-    選「分享」可直接傳到 LINE 等 App；iPhone 也可以長按上面的圖片「加入照片」。
-  </p>
+  <p id="shareTip" class="small"></p>
   <div class="actions">
     <button id="shareClose">關閉</button>
     <button id="shareSave">下載</button>
@@ -646,7 +704,8 @@ let playTotal = 0;
 let revision = 0, draftTimer = null, draftSaving = false;
 let draftAgain = false, dbPromise = null, savedRevision = 0;
 let imageCounter = 0;
-let multiSelect = false, toastTimer = 0, shareFile = null;
+let multiSelect = false, toastTimer = 0;
+let shareFiles = [], deliverFiles = [];   // 可分享的檔案／全部輸出檔案
 
 const sleep = () => new Promise(r => setTimeout(r,0));
 function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
@@ -1028,6 +1087,7 @@ function updateInfo(){
   $("redoBtn").disabled=!redoStack.length;
   $("playBtn").disabled=!frames.length;
   $("exportBtn").disabled=!frames.length;
+  $("sheetExportBtn").disabled=!frames.length;
   $("mUndo").disabled=!undoStack.length;
   $("mRedo").disabled=!redoStack.length;
   syncProxies();
@@ -1981,7 +2041,14 @@ async function exportGIF(){
     writer.byte(0x3B);
     progress("完成",1);
     const blob=writer.blob();
-    deliverGIF(blob,`pixel-motion-${outW}x${outH}.gif`,outW,outH);
+    deliver({
+      files:[new File([blob],`pixel-motion-${outW}x${outH}.gif`,{type:"image/gif"})],
+      image:blob,w:outW,h:outH,title:"GIF 完成",
+      tip:"選「分享」可直接傳到 LINE 等 App；iPhone 也可以長按上面的圖片「加入照片」。",
+      note:Math.max(outW,outH)<240
+        ? "\n尺寸較小，傳到聊天 App 可能被縮放而變糊；可在設定的「GIF 匯出」調高放大倍數。"
+        : ""
+    });
     const palette=useExact?"精確色盤":
       localFrames===frames.length?"每格精確色盤":
       localFrames?`${localFrames} 格精確色盤，其餘減色`:"median cut 減色";
@@ -2278,6 +2345,145 @@ $("helpBtn").onclick=()=>{
 };
 $("closeHelp").onclick=()=>$("helpDialog").close();
 
+/* ---------- 匯出 sprite sheet ---------- */
+// 影格依序由左到右、由上到下排成一張 PNG，可附 Aseprite 格式的 JSON（含每格時間）。
+// 輸出長寬不超過 MAX_SHEET，確保能再用「切割 sprite sheet」匯入。
+
+function outFrames(){
+  return $("outRange").value==="selected"?selectedFrames():frames;
+}
+function outLayout(){
+  const list=outFrames(),n=list.length;
+  const scale=Number($("outScale").value);
+  const gap=clamp(Math.round(Number($("outGap").value)||0),0,64);
+  const margin=clamp(Math.round(Number($("outMargin").value)||0),0,64);
+  const cw=width*scale,ch=height*scale;
+  const size=cols=>{
+    const rows=Math.ceil(n/cols);
+    return {cols,rows,w:2*margin+cols*cw+(cols-1)*gap,h:2*margin+rows*ch+(rows-1)*gap};
+  };
+  let L;
+  if(!n)L=size(1);
+  else if($("outLayout").value==="strip")L=size(n);
+  else if($("outLayout").value==="cols"){
+    L=size(clamp(Math.round(Number($("outCols").value)||1),1,n));
+  }else{
+    // 自動：挑整張圖最接近正方形的欄數；一樣方時選空格較少、再來選較寬的
+    L=size(1);
+    const score=s=>Math.max(s.w/s.h,s.h/s.w);
+    for(let c=2;c<=n;c++){
+      const s=size(c),a=score(s),b=score(L);
+      if(a<b-1e-9||(Math.abs(a-b)<1e-9&&s.cols*s.rows<=L.cols*L.rows))L=s;
+    }
+  }
+  return {...L,list,scale,gap,margin,cw,ch};
+}
+function renderSheetOut(L){
+  const c=newCanvas(L.w,L.h),ctx=c.getContext("2d");
+  if($("outBackground").value==="color"){
+    ctx.fillStyle=$("outColor").value;ctx.fillRect(0,0,L.w,L.h);
+  }
+  ctx.imageSmoothingEnabled=false;
+  const cell=newCanvas(width,height),cctx=cell.getContext("2d");
+  L.list.forEach((f,i)=>{
+    drawFrame(cctx,f);
+    ctx.drawImage(cell,
+      L.margin+(i%L.cols)*(L.cw+L.gap),L.margin+Math.floor(i/L.cols)*(L.ch+L.gap),
+      L.cw,L.ch);
+  });
+  return c;
+}
+function updateOut(){
+  const L=outLayout(),n=L.list.length;
+  $("outColsLabel").hidden=$("outLayout").value!=="cols";
+  $("outColor").hidden=$("outBackground").value!=="color";
+  const tooBig=L.w>MAX_SHEET||L.h>MAX_SHEET;
+  let info;
+  if(!n)info="沒有選取影格。";
+  else if(tooBig)info=`輸出 ${L.w}×${L.h}，超過 ${MAX_SHEET} px。請改用格狀排列、減少欄數或降低放大倍數。`;
+  else info=`${L.cols} 欄 × ${L.rows} 列 · 每格 ${L.cw}×${L.ch} px · 共 ${n} 格`;
+  $("outInfo").textContent=info;
+  $("outSize").textContent=n?`${L.w}×${L.h} px`:"";
+  $("outOk").disabled=!n||tooBig;
+
+  // 預覽：縮放到對話框內，畫出切格線
+  const c=$("outPreview"),wrap=$("outPreviewWrap");
+  if(!n||tooBig){c.width=c.height=1;return}
+  const maxW=wrap.clientWidth-16||480,maxH=Math.min(300,innerHeight*.4);
+  const fitScale=Math.min(maxW/L.w,maxH/L.h);
+  const z=fitScale>=1?Math.min(8,Math.floor(fitScale)):fitScale;
+  c.width=Math.max(1,Math.round(L.w*z));c.height=Math.max(1,Math.round(L.h*z));
+  const ctx=c.getContext("2d");
+  ctx.imageSmoothingEnabled=z<1;
+  ctx.drawImage(renderSheetOut(L),0,0,c.width,c.height);
+  ctx.strokeStyle="#a1cfb1";ctx.lineWidth=1;
+  L.list.forEach((f,i)=>{
+    const x=Math.round((L.margin+(i%L.cols)*(L.cw+L.gap))*z);
+    const y=Math.round((L.margin+Math.floor(i/L.cols)*(L.ch+L.gap))*z);
+    ctx.strokeRect(x+.5,y+.5,Math.max(1,Math.round(L.cw*z))-1,Math.max(1,Math.round(L.ch*z))-1);
+  });
+}
+// Aseprite「Array」格式：Phaser 等工具可直接讀；時間已套用整體速度，與預覽及 GIF 一致
+function asepriteJSON(L,image){
+  const digits=String(L.list.length).length;
+  return {
+    frames:L.list.map((f,i)=>({
+      filename:`frame ${String(i).padStart(digits,"0")}`,
+      frame:{
+        x:L.margin+(i%L.cols)*(L.cw+L.gap),y:L.margin+Math.floor(i/L.cols)*(L.ch+L.gap),
+        w:L.cw,h:L.ch
+      },
+      rotated:false,trimmed:false,
+      spriteSourceSize:{x:0,y:0,w:L.cw,h:L.ch},
+      sourceSize:{w:L.cw,h:L.ch},
+      duration:Math.round(effectiveDuration(f))
+    })),
+    meta:{
+      app:"Pixel Motion",version:"1",image,format:"RGBA8888",
+      size:{w:L.w,h:L.h},scale:"1",
+      frameTags:[{name:"animation",from:0,to:L.list.length-1,direction:"forward"}]
+    }
+  };
+}
+$("sheetExportBtn").onclick=()=>{
+  if(busy||!frames.length)return;
+  pause();
+  $("outScale").value=exportScale;
+  $("outColor").value=background;
+  $("outRange").value=selected.size>1&&selected.size<frames.length?"selected":"all";
+  $("outRange").options[1].disabled=!selected.size;
+  $("outDialog").showModal();
+  updateOut();
+};
+for(const id of ["outLayout","outCols","outGap","outMargin","outScale","outBackground","outColor","outRange"]){
+  $(id).oninput=$(id).onchange=updateOut;
+}
+$("outCancel").onclick=()=>$("outDialog").close();
+$("outOk").onclick=()=>{
+  const L=outLayout();
+  if(!L.list.length||L.w>MAX_SHEET||L.h>MAX_SHEET)return;
+  const withJson=$("outJson").checked;
+  $("outDialog").close();
+  withBusy(async()=>{
+    progress("排列影格",.3);
+    await sleep();
+    const blob=await canvasBlob(renderSheetOut(L));
+    const base=`pixel-motion-sheet-${L.w}x${L.h}`;
+    const files=[new File([blob],base+".png",{type:"image/png"})];
+    if(withJson){
+      const json=JSON.stringify(asepriteJSON(L,base+".png"),null,2);
+      files.push(new File([json],base+".json",{type:"application/json"}));
+    }
+    progress("完成",1);
+    deliver({
+      files,image:blob,w:L.w,h:L.h,title:"sprite sheet 完成",
+      tip:"選「分享」可直接傳到其他 App；iPhone 也可以長按上面的圖片「加入照片」。"
+    });
+    status(`sprite sheet 已輸出 · ${L.w}×${L.h} · ${L.cols}×${L.rows} 格 · `+
+      `${(blob.size/1024).toFixed(1)} KB`+(withJson?" · 含 JSON":""));
+  });
+};
+
 /* ---------- 手機版面 ---------- */
 // ≤700px 時把部分區塊搬進手機介面，回到寬螢幕再搬回原位；元素本身不變，id 與事件都照舊。
 
@@ -2360,27 +2566,33 @@ function moveSelection(direction){
 }
 // 觸控裝置可直接用系統分享選單傳到 LINE 等 App。
 // 分享必須由使用者再點一次觸發，所以先顯示結果，再由「分享」按鈕送出。
-function deliverGIF(blob,name,w,h){
-  const file=new File([blob],name,{type:"image/gif"});
-  if(!(mobileQuery.matches||coarseQuery.matches)||!navigator.canShare?.({files:[file]})){
-    download(blob,name);return;
+// files 的第一個是圖片；不能一起分享的檔案（例如 JSON）改用「下載」取得。
+function deliver({files,image,w,h,title,tip,note=""}){
+  const touch=mobileQuery.matches||coarseQuery.matches;
+  const share=!touch||!navigator.canShare?null:
+    navigator.canShare({files})?files:
+    navigator.canShare({files:[files[0]]})?[files[0]]:null;
+  if(!share){
+    for(const f of files)download(f,f.name);
+    return;
   }
-  shareFile=file;
+  shareFiles=share;deliverFiles=files;
+  $("shareTitle").textContent=title;
+  $("shareTip").textContent=tip;
   if($("shareImg").src.startsWith("blob:"))URL.revokeObjectURL($("shareImg").src);
-  $("shareImg").src=URL.createObjectURL(blob);
-  // 小圖用整數倍放大顯示，保持像素清晰
+  $("shareImg").src=URL.createObjectURL(image);
+  // 小圖用整數倍放大顯示，保持像素清晰；大圖由 CSS 縮到對話框內
   $("shareImg").style.width=w*Math.max(1,Math.floor(Math.min(240/w,200/h)))+"px";
-  $("shareInfo").textContent=`${w}×${h} px · ${(blob.size/1024).toFixed(1)} KB`+
-    (Math.max(w,h)<240
-      ? "\n尺寸較小，傳到聊天 App 可能被縮放而變糊；可在設定的「GIF 匯出」調高放大倍數。"
-      : "");
+  $("shareInfo").textContent=`${w}×${h} px · ${(image.size/1024).toFixed(1)} KB`+note+
+    (share.length<files.length?"\nJSON 無法透過分享傳送，請用「下載全部」取得。":"");
+  $("shareSave").textContent=files.length>1?"下載全部":"下載";
   $("shareDialog").showModal();
 }
 $("shareBtn").onclick=async()=>{
-  try{await navigator.share({files:[shareFile],title:shareFile.name})}
+  try{await navigator.share({files:shareFiles,title:shareFiles[0].name})}
   catch(error){if(error.name!=="AbortError")notify("無法分享："+error.message)}
 };
-$("shareSave").onclick=()=>download(shareFile,shareFile.name);
+$("shareSave").onclick=()=>{for(const f of deliverFiles)download(f,f.name)};
 $("shareClose").onclick=()=>$("shareDialog").close();
 
 document.querySelectorAll("[data-panel]").forEach(b=>{
