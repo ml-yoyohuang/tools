@@ -5,39 +5,30 @@
 <meta name="viewport"
       content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#cdc7bc">
-<title>POCKET WEIRDO｜怪怪口袋相機</title>
+<title>POCKET WEIRDO 02｜怪怪口袋相機</title>
 <style>
 :root{
-  --shell:#cdc7bc;
-  --ink:#30382e;
-  --line:#8d8d7d;
-  --screen:#d5dfa8;
-  --dark:#26352d;
-  --accent:#a44665;
+  --shell:#cdc7bc;--ink:#30382e;--line:#8d8d7d;
+  --screen:#d5dfa8;--dark:#26352d;--accent:#a44665;
   --paper:#e6e1d5;
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{
-  margin:0;min-height:100dvh;
-  background:#a9aca0;
+  margin:0;min-height:100dvh;background:#a9aca0;color:var(--ink);
   background-image:
     linear-gradient(90deg,#ffffff08 1px,transparent 1px),
     linear-gradient(#ffffff08 1px,transparent 1px);
   background-size:8px 8px;
-  color:var(--ink);
   font-family:system-ui,-apple-system,sans-serif;
   overscroll-behavior-y:none;
 }
-button,input,select{font:inherit}
+button,input{font:inherit}
 button{
-  min-height:46px;border:2px solid var(--line);
-  background:var(--paper);color:var(--ink);
-  border-radius:5px;
-  box-shadow:0 3px 0 #898a7a;
-  padding:9px 12px;cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
-  touch-action:manipulation;
+  min-height:46px;padding:9px 12px;border:2px solid var(--line);
+  border-radius:5px;background:var(--paper);color:var(--ink);
+  box-shadow:0 3px 0 #898a7a;cursor:pointer;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
 button:active:not(:disabled){
   transform:translateY(2px);box-shadow:0 1px 0 #898a7a;
@@ -46,29 +37,27 @@ button:disabled{opacity:.45;cursor:default}
 button.active{
   background:var(--dark);color:#e1e9b9;border-color:var(--dark);
 }
-button:focus-visible,input:focus-visible{
+button:focus-visible,input:focus-visible,summary:focus-visible{
   outline:3px solid var(--accent);outline-offset:3px;
 }
-input[type=range]{accent-color:var(--accent);width:100%}
+input[type=range]{width:100%;accent-color:var(--accent);min-height:32px}
 input[type=text]{
-  width:100%;border:2px solid var(--line);
-  background:#f3efdf;padding:12px;border-radius:4px;font-size:16px;
+  width:100%;padding:12px;border:2px solid var(--line);
+  border-radius:4px;background:#f3efdf;font-size:16px;color:var(--ink);
 }
 #machine{
-  width:min(100%,480px);
-  min-height:100dvh;margin:0 auto;
+  width:min(100%,480px);min-height:100dvh;margin:auto;
   padding:14px 16px calc(22px + env(safe-area-inset-bottom));
   padding-top:calc(14px + env(safe-area-inset-top));
-  background:var(--shell);
-  box-shadow:0 0 45px #0002;
+  background:var(--shell);box-shadow:0 0 45px #0002;
 }
 .top{
-  display:flex;justify-content:space-between;align-items:center;
+  display:flex;align-items:center;justify-content:space-between;
   gap:8px;margin-bottom:12px;
 }
 .brand{
-  font:900 17px/1.1 ui-monospace,monospace;
-  letter-spacing:-.8px;text-shadow:1px 1px #f4f0e2;
+  font:900 17px/1.1 ui-monospace,monospace;letter-spacing:-.8px;
+  text-shadow:1px 1px #f4f0e2;
 }
 .brand small{
   display:block;font:10px/1.6 system-ui,sans-serif;
@@ -77,150 +66,136 @@ input[type=text]{
 .top-actions{display:flex;gap:7px}
 .top button{padding:7px 10px}
 .bezel{
-  background:#62685e;padding:16px 12px 11px;
-  border:2px solid #4e554c;
-  border-radius:8px 8px 27px 8px;
+  padding:15px 11px 8px;background:#62685e;
+  border:2px solid #4e554c;border-radius:8px 8px 27px 8px;
   box-shadow:inset 2px 2px #ffffff20;
 }
 .screen-wrap{
-  position:relative;aspect-ratio:8/7;
-  background:var(--screen);overflow:hidden;
-  border:3px solid #303e2f;
-  box-shadow:inset 0 0 8px #0003;
-  touch-action:none;
+  position:relative;aspect-ratio:8/7;background:var(--screen);
+  border:3px solid #303e2f;overflow:hidden;touch-action:none;
 }
 #screen{
-  width:100%;height:100%;display:block;
-  image-rendering:pixelated;
-  image-rendering:crisp-edges;
+  display:block;width:100%;height:100%;image-rendering:pixelated;
   touch-action:none;
 }
 #selectionBox{
-  position:absolute;border:2px dashed #fff;
-  box-shadow:0 0 0 1px #26352d;
-  pointer-events:none;
+  position:absolute;border:2px dashed white;
+  box-shadow:0 0 0 1px #26352d;pointer-events:none;
 }
 #startOverlay{
-  position:absolute;inset:0;
-  display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:14px;
-  padding:22px;background:#d5dfa8ed;text-align:center;
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;
+  padding:16px;background:#d5dfa8ed;text-align:center;
 }
-#startOverlay h1{
-  margin:0;font:900 22px ui-monospace,monospace;letter-spacing:1px;
-}
-#startOverlay p{font-size:13px;margin:0;line-height:1.7}
-#startBtn{
-  background:var(--dark);color:#e1e9b9;
-  border-color:#26352d;min-width:160px;
-}
+#startOverlay h1{margin:0;font:900 23px ui-monospace,monospace}
+#startOverlay p{margin:0;font-size:12px;line-height:1.7}
+#startBtn{background:var(--dark);color:#e1e9b9;border-color:var(--dark)}
 #countdown{
   position:absolute;inset:0;display:grid;place-items:center;
-  font:900 90px ui-monospace,monospace;
+  font:900 80px ui-monospace,monospace;
   color:#e8edc8;text-shadow:5px 5px #24362c;
-  pointer-events:none;background:#26352d22;
-}
-#flash{
-  position:absolute;inset:0;background:#fff;
-  pointer-events:none;opacity:0;
+  background:#26352d22;pointer-events:none;
 }
 .bezel-bottom{
-  margin-top:8px;display:flex;align-items:center;gap:7px;
-  color:#d5dacb;font:10px ui-monospace,monospace;letter-spacing:1px;
+  display:flex;align-items:center;gap:4px;color:#d5dacb;
+  font:10px ui-monospace,monospace;margin-top:3px;
 }
-.led{
-  width:7px;height:7px;background:#824652;
-  box-shadow:1px 1px #333;
-}
+.led{width:7px;height:7px;background:#824652;flex-shrink:0}
 .led.on{background:#ee7495}
-.bezel-bottom span:last-child{margin-left:auto}
+#powerText{font-size:9px;white-space:nowrap;margin-right:auto}
+.secret{
+  min-height:44px;padding:6px 4px;border:0;background:transparent;
+  box-shadow:none;color:#e0e5d7;font:10px ui-monospace,monospace;
+  white-space:nowrap;
+}
+.secret:disabled{opacity:.7}
+.secret:active:not(:disabled){box-shadow:none}
 #message{
-  min-height:36px;display:flex;align-items:center;justify-content:center;
-  text-align:center;padding:7px 2px;font-size:12px;font-weight:600;
+  min-height:40px;padding:7px 0;text-align:center;
+  display:flex;justify-content:center;align-items:center;
+  font-size:12px;font-weight:600;
 }
 .strip{
   display:flex;gap:8px;overflow-x:auto;
   padding:5px 2px 9px;scrollbar-width:thin;
 }
 .choice{
-  min-width:78px;max-width:100px;padding:7px 8px;
-  flex-shrink:0;font-size:11px;
+  min-width:78px;max-width:104px;flex-shrink:0;
+  padding:7px 8px;font-size:11px;
 }
 .choice canvas{
-  width:54px;height:36px;display:block;margin:0 auto 5px;
-  image-rendering:pixelated;
+  display:block;width:54px;height:36px;margin:0 auto 5px;
+  image-rendering:pixelated;object-fit:contain;
 }
 .controls{
   display:flex;align-items:center;justify-content:space-around;
   gap:12px;padding:9px 4px;
 }
 .control-col{
-  width:80px;display:flex;flex-direction:column;
-  align-items:center;gap:7px;
+  display:flex;flex-direction:column;align-items:center;
+  gap:7px;width:80px;
 }
 .control-col small{font-size:11px}
-.round{
-  width:54px;height:54px;border-radius:50%;
-  font-size:23px;padding:0;
-}
+.round{width:54px;height:54px;border-radius:50%;padding:0;font-size:23px}
 #shutter{
-  width:82px;height:82px;border-radius:50%;
+  position:relative;width:82px;height:82px;border-radius:50%;
   border:5px solid #81374f;background:var(--accent);
   box-shadow:0 5px 0 #75334a,inset 0 0 0 5px #c96785;
-  position:relative;
 }
 #shutter::after{
-  content:"";position:absolute;
-  width:25px;height:25px;left:50%;top:50%;
-  transform:translate(-50%,-50%);
-  background:#f1d6de;border-radius:50%;
+  content:"";position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%);width:25px;height:25px;
+  border-radius:50%;background:#f1d6de;
 }
-.inline-actions{
-  display:flex;align-items:center;justify-content:center;
-  flex-wrap:wrap;gap:8px;margin-top:8px;
+.actions{
+  display:flex;justify-content:center;align-items:center;
+  gap:8px;flex-wrap:wrap;margin-top:8px;
 }
-.inline-actions button{font-size:12px}
+.actions button{font-size:12px}
 details{
-  margin-top:12px;border-top:2px solid #aaa99a;padding-top:10px;
+  border-top:2px solid #aaa99a;margin-top:13px;padding-top:8px;
 }
-summary{cursor:pointer;font-size:12px;min-height:32px}
-.settings-row{
-  display:flex;align-items:center;gap:10px;font-size:12px;
+summary{
+  cursor:pointer;min-height:44px;display:flex;align-items:center;
+  font-size:13px;font-weight:700;
 }
-.settings-row label{white-space:nowrap}
-.footnote{
-  color:#69705f;text-align:center;font-size:10px;margin-top:17px;
+.settings{padding:0 3px}
+.setting{margin:11px 0}
+.setting-head{
+  display:flex;justify-content:space-between;gap:8px;
+  font-size:12px;align-items:center;
 }
+.setting-head output{
+  font:11px ui-monospace,monospace;color:#58654e;
+}
+.note{font-size:11px;line-height:1.6;color:#646e5d;margin:6px 0}
+#ramp{display:block;width:100%;height:22px;image-rendering:pixelated}
+.setting-buttons{display:flex;gap:8px;flex-wrap:wrap}
+.setting-buttons button{flex:1;font-size:12px}
 .tabs{display:flex;gap:8px;margin:8px 0}
 .tabs button{flex:1}
-#toolPanel{min-height:75px}
+#toolPanel{min-height:74px}
 .sticker-btn{
   min-width:66px;display:flex;flex-direction:column;
   align-items:center;gap:4px;font-size:11px;
 }
 .sticker-btn canvas{
-  width:36px;height:30px;object-fit:contain;image-rendering:pixelated;
+  width:36px;height:30px;image-rendering:pixelated;object-fit:contain;
 }
 #textPanel{display:flex;gap:8px;padding:7px 0}
 #textPanel input{min-width:0}
 #textPanel button{flex-shrink:0}
-#objectControls{
-  display:flex;justify-content:center;gap:7px;
-  margin:8px 0;flex-wrap:wrap;
-}
+#objectControls{display:flex;justify-content:center;gap:7px;margin:8px 0}
 #objectControls button{font-size:12px}
-#reviewHint{
-  font-size:11px;text-align:center;color:#636b5d;
-  min-height:20px;margin-top:5px;
-}
+#reviewHint{font-size:11px;text-align:center;color:#636b5d;min-height:20px}
 .save-row{display:flex;gap:10px;margin-top:13px}
 .save-row button{flex:1;font-weight:700}
-#saveBtn{background:var(--dark);color:#e1e9b9;border-color:#26352d}
+#saveBtn{background:var(--dark);color:#e1e9b9;border-color:var(--dark)}
+.footnote{text-align:center;color:#69705f;font-size:10px;margin-top:17px}
 dialog{
-  width:min(420px,calc(100vw - 28px));
-  border:3px solid #53634c;border-radius:7px;
-  padding:20px;background:var(--paper);color:var(--ink);
-  max-height:85dvh;overflow:auto;
+  width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;
+  padding:20px;border:3px solid #53634c;border-radius:7px;
+  background:var(--paper);color:var(--ink);
 }
 dialog::backdrop{background:#17221bb0}
 dialog h2{font-size:19px;margin:0 0 12px}
@@ -231,7 +206,7 @@ dialog button{margin-top:10px}
   background:#d5dfa8;border:2px solid #53634c;
 }
 #video{
-  position:fixed;width:1px;height:1px;left:-10px;top:-10px;
+  position:fixed;left:-10px;top:-10px;width:1px;height:1px;
   opacity:0;pointer-events:none;
 }
 @media(min-width:600px){
@@ -249,10 +224,10 @@ dialog button{margin-top:10px}
 <main id="machine">
   <header class="top">
     <div class="brand">POCKET WEIRDO
-      <small>怪怪口袋相機 / 01</small>
+      <small>怪怪口袋相機 / 02</small>
     </div>
     <div class="top-actions">
-      <button id="flipBtn" title="切換前後鏡頭" aria-label="切換前後鏡頭">↻ 鏡頭</button>
+      <button id="flipBtn" aria-label="切換前後鏡頭">↻ 鏡頭</button>
       <button id="helpBtn" aria-label="使用說明">?</button>
     </div>
   </header>
@@ -265,28 +240,34 @@ dialog button{margin-top:10px}
       <div id="startOverlay">
         <h1>HELLO,<br>WEIRDO!</h1>
         <p id="startDescription">
-          把自己變成低解析度生物。<br>
-          照片在裝置上處理，不上傳。
+          把自己變成低解析度生物。<br>照片在裝置上處理，不上傳。
         </p>
         <button id="startBtn">開啟自拍相機</button>
         <button id="startImportBtn">先用照片玩</button>
       </div>
       <div id="countdown" hidden></div>
-      <div id="flash"></div>
     </div>
     <div class="bezel-bottom">
       <i class="led" id="led"></i>
       <span id="powerText">STANDBY</span>
-      <span>128 × 112 / 4 TONES</span>
+      <button id="sizeBtn" class="secret"
+              title="點一下切換像素尺寸" aria-label="切換像素尺寸">
+        128 × 112
+      </button>
+      <span>/</span>
+      <button id="tonesBtn" class="secret"
+              title="點一下切換色階" aria-label="切換色階">
+        4 TONES
+      </button>
     </div>
   </div>
 
   <div id="message" role="status" aria-live="polite">
-    今天也適合變成奇怪的東西。
+    小秘密：點尺寸與 TONES，可以換模式。
   </div>
 
   <section id="liveUI">
-    <div class="strip" id="styleStrip" aria-label="選擇相機風格"></div>
+    <div class="strip" id="styleStrip" aria-label="相機風格"></div>
 
     <div class="controls">
       <div class="control-col">
@@ -298,42 +279,86 @@ dialog button{margin-top:10px}
         <small>拍照</small>
       </div>
       <div class="control-col">
-        <button class="round" id="timerBtn" aria-label="切換三秒倒數">3s</button>
+        <button class="round" id="timerBtn"
+                aria-label="切換三秒倒數" aria-pressed="false">3s</button>
         <small id="timerLabel">倒數關閉</small>
       </div>
     </div>
 
-    <div class="inline-actions">
+    <div class="actions">
       <button id="previousStyleBtn" disabled>↶ 上一組</button>
       <button id="importBtn">匯入照片</button>
-      <button id="mirrorBtn" class="active">自拍鏡像 ✓</button>
+      <button id="mirrorBtn" class="active" aria-pressed="true">自拍鏡像 ✓</button>
     </div>
 
-    <details>
-      <summary>畫面太黑？這裡調一下</summary>
-      <div class="settings-row">
-        <label for="brightness">明暗</label>
-        <input id="brightness" type="range" min="-80" max="80" value="0">
-        <button id="resetBrightness">重設</button>
+    <details id="settingsDetails">
+      <summary>偷偷調一下 · 平滑角色實驗室</summary>
+      <div class="settings">
+        <div class="setting-buttons">
+          <button id="smoothPresetBtn">✧ 平滑角色</button>
+          <button id="resetBtn">恢復這個風格</button>
+        </div>
+        <p class="note">
+          想藏細紋？先按「平滑角色」，再試次暗／次亮。
+          四色、粗像素和低抖動通常比較容易把陰影合併。
+        </p>
+
+        <div class="setting">
+          <div class="setting-head">
+            <label for="brightness">明暗</label><output id="brightnessValue">0</output>
+          </div>
+          <input id="brightness" type="range" min="-80" max="80" value="0">
+        </div>
+
+        <div class="setting">
+          <div class="setting-head">
+            <label for="darkPoint">次暗分界</label><output id="darkValue">25%</output>
+          </div>
+          <input id="darkPoint" type="range" min="3" max="94" value="25">
+        </div>
+        <div class="setting">
+          <div class="setting-head">
+            <label for="lightPoint">次亮分界</label><output id="lightValue">75%</output>
+          </div>
+          <input id="lightPoint" type="range" min="6" max="97" value="75">
+        </div>
+        <canvas id="ramp" width="256" height="12" aria-label="明暗色階分布"></canvas>
+        <p class="note">
+          兩個分界之間會排列其餘分界。把皮膚與陰影分進同一階，
+          紋路就可能淡掉；不是越往某一邊拉越有效。
+        </p>
+
+        <div class="setting">
+          <div class="setting-head">
+            <label for="smooth">平滑</label><output id="smoothValue">0</output>
+          </div>
+          <input id="smooth" type="range" min="0" max="100" value="0">
+          <p class="note">柔化小陰影；太高會連五官與頭髮一起變簡單。</p>
+        </div>
+
+        <div class="setting">
+          <div class="setting-head">
+            <label for="dither">抖動紋理</label><output id="ditherValue">36</output>
+          </div>
+          <input id="dither" type="range" min="0" max="100" value="36">
+        </div>
+        <div class="actions">
+          <button id="matrixBtn">BAYER 4×4</button>
+        </div>
       </div>
-      <p class="footnote">
-        這不是美顏相機。長得奇怪，也算拍成功。
-      </p>
     </details>
   </section>
 
   <section id="reviewUI" hidden>
-    <div class="inline-actions" style="justify-content:space-between">
+    <div class="actions" style="justify-content:space-between">
       <button id="retakeBtn">← 重拍</button>
       <button id="undoBtn" disabled>↶ 復原</button>
     </div>
-
     <div class="tabs">
       <button data-tab="frame" class="active">相框</button>
       <button data-tab="sticker">貼紙</button>
       <button data-tab="text">文字</button>
     </div>
-
     <div id="toolPanel">
       <div class="strip" id="framePanel"></div>
       <div class="strip" id="stickerPanel" hidden></div>
@@ -343,29 +368,26 @@ dialog button{margin-top:10px}
         <button id="addTextBtn">加入</button>
       </div>
     </div>
-
     <div id="objectControls" hidden>
       <button id="smallerBtn">縮小 −</button>
       <button id="largerBtn">放大 ＋</button>
       <button id="deleteObjectBtn">刪除</button>
       <button id="deselectBtn">完成</button>
     </div>
-
-    <div id="reviewHint">加個貼紙吧。香蕉不需要理由。</div>
-
+    <p id="reviewHint">貼紙可以直接拖移。</p>
     <div class="save-row">
       <button id="saveBtn">保存 PNG</button>
-      <button id="shareBtn">分享</button>
+      <button id="shareBtn" disabled>準備分享…</button>
     </div>
-    <div class="inline-actions">
-      <button id="originalBtn">下載原始 128×112</button>
+    <div class="actions">
+      <button id="originalBtn">下載原始尺寸</button>
       <button id="viewImageBtn">開圖／長按保存</button>
     </div>
   </section>
 
   <div class="footnote">
     ORIGINAL PIXEL TOY · NO PHOTO UPLOAD<br>
-    玩得開心。怪得合理。
+    解析度有限。怪度不限。
   </div>
 </main>
 
@@ -373,50 +395,57 @@ dialog button{margin-top:10px}
 <input id="fileInput" type="file" accept="image/*" hidden>
 
 <dialog id="helpDialog">
-  <h2>怪怪口袋相機</h2>
-  <p><strong>開相機 → 拍照 → 保存。</strong><br>
-  其他按鈕都是為了讓你玩得更奇怪。</p>
+  <h2>怪怪口袋相機 02</h2>
+  <p><strong>開相機 → 拍照 → 保存。</strong><br>其他功能，都是偷偷變奇怪的小機關。</p>
   <ul>
-    <li>點風格換效果，骰子抽驚喜，「上一組」可找回剛才的效果。</li>
-    <li>拍完點相框；加入貼紙或文字後，直接在照片上拖移。</li>
-    <li>點選裝飾，可以放大、縮小或刪除。</li>
-    <li>保存 PNG 預設放大 4 倍，維持清楚像素；也能下載原始尺寸。</li>
-    <li>分享依手機支援程度而定，不能保證直接寫入相簿；也可開圖長按保存。</li>
-    <li>切到背景會停止相機。回來按「重新開啟」即可。</li>
+    <li>拍照前點螢幕下方尺寸：64×56、128×112、160×144。</li>
+    <li>點 TONES：4、8、12、16 階明暗。增加色階時，色盤會生成過渡色。</li>
+    <li>128×112 呼應 Game Boy Camera 照片；Game Boy、Pocket、Color 的螢幕都是 160×144。</li>
+    <li>這些是風格選項，不是完整的原機顯色模擬。</li>
+    <li>展開「偷偷調一下」，使用平滑、分界與抖動合併小陰影。</li>
+    <li>次暗／次亮調整的是亮度分界，不是局部修皺紋，也不是原本編輯器程式的逐字移植。</li>
+    <li>骰子改風格參數，不改尺寸與色階。「上一組」可以找回之前的設定。</li>
+    <li>匯入照片後可以先調風格，再按快門。匯入圖不套自拍鏡像。</li>
+    <li>拍完尺寸與色階鎖定，避免裝飾位置改變。點貼紙加入，再直接拖移。</li>
+    <li>保存預設 4 倍放大，也能下載原始像素 PNG。</li>
   </ul>
   <p>
-    相機需要 HTTPS 與權限。若在 LINE 等內建瀏覽器開啟失敗，
-    請改用 Safari／Chrome。也可以不開相機，直接匯入照片。
+    平滑是整張圖的亮度柔化，可能一起減少眼睛、鼻子、頭髮細節。
+    正面柔和光線通常比側光容易藏陰影。
   </p>
   <p>
-    本工具不拆解動畫圖片、不自動保存自拍，
-    不含照片上傳與第三方分析程式。
-    這是原創復古玩具介面，不是原版掌機模擬器。
+    相機需要 HTTPS 與權限。建議 Safari／Chrome；
+    部分 App 內建瀏覽器不支援。離開到背景會關閉相機。
+    分享與相簿保存方式依瀏覽器而異。
   </p>
-  <button id="closeHelp">知道了，去變奇怪</button>
+  <p>
+    無照片上傳、無第三方分析、無自動自拍草稿。
+    動畫圖片只取靜態畫面，不拆解影格。
+  </p>
+  <button id="closeHelp">知道了，繼續玩</button>
 </dialog>
 
 <dialog id="imageDialog">
   <h2>你的低解析度生物</h2>
-  <img id="savedImage" alt="完成的像素自拍">
-  <p>手機可嘗試長按圖片保存或分享。操作方式依瀏覽器而異。</p>
+  <img id="savedImage" alt="完成的像素照片">
+  <p>手機可嘗試長按圖片保存或分享。操作依瀏覽器而異。</p>
   <button id="closeImage">關閉</button>
 </dialog>
 
 <script>
 "use strict";
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const message=t=>$("message").textContent=t;
 
-const $ = id => document.getElementById(id);
-const W = 128, H = 112;
-const screen = $("screen");
-const ctx = screen.getContext("2d");
-const video = $("video");
-const sample = document.createElement("canvas");
-sample.width=W; sample.height=H;
-const sctx=sample.getContext("2d",{willReadFrequently:true});
-const base=document.createElement("canvas");
-base.width=W; base.height=H;
-const bctx=base.getContext("2d");
+const sizes=[
+  {w:64,h:56,name:"超粗像素"},
+  {w:128,h:112,name:"口袋相機"},
+  {w:160,h:144,name:"掌機螢幕"}
+];
+const toneOptions=[4,8,12,16];
+let sizeIndex=1,tones=4,W=128,H=112;
 
 const palettes=[
   {name:"老掌機",colors:["#20382b","#526b3b","#9bac65","#d9e6a1"]},
@@ -434,195 +463,616 @@ const profiles=[
   {palette:4,contrast:1.35,bias:5,dither:32,matrix:8,invert:false},
   {palette:5,contrast:2.1,bias:-6,dither:52,matrix:2,invert:false}
 ];
-const funnyMessages=[
+function withDefaults(p){
+  return {...p,brightness:0,dark:25,light:75,smooth:0};
+}
+let config=withDefaults(profiles[0]),configHistory=[];
+const funny=[
   "你現在是低解析度生物。",
-  "鏡頭表示：這很合理。",
   "偵測到一顆可疑馬鈴薯。",
+  "鏡頭表示：這很合理。",
   "外星人也會有證件照。",
   "這不是壞掉，是有個性。",
-  "解析度有限，想像力不限。",
-  "你的像素已準備出門。",
   "今日怪度：剛剛好。"
 ];
 
-function hexRGB(hex){
-  return [
-    parseInt(hex.slice(1,3),16),
-    parseInt(hex.slice(3,5),16),
-    parseInt(hex.slice(5,7),16)
-  ];
+const screen=$("screen"),ctx=screen.getContext("2d");
+const video=$("video");
+function canvas(w,h){
+  const c=document.createElement("canvas");c.width=w;c.height=h;return c;
 }
-const rgbPalettes=palettes.map(p=>p.colors.map(hexRGB));
-function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
-function randomItem(a){return a[Math.floor(Math.random()*a.length)]}
-function message(text){$("message").textContent=text}
+const sample=canvas(W,H);
+const sctx=sample.getContext("2d",{willReadFrequently:true});
+const base=canvas(W,H),bctx=base.getContext("2d");
+let lumA=new Float32Array(W*H),lumB=new Float32Array(W*H);
+let lumC=new Float32Array(W*H);
+let imageOutput=ctx.createImageData(W,H);
+let stream=null,cameraStarting=false,cameraGeneration=0;
+let sourceImage=null,importing=false,review=false,hasFrame=false;
+let mirror=true,facing="user",timerEnabled=false,counting=false;
+let countGeneration=0,lastProcess=0,lastVideoTime=-1;
+let frameStyle="none",objects=[],selectedId=null,objectId=1;
+let editHistory=[],drag=null,captureColors=palettes[0].colors.slice();
+let imageURL=null,exportVersion=0,exportTimer=null,exportCache=null;
 
+/* ---------- Bayer 矩陣 ---------- */
 function makeBayer(n){
   if(n===2)return [[0,2],[3,1]];
-  const small=makeBayer(n/2);
+  const small=makeBayer(n/2),half=n/2;
   const out=Array.from({length:n},()=>Array(n).fill(0));
   const offsets=[[0,2],[3,1]];
   for(let y=0;y<n;y++)for(let x=0;x<n;x++){
-    out[y][x]=4*small[y%(n/2)][x%(n/2)]
-      +offsets[Math.floor(y/(n/2))][Math.floor(x/(n/2))];
+    out[y][x]=4*small[y%half][x%half]
+      +offsets[Math.floor(y/half)][Math.floor(x/half)];
   }
   return out;
 }
 const bayers={2:makeBayer(2),4:makeBayer(4),8:makeBayer(8)};
+function hexRGB(h){
+  return [
+    parseInt(h.slice(1,3),16),
+    parseInt(h.slice(3,5),16),
+    parseInt(h.slice(5,7),16)
+  ];
+}
+function expandedPalette(index,n){
+  const anchors=palettes[index].colors.map(hexRGB);
+  return Array.from({length:n},(_,i)=>{
+    const p=i/(n-1)*3,j=Math.min(2,Math.floor(p)),t=p-j;
+    return anchors[j].map((v,k)=>Math.round(v+(anchors[j+1][k]-v)*t));
+  });
+}
+let currentColors=expandedPalette(0,4),thresholds=[];
+function rebuildConversion(){
+  currentColors=expandedPalette(config.palette,tones);
+  // 共 n-1 個分界：第一與最後由使用者調整。
+  // 其餘分界在兩個錨點之間均勻排列。
+  thresholds=Array.from({length:tones-1},(_,i)=>
+    (config.dark+(config.light-config.dark)*i/(tones-2))*2.55
+  );
+}
+function quantize(value){
+  let level=0;
+  while(level<thresholds.length&&value>=thresholds[level])level++;
+  return level;
+}
 
-let config={...profiles[0]},configHistory=[];
-let brightness=0,mirror=true,facing="user";
-let stream=null,cameraStarting=false,cameraGeneration=0;
-let review=false,hasLiveFrame=false,importing=false;
-let timerEnabled=false,counting=false,countGeneration=0;
-let lastProcess=0,lastVideoTime=-1;
-let frameStyle="none",objects=[],selectedId=null;
-let editHistory=[],objectId=1,drag=null;
-let captureColors=palettes[0].colors.slice();
-let imageURL=null;
-let activeTab="frame";
-
-/* ---------- 原創 5×7 像素字 ---------- */
-
-const font={
- A:["01110","10001","10001","11111","10001","10001","10001"],
- B:["11110","10001","10001","11110","10001","10001","11110"],
- C:["01111","10000","10000","10000","10000","10000","01111"],
- D:["11110","10001","10001","10001","10001","10001","11110"],
- E:["11111","10000","10000","11110","10000","10000","11111"],
- F:["11111","10000","10000","11110","10000","10000","10000"],
- G:["01111","10000","10000","10111","10001","10001","01111"],
- H:["10001","10001","10001","11111","10001","10001","10001"],
- I:["11111","00100","00100","00100","00100","00100","11111"],
- J:["00111","00010","00010","00010","10010","10010","01100"],
- K:["10001","10010","10100","11000","10100","10010","10001"],
- L:["10000","10000","10000","10000","10000","10000","11111"],
- M:["10001","11011","10101","10101","10001","10001","10001"],
- N:["10001","11001","10101","10011","10001","10001","10001"],
- O:["01110","10001","10001","10001","10001","10001","01110"],
- P:["11110","10001","10001","11110","10000","10000","10000"],
- Q:["01110","10001","10001","10001","10101","10010","01101"],
- R:["11110","10001","10001","11110","10100","10010","10001"],
- S:["01111","10000","10000","01110","00001","00001","11110"],
- T:["11111","00100","00100","00100","00100","00100","00100"],
- U:["10001","10001","10001","10001","10001","10001","01110"],
- V:["10001","10001","10001","10001","10001","01010","00100"],
- W:["10001","10001","10001","10101","10101","10101","01010"],
- X:["10001","10001","01010","00100","01010","10001","10001"],
- Y:["10001","10001","01010","00100","00100","00100","00100"],
- Z:["11111","00001","00010","00100","01000","10000","11111"],
- "0":["01110","10001","10011","10101","11001","10001","01110"],
- "1":["00100","01100","00100","00100","00100","00100","01110"],
- "2":["01110","10001","00001","00010","00100","01000","11111"],
- "3":["11110","00001","00001","01110","00001","00001","11110"],
- "4":["00010","00110","01010","10010","11111","00010","00010"],
- "5":["11111","10000","10000","11110","00001","00001","11110"],
- "6":["01110","10000","10000","11110","10001","10001","01110"],
- "7":["11111","00001","00010","00100","01000","01000","01000"],
- "8":["01110","10001","10001","01110","10001","10001","01110"],
- "9":["01110","10001","10001","01111","00001","00001","01110"],
- "!":["00100","00100","00100","00100","00100","00000","00100"],
- "?":["01110","10001","00001","00010","00100","00000","00100"],
- "-":["00000","00000","00000","11111","00000","00000","00000"],
- ".":["00000","00000","00000","00000","00000","00100","00100"],
- ":":["00000","00100","00100","00000","00100","00100","00000"],
- "/":["00001","00001","00010","00100","01000","10000","10000"],
- " ":["00000","00000","00000","00000","00000","00000","00000"]
-};
-function pixelText(c,text,x,y,color,scale=1){
-  c.fillStyle=color;
-  for(const char of text.toUpperCase()){
-    const rows=font[char]||font["?"];
-    rows.forEach((row,yy)=>{
-      for(let xx=0;xx<5;xx++){
-        if(row[xx]==="1")c.fillRect(x+xx*scale,y+yy*scale,scale,scale);
-      }
-    });
-    x+=6*scale;
+/* ---------- 可重用的亮度柔化 ---------- */
+function blurPass(input,temp,output,r){
+  // 水平與垂直 box blur，邊界使用延伸像素。
+  for(let y=0;y<H;y++){
+    const row=y*W;
+    let sum=0;
+    for(let dx=-r;dx<=r;dx++)sum+=input[row+clamp(dx,0,W-1)];
+    for(let x=0;x<W;x++){
+      temp[row+x]=sum/(2*r+1);
+      sum+=input[row+clamp(x+r+1,0,W-1)]
+          -input[row+clamp(x-r,0,W-1)];
+    }
+  }
+  for(let x=0;x<W;x++){
+    let sum=0;
+    for(let dy=-r;dy<=r;dy++)sum+=temp[clamp(dy,0,H-1)*W+x];
+    for(let y=0;y<H;y++){
+      output[y*W+x]=sum/(2*r+1);
+      sum+=temp[clamp(y+r+1,0,H-1)*W+x]
+          -temp[clamp(y-r,0,H-1)*W+x];
+    }
   }
 }
-function centeredPixelText(c,text,y,color){
-  pixelText(c,text,Math.floor((W-(text.length*6-1))/2),y,color);
+function drawSource(source,flip){
+  const sw=source.videoWidth||source.naturalWidth||source.width;
+  const sh=source.videoHeight||source.naturalHeight||source.height;
+  if(!sw||!sh)return false;
+  const ratio=W/H;
+  let cw=sw,ch=sh;
+  if(sw/sh>ratio)cw=sh*ratio;else ch=sw/ratio;
+  sctx.save();
+  sctx.imageSmoothingEnabled=true;
+  sctx.fillStyle="#fff";sctx.fillRect(0,0,W,H);
+  if(flip){sctx.translate(W,0);sctx.scale(-1,1)}
+  sctx.drawImage(source,(sw-cw)/2,(sh-ch)/2,cw,ch,0,0,W,H);
+  sctx.restore();
+  return true;
+}
+function processSample(){
+  const input=sctx.getImageData(0,0,W,H).data;
+  for(let i=0,p=0;i<input.length;i+=4,p++){
+    lumA[p]=input[i]*.299+input[i+1]*.587+input[i+2]*.114;
+  }
+  let luminance=lumA;
+  if(config.smooth>0){
+    const strength=config.smooth/100;
+    const r=strength>.65?2:1;
+    blurPass(lumA,lumB,lumC,r);
+    // 與原圖混合，避免低強度時突然整張模糊。
+    for(let p=0;p<lumA.length;p++){
+      lumC[p]=lumA[p]*(1-strength)+lumC[p]*strength;
+    }
+    luminance=lumC;
+  }
+  const out=imageOutput.data,n=config.matrix,m=bayers[n];
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    const p=y*W+x,i=p*4;
+    let l=(luminance[p]-128)*config.contrast+128
+      +config.bias+config.brightness;
+    if(config.invert)l=255-l;
+    const d=(m[y%n][x%n]+.5)/(n*n)-.5;
+    l=clamp(l+d*config.dither,0,255);
+    const c=currentColors[quantize(l)];
+    out[i]=c[0];out[i+1]=c[1];out[i+2]=c[2];out[i+3]=255;
+  }
+  ctx.putImageData(imageOutput,0,0);
+  hasFrame=true;
+}
+function refreshPreview(){
+  if(review||importing)return;
+  if(sourceImage){
+    if(drawSource(sourceImage,false))processSample();
+  }else if(stream&&video.readyState>=2){
+    if(drawSource(video,mirror))processSample();
+  }
+  updateUI();
+}
+function loop(now){
+  if(!review&&!sourceImage&&!importing&&stream&&!document.hidden&&
+     video.readyState>=2&&now-lastProcess>=45&&
+     video.currentTime!==lastVideoTime){
+    lastProcess=now;lastVideoTime=video.currentTime;
+    try{refreshPreview()}catch(e){console.warn(e)}
+  }
+  requestAnimationFrame(loop);
 }
 
-/* ---------- 像素貼紙素材 ---------- */
+/* ---------- 原創英數像素字 ---------- */
+const glyphs={
+ A:"01110 10001 10001 11111 10001 10001 10001",
+ B:"11110 10001 10001 11110 10001 10001 11110",
+ C:"01111 10000 10000 10000 10000 10000 01111",
+ D:"11110 10001 10001 10001 10001 10001 11110",
+ E:"11111 10000 10000 11110 10000 10000 11111",
+ F:"11111 10000 10000 11110 10000 10000 10000",
+ G:"01111 10000 10000 10111 10001 10001 01111",
+ H:"10001 10001 10001 11111 10001 10001 10001",
+ I:"11111 00100 00100 00100 00100 00100 11111",
+ J:"00111 00010 00010 00010 10010 10010 01100",
+ K:"10001 10010 10100 11000 10100 10010 10001",
+ L:"10000 10000 10000 10000 10000 10000 11111",
+ M:"10001 11011 10101 10101 10001 10001 10001",
+ N:"10001 11001 10101 10011 10001 10001 10001",
+ O:"01110 10001 10001 10001 10001 10001 01110",
+ P:"11110 10001 10001 11110 10000 10000 10000",
+ Q:"01110 10001 10001 10001 10101 10010 01101",
+ R:"11110 10001 10001 11110 10100 10010 10001",
+ S:"01111 10000 10000 01110 00001 00001 11110",
+ T:"11111 00100 00100 00100 00100 00100 00100",
+ U:"10001 10001 10001 10001 10001 10001 01110",
+ V:"10001 10001 10001 10001 10001 01010 00100",
+ W:"10001 10001 10001 10101 10101 10101 01010",
+ X:"10001 10001 01010 00100 01010 10001 10001",
+ Y:"10001 10001 01010 00100 00100 00100 00100",
+ Z:"11111 00001 00010 00100 01000 10000 11111",
+ "0":"01110 10001 10011 10101 11001 10001 01110",
+ "1":"00100 01100 00100 00100 00100 00100 01110",
+ "2":"01110 10001 00001 00010 00100 01000 11111",
+ "3":"11110 00001 00001 01110 00001 00001 11110",
+ "4":"00010 00110 01010 10010 11111 00010 00010",
+ "5":"11111 10000 10000 11110 00001 00001 11110",
+ "6":"01110 10000 10000 11110 10001 10001 01110",
+ "7":"11111 00001 00010 00100 01000 01000 01000",
+ "8":"01110 10001 10001 01110 10001 10001 01110",
+ "9":"01110 10001 10001 01111 00001 00001 01110",
+ "!":"00100 00100 00100 00100 00100 00000 00100",
+ "?":"01110 10001 00001 00010 00100 00000 00100",
+ "-":"00000 00000 00000 11111 00000 00000 00000",
+ ".":"00000 00000 00000 00000 00000 00100 00100",
+ ":":"00000 00100 00100 00000 00100 00100 00000",
+ "/":"00001 00001 00010 00100 01000 10000 10000",
+ " ":"00000 00000 00000 00000 00000 00000 00000"
+};
+function pixelText(c,text,x,y,color){
+  c.fillStyle=color;
+  for(const ch of text.toUpperCase()){
+    const rows=(glyphs[ch]||glyphs["?"]).split(" ");
+    rows.forEach((row,yy)=>{
+      for(let xx=0;xx<5;xx++){
+        if(row[xx]==="1")c.fillRect(x+xx,y+yy,1,1);
+      }
+    });
+    x+=6;
+  }
+}
+function textBitmap(text,dark,light){
+  const english=/^[A-Za-z0-9 !?.:/-]+$/.test(text);
+  let c;
+  if(english){
+    c=canvas(Math.max(8,text.length*6+3),11);
+    const cc=c.getContext("2d");
+    cc.fillStyle=dark;cc.fillRect(0,0,c.width,c.height);
+    pixelText(cc,text,2,2,light);
+  }else{
+    const measure=canvas(1,1).getContext("2d");
+    measure.font="bold 10px sans-serif";
+    c=canvas(Math.ceil(measure.measureText(text).width)+6,15);
+    const cc=c.getContext("2d");
+    cc.fillStyle=dark;cc.fillRect(0,0,c.width,c.height);
+    cc.font="bold 10px sans-serif";cc.textBaseline="top";
+    cc.fillStyle=light;cc.fillText(text,3,2);
+  }
+  return c;
+}
+function centeredLabel(c,text,y,dark,light,maxWidth=W-8){
+  const img=textBitmap(text,dark,light);
+  const scale=Math.min(1,maxWidth/img.width);
+  const w=Math.round(img.width*scale),h=Math.round(img.height*scale);
+  c.imageSmoothingEnabled=false;
+  c.drawImage(img,Math.floor((W-w)/2),y,w,h);
+}
+function standby(){
+  ctx.fillStyle="#d5dfa8";ctx.fillRect(0,0,W,H);
+  ctx.fillStyle="#b7c687";
+  for(let y=0;y<H;y+=4)for(let x=0;x<W;x+=4){
+    if((x+y)%8===0)ctx.fillRect(x,y,1,1);
+  }
+  centeredLabel(ctx,"WEIRDO",Math.floor(H*.35),"#d5dfa8","#20382b");
+  centeredLabel(ctx,"PRESS START",Math.floor(H*.66),"#d5dfa8","#526b3b");
+}
 
-const stickerDefinitions=[
+/* ---------- 尺寸與色階 ---------- */
+function previewLocked(){
+  return review||counting||importing||cameraStarting;
+}
+function applySize(){
+  ({w:W,h:H}=sizes[sizeIndex]);
+  for(const c of [screen,sample,base]){c.width=W;c.height=H}
+  imageOutput=ctx.createImageData(W,H);
+  lumA=new Float32Array(W*H);lumB=new Float32Array(W*H);
+  lumC=new Float32Array(W*H);
+  $("screenWrap").style.aspectRatio=W+"/"+H;
+  hasFrame=false;
+  syncSettings();standby();refreshPreview();
+}
+function cycleSize(){
+  if(previewLocked())return;
+  sizeIndex=(sizeIndex+1)%sizes.length;
+  applySize();
+  message(sizes[sizeIndex].name+" · "+W+"×"+H+"。不是拉伸，是重新裁切。");
+}
+function cycleTones(){
+  if(previewLocked())return;
+  tones=toneOptions[(toneOptions.indexOf(tones)+1)%toneOptions.length];
+  syncSettings();refreshPreview();
+  message(tones+" 階明暗。色階越多，小陰影也越容易被留下。");
+}
+
+/* ---------- 設定、配方、復原設定 ---------- */
+function rememberConfig(){
+  configHistory.push({...config});
+  if(configHistory.length>40)configHistory.shift();
+}
+function syncSettings(){
+  rebuildConversion();
+  $("sizeBtn").textContent=W+" × "+H;
+  $("tonesBtn").textContent=tones+" TONES";
+  $("brightness").value=config.brightness;
+  $("darkPoint").value=config.dark;$("lightPoint").value=config.light;
+  $("smooth").value=config.smooth;$("dither").value=config.dither;
+  $("brightnessValue").textContent=config.brightness;
+  $("darkValue").textContent=config.dark+"%";
+  $("lightValue").textContent=config.light+"%";
+  $("smoothValue").textContent=config.smooth;
+  $("ditherValue").textContent=config.dither;
+  $("matrixBtn").textContent="BAYER "+config.matrix+"×"+config.matrix;
+  [...$("styleStrip").children].forEach((b,i)=>{
+    b.classList.toggle("active",config.palette===i);
+    b.setAttribute("aria-pressed",config.palette===i?"true":"false");
+  });
+  $("previousStyleBtn").disabled=!configHistory.length||previewLocked();
+  drawRamp();updateUI();
+}
+function drawRamp(){
+  const c=$("ramp"),cc=c.getContext("2d");
+  for(let x=0;x<256;x++){
+    const rgb=currentColors[quantize(x)];
+    cc.fillStyle="rgb("+rgb.join(",")+")";
+    cc.fillRect(x,0,1,c.height);
+  }
+  cc.fillStyle="#a44665";
+  for(const p of [config.dark,config.light]){
+    cc.fillRect(Math.round(p*2.55),0,1,c.height);
+  }
+}
+function useProfile(i){
+  if(previewLocked())return;
+  rememberConfig();config=withDefaults(profiles[i]);
+  syncSettings();refreshPreview();
+  message(palettes[i].name+"模式。膚色正常不在服務範圍內。");
+}
+function dice(){
+  if(previewLocked())return;
+  rememberConfig();
+  config=withDefaults({
+    palette:Math.floor(Math.random()*palettes.length),
+    contrast:pick([1.25,1.6,2,2.5,3]),
+    bias:pick([-24,-10,0,12,24]),
+    dither:pick([0,20,40,60,85]),
+    matrix:pick([2,4,8]),invert:Math.random()<.2
+  });
+  config.smooth=pick([0,20,45,70]);
+  syncSettings();refreshPreview();message(pick(funny));
+}
+function previousConfig(){
+  if(previewLocked()||!configHistory.length)return;
+  config={...configHistory.pop()};
+  syncSettings();refreshPreview();
+  message("救回剛才那個奇怪的你。");
+}
+function smoothPreset(){
+  if(previewLocked())return;
+  rememberConfig();
+  // 不是辨識人臉；降低對比、柔化亮度、減少抖動。
+  config={
+    ...config,contrast:1.15,bias:0,brightness:8,
+    dark:18,light:82,smooth:75,dither:8,matrix:4,invert:false
+  };
+  syncSettings();refreshPreview();
+  message("平滑角色配方！再調分界，試著把皮膚與小陰影合併。");
+}
+function resetProfile(){
+  if(previewLocked())return;
+  rememberConfig();config=withDefaults(profiles[config.palette]);
+  syncSettings();refreshPreview();message("恢復這個風格的原始配方。");
+}
+function bindRange(id,key){
+  const input=$(id);
+  input.addEventListener("pointerdown",()=>{
+    if(!previewLocked())rememberConfig();
+  });
+  input.addEventListener("keydown",e=>{
+    if(!previewLocked()&&
+      ["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Home","End","PageUp","PageDown"]
+      .includes(e.key))rememberConfig();
+  });
+  input.addEventListener("input",()=>{
+    if(previewLocked()){syncSettings();return}
+    let v=Number(input.value);
+    if(key==="dark")v=Math.min(v,config.light-3);
+    if(key==="light")v=Math.max(v,config.dark+3);
+    config[key]=v;
+    syncSettings();refreshPreview();
+  });
+}
+
+/* ---------- 相機與來源 ---------- */
+function updateUI(){
+  const locked=previewLocked();
+  $("led").classList.toggle("on",!!stream&&!review);
+  $("powerText").textContent=review?"SAVED":sourceImage?"PHOTO":stream?"LIVE":"OFF";
+  $("startBtn").disabled=cameraStarting||importing||counting;
+  $("startImportBtn").disabled=importing||cameraStarting||counting;
+  $("flipBtn").disabled=locked;
+  $("shutter").disabled=review||counting||importing||cameraStarting||!hasFrame;
+  $("sizeBtn").disabled=locked;$("tonesBtn").disabled=locked;
+  for(const id of [
+    "diceBtn","smoothPresetBtn","resetBtn","matrixBtn",
+    "brightness","darkPoint","lightPoint","smooth","dither","importBtn"
+  ])$(id).disabled=locked;
+  $("previousStyleBtn").disabled=locked||!configHistory.length;
+  $("mirrorBtn").disabled=locked||!!sourceImage;
+  $("mirrorBtn").classList.toggle("active",mirror);
+  $("mirrorBtn").setAttribute("aria-pressed",mirror?"true":"false");
+  $("mirrorBtn").textContent=mirror?"自拍鏡像 ✓":"自拍鏡像";
+  $("timerBtn").disabled=locked;
+  [...$("styleStrip").children].forEach(b=>b.disabled=locked);
+}
+function showStart(text,label="重新開啟相機"){
+  $("startOverlay").hidden=false;
+  $("startDescription").textContent=text;$("startBtn").textContent=label;
+}
+function stopCamera(){
+  cameraGeneration++;
+  if(stream){
+    stream.getTracks().forEach(t=>t.stop());stream=null;
+  }
+  video.srcObject=null;lastVideoTime=-1;
+  if(!sourceImage)hasFrame=false;
+  updateUI();
+}
+function cameraError(e){
+  if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia){
+    return "相機需要 HTTPS 與支援的瀏覽器，也可以先匯入照片玩。";
+  }
+  if(e.name==="NotAllowedError")return "相機權限未開啟。請允許權限，或先匯入照片。";
+  if(e.name==="NotFoundError")return "找不到可用相機，先匯入照片也可以。";
+  if(e.name==="NotReadableError")return "相機可能被其他程式占用，關閉後再試。";
+  return "相機啟動失敗。請改用 Safari／Chrome，或匯入照片。";
+}
+async function startCamera(){
+  if(review||cameraStarting||importing||counting)return;
+  if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia){
+    showStart(cameraError({}),"再試一次");return;
+  }
+  sourceImage=null;stopCamera();
+  const generation=cameraGeneration;
+  cameraStarting=true;updateUI();message("正在叫醒鏡頭…");
+  let acquired=null;
+  try{
+    acquired=await navigator.mediaDevices.getUserMedia({
+      audio:false,
+      video:{
+        facingMode:{ideal:facing},
+        width:{ideal:640},height:{ideal:480},
+        frameRate:{ideal:24,max:30}
+      }
+    });
+    if(generation!==cameraGeneration||review||document.hidden){
+      acquired.getTracks().forEach(t=>t.stop());return;
+    }
+    stream=acquired;video.srcObject=stream;
+    await video.play();
+    if(generation!==cameraGeneration||review||document.hidden){
+      acquired.getTracks().forEach(t=>t.stop());return;
+    }
+    const actual=stream.getVideoTracks()[0]?.getSettings?.().facingMode;
+    if(actual==="user"||actual==="environment"){
+      facing=actual;mirror=actual==="user";
+    }
+    $("startOverlay").hidden=true;
+    lastProcess=0;lastVideoTime=-1;
+    refreshPreview();
+    message("鏡頭準備好了。點尺寸與色階，還有小機關。");
+  }catch(e){
+    console.warn(e);acquired?.getTracks().forEach(t=>t.stop());
+    if(generation===cameraGeneration){
+      stopCamera();showStart(cameraError(e),"再試一次");
+      message("鏡頭今天有點害羞。");
+    }
+  }finally{
+    cameraStarting=false;updateUI();
+  }
+}
+function cancelCountdown(){
+  countGeneration++;counting=false;
+  $("countdown").hidden=true;updateUI();
+}
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden){
+    cancelCountdown();
+    if(stream||cameraStarting){
+      stopCamera();
+      if(!review&&!sourceImage){
+        showStart("剛才離開畫面，相機已休息。按一下重新開啟。");
+      }
+    }
+  }
+});
+window.addEventListener("pagehide",()=>{cancelCountdown();stopCamera()});
+
+async function loadImage(url){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>resolve(img);
+    img.onerror=()=>reject(new Error("這張圖片讀取失敗"));
+    img.src=url;
+  });
+}
+function chooseFile(){
+  if(previewLocked())return;
+  $("fileInput").click();
+}
+async function importPhoto(file){
+  if(!file||previewLocked())return;
+  if(file.size>35*1024*1024){
+    alert("請使用小於 35 MB 的圖片。");return;
+  }
+  importing=true;updateUI();message("正在把照片變成像素…");
+  const url=URL.createObjectURL(file);
+  try{
+    const img=await loadImage(url);
+    if(img.naturalWidth*img.naturalHeight>40000000){
+      throw new Error("圖片像素太多，請先縮小再匯入");
+    }
+    // 留一份靜態來源，避免動畫圖片在預覽裡自行播放。
+    const staticImage=canvas(img.naturalWidth,img.naturalHeight);
+    staticImage.getContext("2d").drawImage(img,0,0);
+    stopCamera();sourceImage=staticImage;
+    $("startOverlay").hidden=true;
+    message("照片已匯入。可以先調平滑與分界，再按快門。");
+  }catch(e){
+    alert(e.message);message("換一張照片試試看。");
+  }finally{
+    URL.revokeObjectURL(url);importing=false;
+    refreshPreview();updateUI();
+  }
+}
+
+/* ---------- 拍照 ---------- */
+async function takePhoto(){
+  if(review||counting||importing||cameraStarting||!hasFrame)return;
+  if(timerEnabled){
+    counting=true;const generation=++countGeneration;updateUI();
+    for(let n=3;n>=1;n--){
+      $("countdown").textContent=n;$("countdown").hidden=false;
+      await new Promise(r=>setTimeout(r,1000));
+      if(generation!==countGeneration||document.hidden)return;
+    }
+    counting=false;$("countdown").hidden=true;
+  }
+  if(document.hidden||(!stream&&!sourceImage)||!hasFrame){
+    updateUI();return;
+  }
+  // 複製當下已處理畫面：不在快門時偷偷改解析度。
+  bctx.clearRect(0,0,W,H);bctx.drawImage(screen,0,0);
+  captureColors=palettes[config.palette].colors.slice();
+  review=true;cancelCountdown();stopCamera();
+  sourceImage=null;
+  frameStyle="none";objects=[];selectedId=null;editHistory=[];drag=null;
+  $("liveUI").hidden=true;$("reviewUI").hidden=false;
+  $("startOverlay").hidden=true;
+  $("undoBtn").disabled=true;
+  $("originalBtn").textContent="下載原始 "+W+"×"+H;
+  selectTab("frame");renderReview();renderFrameSelection();updateUI();
+  message(pick([
+    "已捕獲一張可疑臉孔。","恭喜，證件照已不合格。",
+    "低解析度角色誕生！","這張照片需要一根香蕉。"
+  ]));
+}
+function retake(){
+  if(drag)return;
+  cancelCountdown();review=false;sourceImage=null;
+  objects=[];selectedId=null;editHistory=[];
+  invalidateExport();revokeImageURL();
+  $("selectionBox").hidden=true;
+  $("reviewUI").hidden=true;$("liveUI").hidden=false;
+  standby();showStart("再捕獲一隻低解析度生物。");
+  syncSettings();startCamera();
+}
+
+/* ---------- 原創貼紙 ---------- */
+const stickerDefs=[
   {
     key:"banana",name:"香蕉",
     rows:[
-      "...........22.",
-      "..........212.",
-      ".........211..",
-      "........211...",
-      ".......211....",
-      "......211.....",
-      ".....211......",
-      "...2211.......",
-      "..21112.......",
-      ".21112........",
-      ".2112.........",
-      "..22.........."
+      "...........22.","..........212.",".........211..",
+      "........211...",".......211....","......211.....",
+      ".....211......","...2211.......","..21112.......",
+      ".21112........",".2112.........","..22.........."
     ],
     colors:{"1":"#f8de6b","2":"#53402a"}
   },
   {
     key:"ufo",name:"UFO",
     rows:[
-      "......222......",
-      ".....21112.....",
-      "....2111112....",
-      "..22222222222..",
-      ".2111111111112.",
-      "211313131313112",
-      ".2222222222222.",
-      "....2.....2....",
-      "...3.......3..."
+      "......222......",".....21112.....","....2111112....",
+      "..22222222222..",".2111111111112.","211313131313112",
+      ".2222222222222.","....2.....2....","...3.......3..."
     ],
     colors:{"1":"#cbe5b6","2":"#243b35","3":"#f0a27c"}
   },
   {
     key:"eyes",name:"可疑眼睛",
     rows:[
-      ".2222...2222.",
-      "211112.211112",
-      "211212.212112",
-      "211212.212112",
-      "211112.211112",
-      ".2222...2222."
+      ".2222...2222.","211112.211112","211212.212112",
+      "211212.212112","211112.211112",".2222...2222."
     ],
     colors:{"1":"#f6f0d9","2":"#26352d"}
   },
   {
     key:"sweat",name:"汗",
     rows:[
-      "....2....",
-      "...212...",
-      "...212...",
-      "..21112..",
-      "..21112..",
-      ".2111112.",
-      ".2113112.",
-      ".2111112.",
-      "..22222.."
+      "....2....","...212...","...212...","..21112..",
+      "..21112..",".2111112.",".2113112.",".2111112.","..22222.."
     ],
     colors:{"1":"#84c9d2","2":"#263d4a","3":"#e6faf2"}
   },
-  {
-    key:"unknown",name:"不明",
-    label:"UNKNOWN"
-  },
-  {
-    key:"suspect",name:"可疑",
-    label:"SUSPECT!"
-  }
+  {key:"unknown",name:"不明",label:"UNKNOWN"},
+  {key:"suspect",name:"可疑",label:"SUSPECT!"}
 ];
 const stickerMap=new Map();
-for(const d of stickerDefinitions){
-  const c=document.createElement("canvas");
+for(const d of stickerDefs){
+  let c;
   if(d.rows){
-    c.width=Math.max(...d.rows.map(r=>r.length));
-    c.height=d.rows.length;
+    c=canvas(Math.max(...d.rows.map(r=>r.length)),d.rows.length);
     const cc=c.getContext("2d");
     d.rows.forEach((row,y)=>{
       [...row].forEach((ch,x)=>{
@@ -631,351 +1081,12 @@ for(const d of stickerDefinitions){
         }
       });
     });
-  }else{
-    c.width=d.label.length*6+3;c.height=11;
-    const cc=c.getContext("2d");
-    cc.fillStyle="#26352d";cc.fillRect(0,0,c.width,c.height);
-    pixelText(cc,d.label,2,2,"#edf1c8");
-  }
+  }else c=textBitmap(d.label,"#26352d","#edf1c8");
   stickerMap.set(d.key,c);
 }
 
-/* ---------- 四階亮度＋Bayer ---------- */
-
-function drawSource(source,flip){
-  const sw=source.videoWidth||source.naturalWidth||source.width;
-  const sh=source.videoHeight||source.naturalHeight||source.height;
-  if(!sw||!sh)return false;
-  const ratio=W/H;
-  let cropW=sw,cropH=sh;
-  if(sw/sh>ratio)cropW=sh*ratio;
-  else cropH=sw/ratio;
-  const sx=(sw-cropW)/2,sy=(sh-cropH)/2;
-
-  sctx.save();
-  sctx.clearRect(0,0,W,H);
-  // 縮小時平滑取樣，降低細線的跳動。
-  sctx.imageSmoothingEnabled=true;
-  sctx.fillStyle="#fff";sctx.fillRect(0,0,W,H);
-  if(flip){sctx.translate(W,0);sctx.scale(-1,1)}
-  sctx.drawImage(source,sx,sy,cropW,cropH,0,0,W,H);
-  sctx.restore();
-  return true;
-}
-function processSample(){
-  const image=sctx.getImageData(0,0,W,H);
-  const data=image.data;
-  const colors=rgbPalettes[config.palette];
-  const n=config.matrix,m=bayers[n];
-  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
-    const i=(y*W+x)*4;
-    let lum=data[i]*.299+data[i+1]*.587+data[i+2]*.114;
-    lum=(lum-128)*config.contrast+128+config.bias+brightness;
-    if(config.invert)lum=255-lum;
-    const threshold=(m[y%n][x%n]+.5)/(n*n)-.5;
-    lum+=threshold*config.dither;
-    const level=clamp(Math.round(clamp(lum,0,255)*3/255),0,3);
-    const color=colors[level];
-    data[i]=color[0];data[i+1]=color[1];data[i+2]=color[2];
-    data[i+3]=255;
-  }
-  ctx.putImageData(image,0,0);
-  hasLiveFrame=true;
-}
-function refreshLive(){
-  if(review||!stream||video.readyState<2)return;
-  if(drawSource(video,mirror))processSample();
-}
-function animationLoop(now){
-  if(!review&&!counting&&stream&&!document.hidden&&video.readyState>=2){
-    if(now-lastProcess>=42&&video.currentTime!==lastVideoTime){
-      lastProcess=now;lastVideoTime=video.currentTime;
-      try{refreshLive()}catch(error){console.warn(error)}
-    }
-  }else if(!review&&counting&&stream&&video.readyState>=2){
-    // 倒數仍保持即時畫面。
-    if(now-lastProcess>=50){
-      lastProcess=now;
-      try{refreshLive()}catch(error){console.warn(error)}
-    }
-  }
-  requestAnimationFrame(animationLoop);
-}
-
-/* ---------- 待機畫面 ---------- */
-
-function drawStandby(){
-  ctx.fillStyle="#d5dfa8";ctx.fillRect(0,0,W,H);
-  ctx.fillStyle="#b7c687";
-  for(let y=0;y<H;y+=4)for(let x=0;x<W;x+=4){
-    if((x+y)%8===0)ctx.fillRect(x,y,1,1);
-  }
-  centeredPixelText(ctx,"POCKET",34,"#526b3b");
-  centeredPixelText(ctx,"WEIRDO",46,"#20382b");
-  centeredPixelText(ctx,"PRESS START",75,"#526b3b");
-}
-function showStart(description,label="重新開啟相機"){
-  $("startOverlay").hidden=false;
-  $("startDescription").textContent=description;
-  $("startBtn").textContent=label;
-}
-function updateCameraUI(){
-  $("led").classList.toggle("on",!!stream&&!review);
-  $("powerText").textContent=review?"CAPTURED":stream?"CAMERA ON":"STANDBY";
-  $("flipBtn").disabled=review||cameraStarting||counting||importing;
-  $("startBtn").disabled=cameraStarting||importing;
-  $("shutter").disabled=!stream||!hasLiveFrame||review||counting||importing;
-}
-
-/* ---------- 相機生命週期 ---------- */
-
-function stopCamera(){
-  cameraGeneration++;
-  if(stream){
-    for(const track of stream.getTracks())track.stop();
-    stream=null;
-  }
-  video.srcObject=null;
-  hasLiveFrame=false;
-  lastVideoTime=-1;
-  updateCameraUI();
-}
-function cameraError(error){
-  if(!window.isSecureContext||
-    !navigator.mediaDevices?.getUserMedia){
-    return "相機需要 HTTPS 網站與支援的瀏覽器。也可以先匯入照片玩。";
-  }
-  if(error.name==="NotAllowedError"){
-    return "相機權限未開啟。請在瀏覽器或系統設定允許，也可匯入照片。";
-  }
-  if(error.name==="NotFoundError")return "找不到可用相機，先用照片玩也可以。";
-  if(error.name==="NotReadableError")return "相機可能被其他程式占用，關閉後再試。";
-  return "相機沒有成功啟動。請改用 Safari／Chrome，或匯入照片。";
-}
-async function startCamera(){
-  if(review||cameraStarting||importing||counting)return;
-  if(!navigator.mediaDevices?.getUserMedia||!window.isSecureContext){
-    showStart(cameraError({}),"再試一次");
-    message("先匯入照片，一樣可以变奇怪。");
-    return;
-  }
-  stopCamera();
-  const generation=cameraGeneration;
-  cameraStarting=true;updateCameraUI();
-  message("正在叫醒鏡頭…");
-  let acquired=null;
-  try{
-    acquired=await navigator.mediaDevices.getUserMedia({
-      audio:false,
-      video:{
-        facingMode:{ideal:facing},
-        width:{ideal:640},
-        height:{ideal:480},
-        frameRate:{ideal:24,max:30}
-      }
-    });
-    if(generation!==cameraGeneration||review||document.hidden){
-      acquired.getTracks().forEach(t=>t.stop());return;
-    }
-    stream=acquired;
-    video.srcObject=stream;
-    await video.play();
-    if(generation!==cameraGeneration||review||document.hidden){
-      acquired.getTracks().forEach(t=>t.stop());return;
-    }
-    $("startOverlay").hidden=true;
-    lastProcess=0;lastVideoTime=-1;
-    refreshLive();
-    message("鏡頭準備好了。你準備好變怪了嗎？");
-  }catch(error){
-    console.warn(error);
-    acquired?.getTracks().forEach(t=>t.stop());
-    if(generation===cameraGeneration){
-      stopCamera();
-      showStart(cameraError(error),"再試一次");
-      message("相機失敗不是你的錯。");
-    }
-  }finally{
-    cameraStarting=false;updateCameraUI();
-  }
-}
-function cancelCountdown(){
-  countGeneration++;
-  counting=false;$("countdown").hidden=true;
-  updateCameraUI();
-}
-document.addEventListener("visibilitychange",()=>{
-  if(document.hidden){
-    cancelCountdown();
-    if(stream||cameraStarting){
-      stopCamera();
-      if(!review)showStart("剛才離開畫面，相機已休息。按一下重新開啟。");
-    }
-  }
-});
-window.addEventListener("pagehide",()=>{
-  cancelCountdown();stopCamera();
-});
-
-/* ---------- 風格與骰子 ---------- */
-
-function rememberConfig(){
-  configHistory.push({config:{...config},brightness});
-  if(configHistory.length>30)configHistory.shift();
-  $("previousStyleBtn").disabled=false;
-}
-function renderStyleButtons(){
-  [...$("styleStrip").children].forEach((b,i)=>{
-    b.classList.toggle("active",config.palette===i);
-    b.setAttribute("aria-pressed",config.palette===i?"true":"false");
-  });
-}
-function useProfile(i){
-  if(review||counting||importing)return;
-  rememberConfig();
-  config={...profiles[i]};
-  brightness=0;$("brightness").value=0;
-  renderStyleButtons();refreshLive();
-  message(palettes[i].name+"模式：膚色正常不在服務範圍內。");
-}
-function dice(){
-  if(review||counting||importing)return;
-  rememberConfig();
-  const i=Math.floor(Math.random()*palettes.length);
-  config={
-    palette:i,
-    contrast:randomItem([1.25,1.6,2,2.5,3]),
-    bias:randomItem([-28,-12,0,12,28]),
-    dither:randomItem([0,25,45,65,85]),
-    matrix:randomItem([2,4,8]),
-    invert:Math.random()<.24
-  };
-  brightness=0;$("brightness").value=0;
-  renderStyleButtons();refreshLive();
-  message(randomItem(funnyMessages));
-}
-function previousStyle(){
-  if(review||counting||importing||!configHistory.length)return;
-  const old=configHistory.pop();
-  config={...old.config};brightness=old.brightness;
-  $("brightness").value=brightness;
-  $("previousStyleBtn").disabled=!configHistory.length;
-  renderStyleButtons();refreshLive();
-  message("救回剛才那個奇怪的你。");
-}
-function buildStyleStrip(){
-  palettes.forEach((p,i)=>{
-    const b=document.createElement("button");
-    b.className="choice";
-    const c=document.createElement("canvas");
-    c.width=36;c.height=24;
-    const cc=c.getContext("2d");
-    p.colors.forEach((color,j)=>{
-      cc.fillStyle=color;cc.fillRect(j*9,0,9,24);
-    });
-    // 小小像素臉。
-    cc.fillStyle=p.colors[0];
-    cc.fillRect(10,7,3,3);cc.fillRect(22,7,3,3);
-    cc.fillRect(14,16,9,2);
-    const label=document.createElement("span");
-    label.textContent=p.name;
-    b.append(c,label);b.onclick=()=>useProfile(i);
-    $("styleStrip").appendChild(b);
-  });
-  renderStyleButtons();
-}
-
-/* ---------- 拍照與匯入 ---------- */
-
-function enterReview(){
-  bctx.clearRect(0,0,W,H);bctx.drawImage(screen,0,0);
-  captureColors=palettes[config.palette].colors.slice();
-  review=true;
-  cancelCountdown();stopCamera();
-  frameStyle="none";objects=[];selectedId=null;editHistory=[];
-  $("liveUI").hidden=true;$("reviewUI").hidden=false;
-  $("startOverlay").hidden=true;
-  selectTab("frame");
-  renderReview();renderFrameSelection();
-  updateCameraUI();
-  $("undoBtn").disabled=true;
-  message(randomItem([
-    "已捕獲一張可疑臉孔。",
-    "恭喜，證件照已不合格。",
-    "今日低解析度生物，保存成功。",
-    "這張照片需要一根香蕉。"
-  ]));
-}
-async function takePhoto(){
-  if(review||!stream||!hasLiveFrame||counting||importing)return;
-  if(timerEnabled){
-    counting=true;
-    const generation=++countGeneration;
-    updateCameraUI();
-    for(let n=3;n>=1;n--){
-      $("countdown").textContent=n;$("countdown").hidden=false;
-      await new Promise(r=>setTimeout(r,1000));
-      if(generation!==countGeneration||document.hidden||!stream)return;
-    }
-    counting=false;$("countdown").hidden=true;
-  }
-  if(!stream||document.hidden)return;
-  // 直接複製目前處理完成的畫面，不偷偷換解析度。
-  enterReview();
-  if(!matchMedia("(prefers-reduced-motion: reduce)").matches){
-    $("flash").style.opacity=".6";
-    setTimeout(()=>$("flash").style.opacity="0",90);
-  }
-}
-function retake(){
-  cancelCountdown();review=false;
-  objects=[];selectedId=null;editHistory=[];
-  $("reviewUI").hidden=true;$("liveUI").hidden=false;
-  $("selectionBox").hidden=true;
-  revokeImageURL();
-  drawStandby();
-  showStart("再捕獲一隻低解析度生物。");
-  updateCameraUI();
-  startCamera();
-}
-function loadImage(url){
-  return new Promise((resolve,reject)=>{
-    const img=new Image();
-    img.onload=()=>resolve(img);
-    img.onerror=()=>reject(new Error("無法讀取這張圖片"));
-    img.src=url;
-  });
-}
-async function importPhoto(file){
-  if(!file||counting||cameraStarting||importing)return;
-  if(file.size>35*1024*1024){
-    alert("這張圖片較大，請使用小於 35 MB 的圖片。");return;
-  }
-  importing=true;updateCameraUI();
-  message("正在把照片變成奇怪的東西…");
-  const url=URL.createObjectURL(file);
-  try{
-    const img=await loadImage(url);
-    if(img.naturalWidth*img.naturalHeight>40000000){
-      throw new Error("圖片像素太多，請先縮小再匯入");
-    }
-    // 匯入圖不套自拍鏡像，避免文字被翻轉。
-    drawSource(img,false);
-    processSample();
-    enterReview();
-    message("照片已像素化。可以開始加些沒道理的東西。");
-  }catch(error){
-    alert(error.message);
-    if(!review)message("換一張圖片試試看。");
-  }finally{
-    URL.revokeObjectURL(url);
-    importing=false;updateCameraUI();
-  }
-}
-
 /* ---------- 相框 ---------- */
-
-const frameDefinitions=[
+const frameDefs=[
   {key:"none",name:"不要框"},
   {key:"passport",name:"外星入境"},
   {key:"wanted",name:"土豆通緝"},
@@ -984,67 +1095,46 @@ const frameDefinitions=[
 ];
 function drawFrame(c,key,colors=captureColors){
   const dark=colors[0],light=colors[3];
-  c.save();
+  c.save();c.imageSmoothingEnabled=false;
+  const band=H<80?10:14;
   if(key==="passport"){
     c.strokeStyle=dark;c.lineWidth=2;c.strokeRect(1,1,W-2,H-2);
-    c.fillStyle=light;c.fillRect(2,2,W-4,12);
-    centeredPixelText(c,"ALIEN ENTRY",5,dark);
-    c.fillStyle=dark;c.fillRect(2,H-13,W-4,11);
-    centeredPixelText(c,"SPECIMEN 001",H-11,light);
+    c.fillStyle=light;c.fillRect(2,2,W-4,band);
+    centeredLabel(c,"ALIEN ENTRY",3,light,dark,W-8);
+    c.fillStyle=dark;c.fillRect(2,H-band-2,W-4,band);
+    centeredLabel(c,"SPECIMEN 001",H-band-1,dark,light,W-8);
   }else if(key==="wanted"){
-    c.fillStyle=light;c.fillRect(0,0,W,14);
-    c.fillRect(0,H-15,W,15);
-    centeredPixelText(c,"WANTED!",3,dark);
-    centeredPixelText(c,"ONE POTATO",H-11,dark);
+    c.fillStyle=light;c.fillRect(0,0,W,band);c.fillRect(0,H-band,W,band);
+    centeredLabel(c,"WANTED!",1,light,dark,W-8);
+    centeredLabel(c,"ONE POTATO",H-band+1,light,dark,W-8);
     c.fillStyle=dark;
-    for(let y=14;y<H-15;y+=4){
+    for(let y=band;y<H-band;y+=4){
       c.fillRect(0,y,2,2);c.fillRect(W-2,y,2,2);
     }
   }else if(key==="sighting"){
-    c.fillStyle=dark;c.fillRect(0,0,W,12);
-    pixelText(c,"REC",4,3,light);
+    c.fillStyle=dark;c.fillRect(0,0,W,band);
+    pixelText(c,"REC",4,2,light);
     c.fillStyle=light;c.fillRect(W-8,4,3,3);
-    c.fillStyle=dark;c.fillRect(0,H-12,W,12);
-    centeredPixelText(c,"UNKNOWN LIFE",H-9,light);
+    c.fillStyle=dark;c.fillRect(0,H-band,W,band);
+    centeredLabel(c,"UNKNOWN LIFE",H-band+1,dark,light,W-8);
     c.strokeStyle=light;c.lineWidth=1;
     for(const [x,y,sx,sy] of [
-      [8,20,1,1],[W-9,20,-1,1],
-      [8,H-20,1,-1],[W-9,H-20,-1,-1]
+      [7,band+5,1,1],[W-8,band+5,-1,1],
+      [7,H-band-6,1,-1],[W-8,H-band-6,-1,-1]
     ]){
-      c.beginPath();c.moveTo(x+7*sx,y);
-      c.lineTo(x,y);c.lineTo(x,y+7*sy);c.stroke();
+      c.beginPath();c.moveTo(x+5*sx,y);
+      c.lineTo(x,y);c.lineTo(x,y+5*sy);c.stroke();
     }
   }else if(key==="print"){
     c.fillStyle=light;
-    c.fillRect(0,0,W,4);c.fillRect(0,H-14,W,14);
+    c.fillRect(0,0,W,4);c.fillRect(0,H-band,W,band);
     c.fillRect(0,0,4,H);c.fillRect(W-4,0,4,H);
     for(let x=4;x<W-4;x+=4){
-      c.fillStyle=((x/4)%2)?dark:colors[1];
-      c.fillRect(x,0,2,2);
+      c.fillStyle=(x/4)%2?dark:colors[1];c.fillRect(x,0,2,2);
     }
-    centeredPixelText(c,"VERY WEIRD",H-10,dark);
+    centeredLabel(c,"VERY WEIRD",H-band+1,light,dark,W-8);
   }
   c.restore();
-}
-function buildFramePanel(){
-  frameDefinitions.forEach(d=>{
-    const b=document.createElement("button");b.className="choice";
-    b.dataset.frame=d.key;
-    const c=document.createElement("canvas");c.width=W;c.height=H;
-    const cc=c.getContext("2d");
-    cc.fillStyle="#9bac65";cc.fillRect(0,0,W,H);
-    cc.fillStyle="#526b3b";cc.fillRect(42,25,44,60);
-    cc.fillStyle="#d9e6a1";cc.fillRect(50,40,7,7);cc.fillRect(70,40,7,7);
-    drawFrame(cc,d.key,palettes[0].colors);
-    const label=document.createElement("span");label.textContent=d.name;
-    b.append(c,label);
-    b.onclick=()=>{
-      if(!review||frameStyle===d.key)return;
-      rememberEdit();frameStyle=d.key;
-      renderReview();renderFrameSelection();
-    };
-    $("framePanel").appendChild(b);
-  });
 }
 function renderFrameSelection(){
   [...$("framePanel").children].forEach(b=>{
@@ -1052,30 +1142,8 @@ function renderFrameSelection(){
   });
 }
 
-/* ---------- 編輯與復原 ---------- */
-
-function editSnapshot(){
-  return {
-    frameStyle,objects:objects.map(o=>({...o})),selectedId
-  };
-}
-function rememberEdit(snapshot=editSnapshot()){
-  editHistory.push(snapshot);
-  if(editHistory.length>40)editHistory.shift();
-  $("undoBtn").disabled=false;
-}
-function undoEdit(){
-  if(!review||drag||!editHistory.length)return;
-  const old=editHistory.pop();
-  frameStyle=old.frameStyle;
-  objects=old.objects.map(o=>({...o}));
-  selectedId=old.selectedId;
-  $("undoBtn").disabled=!editHistory.length;
-  renderReview();renderFrameSelection();
-  message("剛才那一步，收回了。");
-}
+/* ---------- 裝飾編輯 ---------- */
 function selectTab(tab){
-  activeTab=tab;
   document.querySelectorAll("[data-tab]").forEach(b=>{
     b.classList.toggle("active",b.dataset.tab===tab);
   });
@@ -1083,61 +1151,49 @@ function selectTab(tab){
   $("stickerPanel").hidden=tab!=="sticker";
   $("textPanel").hidden=tab!=="text";
 }
-function makeTextBitmap(text){
-  const c=document.createElement("canvas");
-  const english=/^[A-Za-z0-9 !?.:/-]+$/.test(text);
-  if(english){
-    c.width=Math.max(8,text.length*6+3);c.height=11;
-    const cc=c.getContext("2d");
-    cc.fillStyle="#26352d";cc.fillRect(0,0,c.width,c.height);
-    pixelText(cc,text,2,2,"#f1efce");
-  }else{
-    // 中文使用系統字體，優先可讀性；照片仍以像素尺寸輸出。
-    const measure=document.createElement("canvas").getContext("2d");
-    measure.font="bold 10px sans-serif";
-    c.width=Math.ceil(measure.measureText(text).width)+6;c.height=15;
-    const cc=c.getContext("2d");
-    cc.fillStyle="#26352d";cc.fillRect(0,0,c.width,c.height);
-    cc.font="bold 10px sans-serif";cc.textBaseline="top";
-    cc.fillStyle="#f1efce";cc.fillText(text,3,2);
-  }
-  return c;
+function snapshot(){
+  return {frameStyle,objects:objects.map(o=>({...o})),selectedId};
 }
-function objectBitmap(o){
+function rememberEdit(old=snapshot()){
+  editHistory.push(old);
+  if(editHistory.length>40)editHistory.shift();
+  $("undoBtn").disabled=false;
+}
+function undoEdit(){
+  if(!review||drag||!editHistory.length)return;
+  const old=editHistory.pop();
+  frameStyle=old.frameStyle;objects=old.objects.map(o=>({...o}));
+  selectedId=old.selectedId;
+  $("undoBtn").disabled=!editHistory.length;
+  renderReview();renderFrameSelection();
+  message("剛才那一步，收回了。");
+}
+function bitmap(o){
   return o.type==="sticker"?stickerMap.get(o.key):o.bitmap;
 }
 function objectRect(o){
-  const image=objectBitmap(o);
-  const w=Math.max(1,Math.round(image.width*o.scale));
-  const h=Math.max(1,Math.round(image.height*o.scale));
-  return {
-    x:Math.round(o.x-w/2),y:Math.round(o.y-h/2),w,h
-  };
+  const img=bitmap(o);
+  const w=Math.max(1,Math.round(img.width*o.scale));
+  const h=Math.max(1,Math.round(img.height*o.scale));
+  return {x:Math.round(o.x-w/2),y:Math.round(o.y-h/2),w,h};
 }
-function drawObjects(c){
-  c.imageSmoothingEnabled=false;
-  for(const o of objects){
-    const r=objectRect(o);
-    c.drawImage(objectBitmap(o),r.x,r.y,r.w,r.h);
-  }
+function keepInside(o){
+  const r=objectRect(o);
+  o.x=clamp(o.x,r.w/2,W-r.w/2);
+  o.y=clamp(o.y,r.h/2,H-r.h/2);
 }
 function compose(c){
-  c.clearRect(0,0,W,H);
-  c.imageSmoothingEnabled=false;c.drawImage(base,0,0);
-  drawFrame(c,frameStyle);
-  drawObjects(c);
+  c.clearRect(0,0,W,H);c.imageSmoothingEnabled=false;
+  c.drawImage(base,0,0);drawFrame(c,frameStyle);
+  for(const o of objects){
+    const r=objectRect(o);
+    c.drawImage(bitmap(o),r.x,r.y,r.w,r.h);
+  }
 }
-function renderReview(){
-  if(!review)return;
-  compose(ctx);updateObjectSelection();
-}
-function selectedObject(){
-  return objects.find(o=>o.id===selectedId);
-}
-function updateObjectSelection(){
+function selectedObject(){return objects.find(o=>o.id===selectedId)}
+function updateSelection(){
   const o=selectedObject();
-  $("objectControls").hidden=!o;
-  $("selectionBox").hidden=!o;
+  $("selectionBox").hidden=!o;$("objectControls").hidden=!o;
   if(o){
     const r=objectRect(o);
     Object.assign($("selectionBox").style,{
@@ -1147,96 +1203,79 @@ function updateObjectSelection(){
   }
   $("reviewHint").textContent=o
     ?"直接拖移。也可以放大、縮小或刪除。"
-    :"點貼紙加入；點照片上的裝飾可以移動。";
+    :"點贴紙加入；點照片上的裝飾可以移動。";
+}
+function renderReview(changed=true){
+  if(!review)return;
+  compose(ctx);updateSelection();
+  if(changed)queueExport();
+}
+function canAdd(){
+  if(!review)return false;
+  if(objects.length>=24){
+    message("已經很熱鬧了，最多放 24 個裝飾。");return false;
+  }
+  return true;
 }
 function addSticker(key){
-  if(!review||objects.length>=24){
-    if(objects.length>=24)message("已經很熱鬧了，最多放 24 個裝飾。");
-    return;
-  }
+  if(!canAdd())return;
   rememberEdit();
-  const bitmap=stickerMap.get(key);
-  const scale=bitmap.width>40?1:2;
-  const o={
-    id:objectId++,type:"sticker",key,
-    x:W/2,y:H/2,scale
-  };
+  const img=stickerMap.get(key);
+  const preferred=img.width>40?1:Math.max(1,W/64);
+  const scale=Math.min(preferred,(W-4)/img.width,(H-4)/img.height);
+  const o={id:objectId++,type:"sticker",key,x:W/2,y:H/2,scale};
   objects.push(o);selectedId=o.id;renderReview();
-  message(key==="banana"?"香蕉加入了。它沒有解釋。":"貼紙加入，拖到你喜歡的位置。");
+  message(key==="banana"?"香蕉加入了。它沒有解釋。":"貼紙加入，直接拖到你喜歡的位置。");
 }
 function addText(){
-  if(!review||objects.length>=24)return;
+  if(!canAdd())return;
   const text=$("textInput").value.trim();
   if(!text){$("textInput").focus();return}
   rememberEdit();
-  const bitmap=makeTextBitmap(text);
-  const scale=Math.min(1,(W-8)/bitmap.width);
+  const img=textBitmap(text,captureColors[0],captureColors[3]);
+  const scale=Math.min(1,(W-8)/img.width,(H-8)/img.height);
   const o={
-    id:objectId++,type:"text",text,bitmap,
-    x:W/2,y:H-25,scale
+    id:objectId++,type:"text",bitmap:img,text,
+    x:W/2,y:H*.7,scale
   };
-  objects.push(o);selectedId=o.id;
-  $("textInput").value="";
-  $("textInput").blur();renderReview();
+  keepInside(o);objects.push(o);selectedId=o.id;
+  $("textInput").value="";$("textInput").blur();renderReview();
 }
 function scaleObject(factor){
   const o=selectedObject();if(!o||drag)return;
   rememberEdit();
-  const image=objectBitmap(o);
-  const max=Math.min(5,(W-4)/image.width,(H-4)/image.height);
-  o.scale=clamp(o.scale*factor,Math.min(.5,max),max);
-  renderReview();
+  const img=bitmap(o);
+  const max=Math.min(5,(W-4)/img.width,(H-4)/img.height);
+  o.scale=clamp(o.scale*factor,Math.min(.3,max),max);
+  keepInside(o);renderReview();
 }
 function deleteObject(){
   if(!selectedObject()||drag)return;
-  rememberEdit();
-  objects=objects.filter(o=>o.id!==selectedId);
+  rememberEdit();objects=objects.filter(o=>o.id!==selectedId);
   selectedId=null;renderReview();
-}
-function buildStickers(){
-  for(const d of stickerDefinitions){
-    const b=document.createElement("button");
-    b.className="sticker-btn";
-    const src=stickerMap.get(d.key);
-    const c=document.createElement("canvas");c.width=src.width;c.height=src.height;
-    c.getContext("2d").drawImage(src,0,0);
-    const label=document.createElement("span");label.textContent=d.name;
-    b.append(c,label);b.onclick=()=>addSticker(d.key);
-    $("stickerPanel").appendChild(b);
-  }
 }
 
 /* ---------- 手指拖移 ---------- */
-
 function canvasPoint(e){
   const r=screen.getBoundingClientRect();
-  return {
-    x:(e.clientX-r.left)/r.width*W,
-    y:(e.clientY-r.top)/r.height*H
-  };
+  return {x:(e.clientX-r.left)/r.width*W,y:(e.clientY-r.top)/r.height*H};
 }
 screen.addEventListener("pointerdown",e=>{
   if(!review||drag)return;
-  const p=canvasPoint(e);
-  let hit=null;
+  const p=canvasPoint(e);let hit=null;
   for(let i=objects.length-1;i>=0;i--){
     const r=objectRect(objects[i]);
-    // 額外幾個像素的命中範圍，手機比較容易點。
-    if(p.x>=r.x-3&&p.x<=r.x+r.w+3&&
-       p.y>=r.y-3&&p.y<=r.y+r.h+3){
+    if(p.x>=r.x-3&&p.x<=r.x+r.w+3&&p.y>=r.y-3&&p.y<=r.y+r.h+3){
       hit=objects[i];break;
     }
   }
-  selectedId=hit?.id??null;
-  renderReview();
+  selectedId=hit?.id??null;renderReview(false);
   if(!hit)return;
-  e.preventDefault();
-  screen.setPointerCapture(e.pointerId);
+  e.preventDefault();screen.setPointerCapture(e.pointerId);
   drag={
     pointer:e.pointerId,id:hit.id,
     dx:p.x-hit.x,dy:p.y-hit.y,
-    startX:hit.x,startY:hit.y,
-    before:editSnapshot()
+    startX:hit.x,startY:hit.y,before:snapshot()
   };
 });
 screen.addEventListener("pointermove",e=>{
@@ -1244,21 +1283,14 @@ screen.addEventListener("pointermove",e=>{
   e.preventDefault();
   const p=canvasPoint(e),o=objects.find(o=>o.id===drag.id);
   if(!o)return;
-  const r=objectRect(o);
-  o.x=Math.round(clamp(p.x-drag.dx,r.w/2,W-r.w/2));
-  o.y=Math.round(clamp(p.y-drag.dy,r.h/2,H-r.h/2));
-  renderReview();
+  o.x=Math.round(p.x-drag.dx);o.y=Math.round(p.y-drag.dy);
+  keepInside(o);renderReview();
 });
 function endDrag(e){
   if(!drag||drag.pointer!==e.pointerId)return;
-  const old=drag,o=objects.find(o=>o.id===old.id);
-  drag=null;
-  if(o&&(o.x!==old.startX||o.y!==old.startY)){
-    rememberEdit(old.before);
-  }
-  if(screen.hasPointerCapture(e.pointerId)){
-    screen.releasePointerCapture(e.pointerId);
-  }
+  const old=drag,o=objects.find(o=>o.id===old.id);drag=null;
+  if(o&&(o.x!==old.startX||o.y!==old.startY))rememberEdit(old.before);
+  if(screen.hasPointerCapture(e.pointerId))screen.releasePointerCapture(e.pointerId);
 }
 screen.addEventListener("pointerup",endDrag);
 screen.addEventListener("pointercancel",endDrag);
@@ -1266,130 +1298,189 @@ screen.addEventListener("lostpointercapture",e=>{
   if(drag?.pointer===e.pointerId)endDrag(e);
 });
 
-/* ---------- PNG 保存／分享 ---------- */
-
+/* ---------- PNG 與預先產生分享檔 ---------- */
 function outputCanvas(scale){
-  const small=document.createElement("canvas");
-  small.width=W;small.height=H;compose(small.getContext("2d"));
+  const small=canvas(W,H);compose(small.getContext("2d"));
   if(scale===1)return small;
-  const c=document.createElement("canvas");c.width=W*scale;c.height=H*scale;
-  const cc=c.getContext("2d");cc.imageSmoothingEnabled=false;
-  cc.drawImage(small,0,0,c.width,c.height);
-  return c;
+  const out=canvas(W*scale,H*scale),cc=out.getContext("2d");
+  cc.imageSmoothingEnabled=false;
+  cc.drawImage(small,0,0,out.width,out.height);
+  return out;
 }
 function pngBlob(scale){
   return new Promise((resolve,reject)=>{
-    outputCanvas(scale).toBlob(
-      blob=>blob?resolve(blob):reject(new Error("PNG 產生失敗")),
-      "image/png"
+    outputCanvas(scale).toBlob(b=>
+      b?resolve(b):reject(new Error("PNG 產生失敗")),"image/png"
     );
   });
 }
 function filename(){
-  const d=new Date();
-  const part=[d.getHours(),d.getMinutes(),d.getSeconds()]
-    .map(n=>String(n).padStart(2,"0")).join("");
-  return "pocket-weirdo-"+part+".png";
+  return "pocket-weirdo-"+new Date().toISOString()
+    .replace(/[:.]/g,"-")+".png";
 }
-function downloadBlob(blob,name){
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");
+function invalidateExport(){
+  exportVersion++;clearTimeout(exportTimer);exportCache=null;
+  $("shareBtn").disabled=true;$("shareBtn").textContent="準備分享…";
+}
+function queueExport(){
+  invalidateExport();
+  const version=exportVersion;
+  exportTimer=setTimeout(async()=>{
+    try{
+      const blob=await pngBlob(4);
+      if(!review||version!==exportVersion)return;
+      const file=typeof File==="function"
+        ?new File([blob],filename(),{type:"image/png"}):null;
+      exportCache={blob,file,version};
+      $("shareBtn").disabled=false;$("shareBtn").textContent="分享";
+    }catch(e){
+      console.warn(e);
+      if(version===exportVersion){
+        $("shareBtn").textContent="請用保存";
+      }
+    }
+  },180);
+}
+function download(blob,name){
+  const url=URL.createObjectURL(blob),a=document.createElement("a");
   a.href=url;a.download=name;document.body.appendChild(a);
   a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),30000);
 }
-async function savePNG(scale=4){
-  if(!review)return;
+async function savePNG(scale){
+  if(!review||drag)return;
   try{
-    const blob=await pngBlob(scale);
-    downloadBlob(blob,filename());
-    message(scale===1
-      ?"已送出原始像素 PNG 下載。"
-      :"已送出 4 倍 PNG 下載。如果沒出現，可用「開圖／長按保存」。");
-  }catch(error){alert(error.message)}
-}
-async function sharePNG(){
-  if(!review)return;
-  $("shareBtn").disabled=true;
-  try{
-    const blob=await pngBlob(4);
-    const file=new File([blob],filename(),{type:"image/png"});
-    if(navigator.canShare?.({files:[file]})&&navigator.share){
-      await navigator.share({files:[file]});
-      message("低解析度生物已交給分享選單。");
-    }else{
-      await viewImage();
-      message("這個瀏覽器不支援圖片分享，可以長按圖片或下載 PNG。");
-    }
-  }catch(error){
-    if(error.name!=="AbortError"){
-      console.warn(error);
-      message("分享沒有成功，可以改用保存 PNG 或開圖長按。");
-    }
-  }finally{$("shareBtn").disabled=false}
+    const blob=scale===4&&exportCache
+      ?exportCache.blob:await pngBlob(scale);
+    download(blob,filename());
+    message("已送出 PNG 下載。若沒出現，可用「開圖／長按保存」。");
+  }catch(e){alert(e.message)}
 }
 function revokeImageURL(){
   if(imageURL){URL.revokeObjectURL(imageURL);imageURL=null}
   $("savedImage").removeAttribute("src");
 }
+function showImageBlob(blob){
+  revokeImageURL();imageURL=URL.createObjectURL(blob);
+  $("savedImage").src=imageURL;
+  if(!$("imageDialog").open)$("imageDialog").showModal();
+}
 async function viewImage(){
-  if(!review)return;
+  if(!review||drag)return;
   try{
-    const blob=await pngBlob(4);
-    revokeImageURL();imageURL=URL.createObjectURL(blob);
-    $("savedImage").src=imageURL;
-    if(!$("imageDialog").open)$("imageDialog").showModal();
-  }catch(error){alert(error.message)}
+    const blob=exportCache?.blob||await pngBlob(4);
+    if(review)showImageBlob(blob);
+  }catch(e){alert(e.message)}
+}
+function sharePNG(){
+  if(!review||drag||!exportCache)return;
+  const {file,blob}=exportCache;
+  // 直接在點擊事件內呼叫分享，避免 await 編碼後失去使用者啟動狀態。
+  if(file&&navigator.share&&navigator.canShare?.({files:[file]})){
+    $("shareBtn").disabled=true;
+    navigator.share({files:[file]}).then(()=>{
+      message("低解析度生物已交給分享選單。");
+    }).catch(e=>{
+      if(e.name!=="AbortError"){
+        message("分享沒成功，請改用保存 PNG 或開圖長按。");
+      }
+    }).finally(()=>{
+      $("shareBtn").disabled=!exportCache;
+    });
+  }else{
+    showImageBlob(blob);
+    message("此瀏覽器不支援圖片分享，可長按圖片或下載 PNG。");
+  }
 }
 
-/* ---------- 按鈕事件 ---------- */
+/* ---------- 建立工具按鈕 ---------- */
+function buildStyleButtons(){
+  palettes.forEach((p,i)=>{
+    const b=document.createElement("button");b.className="choice";
+    const c=canvas(36,24),cc=c.getContext("2d");
+    p.colors.forEach((color,j)=>{
+      cc.fillStyle=color;cc.fillRect(j*9,0,9,24);
+    });
+    cc.fillStyle=p.colors[0];
+    cc.fillRect(10,7,3,3);cc.fillRect(22,7,3,3);cc.fillRect(14,16,9,2);
+    const label=document.createElement("span");label.textContent=p.name;
+    b.append(c,label);b.onclick=()=>useProfile(i);
+    $("styleStrip").appendChild(b);
+  });
+}
+function buildFrameButtons(){
+  // 縮圖自成一份，不影響目前相機的 W/H。
+  frameDefs.forEach(d=>{
+    const b=document.createElement("button");
+    b.className="choice";b.dataset.frame=d.key;
+    const c=canvas(54,36),cc=c.getContext("2d");
+    cc.fillStyle="#9bac65";cc.fillRect(0,0,54,36);
+    cc.fillStyle="#526b3b";cc.fillRect(18,7,18,23);
+    cc.fillStyle="#d9e6a1";cc.fillRect(21,12,3,3);cc.fillRect(30,12,3,3);
+    if(d.key!=="none"){
+      cc.strokeStyle="#20382b";cc.lineWidth=2;cc.strokeRect(1,1,52,34);
+      cc.fillStyle=d.key==="sighting"?"#20382b":"#d9e6a1";
+      cc.fillRect(0,0,54,5);cc.fillRect(0,31,54,5);
+    }
+    const label=document.createElement("span");label.textContent=d.name;
+    b.append(c,label);
+    b.onclick=()=>{
+      if(!review||drag||frameStyle===d.key)return;
+      rememberEdit();frameStyle=d.key;
+      renderReview();renderFrameSelection();
+    };
+    $("framePanel").appendChild(b);
+  });
+}
+function buildStickerButtons(){
+  stickerDefs.forEach(d=>{
+    const b=document.createElement("button");b.className="sticker-btn";
+    const img=stickerMap.get(d.key),c=canvas(img.width,img.height);
+    c.getContext("2d").drawImage(img,0,0);
+    const label=document.createElement("span");label.textContent=d.name;
+    b.append(c,label);b.onclick=()=>addSticker(d.key);
+    $("stickerPanel").appendChild(b);
+  });
+}
 
+/* ---------- 事件 ---------- */
 $("startBtn").onclick=startCamera;
-$("flipBtn").onclick=async()=>{
-  if(review||cameraStarting||counting||importing)return;
+$("flipBtn").onclick=()=>{
+  if(previewLocked())return;
   facing=facing==="user"?"environment":"user";
-  mirror=facing==="user";
-  $("mirrorBtn").classList.toggle("active",mirror);
-  $("mirrorBtn").textContent=mirror?"自拍鏡像 ✓":"自拍鏡像";
-  await startCamera();
+  mirror=facing==="user";startCamera();
 };
 $("mirrorBtn").onclick=()=>{
-  if(counting||importing)return;
-  mirror=!mirror;
-  $("mirrorBtn").classList.toggle("active",mirror);
-  $("mirrorBtn").textContent=mirror?"自拍鏡像 ✓":"自拍鏡像";
-  refreshLive();
+  if(previewLocked()||sourceImage)return;
+  mirror=!mirror;refreshPreview();updateUI();
 };
-$("diceBtn").onclick=dice;
-$("previousStyleBtn").onclick=previousStyle;
+$("sizeBtn").onclick=cycleSize;$("tonesBtn").onclick=cycleTones;
+$("diceBtn").onclick=dice;$("previousStyleBtn").onclick=previousConfig;
+$("smoothPresetBtn").onclick=smoothPreset;$("resetBtn").onclick=resetProfile;
+$("matrixBtn").onclick=()=>{
+  if(previewLocked())return;
+  rememberConfig();
+  const options=[2,4,8];
+  config.matrix=options[(options.indexOf(config.matrix)+1)%options.length];
+  syncSettings();refreshPreview();
+};
+bindRange("brightness","brightness");
+bindRange("darkPoint","dark");bindRange("lightPoint","light");
+bindRange("smooth","smooth");bindRange("dither","dither");
+
 $("timerBtn").onclick=()=>{
-  if(counting)return;
+  if(previewLocked())return;
   timerEnabled=!timerEnabled;
   $("timerBtn").classList.toggle("active",timerEnabled);
-  $("timerLabel").textContent=timerEnabled?"倒數 3 秒":"倒數關閉";
   $("timerBtn").setAttribute("aria-pressed",timerEnabled?"true":"false");
+  $("timerLabel").textContent=timerEnabled?"倒數 3 秒":"倒數關閉";
 };
 $("shutter").onclick=takePhoto;
-$("brightness").oninput=e=>{
-  if(review||counting||importing)return;
-  brightness=Number(e.target.value);refreshLive();
-};
-$("resetBrightness").onclick=()=>{
-  if(counting||importing)return;
-  brightness=0;$("brightness").value=0;refreshLive();
-};
-function chooseFile(){
-  if(counting||cameraStarting||importing)return;
-  $("fileInput").click();
-}
-$("importBtn").onclick=chooseFile;
-$("startImportBtn").onclick=chooseFile;
+$("importBtn").onclick=chooseFile;$("startImportBtn").onclick=chooseFile;
 $("fileInput").onchange=e=>{
-  const file=e.target.files[0];e.target.value="";
-  importPhoto(file);
+  const file=e.target.files[0];e.target.value="";importPhoto(file);
 };
-$("retakeBtn").onclick=retake;
-$("undoBtn").onclick=undoEdit;
+$("retakeBtn").onclick=retake;$("undoBtn").onclick=undoEdit;
 document.querySelectorAll("[data-tab]").forEach(b=>{
   b.onclick=()=>selectTab(b.dataset.tab);
 });
@@ -1400,39 +1491,26 @@ $("textInput").onkeydown=e=>{
 $("smallerBtn").onclick=()=>scaleObject(.8);
 $("largerBtn").onclick=()=>scaleObject(1.25);
 $("deleteObjectBtn").onclick=deleteObject;
-$("deselectBtn").onclick=()=>{selectedId=null;renderReview()};
+$("deselectBtn").onclick=()=>{selectedId=null;renderReview(false)};
 $("saveBtn").onclick=()=>savePNG(4);
 $("originalBtn").onclick=()=>savePNG(1);
-$("shareBtn").onclick=sharePNG;
-$("viewImageBtn").onclick=viewImage;
+$("shareBtn").onclick=sharePNG;$("viewImageBtn").onclick=viewImage;
 $("closeImage").onclick=()=>$("imageDialog").close();
 $("imageDialog").addEventListener("close",revokeImageURL);
-$("helpBtn").onclick=()=>{
-  cancelCountdown();$("helpDialog").showModal();
-};
+$("helpBtn").onclick=()=>{cancelCountdown();$("helpDialog").showModal()};
 $("closeHelp").onclick=()=>$("helpDialog").close();
 
 window.addEventListener("keydown",e=>{
-  if(["INPUT","TEXTAREA","SELECT"].includes(e.target.tagName)||
-     $("helpDialog").open||$("imageDialog").open)return;
-  if(e.code==="Space"&&!review){
-    e.preventDefault();takePhoto();
-  }else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"&&review){
+  if(["INPUT","TEXTAREA","SELECT","BUTTON","SUMMARY"].includes(e.target.tagName)||
+    $("helpDialog").open||$("imageDialog").open)return;
+  if(e.code==="Space"&&!review){e.preventDefault();takePhoto()}
+  else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"&&review){
     e.preventDefault();undoEdit();
-  }else if(e.key==="Delete"&&review){
-    deleteObject();
-  }
+  }else if(e.key==="Delete"&&review){deleteObject()}
 });
 
-/* ---------- 初始化 ---------- */
-
-buildStyleStrip();
-buildFramePanel();
-buildStickers();
-drawStandby();
-updateCameraUI();
-requestAnimationFrame(animationLoop);
-
+buildStyleButtons();buildFrameButtons();buildStickerButtons();
+syncSettings();standby();requestAnimationFrame(loop);
 if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia){
   $("startDescription").textContent=
     "這個開啟方式可能無法使用相機。請放上 HTTPS 網站，或先匯入照片玩。";
