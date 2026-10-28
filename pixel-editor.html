@@ -109,6 +109,7 @@ h3 {
   gap: 8px;
   margin: 8px 0;
 }
+.row[hidden] { display: none; }
 .small { font-size: 12px; color: var(--muted); }
 #hex { width: 108px; }
 #palette {
@@ -144,6 +145,10 @@ h3 {
   overflow: auto;
   background: #111518;
   overscroll-behavior: contain;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 #wrap { width: max-content; padding: 24px; }
 #stage { position: relative; box-shadow: 0 0 0 1px #52605a, 0 10px 30px #0006; }
@@ -345,6 +350,12 @@ kbd {
           吸色後返回上一工具
         </label>
       </div>
+      <div class="row" id="penOnlyRow" hidden>
+        <label>
+          <input type="checkbox" id="penOnly" checked>
+          只用觸控筆畫，手指平移縮放
+        </label>
+      </div>
       <div class="row">
         <button id="undoBtn">復原</button>
         <button id="redoBtn">重做</button>
@@ -352,7 +363,7 @@ kbd {
       <div class="small">
         填色採四方向、精確 RGBA 比對。<br>
         橡皮擦產生完全透明像素，不產生柔邊。<br>
-        Alt＋點擊：暫時吸色，不切換工具。
+        Alt＋點擊（觸控：長按）：暫時吸色，不切換工具。
       </div>
     </section>
 
@@ -453,7 +464,10 @@ kbd {
       <kbd>Ctrl / ⌘ Shift Z</kbd> 重做<br>
       <kbd>Ctrl / ⌘ S</kbd> 儲存專案<br>
       空白＋拖曳／中鍵拖曳：平移<br>
-      Ctrl / ⌘＋滾輪：縮放
+      Ctrl / ⌘＋滾輪：縮放<br>
+      觸控：兩指捏合縮放、拖曳平移<br>
+      兩指輕點復原 · 三指輕點重做<br>
+      長按吸色，按住拖曳可換色
     </section>
   </aside>
 
@@ -1067,59 +1081,64 @@ function floodFill(x, y, replacement) {
   return true;
 }
 
-canvas.addEventListener("pointerdown", event => {
-  if (gesture || (event.button !== 0 && event.button !== 1)) return;
-  event.preventDefault();
-  canvas.setPointerCapture(event.pointerId);
+/* ---------- 指標輸入：滑鼠、觸控筆、觸控 ---------- */
+// 觸控：單指在畫布上作畫、在畫布外平移；第二指放下時撤銷這一筆，改為捏合縮放＋平移。
+// 兩指輕點復原、三指輕點重做；長按吸色（拖曳可即時換色）。
+// 填色與吸色工具在手指離開時才執行，避免捏合開頭先誤觸一次。
+// 用過觸控筆後可設為「只有筆能畫」，手指一律平移縮放。
 
-  if (spaceDown || event.button === 1) {
-    gesture = {
-      type: "pan", id: event.pointerId,
-      clientX: event.clientX, clientY: event.clientY,
-      left: viewport.scrollLeft, top: viewport.scrollTop
-    };
-    canvas.style.cursor = "grabbing";
-    return;
-  }
+const touches = new Map();      // pointerId → { x, y, startX, startY }
+let touchSession = null;        // 第一指放下到全部離開
+let pinch = null;
+let longPressTimer = 0;
+let penSeen = false;
+let penNotice = false;
 
-  const p = point(event);
-  if (!inBounds(p.x, p.y)) return;
+const TAP_MAX_MS = 400;
+const TAP_SLOP = 10;
+const LONG_PRESS_MS = 500;
+const PINCH_HYSTERESIS = 0.08;
 
-  const temporaryPicker = event.altKey;
-  const activeTool = temporaryPicker ? "picker" : tool;
-
-  if (activeTool === "picker") {
-    const success = pick(p.x, p.y);
-    if (success && !temporaryPicker && $("pickerReturn").checked) {
-      selectTool(previousDrawTool);
-    }
-    return;
-  }
-
-  if (activeTool === "fill") {
-    const before = snapshot();
-    if (floodFill(p.x, p.y, rgb(currentColor))) {
-      remember(before);
-      draw();
-      inspect();
-    }
-    return;
-  }
-
+function startPan(event) {
   gesture = {
-    type: activeTool,
+    type: "pan", id: event.pointerId,
+    clientX: event.clientX, clientY: event.clientY,
+    left: viewport.scrollLeft, top: viewport.scrollTop
+  };
+  canvas.style.cursor = "grabbing";
+}
+
+function startStroke(event, type, p) {
+  gesture = {
+    type,
     id: event.pointerId,
     start: p,
     last: p,
     before: snapshot(),
     size: Number($("brush").value),
-    color: activeTool === "eraser" ? [0, 0, 0, 0] : rgb(currentColor)
+    color: type === "eraser" ? [0, 0, 0, 0] : rgb(currentColor)
   };
   stamp(p.x, p.y, gesture.color, gesture.size);
   draw();
-});
+}
 
-canvas.addEventListener("pointermove", event => {
+function pickAt(p, temporary) {
+  const success = pick(p.x, p.y);
+  if (success && !temporary && $("pickerReturn").checked) {
+    selectTool(previousDrawTool);
+  }
+}
+
+function fillAt(p) {
+  const before = snapshot();
+  if (floodFill(p.x, p.y, rgb(currentColor))) {
+    remember(before);
+    draw();
+    inspect();
+  }
+}
+
+function moveGesture(event) {
   if (!gesture || event.pointerId !== gesture.id) return;
   if (gesture.type === "pan") {
     viewport.scrollLeft =
@@ -1131,6 +1150,18 @@ canvas.addEventListener("pointermove", event => {
 
   // 不夾回畫布範圍：拖出畫布的部分由 putPixel 略過，避免沿邊緣畫出一整條
   const p = point(event);
+
+  if (gesture.type === "tap") {
+    gesture.last = p;
+    return;
+  }
+  if (gesture.type === "pick") {
+    if (p.x !== gesture.last.x || p.y !== gesture.last.y) {
+      gesture.last = p;
+      pick(p.x, p.y);
+    }
+    return;
+  }
 
   if (gesture.type === "line") {
     pixels.set(gesture.before.pixels);
@@ -1147,13 +1178,13 @@ canvas.addEventListener("pointermove", event => {
 
   gesture.last = p;
   draw();
-});
+}
 
 function finishGesture() {
   if (!gesture) return;
   const g = gesture;
   gesture = null;
-  if (g.type !== "pan") {
+  if (g.before) {
     let changed = false;
     for (let i = 0; i < pixels.length; i++) {
       if (pixels[i] !== g.before.pixels[i]) {
@@ -1167,20 +1198,213 @@ function finishGesture() {
   inspect();
 }
 
-function endGesture(event) {
-  if (gesture && event.pointerId === gesture.id) finishGesture();
+/* 觸控 */
+
+function penOnly() {
+  return penSeen && $("penOnly").checked;
 }
 
-canvas.addEventListener("pointerup", endGesture);
-canvas.addEventListener("pointercancel", endGesture);
-canvas.addEventListener("lostpointercapture", endGesture);
-canvas.addEventListener("contextmenu", e => e.preventDefault());
+function cancelTouchGesture() {
+  clearTimeout(longPressTimer);
+  if (!gesture) return;
+  if (gesture.before) {
+    pixels.set(gesture.before.pixels);
+    draw();
+  }
+  gesture = null;
+  canvas.style.cursor = "crosshair";
+}
 
-function changeZoom(direction, clientX, clientY) {
-  if (gesture) return;
+function startLongPressPick() {
+  if (!gesture || !gesture.before) return;
+  // 撤銷長按期間畫下的點，改為吸色
+  pixels.set(gesture.before.pixels);
+  draw();
+  gesture = { type: "pick", id: gesture.id, last: gesture.last };
+  pick(gesture.last.x, gesture.last.y);
+}
+
+function touchStart(event) {
+  const p = point(event);
+  if (event.target !== canvas || !inBounds(p.x, p.y) || penOnly()) {
+    startPan(event);
+    return;
+  }
+  if (tool === "picker" || tool === "fill") {
+    gesture = { type: "tap", id: event.pointerId, last: p };
+    return;
+  }
+  startStroke(event, tool, p);
+  longPressTimer = setTimeout(startLongPressPick, LONG_PRESS_MS);
+}
+
+function touchPair() {
+  const [a, b] = touches.values();
+  return {
+    distance: Math.hypot(a.x - b.x, a.y - b.y) || 1,
+    x: (a.x + b.x) / 2,
+    y: (a.y + b.y) / 2
+  };
+}
+
+function startPinch() {
+  const pair = touchPair();
+  pinch = { distance: pair.distance, zoom, x: pair.x, y: pair.y };
+}
+
+function nearestZoomStep(value) {
+  const gap = step => Math.abs(Math.log(step / value));
+  return ZOOM_STEPS.reduce((best, step) => gap(step) < gap(best) ? step : best);
+}
+
+function updatePinch() {
+  const pair = touchPair();
+  const target = pinch.zoom * pair.distance / pinch.distance;
+  const next = nearestZoomStep(target);
+  // 遲滯：手指停在兩級之間時不要來回跳
+  if (next !== zoom &&
+      Math.abs(Math.log(next / target)) + PINCH_HYSTERESIS <
+      Math.abs(Math.log(zoom / target))) {
+    setZoom(next, pair.x, pair.y);
+    touchSession.moved = true;
+  }
+  viewport.scrollLeft -= pair.x - pinch.x;
+  viewport.scrollTop -= pair.y - pinch.y;
+  pinch.x = pair.x;
+  pinch.y = pair.y;
+}
+
+function touchDown(event) {
+  // 觸控筆或滑鼠作畫中，忽略手掌觸碰
+  if (gesture && !touches.has(gesture.id)) return;
+  event.preventDefault();
+  viewport.setPointerCapture(event.pointerId);
+  touches.set(event.pointerId, {
+    x: event.clientX, y: event.clientY,
+    startX: event.clientX, startY: event.clientY
+  });
+
+  if (touches.size === 1) {
+    touchSession = { start: performance.now(), maxTouches: 1, moved: false };
+    touchStart(event);
+    return;
+  }
+  touchSession.maxTouches = Math.max(touchSession.maxTouches, touches.size);
+  cancelTouchGesture();
+  if (touches.size === 2) startPinch();
+}
+
+function touchMove(event) {
+  const t = touches.get(event.pointerId);
+  if (!t) return;
+  t.x = event.clientX;
+  t.y = event.clientY;
+  if (Math.hypot(t.x - t.startX, t.y - t.startY) > TAP_SLOP) {
+    touchSession.moved = true;
+    clearTimeout(longPressTimer);
+  }
+  if (pinch) updatePinch();
+  else moveGesture(event);
+}
+
+function touchUp(event) {
+  if (!touches.has(event.pointerId)) return;
+  touches.delete(event.pointerId);
+  clearTimeout(longPressTimer);
+  if (event.type === "pointercancel") touchSession.moved = true;
+
+  if (gesture && event.pointerId === gesture.id) {
+    const g = gesture;
+    finishGesture();
+    if (g.type === "tap" && event.type === "pointerup" &&
+        inBounds(g.last.x, g.last.y)) {
+      tool === "picker" ? pickAt(g.last, false) : fillAt(g.last);
+    }
+  }
+
+  // 剩下的手指不接續作畫，等全部離開才重新開始
+  if (touches.size >= 2) startPinch();
+  else pinch = null;
+  if (touches.size) return;
+
+  const s = touchSession;
+  touchSession = null;
+  if (s.moved || performance.now() - s.start > TAP_MAX_MS) return;
+  if (s.maxTouches === 2 && past.length) {
+    undo();
+    inspect("兩指輕點：已復原");
+  } else if (s.maxTouches === 3 && future.length) {
+    redo();
+    inspect("三指輕點：已重做");
+  }
+}
+
+function resetTouches() {
+  touches.clear();
+  pinch = null;
+  touchSession = null;
+  clearTimeout(longPressTimer);
+}
+
+/* 事件 */
+
+viewport.addEventListener("pointerdown", event => {
+  if (event.pointerType === "touch") {
+    touchDown(event);
+    return;
+  }
+  if (event.pointerType === "pen" && !penSeen) {
+    penSeen = true;
+    $("penOnlyRow").hidden = false;
+    penNotice = $("penOnly").checked;
+  }
+  if (gesture || (event.button !== 0 && event.button !== 1)) return;
+  const pan = spaceDown || event.button === 1;
+  if (!pan && event.target !== canvas) return;
+  event.preventDefault();
+  viewport.setPointerCapture(event.pointerId);
+
+  if (pan) {
+    startPan(event);
+    return;
+  }
+
+  const p = point(event);
+  if (!inBounds(p.x, p.y)) return;
+
+  const temporaryPicker = event.altKey;
+  const activeTool = temporaryPicker ? "picker" : tool;
+
+  if (activeTool === "picker") pickAt(p, temporaryPicker);
+  else if (activeTool === "fill") fillAt(p);
+  else startStroke(event, activeTool, p);
+});
+
+viewport.addEventListener("pointermove", event => {
+  if (event.pointerType === "touch") touchMove(event);
+  else moveGesture(event);
+});
+
+function endPointer(event) {
+  if (event.pointerType === "touch") {
+    touchUp(event);
+    return;
+  }
+  if (gesture && event.pointerId === gesture.id) finishGesture();
+  // 第一筆結束後才提示，免得被 finishGesture 的狀態列蓋掉
+  if (penNotice && event.type === "pointerup") {
+    penNotice = false;
+    inspect("偵測到觸控筆：手指改為平移縮放，可在「工具」區關閉");
+  }
+}
+
+viewport.addEventListener("pointerup", endPointer);
+viewport.addEventListener("pointercancel", endPointer);
+viewport.addEventListener("lostpointercapture", endPointer);
+viewport.addEventListener("contextmenu", e => e.preventDefault());
+
+function setZoom(next, clientX, clientY) {
   const old = zoom;
-  const index = ZOOM_STEPS.indexOf(old) + direction;
-  const next = ZOOM_STEPS[Math.max(0, Math.min(ZOOM_STEPS.length - 1, index))];
   if (next === old) return;
 
   const vr = viewport.getBoundingClientRect();
@@ -1194,6 +1418,15 @@ function changeZoom(direction, clientX, clientY) {
   updateView();
   viewport.scrollLeft += logicalX * (next - old);
   viewport.scrollTop += logicalY * (next - old);
+}
+
+function changeZoom(direction, clientX, clientY) {
+  if (gesture) return;
+  const index = ZOOM_STEPS.indexOf(zoom) + direction;
+  setZoom(
+    ZOOM_STEPS[Math.max(0, Math.min(ZOOM_STEPS.length - 1, index))],
+    clientX, clientY
+  );
 }
 
 viewport.addEventListener("wheel", event => {
@@ -2645,6 +2878,7 @@ window.addEventListener("keyup", event => {
 window.addEventListener("blur", () => {
   spaceDown = false;
   finishGesture();
+  resetTouches();
   canvas.style.cursor = "crosshair";
 });
 
@@ -2659,7 +2893,7 @@ const AUTOSAVE_DELAY = 500;
 const AUTOSAVE_SETTINGS = {
   brush: "value", pickerReturn: "checked", gridToggle: "checked",
   exportScale: "value", viewChecker: "checked", viewLcd: "checked",
-  colorLimit: "value"
+  colorLimit: "value", penOnly: "checked"
 };
 let autosaveDb = null;
 let autosaveReady = false;  // 還原完成前不寫入，避免空白畫布蓋掉舊存檔
