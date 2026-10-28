@@ -184,6 +184,9 @@ dialog input[type=number] { width:90px; }
   display:flex; justify-content:flex-end; flex-wrap:wrap;
   gap:7px; margin-top:18px;
 }
+#askMessage { white-space:pre-line; }
+#askInput { width:100%; box-sizing:border-box; }
+#layerCount { color:var(--muted); font-weight:normal; }
 #busy {
   position:fixed; inset:0; background:#0009;
   display:none; place-items:center; z-index:100;
@@ -329,7 +332,7 @@ dialog input[type=number] { width:90px; }
   <button id="loadBtn">載入專案</button>
   <button id="saveBtn">保存專案</button>
   <button id="exportBtn">輸出 PNG</button>
-  <button id="draftBtn">恢復草稿</button>
+  <button id="draftBtn">上一件作品</button>
   <button id="helpBtn">說明</button>
 </header>
 
@@ -516,7 +519,7 @@ dialog input[type=number] { width:90px; }
     </section>
 
     <section>
-      <h3>圖層</h3>
+      <h3>圖層 <span id="layerCount"></span></h3>
       <div class="row">
         <button id="addLayer">＋</button>
         <button id="duplicateLayer">複製</button>
@@ -578,7 +581,7 @@ dialog input[type=number] { width:90px; }
   <button data-proxy="loadBtn">載入專案</button>
   <button data-proxy="saveBtn">保存專案</button>
   <button data-proxy="exportBtn">輸出 PNG</button>
-  <button data-proxy="draftBtn">恢復草稿</button>
+  <button data-proxy="draftBtn">上一件作品</button>
   <button data-proxy="flipBtn">水平翻轉</button>
   <button data-proxy="helpBtn">說明</button>
 </div>
@@ -605,7 +608,7 @@ dialog input[type=number] { width:90px; }
     建立白色背景圖層
   </label>
   <p class="small">
-    長寬各最多 2048 px，最多 16 個圖層。
+    長寬各最多 2048 px，最多 16 個圖層（手機 8 個）。
     低階電腦建議先使用 1000×700 或更小畫布。<br>
     新建會清除復原歷史，請先保存作品。
   </p>
@@ -613,6 +616,18 @@ dialog input[type=number] { width:90px; }
     <button id="cancelNew">取消</button>
     <button id="confirmNew" class="primary">建立</button>
   </div>
+</dialog>
+
+<dialog id="askDialog">
+  <form method="dialog">
+    <h2 id="askTitle"></h2>
+    <p id="askMessage"></p>
+    <input id="askInput" type="text" maxlength="80" hidden>
+    <div class="dialog-actions">
+      <button id="askCancel" type="button">取消</button>
+      <button id="askOk" value="ok" class="primary">確定</button>
+    </div>
+  </form>
 </dialog>
 
 <dialog id="helpDialog" class="full">
@@ -654,8 +669,9 @@ dialog input[type=number] { width:90px; }
     滑鼠使用固定筆徑。
   </p>
   <p>
-    草稿儲存於本機 IndexedDB。私密模式、file URL 儲存政策、
-    更換檔案位置或清除網站資料可能影響草稿。
+    草稿儲存於本機 IndexedDB，開啟頁面時會自動恢復。
+    建立新畫布、載入專案前，原本的作品會留在「上一件作品」，可以換回來。
+    私密模式、file URL 儲存政策、更換檔案位置或清除網站資料可能影響草稿。
     請另存 JSON 備份。
   </p>
   <p>
@@ -675,9 +691,12 @@ const display = $("display");
 const dctx = display.getContext("2d");
 const scene = $("scene");
 const mobileQuery = matchMedia("(max-width:700px)");
+const phoneQuery = matchMedia(
+  "(max-width:700px), (pointer:coarse) and (max-height:500px)");
 let toastTimer = 0;
 
 const MAX_LAYERS = 16;
+const PHONE_MAX_LAYERS = 8;   // 手機記憶體較少，畫布過多容易讓分頁被系統關掉
 const MAX_SIZE = 2048;
 const HISTORY_CAP = 64 * 1024 * 1024;
 
@@ -702,6 +721,7 @@ let brushCache = new Map();
 let revision = 0, draftTimer = null;
 let draftBusy = false, draftPending = false;
 let databasePromise = null;
+let blankDocument = true;     // 尚未修改的新畫布不值得留成「上一件作品」
 
 function makeCanvas(w,h) {
   const c = document.createElement("canvas");
@@ -750,6 +770,9 @@ function setColor(value) {
 function activeLayer() {
   return layers.find(l => l.id === activeId);
 }
+function layerLimit() {
+  return phoneQuery.matches ? PHONE_MAX_LAYERS : MAX_LAYERS;
+}
 function makeLayer(name) {
   return {
     id:nextId++, name,
@@ -757,6 +780,55 @@ function makeLayer(name) {
     visible:true, opacity:1, alphaLock:false
   };
 }
+
+/* ---------- 頁內對話框 ---------- */
+// 取代 alert／confirm／prompt：系統視窗會卡住繪圖迴圈，手機上也很突兀。
+// 一次只顯示一個，後來的排隊等前一個關閉。
+
+let askQueue = Promise.resolve(), askFinish = null;
+
+function showAsk({title="",message="",ok="確定",cancel="取消",input=null}) {
+  const dialog = $("askDialog"), field = $("askInput");
+  $("askTitle").textContent = title;
+  $("askTitle").hidden = !title;
+  $("askMessage").textContent = message;
+  $("askOk").textContent = ok;
+  $("askCancel").textContent = cancel || "";
+  $("askCancel").hidden = !cancel;
+  field.hidden = input === null;
+  field.value = input ?? "";
+  dialog.showModal();
+  if (input !== null) {
+    field.focus();
+    field.select();
+  }
+  return new Promise(resolve => {
+    askFinish = okay => {
+      askFinish = null;
+      resolve(input === null ? okay : okay ? field.value : null);
+    };
+  });
+}
+// 確認回傳 true／false；有 input 時回傳字串，取消則為 null
+function ask(options) {
+  const result = askQueue.then(() => showAsk(options));
+  askQueue = result.catch(() => {});
+  return result;
+}
+function notify(message,title="") {
+  return ask({title,message,cancel:null});
+}
+// 按鈕與 Esc（cancel）當下就回覆；close 事件是非同步的，只當保險。
+// 若對話框已被下一個詢問重新打開，那就是上一次遲到的事件，略過。
+$("askDialog").querySelector("form").onsubmit = () => askFinish?.(true);
+$("askDialog").oncancel = () => askFinish?.(false);
+$("askCancel").onclick = () => {
+  $("askDialog").close();
+  askFinish?.(false);
+};
+$("askDialog").onclose = () => {
+  if (!$("askDialog").open) askFinish?.(false);
+};
 
 /* ---------- 復原歷史 ---------- */
 
@@ -848,7 +920,9 @@ function patchCommand(layerId,rect,before,after) {
   const apply = image => {
     const layer = layers.find(l => l.id === layerId);
     if (layer) context(layer.canvas).putImageData(image,rect.x,rect.y);
+    touchLayer(layerId);
   };
+  touchLayer(layerId);
   pushCommand({
     bytes:before.data.byteLength+after.data.byteLength,
     undo:() => apply(before),
@@ -1812,15 +1886,16 @@ function renderLayers() {
     $("alphaLock").checked=layer.alphaLock;
   }
   const index=layers.findIndex(l => l.id===activeId);
-  $("addLayer").disabled=layers.length>=MAX_LAYERS;
-  $("duplicateLayer").disabled=layers.length>=MAX_LAYERS;
+  $("layerCount").textContent=layers.length+"／"+layerLimit();
+  $("addLayer").disabled=layers.length>=layerLimit();
+  $("duplicateLayer").disabled=layers.length>=layerLimit();
   $("deleteLayer").disabled=layers.length<=1;
   $("layerUp").disabled=index>=layers.length-1;
   $("layerDown").disabled=index<=0;
   $("mergeLayer").disabled=index<=0;
 }
 $("addLayer").onclick=() => {
-  if (layers.length>=MAX_LAYERS) return;
+  if (layers.length>=layerLimit()) return;
   structuralAction(() => {
     const l=makeLayer("圖層 "+nextId);
     const i=layers.findIndex(x => x.id===activeId);
@@ -1829,7 +1904,7 @@ $("addLayer").onclick=() => {
   },W*H*4);
 };
 $("duplicateLayer").onclick=() => {
-  if (layers.length>=MAX_LAYERS) return;
+  if (layers.length>=layerLimit()) return;
   structuralAction(() => {
     const source=activeLayer();
     const l=makeLayer(source.name+" 副本");
@@ -1850,9 +1925,11 @@ $("deleteLayer").onclick=() => {
     activeId=layers[Math.min(i,layers.length-1)].id;
   },W*H*4);
 };
-$("renameLayer").onclick=() => {
+$("renameLayer").onclick=async () => {
   if (gesture || fileBusy) return;
-  const name=prompt("圖層名稱：",activeLayer().name);
+  const name=await ask({
+    title:"重新命名圖層",input:activeLayer().name,ok:"套用"
+  });
   if (name===null || !name.trim()) return;
   structuralAction(() => {
     activeLayer().name=name.trim().slice(0,80);
@@ -1930,7 +2007,7 @@ $("hex").onchange=event => {
 $("addSwatch").onclick=() => {
   if (swatches.includes(color) || fileBusy) return;
   if (swatches.length>=28) {
-    alert("最多 28 個自訂色票");
+    status("最多 28 個自訂色票");
     return;
   }
   swatches.push(color);
@@ -2037,17 +2114,53 @@ function brushSettingsObject() {
     tailLength:Number($("tailLength").value)
   };
 }
-function projectObject() {
-  return {
+// 每個圖層的 PNG 依內容版本快取：草稿只重新編碼畫過的圖層。
+// 改動圖層像素的地方（筆畫、填色、復原）都經過 patchCommand；
+// 其他操作只會畫在新建的畫布上，新畫布本來就沒有快取。
+const canvasVersions=new WeakMap();
+const encodedLayers=new WeakMap();
+
+function touchLayer(id) {
+  const layer=layers.find(l => l.id===id);
+  if (!layer) return;
+  canvasVersions.set(layer.canvas,(canvasVersions.get(layer.canvas)||0)+1);
+}
+function layerBlob(canvas) {
+  const version=canvasVersions.get(canvas)||0;
+  const cached=encodedLayers.get(canvas);
+  if (cached && cached.version===version) return cached.blob;
+  const blob=new Promise((resolve,reject) => {
+    canvas.toBlob(b => b?resolve(b):reject(new Error("圖層編碼失敗")),
+      "image/png");
+  });
+  encodedLayers.set(canvas,{version,blob});
+  blob.catch(() => {
+    if (encodedLayers.get(canvas)?.blob===blob) encodedLayers.delete(canvas);
+  });
+  return blob;
+}
+// toBlob 在呼叫當下就取得畫面，所以所有圖層先同步送出，再一起等待
+async function projectSnapshot() {
+  const meta={
     format:"light-paint",version:1,
-    width:W,height:H,activeId,color,swatches,
-    brushSettings:brushSettingsObject(),
-    layers:layers.map(l => ({
-      id:l.id,name:l.name,visible:l.visible,
-      opacity:l.opacity,alphaLock:l.alphaLock,
-      image:l.canvas.toDataURL("image/png")
-    }))
+    width:W,height:H,activeId,color,swatches:[...swatches],
+    brushSettings:brushSettingsObject()
   };
+  const list=layers.map(l => ({
+    id:l.id,name:l.name,visible:l.visible,
+    opacity:l.opacity,alphaLock:l.alphaLock
+  }));
+  const blobs=await Promise.all(layers.map(l => layerBlob(l.canvas)));
+  list.forEach((entry,i) => entry.blob=blobs[i]);
+  return {...meta,layers:list};
+}
+function blobToDataURL(blob) {
+  return new Promise((resolve,reject) => {
+    const reader=new FileReader();
+    reader.onload=() => resolve(reader.result);
+    reader.onerror=() => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
 }
 function restoreBrushSettings(s) {
   if (!s || typeof s!=="object") return;
@@ -2092,18 +2205,18 @@ function download(blob,name) {
   setTimeout(() => URL.revokeObjectURL(url),30000);
 }
 function saveProject() {
-  if (fileBusy) return;
-  settle();
-  try {
+  runFileTask(async () => {
+    const p=await projectSnapshot();
+    for (const entry of p.layers) {
+      entry.image=await blobToDataURL(entry.blob);
+      delete entry.blob;
+    }
     download(
-      new Blob([JSON.stringify(projectObject())],
-        {type:"application/json"}),
+      new Blob([JSON.stringify(p)],{type:"application/json"}),
       `light-paint-${W}x${H}.json`
     );
     status("專案已匯出；請保留 JSON 作為備份");
-  } catch (error) {
-    alert("保存失敗："+error.message);
-  }
+  });
 }
 function loadImage(src) {
   return new Promise((resolve,reject) => {
@@ -2135,8 +2248,10 @@ async function applyProject(p) {
   const loaded=[];
   const ids=new Set();
   for (const entry of p.layers) {
-    if (!entry || typeof entry.image!=="string" ||
-        !entry.image.startsWith("data:image/png;base64,") ||
+    // JSON 專案用 data URL；本機草稿直接存 PNG Blob
+    const fromBlob=entry?.blob instanceof Blob;
+    if (!entry || (!fromBlob && (typeof entry.image!=="string" ||
+        !entry.image.startsWith("data:image/png;base64,"))) ||
         !Number.isSafeInteger(entry.id) || entry.id<1 ||
         entry.id>1000000000 || ids.has(entry.id) ||
         typeof entry.opacity!=="number" ||
@@ -2144,12 +2259,21 @@ async function applyProject(p) {
       throw new Error("圖層資料不完整");
     }
     ids.add(entry.id);
-    const image=await loadImage(entry.image);
+    const url=fromBlob?URL.createObjectURL(entry.blob):entry.image;
+    let image;
+    try {
+      image=await loadImage(url);
+    } finally {
+      if (fromBlob) URL.revokeObjectURL(url);
+    }
     if (image.width!==p.width || image.height!==p.height) {
       throw new Error("圖層尺寸與畫布不一致");
     }
     const c=makeCanvas(p.width,p.height);
     context(c).drawImage(image,0,0);
+    if (fromBlob) {
+      encodedLayers.set(c,{version:0,blob:Promise.resolve(entry.blob)});
+    }
     loaded.push({
       id:entry.id,
       name:String(entry.name || "圖層").slice(0,80),
@@ -2173,7 +2297,10 @@ async function applyProject(p) {
   flipped=false;
   fitView();
   changed();
-  status("專案已載入；復原歷史已重設");
+  blankDocument=false;
+  status(layers.length>layerLimit()
+    ? `專案已載入；有 ${layers.length} 個圖層，手機上建議不超過 ${layerLimit()} 個`
+    : "專案已載入；復原歷史已重設");
 }
 async function runFileTask(task) {
   if (fileBusy) return;
@@ -2184,7 +2311,7 @@ async function runFileTask(task) {
   try {
     await task();
   } catch (error) {
-    alert("檔案處理失敗："+error.message);
+    notify(error.message,"檔案處理失敗");
   } finally {
     fileBusy=false;
     $("busy").style.display="none";
@@ -2203,17 +2330,23 @@ $("loadBtn").onclick=() => {
   settle();
   $("projectFile").click();
 };
-$("projectFile").onchange=event => {
+$("projectFile").onchange=async event => {
   const file=event.target.files[0];
   event.target.value="";
   if (!file || fileBusy) return;
-  if (!confirm("載入會替換作品並清除復原歷史。已保存目前作品嗎？")) return;
+  if (!await ask({
+    title:"載入專案",
+    message:"載入會替換目前作品並清除復原歷史。\n"+
+      "目前作品會留在「上一件作品」，可以換回來。",
+    ok:"載入"
+  })) return;
 
   runFileTask(async () => {
     if (file.size>100*1024*1024) {
       throw new Error("專案檔超過 100 MB");
     }
     const p=JSON.parse(await file.text());
+    await keepPrevious();
     await applyProject(p);
   });
 };
@@ -2224,14 +2357,14 @@ $("exportBtn").onclick=() => {
   render();
   display.toBlob(blob => {
     if (blob) download(blob,`light-paint-${W}x${H}.png`);
-    else alert("PNG 輸出失敗");
+    else notify("PNG 輸出失敗");
   },"image/png");
 };
 $("importBtn").onclick=() => {
   if (fileBusy) return;
   settle();
-  if (layers.length>=MAX_LAYERS) {
-    alert("最多 16 個圖層");
+  if (layers.length>=layerLimit()) {
+    status(`最多 ${layerLimit()} 個圖層`);
     return;
   }
   $("imageFile").click();
@@ -2245,7 +2378,7 @@ $("imageFile").onchange=event => {
     const url=URL.createObjectURL(file);
     try {
       const image=await loadImage(url);
-      if (layers.length>=MAX_LAYERS) throw new Error("圖層已滿");
+      if (layers.length>=layerLimit()) throw new Error("圖層已滿");
 
       const before=structureState();
       const l=makeLayer(file.name.slice(0,80));
@@ -2278,14 +2411,25 @@ $("newBtn").onclick=() => {
   $("newDialog").showModal();
 };
 $("cancelNew").onclick=() => $("newDialog").close();
-$("confirmNew").onclick=() => {
+$("confirmNew").onclick=async () => {
   const w=Number($("newW").value),h=Number($("newH").value);
   if (!validDimensions(w,h)) {
-    alert("長寬必須是 16～2048 的整數");
+    notify("長寬必須是 16～2048 的整數");
     return;
   }
-  if (!confirm("建立新畫布會替換作品。確定繼續？")) return;
-
+  if (!blankDocument && !await ask({
+    title:"建立新畫布",
+    message:"新畫布會替換目前作品並清除復原歷史。\n"+
+      "目前作品會留在「上一件作品」，可以換回來。",
+    ok:"建立"
+  })) return;
+  $("newDialog").close();
+  runFileTask(async () => {
+    await keepPrevious();
+    createDocument(w,h);
+  });
+};
+function createDocument(w,h) {
   W=w; H=h; layers=[]; nextId=1;
   if ($("whiteBackground").checked) {
     const background=makeLayer("背景");
@@ -2302,9 +2446,9 @@ $("confirmNew").onclick=() => {
   flipped=false;
   fitView();
   changed();
-  $("newDialog").close();
+  blankDocument=true;
   status("新畫布已建立");
-};
+}
 
 /* ---------- IndexedDB 本機草稿 ---------- */
 
@@ -2327,27 +2471,29 @@ function openDatabase() {
   });
   return databasePromise;
 }
-async function writeDraft(value) {
+// latest：目前作品的自動草稿；previous：換作品前留下的上一件作品
+async function writeDraft(value,key="latest") {
   const db=await openDatabase();
   return new Promise((resolve,reject) => {
     const tx=db.transaction("drafts","readwrite");
-    tx.objectStore("drafts").put(value,"latest");
+    tx.objectStore("drafts").put(value,key);
     tx.oncomplete=resolve;
     tx.onerror=() => reject(tx.error);
     tx.onabort=() => reject(tx.error || new Error("草稿保存中止"));
   });
 }
-async function readDraft() {
+async function readDraft(key="latest") {
   const db=await openDatabase();
   return new Promise((resolve,reject) => {
     const tx=db.transaction("drafts","readonly");
-    const request=tx.objectStore("drafts").get("latest");
+    const request=tx.objectStore("drafts").get(key);
     request.onsuccess=() => resolve(request.result);
     request.onerror=() => reject(request.error);
   });
 }
 function changed() {
   revision++;
+  blankDocument=false;
   $("draftStatus").textContent="有未保存變更，準備保存草稿…";
   clearTimeout(draftTimer);
   draftTimer=setTimeout(saveDraft,1800);
@@ -2367,7 +2513,7 @@ async function saveDraft() {
   const savedRevision=revision;
   try {
     $("draftStatus").textContent="正在保存本機草稿…";
-    const data={time:Date.now(),project:projectObject()};
+    const data={time:Date.now(),project:await projectSnapshot()};
     await writeDraft(data);
     if (revision===savedRevision) {
       $("draftStatus").textContent=
@@ -2387,28 +2533,84 @@ async function saveDraft() {
     }
   }
 }
+// 換作品前留一份，誤按新畫布或載入時還能換回來
+async function keepPrevious() {
+  if (blankDocument) return;
+  try {
+    const project=await projectSnapshot();
+    await writeDraft({time:Date.now(),project},"previous");
+  } catch (error) {
+    console.warn(error);
+  }
+}
 $("draftBtn").onclick=async () => {
   if (fileBusy) return;
   settle();
-  clearTimeout(draftTimer);
+  let previous;
   try {
-    const draft=await readDraft();
-    if (!draft) {
-      alert("目前找不到本機草稿");
-      return;
-    }
-    const time=new Date(draft.time).toLocaleString();
-    if (!confirm(`恢復 ${time} 的草稿？目前作品會被替換，請先備份。`)) return;
-    await runFileTask(() => applyProject(draft.project));
+    previous=await readDraft("previous");
   } catch (error) {
-    alert("草稿恢復失敗："+error.message);
-  } finally {
-    if (revision>0 && !fileBusy) {
-      clearTimeout(draftTimer);
-      draftTimer=setTimeout(saveDraft,1800);
-    }
+    notify(error.message,"無法讀取本機儲存");
+    return;
   }
+  if (!previous) {
+    notify("建立新畫布或載入專案時，原本的作品會留在這裡。",
+      "還沒有上一件作品");
+    return;
+  }
+  const time=new Date(previous.time).toLocaleString();
+  if (!await ask({
+    title:"換回上一件作品",
+    message:`換回 ${time} 的作品？\n目前作品會改留為上一件作品，可以再換回來。`,
+    ok:"換回"
+  })) return;
+  // 兩件互換：目前作品存成上一件，再載入原本的上一件
+  runFileTask(async () => {
+    await keepPrevious();
+    await applyProject(previous.project);
+    status("已換回 "+time+" 的作品");
+  });
 };
+async function restoreDraft() {
+  let draft;
+  try {
+    draft=await readDraft();
+  } catch (error) {
+    if (revision===0) {
+      $("draftStatus").textContent=
+        "此環境無法使用本機草稿，請手動下載 JSON。";
+    }
+    return;
+  }
+  if (!draft) {
+    if (revision===0) {
+      $("draftStatus").textContent="開始修改後會自動保存本機草稿。";
+    }
+    return;
+  }
+  // 讀取期間已開始畫，以目前畫面為準；舊草稿改留為上一件作品
+  if (revision>0 || gesture || fileBusy) {
+    writeDraft(draft,"previous").catch(error => console.warn(error));
+    return;
+  }
+
+  const time=new Date(draft.time).toLocaleString();
+  fileBusy=true;
+  $("busy").style.display="grid";
+  try {
+    await applyProject(draft.project);
+    clearTimeout(draftTimer);
+    revision=0;
+    $("draftStatus").textContent="已恢復 "+time+" 的草稿";
+    status("已恢復上次的草稿 · "+time);
+  } catch (error) {
+    console.warn(error);
+    $("draftStatus").textContent="上次的草稿無法讀取；開始修改後會覆蓋它。";
+  } finally {
+    fileBusy=false;
+    $("busy").style.display="none";
+  }
+}
 document.addEventListener("visibilitychange",() => {
   if (document.hidden && revision>0 && !fileBusy) {
     settle();
@@ -2586,6 +2788,7 @@ $("mUndo").onclick=undo;
 $("mRedo").onclick=redo;
 $("mZoom").onclick=fitView;
 mobileQuery.addEventListener("change",applyLayout);
+phoneQuery.addEventListener("change",renderLayers);
 applyLayout();
 
 /* ---------- 初始化 ---------- */
@@ -2609,17 +2812,7 @@ function initialize() {
   requestAnimationFrame(frame);
   status("漫畫沾水筆已就緒 · 建議先測試筆壓與頭尾長度");
 
-  readDraft().then(draft => {
-    if (revision>0) return;
-    $("draftStatus").textContent=draft
-      ? "找到舊草稿，可按「恢復草稿」載入。"
-      : "開始修改後會自動保存本機草稿。";
-  }).catch(() => {
-    if (revision===0) {
-      $("draftStatus").textContent=
-        "此環境無法使用本機草稿，請手動下載 JSON。";
-    }
-  });
+  restoreDraft();
 }
 initialize();
 </script>
