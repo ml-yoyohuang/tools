@@ -142,6 +142,7 @@ h3 {
 #viewport {
   flex: 1;
   min-height: 0;
+  display: flex;
   overflow: auto;
   background: #111518;
   overscroll-behavior: contain;
@@ -150,7 +151,8 @@ h3 {
   -webkit-user-select: none;
   user-select: none;
 }
-#wrap { width: max-content; padding: 24px; }
+/* margin: auto 置中；畫布比畫面大時不會像 justify-content 那樣切掉左上角 */
+#wrap { width: max-content; flex-shrink: 0; margin: auto; padding: 24px; }
 #stage { position: relative; box-shadow: 0 0 0 1px #52605a, 0 10px 30px #0006; }
 #stage, .checker {
   background-color: #d0d0d0;
@@ -176,6 +178,31 @@ h3 {
   background-image:
     linear-gradient(to right, #1116 1px, transparent 1px),
     linear-gradient(to bottom, #1116 1px, transparent 1px);
+}
+#pickLoupe {
+  position: fixed;
+  z-index: 10;
+  padding: 6px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px #000a, 0 6px 18px #0008;
+  pointer-events: none;
+}
+#pickLoupe canvas {
+  display: block;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+}
+#pickLoupe span {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translate(-50%, -4px);
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #000c;
+  font: 11px/1.5 ui-monospace, monospace;
+  white-space: nowrap;
 }
 #status {
   min-height: 34px;
@@ -333,6 +360,7 @@ kbd {
         <button data-tool="picker">吸色 I</button>
         <button data-tool="fill">填色 G</button>
         <button data-tool="line">直線 L</button>
+        <button data-tool="pan">移動 M</button>
       </div>
       <div class="row">
         <label for="brush">筆刷</label>
@@ -459,7 +487,8 @@ kbd {
       <h3>快捷鍵</h3>
       <kbd>B</kbd> 鉛筆 · <kbd>E</kbd> 橡皮擦<br>
       <kbd>I</kbd> 吸色 · <kbd>G</kbd> 填色<br>
-      <kbd>L</kbd> 直線 · <kbd>H</kbd> 網格<br>
+      <kbd>L</kbd> 直線 · <kbd>M</kbd> 移動<br>
+      <kbd>H</kbd> 網格 · <kbd>0</kbd> 符合畫面<br>
       <kbd>Ctrl / ⌘ Z</kbd> 復原<br>
       <kbd>Ctrl / ⌘ Shift Z</kbd> 重做<br>
       <kbd>Ctrl / ⌘ S</kbd> 儲存專案<br>
@@ -476,6 +505,7 @@ kbd {
       <button id="zoomOut">−</button>
       <span id="zoomLabel">8×</span>
       <button id="zoomIn">＋</button>
+      <button id="zoomFit">符合畫面</button>
       <label><input type="checkbox" id="gridToggle" checked> 網格</label>
       <span id="dimensions" class="small"></span>
       <span id="autosaveState" class="small" role="status"></span>
@@ -492,6 +522,7 @@ kbd {
 </main>
 
 <div id="status" role="status">準備就緒。</div>
+<div id="pickLoupe" hidden><canvas width="72" height="72"></canvas><span></span></div>
 
 <input id="imageFile" type="file" accept="image/*" hidden>
 <input id="projectFile" type="file" accept=".json,application/json" hidden>
@@ -987,6 +1018,7 @@ function selectTool(value) {
   document.querySelectorAll("[data-tool]").forEach(b => {
     b.classList.toggle("active", b.dataset.tool === tool);
   });
+  if (!gesture) canvas.style.cursor = idleCursor();
   scheduleAutosave();
 }
 
@@ -1098,6 +1130,52 @@ const TAP_MAX_MS = 400;
 const TAP_SLOP = 10;
 const LONG_PRESS_MS = 500;
 const PINCH_HYSTERESIS = 0.08;
+const LOUPE_RADIUS = 4;         // 吸色放大鏡顯示 9×9 格
+const LOUPE_OFFSET = 70;        // 放在手指上方，避免被手指遮住
+
+const loupe = $("pickLoupe");
+const loupeCtx = loupe.querySelector("canvas").getContext("2d");
+
+function idleCursor() {
+  return spaceDown || tool === "pan" ? "grab" : "crosshair";
+}
+
+function showLoupe(p, clientX, clientY) {
+  const n = LOUPE_RADIUS;
+  const cell = loupeCtx.canvas.width / (n * 2 + 1);
+  for (let dy = -n; dy <= n; dy++) {
+    for (let dx = -n; dx <= n; dx++) {
+      const x = p.x + dx, y = p.y + dy;
+      const i = (y * W + x) * 4;
+      loupeCtx.fillStyle =
+        !inBounds(x, y) ? "#111518" :
+        pixels[i + 3] ? `rgb(${pixels[i]} ${pixels[i + 1]} ${pixels[i + 2]})` :
+        (x + y) & 1 ? "#aaa" : "#d0d0d0";
+      loupeCtx.fillRect((dx + n) * cell, (dy + n) * cell, cell, cell);
+    }
+  }
+  loupeCtx.lineWidth = 2;
+  loupeCtx.strokeStyle = "#fff";
+  loupeCtx.strokeRect(n * cell, n * cell, cell, cell);
+  loupeCtx.lineWidth = 1;
+  loupeCtx.strokeStyle = "#000";
+  loupeCtx.strokeRect(n * cell - 1.5, n * cell - 1.5, cell + 3, cell + 3);
+
+  // 外圈與標籤顯示會吸到的顏色
+  const i = (p.y * W + p.x) * 4;
+  const hex = inBounds(p.x, p.y) && pixels[i + 3]
+    ? toHex(pixels[i], pixels[i + 1], pixels[i + 2]) : null;
+  loupe.style.background = hex || "var(--panel)";
+  loupe.querySelector("span").textContent = hex || "透明";
+
+  loupe.hidden = false;
+  const half = loupe.offsetWidth / 2;
+  const x = Math.min(Math.max(clientX, half + 4), innerWidth - half - 4);
+  let y = clientY - LOUPE_OFFSET - half;
+  if (y - half < 24) y = clientY + LOUPE_OFFSET + half;
+  loupe.style.left = x - half + "px";
+  loupe.style.top = y - half + "px";
+}
 
 function startPan(event) {
   gesture = {
@@ -1153,6 +1231,7 @@ function moveGesture(event) {
 
   if (gesture.type === "tap") {
     gesture.last = p;
+    if (tool === "picker") showLoupe(p, event.clientX, event.clientY);
     return;
   }
   if (gesture.type === "pick") {
@@ -1160,6 +1239,7 @@ function moveGesture(event) {
       gesture.last = p;
       pick(p.x, p.y);
     }
+    showLoupe(p, event.clientX, event.clientY);
     return;
   }
 
@@ -1184,6 +1264,7 @@ function finishGesture() {
   if (!gesture) return;
   const g = gesture;
   gesture = null;
+  loupe.hidden = true;
   if (g.before) {
     let changed = false;
     for (let i = 0; i < pixels.length; i++) {
@@ -1194,7 +1275,7 @@ function finishGesture() {
     }
     if (changed) remember(g.before);
   }
-  canvas.style.cursor = spaceDown ? "grab" : "crosshair";
+  canvas.style.cursor = idleCursor();
   inspect();
 }
 
@@ -1206,13 +1287,14 @@ function penOnly() {
 
 function cancelTouchGesture() {
   clearTimeout(longPressTimer);
+  loupe.hidden = true;
   if (!gesture) return;
   if (gesture.before) {
     pixels.set(gesture.before.pixels);
     draw();
   }
   gesture = null;
-  canvas.style.cursor = "crosshair";
+  canvas.style.cursor = idleCursor();
 }
 
 function startLongPressPick() {
@@ -1222,16 +1304,21 @@ function startLongPressPick() {
   draw();
   gesture = { type: "pick", id: gesture.id, last: gesture.last };
   pick(gesture.last.x, gesture.last.y);
+  const t = touches.get(gesture.id);
+  showLoupe(gesture.last, t.x, t.y);
+  navigator.vibrate?.(10);
 }
 
 function touchStart(event) {
   const p = point(event);
-  if (event.target !== canvas || !inBounds(p.x, p.y) || penOnly()) {
+  if (event.target !== canvas || !inBounds(p.x, p.y) ||
+      tool === "pan" || penOnly()) {
     startPan(event);
     return;
   }
   if (tool === "picker" || tool === "fill") {
     gesture = { type: "tap", id: event.pointerId, last: p };
+    if (tool === "picker") showLoupe(p, event.clientX, event.clientY);
     return;
   }
   startStroke(event, tool, p);
@@ -1359,7 +1446,7 @@ viewport.addEventListener("pointerdown", event => {
     penNotice = $("penOnly").checked;
   }
   if (gesture || (event.button !== 0 && event.button !== 1)) return;
-  const pan = spaceDown || event.button === 1;
+  const pan = spaceDown || event.button === 1 || tool === "pan";
   if (!pan && event.target !== canvas) return;
   event.preventDefault();
   viewport.setPointerCapture(event.pointerId);
@@ -1416,8 +1503,23 @@ function setZoom(next, clientX, clientY) {
 
   zoom = next;
   updateView();
-  viewport.scrollLeft += logicalX * (next - old);
-  viewport.scrollTop += logicalY * (next - old);
+  // 依新的畫布位置對齊：畫布置中時，縮放也會移動畫布本身
+  const nr = stage.getBoundingClientRect();
+  viewport.scrollLeft += nr.left + logicalX * next - x;
+  viewport.scrollTop += nr.top + logicalY * next - y;
+}
+
+function fitZoom() {
+  if (gesture) return;
+  const padX = $("wrap").offsetWidth - stage.offsetWidth;
+  const padY = $("wrap").offsetHeight - stage.offsetHeight;
+  const fit = Math.min(
+    (viewport.clientWidth - padX) / W,
+    (viewport.clientHeight - padY) / H
+  );
+  setZoom(ZOOM_STEPS.filter(z => z <= fit).pop() ?? ZOOM_STEPS[0]);
+  viewport.scrollLeft = (viewport.scrollWidth - viewport.clientWidth) / 2;
+  viewport.scrollTop = (viewport.scrollHeight - viewport.clientHeight) / 2;
 }
 
 function changeZoom(direction, clientX, clientY) {
@@ -2788,6 +2890,7 @@ $("undoBtn").onclick = undo;
 $("redoBtn").onclick = redo;
 $("zoomIn").onclick = () => changeZoom(1);
 $("zoomOut").onclick = () => changeZoom(-1);
+$("zoomFit").onclick = fitZoom;
 $("gridToggle").onchange = updateView;
 
 $("importBtn").onclick = () => {
@@ -2854,7 +2957,8 @@ window.addEventListener("keydown", event => {
   }
 
   const keys = {
-    b: "pencil", e: "eraser", i: "picker", g: "fill", l: "line"
+    b: "pencil", e: "eraser", i: "picker", g: "fill", l: "line",
+    m: "pan"
   };
   if (keys[key]) selectTool(keys[key]);
 
@@ -2864,13 +2968,14 @@ window.addEventListener("keydown", event => {
   }
   if (key === "+" || key === "=") changeZoom(1);
   if (key === "-") changeZoom(-1);
+  if (key === "0") fitZoom();
 });
 
 window.addEventListener("keyup", event => {
   if (event.code === "Space") {
     spaceDown = false;
     if (!gesture || gesture.type !== "pan") {
-      canvas.style.cursor = "crosshair";
+      canvas.style.cursor = idleCursor();
     }
   }
 });
@@ -2879,7 +2984,7 @@ window.addEventListener("blur", () => {
   spaceDown = false;
   finishGesture();
   resetTouches();
-  canvas.style.cursor = "crosshair";
+  canvas.style.cursor = idleCursor();
 });
 
 /* ---------- 自動存檔（IndexedDB） ---------- */
