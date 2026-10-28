@@ -5,7 +5,7 @@
 <meta name="viewport"
       content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#cdc7bc">
-<title>POCKET WEIRDO 02｜怪怪口袋相機</title>
+<title>POCKET WEIRDO 02｜口袋相機</title>
 <style>
 :root{--shell:#cdc7bc;--ink:#30382e;--line:#8d8d7d;--screen:#d5dfa8;--dark:#26352d;--accent:#a44665;--paper:#e6e1d5}
 *{box-sizing:border-box}
@@ -102,7 +102,7 @@ dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;paddin
 <main id="machine">
   <header class="top">
     <div class="brand">POCKET WEIRDO
-      <small>怪怪口袋相機 / 02</small>
+      <small>口袋相機 / 02</small>
     </div>
     <div class="top-actions">
       <button id="flipBtn" aria-label="切換前後鏡頭">↻ 鏡頭</button>
@@ -116,9 +116,9 @@ dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;paddin
               aria-label="像素相機畫面"></canvas>
       <div id="selectionBox" hidden></div>
       <div id="startOverlay">
-        <h1>HELLO,<br>WEIRDO!</h1>
+        <h1>HELLO,<br>THERE!</h1>
         <p id="startDescription">
-          把自己變成低解析度生物。<br>照片在裝置上處理，不上傳。
+          選個色盤，再按快門。<br>照片在裝置上處理，不上傳。
         </p>
         <button id="startBtn">開啟自拍相機</button>
         <button id="startImportBtn">先用照片玩</button>
@@ -177,7 +177,7 @@ dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;paddin
           <div class="strip" id="framePanel" aria-label="相框款式"></div>
           <div class="strip" id="stickerPanel" aria-label="彩色貼紙" hidden></div>
           <div id="textPanel" hidden>
-            <input id="textInput" type="text" maxlength="20" placeholder="輸入奇怪的一句話" aria-label="照片文字">
+            <input id="textInput" type="text" maxlength="20" placeholder="寫點什麼" aria-label="照片文字">
             <button id="addTextBtn">加入</button>
           </div>
         </div>
@@ -247,7 +247,7 @@ dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;paddin
         <button id="originalBtn">下載原始尺寸</button><button id="viewImageBtn">開圖／長按保存</button>
       </div></details>
     </div>
-    <div class="shell-bottom"><span>PW—02<br>解析度有限。怪度不限。</span><div class="speaker" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>
+    <div class="shell-bottom"><span>PW—02</span><div class="speaker" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>
   </section>
 </main>
 
@@ -255,8 +255,8 @@ dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;paddin
 <input id="fileInput" type="file" accept="image/*" hidden>
 
 <dialog id="helpDialog">
-  <h2>怪怪口袋相機 02</h2>
-  <p><strong>開相機 → 拍照 → 保存。</strong><br>其他功能，都是偷偷變奇怪的小機關。</p>
+  <h2>口袋相機 02</h2>
+  <p><strong>開相機 → 拍照 → 保存。</strong><br>拍照前選風格，拍照後加相框、貼紙或文字。</p>
   <ul>
     <li>拍照前點螢幕下方尺寸：粗粗 64×56、經典 128×112、細細 160×144。</li>
     <li>點 TONES：4、8、12、16 階明暗。增加色階時，色盤會生成過渡色。</li>
@@ -286,7 +286,7 @@ dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;paddin
 </dialog>
 
 <dialog id="imageDialog">
-  <h2>你的低解析度生物</h2>
+  <h2>這張照片</h2>
   <img id="savedImage" alt="完成的像素照片">
   <p>手機可嘗試長按圖片保存或分享。操作依瀏覽器而異。</p>
   <button id="closeImage">關閉</button>
@@ -327,14 +327,54 @@ function withDefaults(p){
   return {...p,brightness:0,dark:25,light:75,smooth:0};
 }
 let config=withDefaults(profiles[0]),configHistory=[];
-const funny=[
-  "你現在是低解析度生物。",
-  "偵測到一顆可疑馬鈴薯。",
-  "鏡頭表示：這很合理。",
-  "外星人也會有證件照。",
-  "這不是壞掉，是有個性。",
-  "今日怪度：剛剛好。"
+// 文案原則：平靜敘述不合理的日常，不自稱「怪」、不評價使用者，
+// 也不替笑話解釋。操作、保存與錯誤提示保持直白。
+const paletteNotes=[
+  [
+    "存檔裡住著一個不肯搬家的星期二。",
+    "電池蓋裡的紙條寫著：蔥放冰箱。",
+    "第二關的門衛去買早餐了。",
+    "暫停的時候，雲會去上廁所。"
+  ],
+  [
+    "第三份文件堅持自己才是正本。",
+    "訂書機今天只訂素食。",
+    "這張紙的背面正在午休。",
+    "請勿影印星期一，庫存已滿。"
+  ],
+  [
+    "外星人繞了三圈，還是停進機車格。",
+    "飛碟停在巷口，駕駛去買蔥了。",
+    "星際會議延後。有人把月亮借走了。",
+    "他們來地球，只是想退一把雨傘。"
+  ],
+  [
+    "這顆糖的夢想是當一塊鹹酥雞。",
+    "包裝紙說今天不想上班。",
+    "草莓口味正在練習說謊。",
+    "糖罐裡有人在收房租。"
+  ],
+  [
+    "微波爐說再給它五分鐘。",
+    "關東煮的白蘿蔔請了半天假。",
+    "店員正在替一朵雲找零。",
+    "凌晨三點，茶葉蛋開了一場短會。"
+  ],
+  [
+    "火星洋芋還在等地球的胡椒鹽。",
+    "洋芋的履歷上寫著：略懂公轉。",
+    "這一袋原本要寄去木星。",
+    "火星沒有下雨，只有忘了關的灑水器。"
+  ]
 ];
+const lastPaletteNotes=palettes.map(()=>-1);
+function paletteNote(index){
+  const notes=paletteNotes[index];
+  const choices=notes.map((_,i)=>i).filter(i=>i!==lastPaletteNotes[index]);
+  const chosen=pick(choices);
+  lastPaletteNotes[index]=chosen;
+  return notes[chosen];
+}
 
 const screen=$("screen"),ctx=screen.getContext("2d");
 const video=$("video");
@@ -410,13 +450,13 @@ function directionKey(direction){
     useProfile((config.palette+(direction==="left"?-1:1)+profiles.length)%profiles.length);
   }else{
     adjustSetting("brightness",direction==="up"?4:-4);
-    message("明暗 "+(config.brightness>0?"+":"")+config.brightness+"。按 TUNE 還有小機關。");
+    message("明暗 "+(config.brightness>0?"+":"")+config.brightness+"。按 TUNE 可繼續調整。");
   }
 }
 function finishDecoration(){
   if(!review||drag)return;
   selectedId=null;renderReview(false);
-  message("裝飾完成。按 SAVE 帶走這隻低解析度生物。");
+  message("裝飾完成。按 SAVE 保存 PNG。");
 }
 
 /* ---------- Bayer 矩陣 ---------- */
@@ -716,12 +756,12 @@ function useProfile(i){
   if(previewLocked())return;
   rememberConfig();config=withDefaults(profiles[i]);
   syncSettings();refreshPreview();
-  message(palettes[i].name+"模式。膚色正常不在服務範圍內。");
+  message(paletteNote(i));
 }
 function dice(){
   if(previewLocked())return;
   if(!hasFrame){
-    message("先開啟相機或匯入照片，B 才能把畫面變奇怪。");
+    message("先開啟相機或匯入照片，再按 B 隨機換效果。");
     return;
   }
   rememberConfig();
@@ -736,13 +776,13 @@ function dice(){
   });
   config.smooth=pick([0,20,45,70]);
   syncSettings();refreshPreview();
-  message("抽到「"+palettes[config.palette].name+"」！"+pick(funny)+" BACK 可還原。");
+  message("抽到「"+palettes[config.palette].name+"」。"+paletteNote(config.palette)+" BACK 可還原。");
 }
 function previousConfig(){
   if(previewLocked()||!configHistory.length)return;
   config={...configHistory.pop()};
   syncSettings();refreshPreview();
-  message("救回剛才那個奇怪的你。");
+  message("已還原上一組設定。");
 }
 function smoothPreset(){
   if(previewLocked())return;
@@ -753,7 +793,7 @@ function smoothPreset(){
     dark:18,light:82,smooth:75,dither:8,matrix:4,invert:false
   };
   syncSettings();refreshPreview();
-  message("角色簡化完成。五官、頭髮和小陰影都會一起變簡單。");
+  message("已套用平滑配方。五官、頭髮與陰影的細節會一起減少。");
 }
 function resetProfile(){
   if(previewLocked())return;
@@ -860,7 +900,7 @@ async function startCamera(){
   }
   sourceImage=null;stopCamera();
   const generation=cameraGeneration;
-  cameraStarting=true;updateUI();message("正在叫醒鏡頭…");
+  cameraStarting=true;updateUI();message("正在開啟相機…");
   let acquired=null;
   try{
     acquired=await navigator.mediaDevices.getUserMedia({
@@ -886,12 +926,12 @@ async function startCamera(){
     $("startOverlay").hidden=true;
     lastProcess=0;lastVideoTime=-1;
     refreshPreview();
-    message("鏡頭準備好了。點尺寸與色階，還有小機關。");
+    message("相機已開啟。選好風格就可以拍照。");
   }catch(e){
     console.warn(e);acquired?.getTracks().forEach(t=>t.stop());
     if(generation===cameraGeneration){
       stopCamera();showStart(cameraError(e),"再試一次");
-      message("鏡頭今天有點害羞。");
+      message("相機未能啟動。可以重試或匯入照片。");
     }
   }finally{
     cameraStarting=false;updateUI();
@@ -907,7 +947,7 @@ document.addEventListener("visibilitychange",()=>{
     if(stream||cameraStarting){
       stopCamera();
       if(!review&&!sourceImage){
-        showStart("剛才離開畫面，相機已休息。按一下重新開啟。");
+        showStart("離開畫面時已關閉相機。按一下重新開啟。");
       }
     }
   }
@@ -982,10 +1022,7 @@ async function takePhoto(){
   $("retakeBtn").setAttribute("aria-label",captureSource==="photo"?"換照片":"拍下一張");
   $("originalBtn").textContent="下載原始 "+W+"×"+H;
   selectTab("frame");renderReview();renderFrameSelection();updateUI();
-  message(pick([
-    "已捕獲一張可疑臉孔。","恭喜，證件照已不合格。",
-    "低解析度角色誕生！","這張照片需要一根香蕉。"
-  ]));
+  message("拍好了。可以選相框、貼紙或文字。");
 }
 function leaveReview(){
   cancelCountdown();review=false;sourceImage=null;
@@ -1002,7 +1039,7 @@ function retake(){
     $("fileInput").click();return;
   }
   leaveReview();
-  standby();showStart("再捕獲一隻低解析度生物。");
+  standby();showStart("準備拍下一張。");
   syncSettings();startCamera();
 }
 
@@ -1113,7 +1150,7 @@ function drawFrame(c,key,colors=captureColors,width=W,height=H){
     for(let x=4;x<W-4;x+=4){
       c.fillStyle=(x/4)%2?dark:colors[1];c.fillRect(x,0,2,2);
     }
-    label("VERY WEIRD",H-band+1,light,dark,W-8);
+    label("AIR MAIL",H-band+1,light,dark,W-8);
   }
   c.restore();
 }
@@ -1187,7 +1224,7 @@ function updateSelection(){
   }
   $("reviewHint").textContent=o
     ?"直接拖移或用十字鍵微移。A 完成，B 復原。"
-    :"照片已定案。選相框、貼紙或文字，繼續惡搞。";
+    :"照片已定案。可加相框、貼紙或文字。";
   updateUI();
 }
 function renderReview(changed=true){
@@ -1198,7 +1235,7 @@ function renderReview(changed=true){
 function canAdd(){
   if(!review)return false;
   if(objects.length>=24){
-    message("已經很熱鬧了，最多放 24 個裝飾。");return false;
+    message("最多可放 24 個裝飾，刪除一個就能再加入。");return false;
   }
   return true;
 }
@@ -1210,7 +1247,7 @@ function addSticker(key){
   const scale=Math.min(preferred,(W-4)/img.width,(H-4)/img.height);
   const o={id:objectId++,type:"sticker",key,x:W/2,y:H/2,scale};
   objects.push(o);selectedId=o.id;renderReview();
-  message(key==="banana"?"香蕉加入了。它沒有解釋。":"貼紙加入，直接拖到你喜歡的位置。");
+  message(key==="banana"?"香蕉放好了。拖一下可以換位置。":"貼紙加入，直接拖到你喜歡的位置。");
 }
 function addText(){
   if(!canAdd())return;
@@ -1366,7 +1403,7 @@ function sharePNG(){
   if(file&&navigator.share&&navigator.canShare?.({files:[file]})){
     $("shareBtn").disabled=true;
     navigator.share({files:[file]}).then(()=>{
-      message("低解析度生物已交給分享選單。");
+      message("圖片已交給分享選單。");
     }).catch(e=>{
       if(e.name!=="AbortError"){
         message("分享沒成功，請改用保存 PNG 或開圖長按。");
