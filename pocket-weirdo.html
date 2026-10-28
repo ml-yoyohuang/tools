@@ -65,13 +65,19 @@ input[type=text]{width:100%;min-width:0;padding:10px;border:2px solid #526b3b;bo
 .deck{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 5px 7px}
 .direction-unit{display:flex;flex-direction:column;align-items:center;gap:8px}
 .direction-unit small{font-size:9px;color:#656c5f;text-align:center;max-width:150px}
-.dpad{display:grid;grid-template-columns:29px 52px 29px;grid-template-rows:29px 52px 29px;position:relative}
-.pad,.pad-center{min-height:0;padding:0;border:0;border-radius:0;background:#454b43;color:#9a9f8e;box-shadow:none;font-size:13px}
-.pad:active:not(:disabled){background:#454b43;color:#ef9ab5;box-shadow:none;transform:none}
-.pad span{display:block;pointer-events:none}
-.up span{transform:translateY(5px)}.down span{transform:translateY(-5px)}
-.left span{transform:translateX(5px)}.right span{transform:translateX(-5px)}
-.up{grid-area:1/2;border-radius:10px 10px 0 0}.left{grid-area:2/1;border-radius:10px 0 0 10px}.right{grid-area:2/3;border-radius:0 10px 10px 0}.down{grid-area:3/2;border-radius:0 0 10px 10px}.pad-center{grid-area:2/2;box-shadow:none;position:relative}
+/* 外觀為原本 110px 十字的 0.9 倍；四個原生按鈕以扇區填滿 116px 點擊範圍。 */
+.dpad{width:116px;height:116px;position:relative}
+.dpad-shape{position:absolute;width:99px;height:99px;left:50%;top:50%;transform:translate(-50%,-50%);fill:#454b43;pointer-events:none}
+.pad{position:absolute;inset:0;width:100%;height:100%;min-height:0;padding:0;border:0;border-radius:0;background:transparent;color:#9a9f8e;box-shadow:none;font-size:11.7px}
+.pad:active:not(:disabled){background:transparent;color:#ef9ab5;box-shadow:none;transform:none}
+.pad span{position:absolute;display:block;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none}
+.up{inset:0 auto auto 0;width:100%;height:50%;clip-path:polygon(0 0,100% 0,50% 100%)}
+.right{inset:0 auto auto 50%;width:50%;height:100%;clip-path:polygon(0 50%,100% 0,100% 100%)}
+.down{inset:50% auto auto 0;width:100%;height:50%;clip-path:polygon(50% 0,100% 100%,0 100%)}
+.left{inset:0 auto auto 0;width:50%;height:100%;clip-path:polygon(0 0,100% 50%,0 100%)}
+.up span{top:26.05px}.down span{top:31.95px}.left span{left:26.05px}.right span{left:31.95px}
+.pad:focus-visible{outline:none}.pad:focus-visible span{outline:2px solid var(--accent);outline-offset:3px}
+.dpad:has(.pad:disabled) .dpad-shape{opacity:.45}
 .action-unit{display:flex;align-items:center;gap:12px;padding:6px 2px 5px 10px;transform:rotate(-13deg)}
 .hardware-key{display:flex;flex-direction:column;align-items:center;gap:6px}.hardware-key>span{font-size:9px;font-weight:700;letter-spacing:.4px;color:#656c5f}
 .action-unit .hardware-key{transform:rotate(13deg)}.key-b{margin-top:19px}.key-a{margin-bottom:12px}
@@ -202,9 +208,11 @@ dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;paddin
     <div class="deck">
       <div class="direction-unit">
         <div class="dpad" role="group" aria-label="方向鍵">
+          <svg class="dpad-shape" viewBox="0 0 110 110" aria-hidden="true" focusable="false">
+            <path d="M39 0H71Q81 0 81 10V29H100Q110 29 110 39V71Q110 81 100 81H81V100Q81 110 71 110H39Q29 110 29 100V81H10Q0 81 0 71V39Q0 29 10 29H29V10Q29 0 39 0Z"/>
+          </svg>
           <button id="padUp" class="pad up" aria-label="方向鍵：上"><span aria-hidden="true">▲</span></button>
           <button id="padLeft" class="pad left" aria-label="方向鍵：左"><span aria-hidden="true">◀</span></button>
-          <span class="pad-center" aria-hidden="true"></span>
           <button id="padRight" class="pad right" aria-label="方向鍵：右"><span aria-hidden="true">▶</span></button>
           <button id="padDown" class="pad down" aria-label="方向鍵：下"><span aria-hidden="true">▼</span></button>
         </div>
@@ -333,7 +341,7 @@ const paletteNotes=[
   [
     "存檔裡住著一個不肯搬家的星期二。",
     "電池蓋裡的紙條寫著：蔥放冰箱。",
-    "第二關的門衛去買早餐了。",
+    "第二關的守衛去買早餐了。",
     "暫停的時候，雲會去上廁所。"
   ],
   [
