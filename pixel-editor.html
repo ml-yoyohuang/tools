@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Pixel Workshop｜像素精修工具</title>
 <meta name="theme-color" content="#14181b">
 <meta name="description" content="匯入 AI 半成品或像素圖，每格取眾數色對齊網格，減色、轉 Game Boy／GBC／GBA 風格，再一格一格精修。">
@@ -43,6 +43,8 @@ body {
   background: var(--bg);
   color: var(--text);
   font: 14px/1.5 system-ui, sans-serif;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
 }
 button, input, select { font: inherit; }
 button, select, input[type="number"], input[type="text"] {
@@ -53,7 +55,9 @@ button, select, input[type="number"], input[type="text"] {
   padding: 6px 9px;
 }
 button { cursor: pointer; }
-button:hover:not(:disabled) { border-color: var(--accent); }
+@media (hover: hover) {
+  button:hover:not(:disabled) { border-color: var(--accent); }
+}
 button.active, button.primary {
   background: var(--accent);
   color: #18211c;
@@ -109,7 +113,7 @@ h3 {
   gap: 8px;
   margin: 8px 0;
 }
-.row[hidden] { display: none; }
+.row[hidden], .row:empty { display: none; }
 .small { font-size: 12px; color: var(--muted); }
 #hex { width: 108px; }
 #palette {
@@ -297,6 +301,7 @@ kbd {
   border-bottom: 1px solid #303a3e;
 }
 .color-item:last-child { border-bottom: 0; }
+.color-item .color-box, .color-item .color-code { cursor: pointer; }
 .color-item.chosen { background: #303d30; }
 .color-item.target-row { background: #273732; }
 .color-box {
@@ -319,12 +324,207 @@ kbd {
   background: #18201d;
 }
 .empty { padding: 24px; text-align: center; color: var(--muted); }
+.icon {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#mTop, #mBottom, #mScrim, #mMenu, #colorSheet, #toast { display: none; }
+#toast.show {
+  display: block;
+  position: fixed;
+  z-index: 30;
+  left: 50%;
+  top: calc(env(safe-area-inset-top) + 64px);
+  transform: translateX(-50%);
+  max-width: calc(100vw - 32px);
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #000d;
+  font-size: 13px;
+  pointer-events: none;
+}
+
+/* 觸控裝置（含 iPad 桌機版面）：放大點擊範圍；16px 以上 iOS 聚焦時才不會自動放大頁面 */
+@media (pointer: coarse) {
+  button:not(.swatch), select,
+  input[type="text"], input[type="number"] { min-height: 44px; }
+  input, select, textarea { font-size: 16px; }
+  input[type="checkbox"] { width: 20px; height: 20px; }
+}
+
+/* ---------- 手機版面（≤700px）：上方列＋畫布＋色盤條＋工具列，側欄改為底部抽屜 ---------- */
 @media (max-width: 700px) {
-  main { grid-template-columns: 185px minmax(0, 1fr); }
-  aside { padding: 10px; }
-  header { padding: 9px; }
+  header, .viewbar, #status, .desktop-only,
+  aside section > .small { display: none !important; }
+  main { grid-template-columns: minmax(0, 1fr); }
+  #wrap { padding: 12px; }
+
+  #mTop {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    padding-top: max(6px, env(safe-area-inset-top));
+    border-bottom: 1px solid var(--line);
+  }
+  #mTop button {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+  }
+  #mTop #mZoom {
+    flex: 1;
+    width: auto;
+    background: none;
+    border: 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  #mBottom {
+    display: block;
+    background: var(--panel);
+    border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  #mPaletteBar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  #mColorBtn {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 2px solid #fff;
+    border-radius: 8px;
+  }
+  #palette {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    gap: 6px;
+    padding: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  #palette .swatch { flex: none; width: 34px; height: 34px; }
+  #mTools { display: grid; grid-template-columns: repeat(6, 1fr); }
+  #mTools button {
+    min-height: 54px;
+    padding: 6px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  #mTools button.active { color: var(--accent); background: none; }
+
+  aside, #colorSheet {
+    display: block;
+    position: fixed;
+    z-index: 20;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 62dvh;
+    overflow: auto;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-bottom: 0;
+    border-radius: 14px 14px 0 0;
+    padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
+    transform: translateY(100%);
+    visibility: hidden;
+    transition: transform .2s ease, visibility 0s .2s;
+  }
+  aside.open, #colorSheet.open {
+    transform: none;
+    visibility: visible;
+    transition: transform .2s ease;
+  }
+  aside::before, #colorSheet::before {
+    content: "";
+    display: block;
+    width: 36px;
+    height: 4px;
+    margin: 0 auto 10px;
+    border-radius: 2px;
+    background: var(--line);
+  }
+  aside section + section { margin-top: 14px; }
+  #mScrim.open {
+    display: block;
+    position: fixed;
+    z-index: 15;
+    inset: 0;
+    background: #0006;
+  }
+  #mMenu.open {
+    display: block;
+    position: fixed;
+    z-index: 20;
+    top: calc(max(6px, env(safe-area-inset-top)) + 52px);
+    left: 8px;
+    min-width: 210px;
+    padding: 4px 0;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+  #autosaveState { margin-left: 4px; }
+  #mInfo {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 12px;
+  }
+  #mMenu button {
+    display: block;
+    width: 100%;
+    padding: 11px 14px;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    text-align: left;
+  }
+
   dialog { padding: 14px; }
+  dialog.full {
+    width: 100vw !important;  /* 蓋過各對話框以 id 指定的寬度 */
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    padding: max(14px, env(safe-area-inset-top)) 16px 0;
+  }
+  dialog.full .dialog-actions {
+    position: sticky;
+    bottom: 0;
+    margin: 12px -16px 0;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    background: var(--panel);
+    border-top: 1px solid var(--line);
+  }
   .import-previews { grid-template-columns: 1fr; }
+  #mergeList { max-height: none; }
   .color-item {
     grid-template-columns: 24px 24px 1fr auto;
     gap: 5px;
@@ -332,6 +532,11 @@ kbd {
   .color-count { grid-column: 3; }
   .color-item button { grid-column: 4; grid-row: span 2; }
   .color-box { width: 22px; height: 22px; }
+  .color-item input[type="checkbox"] { width: 22px; height: 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  aside, #colorSheet { transition: none !important; }
 }
 </style>
 </head>
@@ -350,11 +555,19 @@ kbd {
   </div>
 </header>
 
+<div id="mTop">
+  <button id="mMenuBtn" data-panel="mMenu" aria-label="檔案選單"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <button id="mUndo" aria-label="復原"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+  <button id="mRedo" aria-label="重做"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
+  <button id="mZoom" aria-label="符合畫面"></button>
+  <button id="mAdjustBtn" data-panel="sidebar" aria-label="調整"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h8M16 6h4M4 12h2M10 12h10M4 18h11M19 18h1"/><path d="M12 6a2 2 0 1 0 4 0a2 2 0 1 0-4 0M6 12a2 2 0 1 0 4 0a2 2 0 1 0-4 0M15 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0"/></svg></button>
+</div>
+
 <main>
-  <aside>
+  <aside id="sidebar">
     <section>
       <h3>工具</h3>
-      <div class="tools">
+      <div class="tools desktop-only">
         <button data-tool="pencil" class="active">鉛筆 B</button>
         <button data-tool="eraser">橡皮擦 E</button>
         <button data-tool="picker">吸色 I</button>
@@ -384,18 +597,19 @@ kbd {
           只用觸控筆畫，手指平移縮放
         </label>
       </div>
-      <div class="row">
+      <div class="row" id="mGridSlot"></div>
+      <div class="row desktop-only">
         <button id="undoBtn">復原</button>
         <button id="redoBtn">重做</button>
       </div>
-      <div class="small">
+      <div class="small desktop-only">
         填色採四方向、精確 RGBA 比對。<br>
         橡皮擦產生完全透明像素，不產生柔邊。<br>
         Alt＋點擊（觸控：長按）：暫時吸色，不切換工具。
       </div>
     </section>
 
-    <section>
+    <section id="colorSection">
       <h3>目前顏色</h3>
       <div class="row">
         <input id="color" type="color" value="#264f49" aria-label="目前顏色">
@@ -448,7 +662,7 @@ kbd {
       </div>
     </section>
 
-    <section>
+    <section id="exportSection">
       <h3>輸出預覽</h3>
       <div class="row">
         <label for="exportScale">放大倍數</label>
@@ -483,7 +697,7 @@ kbd {
       </div>
     </section>
 
-    <section class="small">
+    <section class="small desktop-only">
       <h3>快捷鍵</h3>
       <kbd>B</kbd> 鉛筆 · <kbd>E</kbd> 橡皮擦<br>
       <kbd>I</kbd> 吸色 · <kbd>G</kbd> 填色<br>
@@ -506,7 +720,7 @@ kbd {
       <span id="zoomLabel">8×</span>
       <button id="zoomIn">＋</button>
       <button id="zoomFit">符合畫面</button>
-      <label><input type="checkbox" id="gridToggle" checked> 網格</label>
+      <label id="gridLabel"><input type="checkbox" id="gridToggle" checked> 網格</label>
       <span id="dimensions" class="small"></span>
       <span id="autosaveState" class="small" role="status"></span>
     </div>
@@ -521,13 +735,40 @@ kbd {
   </div>
 </main>
 
+<div id="mBottom">
+  <div id="mPaletteBar">
+    <button id="mColorBtn" data-panel="colorSheet" aria-label="目前顏色"
+            style="background:#264f49"></button>
+  </div>
+  <div id="mTools">
+    <button data-tool="pencil" class="active"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2.83 2.83 0 1 0-4-4L4 16v4"/><path d="M13.5 6.5l4 4"/></svg>鉛筆</button>
+    <button data-tool="eraser"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 20H8.5l-4.2-4.3a1 1 0 0 1 0-1.4l10-10a1 1 0 0 1 1.4 0l5 5a1 1 0 0 1 0 1.4L11.5 20"/><path d="M18 13.3L11.7 7"/></svg>橡皮</button>
+    <button data-tool="picker"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 7l6 6"/><path d="M4 16L15.7 4.3a1 1 0 0 1 1.4 0l2.6 2.6a1 1 0 0 1 0 1.4L8 20H4v-4z"/></svg>吸色</button>
+    <button data-tool="fill"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 13.5L11 6l7.5 7.5L11 21z"/><path d="M11 6V3"/><path d="M20 16.5c0 1.5-1 2.3-1 3a1 1 0 0 0 2 0c0-.7-1-1.5-1-3z"/></svg>填色</button>
+    <button data-tool="line"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7"/><path d="M3 17h4v4H3zM17 3h4v4h-4z"/></svg>直線</button>
+    <button data-tool="pan"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></svg>移動</button>
+  </div>
+</div>
+
 <div id="status" role="status">準備就緒。</div>
+<div id="mScrim"></div>
+<div id="mMenu">
+  <div id="mInfo"><span id="mStats"></span></div>
+  <button data-proxy="newBtn">新畫布</button>
+  <button data-proxy="importBtn">匯入圖片</button>
+  <button data-proxy="loadBtn">載入專案</button>
+  <button data-proxy="saveBtn">儲存專案</button>
+  <button id="mExport">匯出 PNG…</button>
+  <button id="mHelp">手勢說明</button>
+</div>
+<div id="colorSheet"></div>
+<div id="toast" role="status"></div>
 <div id="pickLoupe" hidden><canvas width="72" height="72"></canvas><span></span></div>
 
 <input id="imageFile" type="file" accept="image/*" hidden>
 <input id="projectFile" type="file" accept=".json,application/json" hidden>
 
-<dialog id="importDialog">
+<dialog id="importDialog" class="full">
   <h2>匯入到低解析度畫布</h2>
   <div id="sourceInfo" class="small"></div>
   <div class="import-previews">
@@ -574,7 +815,7 @@ kbd {
   </div>
 </dialog>
 
-<dialog id="mergeDialog">
+<dialog id="mergeDialog" class="full">
   <h2>整理工作色盤／手動合併</h2>
   <div id="mergeInfo" class="small"></div>
 
@@ -635,7 +876,7 @@ kbd {
   </div>
 </dialog>
 
-<dialog id="gbDialog">
+<dialog id="gbDialog" class="full">
   <h2>轉換為 Game Boy 4 色</h2>
   <div class="import-previews">
     <figure>
@@ -705,7 +946,7 @@ kbd {
   </div>
 </dialog>
 
-<dialog id="hhDialog">
+<dialog id="hhDialog" class="full">
   <h2>掌機風格（GBC／GBA 氛圍）</h2>
   <div class="import-previews">
     <figure>
@@ -776,6 +1017,19 @@ kbd {
   </div>
 </dialog>
 
+<dialog id="exportDialog">
+  <h2>匯出 PNG</h2>
+  <div id="exportSlot"></div>
+  <div class="row">
+    <button data-proxy="pngBtn">原尺寸 PNG</button>
+    <button data-proxy="largeBtn">放大 PNG</button>
+    <button data-proxy="viewBtn">畫面 PNG（含網格）</button>
+  </div>
+  <div class="dialog-actions">
+    <button id="closeExport">關閉</button>
+  </div>
+</dialog>
+
 <dialog id="messageDialog">
   <p id="messageText"></p>
   <div class="dialog-actions">
@@ -792,6 +1046,7 @@ const canvas = $("canvas");
 const ctx = canvas.getContext("2d", { willReadFrequently: true });
 const viewport = $("viewport");
 const stage = $("stage");
+const mobileQuery = matchMedia("(max-width: 700px)");
 
 let W = 128, H = 80, zoom = 8;
 let pixels = new Uint8ClampedArray(W * H * 4);
@@ -866,6 +1121,7 @@ function setColor(value) {
   const hex = normalizeHex(value);
   if (!hex) return false;
   currentColor = hex;
+  $("mColorBtn").style.background = hex;
   $("color").value = hex;
   $("hex").value = hex;
   renderPalette();
@@ -920,8 +1176,8 @@ function restore(state) {
 }
 
 function updateHistory() {
-  $("undoBtn").disabled = past.length === 0;
-  $("redoBtn").disabled = future.length === 0;
+  $("undoBtn").disabled = $("mUndo").disabled = past.length === 0;
+  $("redoBtn").disabled = $("mRedo").disabled = future.length === 0;
   $("mergeUndo").disabled = past.length === 0;
 }
 
@@ -958,6 +1214,7 @@ function updateView() {
   $("grid").style.display =
     $("gridToggle").checked && zoom >= 4 ? "block" : "none";
   $("zoomLabel").textContent = zoom + "×";
+  $("mZoom").textContent = `${zoom}× · ${W}×${H}`;
   $("dimensions").textContent = `${W} × ${H} px`;
   scheduleAutosave();
 }
@@ -991,6 +1248,9 @@ function inspect(note = "") {
     `${W}×${H} px · ${colors.size} 個可見 RGB 色 · ` +
     (partial ? `⚠ ${partial} 個半透明像素` : "沒有半透明像素") +
     (note ? " · " + note : "");
+  $("mStats").textContent = `${W}×${H} · ${colors.size} 色` +
+    (partial ? ` · ⚠ ${partial} 半透明` : "");
+  if (note) toast(note);
 }
 
 function extractPalette(preferred = null) {
@@ -1669,6 +1929,9 @@ function renderMergePage() {
     const count = document.createElement("span");
     count.className = "color-count";
     count.textContent = c.count.toLocaleString() + " px";
+
+    // 點色塊或色碼也能勾選，手機上不必瞄準小小的勾選框
+    swatch.onclick = code.onclick = () => checkbox.click();
 
     const keep = document.createElement("button");
     keep.textContent = isTarget ? "保留色 ✓" : "保留此色";
@@ -2829,6 +3092,98 @@ function askConfirm(text, okLabel) {
 
 $("messageOk").onclick = () => $("messageDialog").close("ok");
 $("messageCancel").onclick = () => $("messageDialog").close();
+
+/* ---------- 手機版面 ---------- */
+// ≤700px 時把部分區塊搬進手機介面，回到寬螢幕再搬回原位；元素本身不變，id 與事件都照舊。
+
+const MOBILE_MOVES = [
+  ["palette", "mPaletteBar"],
+  ["colorSection", "colorSheet"],
+  ["exportSection", "exportSlot"],
+  ["gridLabel", "mGridSlot"],
+  ["autosaveState", "mInfo"]
+];
+const PANEL_IDS = ["mMenu", "sidebar", "colorSheet"];
+const mobileHomes = new Map();  // 元素 → 原位置的標記
+let toastTimer = 0;
+
+function closePanels() {
+  for (const id of PANEL_IDS) $(id).classList.remove("open");
+  $("mScrim").classList.remove("open");
+  document.querySelectorAll("[data-panel]").forEach(b => {
+    b.classList.remove("active");
+  });
+}
+
+function togglePanel(button) {
+  const panel = $(button.dataset.panel);
+  const wasOpen = panel.classList.contains("open");
+  closePanels();
+  if (wasOpen) return;
+  panel.classList.add("open");
+  button.classList.add("active");
+  $("mScrim").classList.add("open");
+}
+
+function applyLayout() {
+  closePanels();
+  for (const [id, slot] of MOBILE_MOVES) {
+    const el = $(id);
+    if (mobileQuery.matches) {
+      if (mobileHomes.has(el)) continue;
+      const mark = document.createComment(id);
+      el.before(mark);
+      mobileHomes.set(el, mark);
+      $(slot).append(el);
+    } else if (mobileHomes.has(el)) {
+      mobileHomes.get(el).replaceWith(el);
+      mobileHomes.delete(el);
+    }
+  }
+  if (!mobileQuery.matches && $("exportDialog").open) {
+    $("exportDialog").close();
+  }
+}
+
+function toast(text) {
+  if (!mobileQuery.matches) return;
+  $("toast").textContent = text;
+  $("toast").classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $("toast").classList.remove("show"), 2500);
+}
+
+document.querySelectorAll("[data-panel]").forEach(b => {
+  b.onclick = () => togglePanel(b);
+});
+document.querySelectorAll("[data-proxy]").forEach(b => {
+  b.onclick = () => {
+    closePanels();
+    b.closest("dialog")?.close();
+    $(b.dataset.proxy).click();
+  };
+});
+$("mScrim").onclick = closePanels;
+$("mUndo").onclick = undo;
+$("mRedo").onclick = redo;
+$("mZoom").onclick = fitZoom;
+$("mExport").onclick = () => {
+  closePanels();
+  $("exportDialog").showModal();
+};
+$("closeExport").onclick = () => $("exportDialog").close();
+$("mHelp").onclick = () => {
+  closePanels();
+  showMessage(
+    "單指：使用目前工具；在畫布外拖曳可平移\n" +
+    "兩指捏合：縮放；兩指拖曳：平移\n" +
+    "兩指輕點：復原；三指輕點：重做\n" +
+    "長按：吸色，按住拖曳可換色\n" +
+    "點上方倍率：符合畫面"
+  );
+};
+mobileQuery.addEventListener("change", applyLayout);
+applyLayout();
 
 /* ---------- 一般介面 ---------- */
 
