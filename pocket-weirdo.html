@@ -2361,7 +2361,7 @@ const textStyles=[
   {key:"label",name:"標籤"},
   {key:"bubble",name:"對話框"},
   {key:"thought",name:"想法泡泡"},
-  {key:"dialog",name:"掌機對話框"},
+  {key:"dialog",name:"系統訊息"},
   {key:"subtitle",name:"字幕"},
   {key:"note",name:"便條紙"}
 ];
@@ -2459,7 +2459,7 @@ function addText(){
   const style=textStyle,img=textBox(text,style);
   const o={id:objectId++,type:"text",bitmap:img,text,style,flip:false,x:W/2,y:H*.7};
   o.scale=fitTextScale(o,img);
-  // 掌機對話框貼底，字幕放在下方
+  // 系統訊息貼底，字幕放在下方
   if(style==="dialog")o.y=H;
   if(style==="subtitle")o.y=H*.85;
   keepInside(o);objects.push(o);selectedId=o.id;
