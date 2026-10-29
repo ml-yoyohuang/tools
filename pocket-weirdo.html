@@ -77,7 +77,7 @@ input[type=text]{width:100%;min-width:0;padding:10px;border:2px solid #526b3b;bo
 .tabs{display:flex;gap:5px;margin:5px 0}.tabs button{flex:1;min-height:34px}
 #toolPanel{min-height:73px}.sticker-btn{min-width:72px;white-space:nowrap;display:flex;flex-direction:column;align-items:center;gap:4px}
 .sticker-btn canvas{width:36px;height:30px;image-rendering:pixelated;object-fit:contain}
-#textPanel{display:flex;gap:6px;padding:10px 0}#textPanel button{flex-shrink:0}
+#textPanel{padding:0 0 8px}.text-row{display:flex;gap:6px}.text-row button{flex-shrink:0}
 #objectControls{display:flex;gap:6px;margin:3px 0}#objectControls button{flex:1;min-height:34px}
 #reviewHint{font-size:10px;margin:4px 0 7px;line-height:1.5}
 .hardware{margin:13px -4px 0;padding:0 4px}
@@ -203,8 +203,11 @@ dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;paddin
           <div class="strip" id="framePanel" aria-label="相框款式"></div>
           <div class="strip" id="stickerPanel" aria-label="彩色貼紙" hidden></div>
           <div id="textPanel" hidden>
-            <input id="textInput" type="text" maxlength="20" placeholder="寫點什麼" aria-label="照片文字">
-            <button id="addTextBtn">加入</button>
+            <div class="strip" id="textStylePanel" aria-label="文字框樣式"></div>
+            <div class="text-row">
+              <input id="textInput" type="text" maxlength="20" placeholder="寫點什麼" aria-label="照片文字">
+              <button id="addTextBtn">加入</button>
+            </div>
           </div>
         </div>
         <div id="objectControls" hidden>
@@ -727,14 +730,15 @@ function textBitmap(text,dark,light,tiny=false){
   if(english){
     c=canvas(Math.max(8,text.length*(tiny?4:6)+3),tiny?9:11);
     const cc=c.getContext("2d");
-    cc.fillStyle=dark;cc.fillRect(0,0,c.width,c.height);
+    // dark 為 null 時不鋪底色，給字幕描邊用。
+    if(dark){cc.fillStyle=dark;cc.fillRect(0,0,c.width,c.height)}
     pixelText(cc,text,2,2,light,tiny);
   }else{
     const measure=canvas(1,1).getContext("2d");
     measure.font="bold 10px sans-serif";
     c=canvas(Math.ceil(measure.measureText(text).width)+6,15);
     const cc=c.getContext("2d");
-    cc.fillStyle=dark;cc.fillRect(0,0,c.width,c.height);
+    if(dark){cc.fillStyle=dark;cc.fillRect(0,0,c.width,c.height)}
     cc.font="bold 10px sans-serif";cc.textBaseline="top";
     cc.fillStyle=light;cc.fillText(text,3,2);
   }
@@ -2092,6 +2096,7 @@ function updateSelection(){
       width:r.w/W*100+"%",height:r.h/H*100+"%"
     });
   }
+  if(o?.type==="text"&&o.style!==textStyle){textStyle=o.style;renderTextStyles()}
   $("reviewHint").textContent=o
     ?"直接拖移或用十字鍵微移。A 完成，B 復原。"
     :"拍完不能再調色，可以加相框、貼紙或文字。";
@@ -2119,19 +2124,116 @@ function addSticker(key){
   objects.push(o);selectedId=o.id;renderReview();
   say(key==="banana"?"banana":"sticker");
 }
+/* ---------- 文字框樣式 ---------- */
+const textStyles=[
+  {key:"label",name:"標籤"},
+  {key:"bubble",name:"對話框"},
+  {key:"thought",name:"想法泡泡"},
+  {key:"dialog",name:"掌機對話框"},
+  {key:"subtitle",name:"字幕"},
+  {key:"note",name:"便條紙"}
+];
+let textStyle="label";
+function textBox(text,style,flip=false,colors=captureColors,width=W){
+  const [dark,mid,,light]=colors;
+  if(style==="label")return textBitmap(text,dark,light);
+  if(style==="subtitle"){
+    // 沒有底色：深色描一圈，淺色字放中間
+    const fg=textBitmap(text,null,light),edge=textBitmap(text,null,dark);
+    const c=canvas(fg.width+2,fg.height+2),cc=c.getContext("2d");
+    for(let dy=0;dy<3;dy++)for(let dx=0;dx<3;dx++)cc.drawImage(edge,dx,dy);
+    cc.drawImage(fg,1,1);
+    return c;
+  }
+  const inner=textBitmap(text,light,dark);
+  let c,cc;
+  // 深色外框、淺色內部，四角削掉 cut 格
+  const box=(w,h,cut)=>{
+    cc.fillStyle=dark;cc.fillRect(cut,0,w-2*cut,h);cc.fillRect(0,cut,w,h-2*cut);
+    if(cut>1)cc.fillRect(1,1,w-2,h-2);
+    cc.fillStyle=light;cc.fillRect(cut,1,w-2*cut,h-2);cc.fillRect(1,cut,w-2,h-2*cut);
+  };
+  if(style==="bubble"||style==="thought"){
+    const w=inner.width+4,bh=inner.height+4,X=x=>flip?w-1-x:x;
+    c=canvas(w,bh+(style==="bubble"?4:7));cc=c.getContext("2d");
+    box(w,bh,2);cc.drawImage(inner,2,2);
+    if(style==="bubble"){
+      // 尾巴：從框底往下的小三角
+      const tx=Math.min(5,w-8);
+      for(let i=0;i<4;i++){
+        cc.fillStyle=light;
+        for(let x=tx+1;x<tx+4-i;x++)cc.fillRect(X(x),bh-1+i,1,1);
+        cc.fillStyle=dark;cc.fillRect(X(tx),bh-1+i,1,1);cc.fillRect(X(tx+4-i),bh-1+i,1,1);
+      }
+    }else{
+      // 兩顆小泡泡往下延伸
+      for(const [x,y,s] of [[5,bh+1,3],[3,bh+5,2]]){
+        cc.fillStyle=dark;cc.fillRect(Math.min(X(x),X(x+s-1)),y,s,s);
+        if(s>2){cc.fillStyle=light;cc.fillRect(X(x+1),y+1,1,1)}
+      }
+    }
+    return c;
+  }
+  if(style==="dialog"){
+    const w=Math.max(width-4,inner.width+16),h=inner.height+8;
+    c=canvas(w,h);cc=c.getContext("2d");
+    // 掌機遊戲的雙線框，右下角一個 ▼
+    for(const [i,color] of [[0,dark],[1,light],[2,dark],[3,light]]){
+      cc.fillStyle=color;cc.fillRect(i,i,w-2*i,h-2*i);
+    }
+    cc.drawImage(inner,4,4);
+    cc.fillStyle=dark;
+    for(let i=0;i<3;i++)cc.fillRect(w-10+i,h-7+i,5-2*i,1);
+    return c;
+  }
+  // note：便條紙，右下有影子，上方貼一段半透明膠帶
+  const w=inner.width+5,h=inner.height+8;
+  c=canvas(w,h);cc=c.getContext("2d");
+  cc.fillStyle=mid;cc.fillRect(1,4,w-1,h-4);
+  cc.fillStyle=light;cc.fillRect(0,3,w-1,h-4);
+  cc.drawImage(inner,2,5);
+  const tw=Math.min(16,Math.round(w*.4)),tx=Math.round((w-tw)/2);
+  cc.fillStyle="rgba(255,255,255,.6)";cc.fillRect(tx,0,tw,6);
+  cc.fillStyle="rgba(255,255,255,.35)";cc.fillRect(tx,0,1,6);cc.fillRect(tx+tw-1,0,1,6);
+  return c;
+}
+const fitTextScale=(o,img)=>Math.min(o.style==="dialog"?1:o.scale??1,
+  (W-(o.style==="dialog"?4:8))/img.width,(H-8)/img.height);
+function renderTextStyles(){
+  document.querySelectorAll("[data-text-style]").forEach(b=>{
+    b.classList.toggle("active",b.dataset.textStyle===textStyle);
+    b.setAttribute("aria-pressed",String(b.dataset.textStyle===textStyle));
+  });
+}
+function chooseTextStyle(key){
+  const o=selectedObject();
+  textStyle=key;renderTextStyles();
+  if(!review||drag||o?.type!=="text")return;
+  const flippable=key==="bubble"||key==="thought";
+  if(o.style===key&&!flippable)return;
+  rememberEdit();
+  // 同一個樣式再點一次：對話框與想法泡泡換邊
+  if(o.style===key)o.flip=!o.flip;else{o.style=key;o.flip=false}
+  o.bitmap=textBox(o.text,o.style,o.flip);
+  o.scale=fitTextScale(o,o.bitmap);
+  if(o.style==="dialog")o.y=H;
+  keepInside(o);renderReview();
+}
 function addText(){
   if(!canAdd())return;
   const text=$("textInput").value.trim();
   if(!text){$("textInput").focus();return}
   rememberEdit();
-  const img=textBitmap(text,captureColors[0],captureColors[3]);
-  const scale=Math.min(1,(W-8)/img.width,(H-8)/img.height);
-  const o={
-    id:objectId++,type:"text",bitmap:img,text,
-    x:W/2,y:H*.7,scale
-  };
+  const style=textStyle,img=textBox(text,style);
+  const o={id:objectId++,type:"text",bitmap:img,text,style,flip:false,x:W/2,y:H*.7};
+  o.scale=fitTextScale(o,img);
+  // 掌機對話框貼底，字幕放在下方
+  if(style==="dialog")o.y=H;
+  if(style==="subtitle")o.y=H*.85;
   keepInside(o);objects.push(o);selectedId=o.id;
   $("textInput").value="";$("textInput").blur();renderReview();
+  if(style==="bubble")message("再點一次「對話框」，尾巴會換邊。");
+  if(style==="thought")message("再點一次「想法泡泡」，泡泡會換邊。");
 }
 function scaleObject(factor){
   const o=selectedObject();if(!o||drag)return;
@@ -2324,6 +2426,22 @@ function buildFrameButtons(){
     $("framePanel").appendChild(b);
   });
 }
+function buildTextStyleButtons(){
+  textStyles.forEach(s=>{
+    const b=document.createElement("button");
+    b.className="choice";b.dataset.textStyle=s.key;
+    const img=textBox("HI!",s.key,false,palettes[0].colors,24);
+    const c=canvas(48,32),cc=c.getContext("2d");
+    cc.fillStyle="#9bac65";cc.fillRect(0,0,48,32);cc.imageSmoothingEnabled=false;
+    const k=Math.max(1,Math.floor(Math.min(44/img.width,28/img.height)));
+    cc.drawImage(img,Math.round((48-img.width*k)/2),Math.round((32-img.height*k)/2),
+      img.width*k,img.height*k);
+    const label=document.createElement("span");label.textContent=s.name;
+    b.append(c,label);b.onclick=()=>chooseTextStyle(s.key);
+    $("textStylePanel").appendChild(b);
+  });
+  renderTextStyles();
+}
 function buildStickerButtons(){
   stickerDefs.forEach(d=>{
     const b=document.createElement("button");b.className="sticker-btn";
@@ -2418,7 +2536,7 @@ window.addEventListener("keydown",e=>{
   }else if(e.key==="Delete"&&review){deleteObject()}
 });
 
-buildStyleButtons();buildFrameButtons();buildStickerButtons();
+buildStyleButtons();buildFrameButtons();buildStickerButtons();buildTextStyleButtons();
 showSetting(0);syncSettings();standby();say("idle");requestAnimationFrame(loop);
 if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia){
   $("startDescription").textContent=
