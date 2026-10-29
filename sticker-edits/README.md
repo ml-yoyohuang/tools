@@ -138,3 +138,4 @@
 | 皇帶魚 | [oarfish.json](oarfish.json) |
 | 鮟鱇魚 | [angler.json](angler.json) |
 | 鼴鼠 | [mole.json](mole.json) |
+| 尼斯湖水怪 | [nessie.json](nessie.json) |

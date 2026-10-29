@@ -2507,6 +2507,23 @@ const stickerDefs=[
     ],
     colors:{"m":"#4a4048","k":"#1d1d1d","p":"#f0a0b0","h":"#f0c8b0","d":"#8a6a48","D":"#6a4e34","o":"#26352d"}
   },
+  {
+    // 照 1934 年那張可疑的「目擊照」：模糊的黑色剪影、顆粒、水波
+    key:"nessie",name:"尼斯湖水怪",
+    rows:[
+      "...kkks.....................",".skksskks...................",
+      "kkkkkkkkk...................",".s..sskkks..................",
+      ".......skk..................",".......sksk.................",
+      "........kkks................","........skkk................",
+      ".........kkk................",".........ksks...............",
+      ".........kkkk...............",".........kkkk...............",
+      ".........kkkks..............",".........kkkkk....sskkkss...",
+      "........skkkkks.skskkskkks..","..wwwwwwkkkskskwkkkkkkskskww",
+      "....w.wwwwwwwwwww.wwwwwwww.w","..WW...........WW.........WW",
+      "WW..WWWW.....WW..WWWWW..WW.."
+    ],
+    colors:{"k":"#1e1e22","s":"#4a4a50","w":"#c8ccd0","W":"#8a8e94"}
+  },
   /* 辦公字 */
   {key:"original",name:"正本",label:"ORIGINAL",look:"stampRed"},
   {key:"sample",name:"樣品",label:"SAMPLE",look:"stampBlue"},
@@ -2856,10 +2873,16 @@ function objectRect(o){
   const h=Math.max(1,Math.round(img.height*o.scale));
   return {x:Math.round(o.x-w/2),y:Math.round(o.y-h/2),w,h};
 }
+// 貼紙和文字可以拖出畫面，但至少留 6 格（或四分之一）在畫面內，才抓得回來；
+// 系統訊息框照舊整個留在畫面裡。
 function keepInside(o){
   const r=objectRect(o);
-  o.x=clamp(o.x,r.w/2,W-r.w/2);
-  o.y=clamp(o.y,r.h/2,H-r.h/2);
+  if(o.style==="dialog"){
+    o.x=clamp(o.x,r.w/2,W-r.w/2);o.y=clamp(o.y,r.h/2,H-r.h/2);return;
+  }
+  const mx=Math.min(6,r.w/4),my=Math.min(6,r.h/4);
+  o.x=clamp(o.x,mx-r.w/2,W-mx+r.w/2);
+  o.y=clamp(o.y,my-r.h/2,H-my+r.h/2);
 }
 function compose(c){
   c.clearRect(0,0,W,H);c.imageSmoothingEnabled=false;
@@ -3023,7 +3046,8 @@ function scaleObject(factor){
   const o=selectedObject();if(!o||drag)return;
   rememberEdit();
   const img=bitmap(o);
-  const max=Math.min(5,(W-4)/img.width,(H-4)/img.height);
+  // 可以放大到超出畫面，最多 5 倍；系統訊息框寬度固定，不縮放
+  const max=o.style==="dialog"?1:5;
   o.scale=clamp(o.scale*factor,Math.min(.3,max),max);
   keepInside(o);renderReview();
 }
