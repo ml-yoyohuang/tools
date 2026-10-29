@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1200" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="sky" cx="50%" cy="46%" r="72%">
+      <stop stop-color="#d9f2ff"/>
+      <stop offset=".42" stop-color="#9bb9e9"/>
+      <stop offset="1" stop-color="#5664b0"/>
+    </radialGradient>
+    <linearGradient id="crystal" x1="0" x2="1" y1="0" y2="1">
+      <stop stop-color="#fff"/>
+      <stop offset=".45" stop-color="#c9efff"/>
+      <stop offset="1" stop-color="#9ca8ed"/>
+    </linearGradient>
+    <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
+      <path d="M80 0H0V80" fill="none" stroke="#eaf9ff" stroke-width="2" opacity=".28"/>
+      <circle cx="0" cy="0" r="3" fill="#fff" opacity=".45"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="1200" fill="url(#sky)"/>
+  <rect width="800" height="1200" fill="url(#grid)"/>
+  <ellipse cx="400" cy="560" rx="245" ry="76" fill="none" stroke="#fff" stroke-width="24" opacity=".75"/>
+  <ellipse cx="400" cy="560" rx="236" ry="69" fill="none" stroke="#6678c2" stroke-width="7"/>
+  <g fill="#e9f8ff" stroke="#fff" stroke-width="10" stroke-linejoin="round" opacity=".85">
+    <path d="M330 600C235 498 135 470 56 548c100-13 139 63 207 107-82-15-133 26-165 98 86-39 156-12 232 35z"/>
+    <path d="M470 600c95-102 195-130 274-52-100-13-139 63-207 107 82-15 133 26 165 98-86-39-156-12-232 35z"/>
+  </g>
+  <g transform="translate(400 610)">
+    <path d="M0-260 66-66 260 0 66 66 0 260-66 66-260 0-66-66z" fill="url(#crystal)" stroke="#6a79c6" stroke-width="29" stroke-linejoin="round"/>
+    <path d="M0-260 66-66 260 0 66 66 0 260-66 66-260 0-66-66z" fill="none" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M0-206 35-35 206 0 35 35 0 206-35 35-206 0-35-35z" fill="#fff" opacity=".62"/>
+    <path d="M0-176 22-22 176 0 22 22 0 176-22 22-176 0-22-22z" fill="#e5f8ff"/>
+  </g>
+  <g fill="#fff" stroke="#d4efff" stroke-width="5">
+    <path d="M145 270l16 50 50 16-50 16-16 50-16-50-50-16 50-16z"/>
+    <path d="M652 324l12 36 36 12-36 12-12 36-12-36-36-12 36-12z"/>
+    <path d="M142 905l12 38 38 12-38 12-12 38-12-38-38-12 38-12z"/>
+    <path d="M668 942l17 49 49 17-49 17-17 49-17-49-49-17 49-17z"/>
+  </g>
+  <path d="M-30 152c170 80 220 75 345-12M840 1020c-170-80-220-75-345 12" fill="none" stroke="#f7fdff" stroke-width="5" opacity=".65"/>
+</svg>

@@ -23,7 +23,7 @@ body[data-theme=hara]{--accent:#a04dd3;--second:#d3fa65;--bg:#e9d7fb;--paper:#ff
 @media(max-width:760px){.topbar{height:62px;padding:0 20px}.topbar .tag{display:none}.arcade{padding:27px 0 20px}.intro{padding:0 23px;margin-bottom:24px}.intro h1{font-size:34px;letter-spacing:-2px}.intro{display:block}.intro p{max-width:none!important;margin-top:12px}.intro p br{display:none}.intro .ticket{display:none}.intro p{max-width:135px;font-size:11px}.machines{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding:8px 25px 16px;gap:22px;scroll-padding:25px}.machine{flex:0 0 85%;scroll-snap-align:center;min-height:535px}.machine .machine-title{font-size:65px}.cyber .machine-title{font-size:57px}.arcade-foot{padding:0 25px;gap:12px;line-height:1.6}.workspace{padding:22px 16px 32px}.steps{gap:8px;font-size:9px;letter-spacing:0;margin-bottom:24px}.console{padding:17px 12px;box-shadow:4px 5px 0 var(--line);border-radius:20px}.mode-grid{gap:10px}.mode{padding:5px;border-radius:9px}.mode .mode-label{padding:10px 3px 4px;font-size:12px}.mode small{font-size:9px}.mode em{font-size:16px}.station-head h1{font-size:30px}.station-head.row{flex-wrap:nowrap}.station-head.row>div:first-child{min-width:0}.station-head.row h1{font-size:27px;letter-spacing:-1px}.station-head .eyebrow{font-size:9px;letter-spacing:1px}.station-head p{font-size:12px}.four-grid{grid-template-columns:repeat(2,1fr)}.editor{grid-template-columns:1fr;gap:18px}.photo-tabs{margin-bottom:14px}.toolbox{padding:14px}.stickers{grid-template-columns:repeat(6,1fr);gap:6px}.sticker-button canvas{width:36px;height:36px}.sticker-button{min-height:59px}.edit-footer{position:sticky;bottom:0;padding:13px 0;background:var(--bg);z-index:4}.edit-footer .primary{min-width:180px}.print-layout{grid-template-columns:1fr;gap:22px}.sheet-stage{min-height:250px;padding:20px}.sheet-stage canvas{max-height:55vh}.print-panel{max-width:600px;width:100%;margin:auto}.layout-choices{grid-template-columns:repeat(3,1fr);gap:8px}.layout-choices button{display:block;text-align:center;padding:12px 5px}.layout-icon{margin:0 auto 8px!important}.layout-choices strong{font-size:12px}.layout-choices small{font-size:9px}.print-panel h2{font-size:19px}.import-grid{gap:12px}.camera-hud{font-size:10px}.count-number{-webkit-text-stroke:2px var(--line)}.timer{width:57px;height:57px}.topbar .coin{font-size:9px}.brand{font-size:20px}}
 @media(max-width:760px){body[data-stage=edit] .topbar,body[data-stage=edit] .marquee,body[data-stage=edit] .steps{display:none}body[data-stage=edit] .workspace{padding:12px 14px 16px}body[data-stage=edit] .station-head{margin-bottom:12px}body[data-stage=edit] .station-head h1{font-size:24px}body[data-stage=edit] .editor{gap:10px}body[data-stage=edit] .photo-tabs{margin-bottom:12px}body[data-stage=edit] .photo-tabs canvas{max-height:49px;object-fit:cover}body[data-stage=edit] .selected-info{margin:10px 0}body[data-stage=edit] .toolbox{padding:12px}body[data-stage=edit] .tool-tabs{margin-bottom:12px}body[data-stage=edit] .edit-footer{margin-top:12px;padding:10px 0}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.foil-card{transform:none!important}}
-/* The lobby is an edge-to-edge booth selector. Keep the shared chrome for later steps. */
+/* The lobby is an edge-to-edge booth selector. */
 body[data-stage=lobby]{overflow:hidden}
 body[data-stage=lobby] .topbar,body[data-stage=lobby] .marquee,body[data-stage=lobby] .status{display:none}
 body[data-stage=lobby] main{height:100dvh}
@@ -145,6 +145,47 @@ body[data-stage=lobby] main{height:100dvh}
 @media(max-width:760px){.machine-index{display:block}}
 @media(min-width:761px){.machine .choose{bottom:clamp(55px,calc(4vh + 32px),75px)}}
 @media(prefers-reduced-motion:reduce){.machine-ornament{opacity:.7;transform:rotate(var(--ornament-angle))}.machine.hara .machine-ornament,.machine.cyber .machine-ornament{transform:none}}
+/* One fixed progress strip replaces the shared chrome throughout the photo flow. */
+body:not([data-stage=lobby]) .topbar,body:not([data-stage=lobby]) .marquee,body:not([data-stage=lobby]) .machine-name{display:none}
+body:not([data-stage=lobby]) .status{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;padding:0;border:0}
+body:not([data-stage=lobby]) .workspace{min-height:100dvh;padding-top:54px}
+body:not([data-stage=lobby]) .steps{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;height:30px;margin:0;padding:0;gap:0;background:#241329;color:#fff7e9;font:800 clamp(7px,.8vw,11px)/1 monospace;letter-spacing:.06em}
+body:not([data-stage=lobby]) .steps span[data-step]{flex:1;min-width:0;display:grid;place-items:center;white-space:nowrap;opacity:.62}
+body:not([data-stage=lobby]) .steps .current{background:var(--accent);color:#fff;opacity:1;box-shadow:none;padding:0;transform:none}
+body[data-stage=start]{overflow:hidden}
+body[data-stage=start] .workspace{height:100dvh;min-height:0;padding:30px 0 0;background:#171322;overflow:hidden}
+body[data-stage=start] .station{max-width:none;width:100%;height:100%}
+#startSection{position:relative;display:flex;flex-direction:column;height:100%;min-height:0}
+body[data-stage=start] .mode-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;flex:1;min-height:0;width:100%;margin:0;padding:0}
+body[data-stage=start] .mode{position:relative;display:block;width:100%;height:100%;min-height:0;margin:0;padding:0;overflow:hidden;border:0;border-radius:0;background:#211a2d;color:#fff;text-align:center;box-shadow:none;transform:none}
+body[data-stage=start] .mode:first-child{border-right:2px solid #241329}
+body[data-stage=start] .mode.active,body[data-stage=start] .mode[aria-pressed=true]{background:#211a2d}
+body[data-stage=start] .mode:hover:not(:disabled),body[data-stage=start] .mode:active:not(:disabled){transform:none;box-shadow:none}
+body[data-stage=start] .mode:focus-visible{outline:4px solid #fff;outline-offset:-5px;z-index:4}
+body[data-stage=start] .standby-art,body[data-stage=start] .mode canvas{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;pointer-events:none}
+body[data-stage=start] .standby-art{opacity:1;transition:opacity .2s ease}
+body[data-stage=start] .mode[data-look=old] .standby-art{filter:sepia(.13) saturate(1.18) contrast(1.08)}
+body[data-stage=start] .mode[data-look=soft] .standby-art{filter:brightness(1.07) saturate(.86)}
+body[data-stage=start] .mode canvas{aspect-ratio:auto;border-radius:0;background:transparent;opacity:0;transition:opacity .2s ease}
+body[data-stage=start] #startSection[data-camera-ready=true] .mode canvas{opacity:1}
+body[data-stage=start] #startSection[data-camera-ready=true] .standby-art{opacity:0}
+body[data-stage=start] .mode[data-look=old] canvas{image-rendering:pixelated}
+body[data-stage=start] .mode::after{content:"";position:absolute;inset:55% 0 0;z-index:1;pointer-events:none;background:linear-gradient(transparent,#100c22a8)}
+body[data-stage=start] .mode-label{position:absolute;z-index:2;left:50%;bottom:clamp(22px,5vh,52px);display:flex;align-items:center;justify-content:center;gap:8px;width:min(calc(100% - 32px),300px);min-height:54px;padding:10px 12px;border:2px solid #fff;border-radius:999px;background:var(--accent);color:#fff;box-shadow:0 8px 20px #160c2599;text-shadow:0 1px 2px #130a1d;font:900 clamp(12px,1.6vw,18px)/1.1 "Arial Rounded MT Bold","Microsoft JhengHei",system-ui,sans-serif;white-space:nowrap;transform:translateX(-50%)}
+body[data-stage=start] .mode[data-look=soft] .mode-label{background:var(--paper);color:var(--ink);text-shadow:none}
+body[data-stage=start] .mode:hover .mode-label,body[data-stage=start] .mode:focus-visible .mode-label{box-shadow:0 0 0 5px #fff8,0 10px 22px #160c25a6}
+#startSection #flipBtn{position:absolute;top:14px;left:16px;z-index:8;width:50px;height:50px;min-height:50px;padding:0;border:1px solid #fff9;border-radius:50%;background:#241329cc;color:#fff;box-shadow:none;font:800 30px/1 Arial,sans-serif}
+#startSection #timeToggle{position:absolute;top:14px;right:16px;z-index:8;width:76px;height:76px;min-height:76px;padding:3px;background:#fffaf1f2;box-shadow:0 5px 12px #130b2866}
+#startSection #timeToggle small{font-size:28px;line-height:1}
+#startSection #timeToggle b{font:900 27px/1 monospace}
+#startSection #timeToggle[data-unlimited=true] b{font:900 48px/.75 Arial,sans-serif}
+#startSection #permission{position:absolute;top:50%;left:50%;z-index:7;display:grid;gap:12px;width:min(380px,calc(100% - 32px));padding:22px;transform:translate(-50%,-50%);border:3px solid var(--line);border-radius:26px;background:var(--paper);color:var(--ink);box-shadow:7px 8px 0 var(--line)}
+#startSection #permission p{margin:0 0 2px;font-size:14px;font-weight:800;line-height:1.55;text-align:center}
+#startSection #permission button{display:block;width:100%;min-height:48px;margin:0}
+#startSection #permission .quiet{border:2px solid var(--line);border-radius:12px;background:#fffaf1;color:var(--ink);box-shadow:none;font-size:13px}
+#startSection #backLobby{flex:0 0 calc(30px + env(safe-area-inset-bottom));width:100%;height:calc(30px + env(safe-area-inset-bottom));min-height:30px;margin:0;padding:0 0 env(safe-area-inset-bottom);border:0;border-radius:0;background:#241329;color:#fff7e9;box-shadow:none;font:800 12px/30px "Arial Rounded MT Bold","Microsoft JhengHei",system-ui,sans-serif;letter-spacing:.08em}
+#startSection #backLobby:hover:not(:disabled),#startSection #backLobby:active:not(:disabled){transform:none;background:#452449;box-shadow:none}
+@media(max-width:760px){body:not([data-stage=lobby]) .steps{font-size:7px;letter-spacing:0}#startSection #flipBtn{top:10px;left:10px;width:42px;height:42px;min-height:42px;font-size:25px}#startSection #timeToggle{top:10px;right:10px;width:66px;height:66px;min-height:66px}#startSection #timeToggle small{font-size:24px}#startSection #timeToggle b{font-size:24px}#startSection #timeToggle[data-unlimited=true] b{font-size:40px}body[data-stage=start] .mode-label{bottom:22px;min-height:48px;padding:8px 6px;font-size:12px}}
 </style>
 </head>
 <body data-theme="gal" data-stage="lobby">
@@ -163,14 +204,13 @@ body[data-stage=lobby] main{height:100dvh}
  <output class="machine-index" id="machineIndex" aria-live="polite">1/3</output>
 </section>
 <div id="workspace" class="workspace" hidden><div class="station">
- <nav class="steps" aria-label="拍貼流程"><span data-step="start">01 進入機台</span><span>→</span><span data-step="shoot">02 拍照</span><span>→</span><span data-step="edit">03 裝飾</span><span>→</span><span data-step="layout">04 排版</span><span>→</span><span data-step="result">05 印刷</span></nav>
+ <nav class="steps" aria-label="拍貼流程"><span data-step="start">01 ENTER BOOTH</span><span data-step="shoot">02 SHOOT</span><span data-step="edit">03 DECORATE</span><span data-step="layout">04 LAYOUT</span><span data-step="result">05 PRINT</span></nav>
  <section id="startSection" hidden>
-  <div class="station-head row between"><div><div class="eyebrow machine-name"></div><h1>準備好，可愛出場。</h1></div><button id="timeToggle" class="timer" aria-label="編輯時間 90 秒，點擊切換不限時" title="切換編輯時間"><small>⏱</small><b>90</b></button></div>
-  <div class="console"><div class="row between"><span class="label"><span class="live-dot"></span>LIVE MIRROR / 選擇照片質感</span><button id="flipBtn" class="quiet">↻ 切換鏡頭</button></div>
-   <div class="mode-grid"><button class="mode active" data-look="old" aria-pressed="true"><canvas id="oldPreview" width="480" height="360" aria-label="復古低清即時預覽"></canvas><span class="mode-label"><span>2000 復古低清<small>柔焦、暖暖的回憶感</small></span><em>♡</em></span></button><button class="mode" data-look="soft" aria-pressed="false"><canvas id="softPreview" width="480" height="360" aria-label="柔亮清晰即時預覽"></canvas><span class="mode-label"><span>天生柔亮<small>透亮、保留更多細節</small></span><em>✧</em></span></button></div>
-   <div id="permission" class="permission"><p id="cameraMessage">開啟鏡頭，看見兩種質感的自己。</p><button id="enableCamera" class="primary">開啟相機 ♡</button><button id="importEntry" class="quiet">沒有相機？匯入照片 ↗</button></div>
-   <p id="previewNote" class="preview-help" hidden>兩邊都是即時畫面，點選你喜歡的質感。</p>
-  </div><div class="start-actions"><div class="press">PRESS START!</div><button id="startBtn" class="primary full" disabled>以這個模式開始 →</button><p class="small">四張連拍，每張 5 秒。記得換個姿勢 ♡</p><button id="backLobby" class="quiet">← 回去選機台</button></div>
+  <button id="flipBtn" class="quiet" aria-label="切換鏡頭" title="切換鏡頭">↻</button>
+  <button id="timeToggle" class="timer" aria-label="編輯時間 90 秒，點擊切換不限時" title="切換編輯時間"><small>⏱</small><b>90</b></button>
+  <div class="mode-grid"><button class="mode active" data-look="old" aria-pressed="true" aria-label="選擇復古低清模式並開始拍攝"><img class="standby-art" src="assets/puri-club/standby/109-style.svg" width="800" height="1200" alt="" aria-hidden="true"><canvas id="oldPreview" width="480" height="360" aria-hidden="true"></canvas><span class="mode-label">復古低清模式</span></button><button class="mode" data-look="soft" aria-pressed="false" aria-label="選擇天生柔亮模式並開始拍攝"><img class="standby-art" src="assets/puri-club/standby/109-style.svg" width="800" height="1200" alt="" aria-hidden="true"><canvas id="softPreview" width="480" height="360" aria-hidden="true"></canvas><span class="mode-label">天生柔亮模式</span></button></div>
+  <div id="permission" class="permission"><p id="cameraMessage">開啟相機後，選一邊開始拍攝。</p><button id="enableCamera" class="primary">開啟相機 ♡</button><button id="importEntry" class="quiet">沒有相機？匯入照片 ↗</button></div>
+  <button id="backLobby" class="quiet">← 回去選機台</button>
  </section>
  <section id="shootSection" hidden><div class="station-head row between"><div><div class="eyebrow machine-name"></div><h1 id="shootTitle">輪到你閃閃發光。</h1></div><span id="shotNumber" class="eyebrow">01 / 04</span></div><div class="camera-stage" id="cameraStage"><canvas id="cameraCanvas" width="800" height="600" aria-label="拍攝即時畫面"></canvas><div class="camera-hud"><span>● REC / PURI CLUB</span><span id="poseHint">看鏡頭，笑一個 ♡</span></div><div id="countOverlay" class="count-overlay"><div id="countNumber" class="count-number"></div><div id="countLabel" class="count-label">先擺好姿勢 ♡</div></div></div><div class="shoot-footer"><button id="resumeBtn" class="primary" hidden>重新開啟相機，繼續拍攝</button><p id="shootNote">每張之間留 3 秒換姿勢，慢慢來也很可愛。</p></div></section>
  <section id="reviewSection" hidden><div class="station-head"><div class="eyebrow machine-name"></div><h1>四張，都要喜歡。</h1><p class="small">點選想重拍的照片。每張只有一次重拍機會 ♡</p></div><div id="reviewGrid" class="four-grid"></div><p id="retakeNote" class="review-note">每張可以重拍 1 次，準備好再按完成。</p><button id="reviewDone" class="primary full">完成，開始裝飾 →</button><p class="small" style="text-align:center;margin-top:16px">按下完成後，才開始計算裝飾時間。</p></section>
@@ -202,6 +242,7 @@ function makeCanvas(w,h){const c=document.createElement("canvas");c.width=w;c.he
 function roundRect(c,x,y,w,h,r){c.beginPath();c.roundRect(x,y,w,h,r)}
 function cropDraw(c,img,x,y,w,h){const sw=img.videoWidth||img.naturalWidth||img.width,sh=img.videoHeight||img.naturalHeight||img.height;if(!sw||!sh)return;let cw=sw,ch=sh;if(sw/sh>w/h)cw=sh*w/h;else ch=sw*h/w;c.drawImage(img,(sw-cw)/2,(sh-ch)/2,cw,ch,x,y,w,h)}
 const THEMES={gal:{name:"109 STYLE",paper:"#fff0df",accent:"#f73692",ink:"#3d2036",secondary:"#ffe16c",border:"#392334",symbol:"♥",poses:["看鏡頭，笑一個 ♡","比個辣妹 peace！","靠近一點點 ♡","最後一張，最閃亮！"]},hara:{name:"HARAJUKU MIX",paper:"#fffce1",accent:"#ef59a5",ink:"#51316c",secondary:"#b9e858",border:"#69418c",symbol:"★",poses:["準備你的招牌表情 ☆","換一個超怪可愛 pose！","跟朋友擠在一起！","最後一張，放膽玩！"]},cyber:{name:"CYBER ANGEL",paper:"#edf5ff",accent:"#7c89d8",ink:"#414e7c",secondary:"#b2e8f5",border:"#8196bc",symbol:"✧",poses:["天使準備連線 ✧","輕輕歪個頭 ✧","發送一個愛心！","最後一張，閃耀吧！"]}};
+const STANDBY_ART={gal:"assets/puri-club/standby/109-style.svg",hara:"assets/puri-club/standby/harajuku-mix.svg",cyber:"assets/puri-club/standby/cyber-angel.svg"};
 let stage="lobby",theme="gal",look="old",layout="grid",film="none",duration=90;
 let photos=Array(4).fill(null),processed=Array(4).fill(null),decorations=Array.from({length:4},()=>[]),histories=Array.from({length:4},()=>[]),retakes=[0,0,0,0];
 let activePhoto=0,selectedId=null,nextId=1,tool="sticker",textColor="#f73692",drawColor="#f73692",brushSize=7,gesture=null,deadline=0,editLocked=false;
@@ -210,8 +251,9 @@ let importSlot=0,importBusy=false,exportBlob=null,exportFile=null,exportToken=0,
 const video=$("sourceVideo"),editCanvas=$("editCanvas"),stampDate=new Date().toLocaleDateString("sv-SE").replaceAll("-",".");
 // Reused original photo processing and vector sticker artwork.
 function processPhoto(raw,preview=false){
-  const low=look==="old"?320:480;
-  const w=preview?Math.min(low,240):low;
+  const retro=look==="old";
+  const low=retro?160:640;
+  const w=preview?Math.min(low,320):low;
   const h=Math.round(w*.75);
   const small=makeCanvas(w,h);
   const c=small.getContext("2d",{willReadFrequently:true});
@@ -221,19 +263,20 @@ function processPhoto(raw,preview=false){
 
   const data=c.getImageData(0,0,w,h);
   const p=data.data;
-  const t=THEMES[theme];
   for(let i=0;i<p.length;i+=4){
     let r=p[i],g=p[i+1],b=p[i+2];
     const l=.299*r+.587*g+.114*b;
-    const contrast=look==="old"?.86:.93;
-    const lift=look==="old"?13:8;
-    const saturation=look==="old"?.88:.96;
+    const contrast=retro?1.18:.82;
+    const lift=retro?2:22;
+    const saturation=retro?1.28:.86;
     r=l+(r-l)*saturation;
     g=l+(g-l)*saturation;
     b=l+(b-l)*saturation;
     r=(r-128)*contrast+128+lift;
     g=(g-128)*contrast+128+lift;
     b=(b-128)*contrast+128+lift;
+    if(retro){r+=15;g+=3;b-=10}
+    else{r-=6;g+=7;b+=20}
     // 輕微主題色調，不把膚色染成強烈純色。
     if(theme==="gal"){r+=4;b+=2}
     if(theme==="hara"){r+=2;g+=2}
@@ -245,36 +288,35 @@ function processPhoto(raw,preview=false){
   }
   c.putImageData(data,0,0);
 
-  // 小量柔化混合；低清模式以更低解析度丟掉細節。
-  const softened=makeCanvas(w,h);
-  const sc=softened.getContext("2d");
-  sc.filter=look==="old"?"blur(0.65px)":"blur(0.35px)";
-  sc.drawImage(small,0,0);
-  sc.filter="none";
-  c.globalAlpha=look==="old"?.36:.18;
-  c.drawImage(softened,0,0);
-  c.globalAlpha=1;
-
-  // 只擷取高亮區域，避免整張大量霧化。
-  if(!preview){
+  if(retro){
+    const vignette=c.createRadialGradient(w/2,h/2,w*.12,w/2,h/2,w*.72);
+    vignette.addColorStop(0,"#0000");vignette.addColorStop(1,"#42102f52");
+    c.fillStyle=vignette;c.fillRect(0,0,w,h);
+  }else{
+    const softened=makeCanvas(w,h);
+    const sc=softened.getContext("2d");
+    sc.filter=`blur(${(w/320*1.7).toFixed(1)}px)`;sc.drawImage(small,0,0);
+    c.globalAlpha=.52;c.drawImage(softened,0,0);c.globalAlpha=1;
+    // 柔亮模式把亮部暈開，預覽與成品使用相同效果。
     const light=makeCanvas(w,h);
     const lc=light.getContext("2d");
     const highlights=c.getImageData(0,0,w,h);
     for(let i=0;i<highlights.data.length;i+=4){
       const q=highlights.data;
       const l=.299*q[i]+.587*q[i+1]+.114*q[i+2];
-      q[i+3]=Math.round(clamp((l-175)/80,0,1)*80);
+      q[i+3]=Math.round(clamp((l-155)/90,0,1)*150);
     }
     lc.putImageData(highlights,0,0);
     c.save();
     c.globalCompositeOperation="screen";
-    c.globalAlpha=look==="old"?.16:.11;
-    c.filter="blur(3px)";
+    c.globalAlpha=.42;
+    c.filter=`blur(${(w/320*4).toFixed(1)}px)`;
     c.drawImage(light,0,0);
     c.restore();
   }
   return small;
 }
+function drawProcessed(ctx,img,x,y,w,h,mode=look){ctx.save();ctx.imageSmoothingEnabled=mode!=="old";ctx.drawImage(img,x,y,w,h);ctx.restore()}
 
 const stickerDefs=[
   ["heart","愛心"],
@@ -466,12 +508,12 @@ function drawObject(c,o){
 }
 
 function setStage(next){stage=next;document.body.dataset.stage=next;$("lobbySection").hidden=next!=="lobby";$("workspace").hidden=next==="lobby";for(const name of ["start","shoot","review","import","edit","layout","result"])$(name+"Section").hidden=name!==next;document.querySelectorAll("[data-step]").forEach(el=>el.classList.toggle("current",el.dataset.step===(["review","import"].includes(next)?"shoot":next)));if(!["start","shoot","review"].includes(next))stopCamera();window.scrollTo({top:0,behavior:"instant"})}
-function syncTheme(){document.body.dataset.theme=theme;document.querySelectorAll(".machine-name").forEach(el=>el.textContent=THEMES[theme].name+" / PURI CLUB 2000");buildStickers()}
+function syncTheme(){document.body.dataset.theme=theme;document.querySelectorAll(".machine-name").forEach(el=>el.textContent=THEMES[theme].name+" / PURI CLUB 2000");document.querySelectorAll(".standby-art").forEach(img=>{if(img.getAttribute("src")!==STANDBY_ART[theme])img.src=STANDBY_ART[theme]});buildStickers()}
 function selectButtons(selector,key,value){document.querySelectorAll(selector).forEach(b=>{const active=b.dataset[key]===value;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active))})}
-function placeholder(canvas,label){const c=canvas.getContext("2d"),w=canvas.width,h=canvas.height;c.fillStyle=THEMES[theme].ink;c.fillRect(0,0,w,h);c.fillStyle="#ffffff1a";for(let x=0;x<w;x+=25)for(let y=0;y<h;y+=25){c.beginPath();c.arc(x,y,1,0,7);c.fill()}c.textAlign="center";c.textBaseline="middle";c.fillStyle=THEMES[theme].secondary;c.font="bold "+w*.11+"px Arial";c.fillText(THEMES[theme].symbol,w/2,h*.39);c.fillStyle="#fff";c.font="bold "+w*.028+"px monospace";c.fillText(label,w/2,h*.65)}
-function cameraError(e){if(!isSecureContext||!navigator.mediaDevices?.getUserMedia)return "相機需要 HTTPS 或 localhost。也可以匯入照片。";return ({NotAllowedError:"相機權限尚未開啟。請允許鏡頭，或改用匯入照片。",NotFoundError:"找不到相機，改用你喜歡的照片也可以。",NotReadableError:"相機被其他程式使用中，關閉後再試一次。"})[e.name]||"相機暫時無法啟動，請再試一次或匯入照片。"}
+function placeholder(canvas,label){const c=canvas.getContext("2d"),w=canvas.width,h=canvas.height;c.fillStyle=THEMES[theme].ink;c.fillRect(0,0,w,h);c.fillStyle="#ffffff1a";for(let x=0;x<w;x+=25)for(let y=0;y<h;y+=25){c.beginPath();c.arc(x,y,1,0,7);c.fill()}c.textAlign="center";c.textBaseline="middle";c.fillStyle=THEMES[theme].secondary;c.font="bold "+w*.11+"px Arial";c.fillText(THEMES[theme].symbol,w/2,h*.39);if(label){c.fillStyle="#fff";c.font="bold "+w*.028+"px monospace";c.fillText(label,w/2,h*.65)}}
+function cameraError(e){if(!isSecureContext||!navigator.mediaDevices?.getUserMedia)return "相機需要 HTTPS 或 localhost。也可以匯入照片。";return ({NotAllowedError:"請允許使用相機，或匯入照片。",NotFoundError:"找不到相機，改用你喜歡的照片也可以。",NotReadableError:"相機被其他程式使用中，關閉後再試一次。"})[e.name]||"相機暫時無法啟動，請再試一次或匯入照片。"}
 function stopCamera(){cameraToken++;stream?.getTracks().forEach(t=>t.stop());stream=null;video.srcObject=null;cameraReady=false;cameraBusy=false;updateCameraUI()}
-function updateCameraUI(){$("startBtn").disabled=!cameraReady||cameraBusy;$("enableCamera").disabled=cameraBusy;$("enableCamera").textContent=cameraBusy?"正在開啟鏡頭…":"開啟相機 ♡";$("flipBtn").disabled=cameraBusy;$("permission").hidden=cameraReady;$("previewNote").hidden=!cameraReady}
+function updateCameraUI(){if(!cameraReady)$("startSection").dataset.cameraReady="false";$("enableCamera").disabled=cameraBusy;$("enableCamera").textContent=cameraBusy?"正在開啟鏡頭…":"開啟相機 ♡";$("flipBtn").disabled=cameraBusy;$("permission").hidden=cameraReady}
 async function startCamera(){if(cameraBusy||!["start","shoot","review"].includes(stage))return false;stopCamera();const token=cameraToken;cameraBusy=true;updateCameraUI();let acquired;
  try{if(!navigator.mediaDevices?.getUserMedia)throw Error("unsupported");acquired=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:960}}});if(token!==cameraToken){acquired.getTracks().forEach(t=>t.stop());return false}stream=acquired;video.srcObject=stream;await video.play();const until=performance.now()+8000;while(video.readyState<2||!video.videoWidth){if(token!==cameraToken)return false;if(performance.now()>until)throw Error("Video timeout");await sleep(80)}if(token!==cameraToken)return false;mirror=(stream.getVideoTracks()[0]?.getSettings().facingMode||facing)!=="environment";cameraReady=true;stream.getVideoTracks()[0]?.addEventListener("ended",()=>{if(stream===acquired)interruptCapture("鏡頭中斷了，重新開啟就能繼續。")});status("鏡頭已連線。選好質感，準備開始！");return true;
  }catch(e){acquired?.getTracks().forEach(t=>t.stop());if(token===cameraToken){stopCamera();$("cameraMessage").textContent=cameraError(e);status(cameraError(e))}return false}
@@ -479,7 +521,7 @@ async function startCamera(){if(cameraBusy||!["start","shoot","review"].includes
 }
 function rawFromCamera(){if(!cameraReady||video.readyState<2||!video.videoWidth)throw Error("camera not ready");const raw=makeCanvas(800,600),c=raw.getContext("2d");if(mirror){c.translate(800,0);c.scale(-1,1)}cropDraw(c,video,0,0,800,600);return raw}
 function processedWith(raw,mode,preview=false){const previous=look;look=mode;try{return processPhoto(raw,preview)}finally{look=previous}}
-function previewLoop(now){if(cameraReady&&stream&&video.readyState>=2&&!document.hidden&&["start","shoot"].includes(stage)&&now-lastPreview>120){lastPreview=now;try{const raw=rawFromCamera();if(stage==="start"){for(const mode of ["old","soft"]){const c=$(mode+"Preview");c.getContext("2d").drawImage(processedWith(raw,mode),0,0,c.width,c.height)}}else{$("cameraCanvas").getContext("2d").drawImage(processPhoto(raw),0,0,800,600)}}catch(e){interruptCapture("鏡頭暫時沒有畫面，請重新開啟。")}}requestAnimationFrame(previewLoop)}
+function previewLoop(now){if(cameraReady&&stream&&video.readyState>=2&&!document.hidden&&["start","shoot"].includes(stage)&&now-lastPreview>120){lastPreview=now;try{const raw=rawFromCamera();if(stage==="start"){for(const mode of ["old","soft"]){const c=$(mode+"Preview");drawProcessed(c.getContext("2d"),processedWith(raw,mode,true),0,0,c.width,c.height,mode)}$("startSection").dataset.cameraReady="true"}else{drawProcessed($("cameraCanvas").getContext("2d"),processPhoto(raw,true),0,0,800,600)}}catch(e){interruptCapture("鏡頭暫時沒有畫面，請重新開啟。")}}requestAnimationFrame(previewLoop)}
 function interruptCapture(message){sequenceToken++;running=false;stopCamera();if(stage==="shoot"){$("countOverlay").hidden=true;$("resumeBtn").hidden=false;$("shootNote").textContent=message}else if(stage==="start"){$("cameraMessage").textContent=message}status(message)}
 async function sequenceWait(ms,token){await sleep(ms);return token===sequenceToken&&stage==="shoot"&&!document.hidden&&cameraReady&&video.readyState>=2}
 async function captureSequence(slots,isRetake=false){if(running||!slots.length)return;if(isRetake&&retakes[slots[0]]>=1)return;pendingSlots=[...slots];retakeSlot=isRetake?slots[0]:null;setStage("shoot");$("resumeBtn").hidden=true;$("countOverlay").hidden=false;if(!cameraReady){$("countNumber").textContent="♡";$("countLabel").textContent="正在連接鏡頭…";if(!await startCamera()){$("countOverlay").hidden=true;$("resumeBtn").hidden=false;$("shootNote").textContent="請允許鏡頭後繼續；已拍攝的照片會保留。";return}}
@@ -491,8 +533,8 @@ async function captureSequence(slots,isRetake=false){if(running||!slots.length)r
  }
  running=false;pendingSlots=[];retakeSlot=null;showReview();
 }
-function showReview(){setStage("review");const grid=$("reviewGrid");grid.replaceChildren();for(let i=0;i<4;i++){const tile=document.createElement("div");tile.className="photo-tile";const c=makeCanvas(320,240);c.getContext("2d").drawImage(processed[i],0,0,320,240);const label=document.createElement("div");label.className="tile-label";label.textContent="SHOT 0"+(i+1)+" / "+(retakes[i]?"RETAKE USED":"ONE MORE ♡");const b=document.createElement("button");b.textContent=retakes[i]?"這張重拍機會已用完":"↻ 重拍這一張（剩 1 次）";b.disabled=retakes[i]>=1;b.onclick=()=>captureSequence([i],true);tile.append(c,label,b);grid.append(tile)}$("retakeNote").textContent=retakes.every(Boolean)?"四張重拍機會都用完囉。看好了，再按完成！":"每張只能重拍 1 次，新照片會替換原照。";status("四張都拍好了！確認後，手動按完成開始裝飾。");}
-function renderImport(){const grid=$("importGrid");grid.replaceChildren();for(let i=0;i<4;i++){const b=document.createElement("button"),c=makeCanvas(400,300);if(processed[i])c.getContext("2d").drawImage(processed[i],0,0,400,300);else placeholder(c,"＋ SELECT PHOTO 0"+(i+1));const label=document.createElement("span");label.textContent=photos[i]?"第 "+(i+1)+" 張 · 更換照片":"第 "+(i+1)+" 張 · 選擇照片";b.disabled=importBusy;b.append(c,label);b.onclick=()=>{if(importBusy)return;importSlot=i;$("fileInput").click()};grid.append(b)}$("importDone").disabled=importBusy||!photos.every(Boolean);$("importBack").disabled=importBusy}
+function showReview(){setStage("review");const grid=$("reviewGrid");grid.replaceChildren();for(let i=0;i<4;i++){const tile=document.createElement("div");tile.className="photo-tile";const c=makeCanvas(320,240);drawProcessed(c.getContext("2d"),processed[i],0,0,320,240);const label=document.createElement("div");label.className="tile-label";label.textContent="SHOT 0"+(i+1)+" / "+(retakes[i]?"RETAKE USED":"ONE MORE ♡");const b=document.createElement("button");b.textContent=retakes[i]?"這張重拍機會已用完":"↻ 重拍這一張（剩 1 次）";b.disabled=retakes[i]>=1;b.onclick=()=>captureSequence([i],true);tile.append(c,label,b);grid.append(tile)}$("retakeNote").textContent=retakes.every(Boolean)?"四張重拍機會都用完囉。看好了，再按完成！":"每張只能重拍 1 次，新照片會替換原照。";status("四張都拍好了！確認後，手動按完成開始裝飾。");}
+function renderImport(){const grid=$("importGrid");grid.replaceChildren();for(let i=0;i<4;i++){const b=document.createElement("button"),c=makeCanvas(400,300);if(processed[i])drawProcessed(c.getContext("2d"),processed[i],0,0,400,300);else placeholder(c,"＋ SELECT PHOTO 0"+(i+1));const label=document.createElement("span");label.textContent=photos[i]?"第 "+(i+1)+" 張 · 更換照片":"第 "+(i+1)+" 張 · 選擇照片";b.disabled=importBusy;b.append(c,label);b.onclick=()=>{if(importBusy)return;importSlot=i;$("fileInput").click()};grid.append(b)}$("importDone").disabled=importBusy||!photos.every(Boolean);$("importBack").disabled=importBusy}
 async function importPhoto(file){if(!file||stage!=="import"||importBusy)return;const slot=importSlot;importBusy=true;renderImport();const url=URL.createObjectURL(file);try{if(file.size>35*1024*1024)throw Error("照片超過 35 MB，請先縮小。");const img=new Image();img.src=url;await img.decode();if(img.naturalWidth*img.naturalHeight>40000000)throw Error("照片尺寸過大，請先縮小。");const raw=makeCanvas(800,600),c=raw.getContext("2d");c.fillStyle="white";c.fillRect(0,0,800,600);cropDraw(c,img,0,0,800,600);photos[slot]=raw;processed[slot]=processPhoto(raw);status("第 "+(slot+1)+" 張放好了。"+(photos.every(Boolean)?"可以開始裝飾囉！":"繼續選擇下一格。"))}catch(e){status("這張無法讀取："+e.message)}finally{URL.revokeObjectURL(url);importBusy=false;renderImport()}}
 function objects(){return decorations[activePhoto]}
 function remember(){histories[activePhoto].push(structuredClone(objects()));if(histories[activePhoto].length>35)histories[activePhoto].shift();syncEditControls()}
@@ -501,7 +543,7 @@ function finishGesture(){if(gesture){gesture=null;renderEditor()}}
 function lockEditing(){if(editLocked)return;editLocked=true;finishGesture();selectedId=null;$("expiredNotice").hidden=false;$("clock").innerHTML="<small>TIME UP</small><b>0</b>";$("clock").classList.remove("urgent");syncEditControls();renderEditor();status("裝飾時間到了。作品已保留，請按「完成裝飾」繼續。");}
 function updateClock(){if(stage!=="edit"||editLocked)return;const seconds=duration===0?Infinity:Math.max(0,Math.ceil((deadline-performance.now())/1000));if(seconds===0){lockEditing();return}$("clock").innerHTML="<small>⏱</small><b>"+(seconds===Infinity?"∞":seconds)+"</b>";$("clock").setAttribute("aria-label",seconds===Infinity?"不限時編輯":"編輯剩餘 "+seconds+" 秒");$("clock").classList.toggle("urgent",seconds<=15)}
 function beginEdit(){if(!photos.every(Boolean)||importBusy||running)return;activePhoto=0;selectedId=null;editLocked=false;deadline=performance.now()+duration*1000;setStage("edit");$("expiredNotice").hidden=true;buildPhotoTabs();setTool("sticker");updateClock();renderEditor();syncEditControls();status(duration===0?"慢慢裝飾，今天不限時 ♡":"90 秒裝飾開始！四張各自裝飾，點縮圖切換。");}
-function decoratedPhoto(i){const c=makeCanvas(800,600),ctx=c.getContext("2d");ctx.drawImage(processed[i],0,0,800,600);decorations[i].forEach(o=>drawObject(ctx,o));return c}
+function decoratedPhoto(i){const c=makeCanvas(800,600),ctx=c.getContext("2d");drawProcessed(ctx,processed[i],0,0,800,600);decorations[i].forEach(o=>drawObject(ctx,o));return c}
 function buildPhotoTabs(){const tabs=$("photoTabs");tabs.replaceChildren();for(let i=0;i<4;i++){const b=document.createElement("button"),c=makeCanvas(160,120),small=document.createElement("small");small.textContent="PHOTO 0"+(i+1);b.append(c,small);b.setAttribute("aria-label","裝飾第 "+(i+1)+" 張");b.onclick=()=>{finishGesture();activePhoto=i;selectedId=null;renderEditor()};tabs.append(b)}}
 function selectedObject(){return objects().find(o=>o.id===selectedId&&o.type!=="stroke")}
 function renderEditor(){if(stage!=="edit")return;const c=editCanvas.getContext("2d");c.clearRect(0,0,800,600);c.drawImage(decoratedPhoto(activePhoto),0,0);const o=selectedObject();if(o&&!editLocked){const s=objectSize(o);c.save();c.translate(o.x,o.y);c.rotate(o.rotation);c.strokeStyle="#fff";c.lineWidth=3;c.setLineDash([8,5]);c.strokeRect(-s.w/2-5,-s.h/2-5,s.w+10,s.h+10);c.restore()}[...$("photoTabs").children].forEach((b,i)=>{b.classList.toggle("active",i===activePhoto);b.setAttribute("aria-pressed",String(i===activePhoto));b.querySelector("canvas").getContext("2d").drawImage(decoratedPhoto(i),0,0,160,120)});$("selectedInfo").textContent="正在"+(editLocked?"查看":"裝飾")+"第 "+(activePhoto+1)+" 張 · "+(editLocked?"裝飾已鎖定":"點貼紙或文字，再拖到喜歡的位置");syncEditControls()}
@@ -547,8 +589,9 @@ let enteringMachine=false;
 async function enterMachine(nextTheme){
  if(stage!=="lobby"||enteringMachine)return;
  enteringMachine=true;theme=nextTheme;syncTheme();
- placeholder($("oldPreview"),"CAMERA / WAITING FOR YOU");placeholder($("softPreview"),"CAMERA / WAITING FOR YOU");
- $("cameraMessage").textContent="開啟鏡頭，看見兩種質感的自己。";
+ $("startSection").dataset.cameraReady="false";
+ for(const id of ["oldPreview","softPreview"]){const c=$(id);c.getContext("2d").clearRect(0,0,c.width,c.height)}
+ $("cameraMessage").textContent="開啟相機後，選一邊開始拍攝。";
  const flash=$("entryFlash"),reduceMotion=matchMedia("(prefers-reduced-motion: reduce)").matches;
  const selectedIndex=machineCards.findIndex(card=>card.querySelector(".choose").dataset.machine===nextTheme);
  try{
@@ -563,10 +606,10 @@ async function enterMachine(nextTheme){
 }
 document.querySelectorAll("[data-machine]").forEach(b=>b.onclick=()=>enterMachine(b.dataset.machine));
 machineCards.forEach(card=>card.addEventListener("click",e=>{if(stage!=="lobby"||!matchMedia("(min-width:761px)").matches||e.target.closest(".choose"))return;card.querySelector(".choose").click()}));
-document.querySelectorAll("[data-look]").forEach(b=>b.onclick=()=>{look=b.dataset.look;selectButtons("[data-look]","look",look)});
-$("timeToggle").onclick=()=>{duration=duration===90?0:90;$("timeToggle").innerHTML="<small>⏱</small><b>"+(duration===0?"∞":"90")+"</b>";$("timeToggle").setAttribute("aria-label",duration===0?"不限時編輯，點擊切換 90 秒":"編輯時間 90 秒，點擊切換不限時")};
+document.querySelectorAll("[data-look]").forEach(b=>b.onclick=()=>{if(stage!=="start"||running)return;look=b.dataset.look;selectButtons("[data-look]","look",look);if(cameraBusy)return;if(!cameraReady){startCamera();return}photos=Array(4).fill(null);processed=Array(4).fill(null);retakes=[0,0,0,0];captureSequence([0,1,2,3])});
+$("timeToggle").onclick=()=>{duration=duration===90?0:90;$("timeToggle").dataset.unlimited=String(duration===0);$("timeToggle").innerHTML="<small>⏱</small><b>"+(duration===0?"∞":"90")+"</b>";$("timeToggle").setAttribute("aria-label",duration===0?"不限時編輯，點擊切換 90 秒":"編輯時間 90 秒，點擊切換不限時")};
 $("enableCamera").onclick=startCamera;$("flipBtn").onclick=()=>{facing=facing==="user"?"environment":"user";startCamera()};
-$("backLobby").onclick=()=>setStage("lobby");$("startBtn").onclick=()=>{if(!cameraReady)return;photos=Array(4).fill(null);processed=Array(4).fill(null);retakes=[0,0,0,0];captureSequence([0,1,2,3])};
+$("backLobby").onclick=()=>setStage("lobby");
 $("resumeBtn").onclick=async()=>{if(cameraBusy||running)return;$("resumeBtn").disabled=true;try{if(await startCamera()){if(!pendingSlots.length&&photos.every(Boolean)){retakeSlot=null;showReview()}else await captureSequence([...pendingSlots],retakeSlot!==null)}}finally{$("resumeBtn").disabled=false}};
 $("reviewDone").onclick=beginEdit;$("importEntry").onclick=()=>{photos=Array(4).fill(null);processed=Array(4).fill(null);setStage("import");renderImport();status("點選空相框，一次匯入一張照片。")};
 $("fileInput").onchange=e=>{const file=e.target.files[0];e.target.value="";importPhoto(file)};$("importDone").onclick=beginEdit;$("importBack").onclick=()=>{setStage("start");updateCameraUI()};
@@ -576,7 +619,7 @@ $("editDone").onclick=finishEdit;document.querySelectorAll("[data-layout]").forE
 document.querySelectorAll("button[data-film]").forEach(b=>b.onclick=()=>{film=b.dataset.film;selectButtons("button[data-film]","film",film);$("foilCard").dataset.film=film;resetTilt();$("filmHint").textContent=film==="none"?"選一張膜，讓回憶閃閃發亮。":"移動一下，這個角度的你也好閃亮 ✧";$("motionBtn").hidden=typeof DeviceOrientationEvent==="undefined"||film==="none";prepareExport()});
 $("saveBtn").onclick=savePNG;$("shareBtn").onclick=share;$("openImageBtn").onclick=openImage;$("closeImage").onclick=()=>$("imageDialog").close();$("imageDialog").addEventListener("close",()=>{if(imageURL)URL.revokeObjectURL(imageURL);imageURL=null;$("saveImage").removeAttribute("src")});
 $("backLayout").onclick=()=>{clearExport();setStage("layout");renderSheet($("layoutCanvas"))};
-$("restartBtn").onclick=()=>{if(!confirm("要再玩一次嗎？請先把這次的拍貼存好喔。"))return;sequenceToken++;running=false;clearExport();photos=Array(4).fill(null);processed=Array(4).fill(null);decorations=Array.from({length:4},()=>[]);histories=Array.from({length:4},()=>[]);retakes=[0,0,0,0];selectedId=null;gesture=null;editLocked=false;film="none";layout="grid";duration=90;motionEnabled=false;$("motionBtn").textContent="✧ 跟著手機轉動";$("timeToggle").innerHTML="<small>⏱</small><b>90</b>";$("timeToggle").setAttribute("aria-label","編輯時間 90 秒，點擊切換不限時");selectButtons("button[data-film]","film",film);selectButtons("[data-layout]","layout",layout);resetTilt();setStage("lobby");status("再選一台，製造新的回憶 ♡")};
+$("restartBtn").onclick=()=>{if(!confirm("要再玩一次嗎？請先把這次的拍貼存好喔。"))return;sequenceToken++;running=false;clearExport();photos=Array(4).fill(null);processed=Array(4).fill(null);decorations=Array.from({length:4},()=>[]);histories=Array.from({length:4},()=>[]);retakes=[0,0,0,0];selectedId=null;gesture=null;editLocked=false;film="none";layout="grid";duration=90;motionEnabled=false;$("motionBtn").textContent="✧ 跟著手機轉動";$("timeToggle").dataset.unlimited="false";$("timeToggle").innerHTML="<small>⏱</small><b>90</b>";$("timeToggle").setAttribute("aria-label","編輯時間 90 秒，點擊切換不限時");selectButtons("button[data-film]","film",film);selectButtons("[data-layout]","layout",layout);resetTilt();setStage("lobby");status("再選一台，製造新的回憶 ♡")};
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&["start","shoot","review"].includes(stage))interruptCapture("相機已暫停，回來後重新開啟就能繼續。");if(stage==="edit")updateClock()});window.addEventListener("pagehide",()=>{sequenceToken++;running=false;stopCamera()});
 window.addEventListener("keydown",e=>{if(["INPUT","SELECT","TEXTAREA"].includes(e.target.tagName))return;if(stage==="edit"&&(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"){e.preventDefault();undo()}if(stage==="edit"&&e.key==="Delete")changeObject("delete")});
 buildStickers();buildSwatches("textColors","text");buildSwatches("drawColors","draw");setInterval(updateClock,150);requestAnimationFrame(previewLoop);
