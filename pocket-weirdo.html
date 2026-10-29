@@ -54,7 +54,8 @@ input[type=text]{width:100%;min-width:0;padding:10px;border:2px solid #526b3b;bo
 #startOverlay p{margin:0;font-size:11px;line-height:1.6}
 #startOverlay button{min-height:40px;padding:6px 12px;font-size:12px}
 #startBtn{background:var(--dark);color:#e1e9b9;border-color:var(--dark)}
-#countdown{position:absolute;inset:0;display:grid;place-items:center;font:900 80px ui-monospace,monospace;color:#e8edc8;text-shadow:5px 5px #24362c;background:#26352d22;pointer-events:none}
+#countdown{position:absolute;inset:0;display:grid;place-items:center;background:#26352d22;pointer-events:none}
+#countdownDigit{height:62%;max-width:90%;object-fit:contain;image-rendering:pixelated}
 .lcd-ui{margin-top:7px;padding:0 8px;background:var(--screen);border:2px solid #303e2f;box-shadow:inset 1px 1px #ecf2c8;color:var(--dark)}
 .lcd-ui button{border:1px solid #526b3b;border-radius:2px;background:transparent;box-shadow:none;color:var(--dark);font-size:11px}
 .lcd-ui button.active{background:var(--dark);color:var(--screen)}
@@ -149,7 +150,7 @@ dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;paddin
         <button id="startBtn">開啟自拍相機</button>
         <button id="startImportBtn">先用照片玩</button>
       </div>
-      <div id="countdown" hidden></div>
+      <div id="countdown" hidden><canvas id="countdownDigit" role="img"></canvas></div>
     </div>
     <div class="lcd-ui">
       <section id="liveUI" aria-label="拍照前設定">
@@ -1029,7 +1030,7 @@ async function startCamera(){
 }
 function cancelCountdown(){
   countGeneration++;counting=false;
-  $("countdown").hidden=true;updateUI();
+  hideCount();updateUI();
 }
 document.addEventListener("visibilitychange",()=>{
   if(document.hidden){
@@ -1083,17 +1084,134 @@ async function importPhoto(file){
   }
 }
 
+/* ---------- 倒數數字 ---------- */
+// 每一秒隨機抽一種點陣樣式；boil 的樣式每格畫面重畫，筆畫會一直晃。
+const boldDigits={
+  1:["..11..",".111..","1111..","..11..","..11..","..11..","..11..","..11..","111111"],
+  2:[".1111.","11..11","....11","...11.","..11..",".11...","11....","11....","111111"],
+  3:[".1111.","11..11","....11","....11","..111.","....11","....11","11..11",".1111."]
+};
+const smallDigit=n=>glyphs[n].split(" ");
+function digitImage(rows,color){
+  const c=canvas(rows[0].length,rows.length);drawRows(c.getContext("2d"),rows,0,0,color);return c;
+}
+function strokeLine(cc,x0,y0,x1,y1,w){
+  const n=Math.max(Math.abs(x1-x0),Math.abs(y1-y0),1);
+  for(let i=0;i<=n;i++)cc.fillRect(Math.round(x0+(x1-x0)*i/n),Math.round(y0+(y1-y0)*i/n),w,w);
+}
+const countStyles=[
+  {name:"掌機粗字",draw:n=>{
+    const c=canvas(7,9),cc=c.getContext("2d");
+    drawRows(cc,smallDigit(n),1,1,"#24362c");drawRows(cc,smallDigit(n),0,0,"#e8edc8");return c;
+  }},
+  {name:"七段顯示器",draw:n=>{
+    const c=canvas(10,15),cc=c.getContext("2d"),on={1:"bc",2:"abged",3:"abgcd"}[n];
+    const seg={a:[2,0,6,2],b:[8,2,2,5],c:[8,8,2,5],d:[2,13,6,2],e:[0,8,2,5],f:[0,2,2,5],g:[2,7,6,2]};
+    for(const [k,[x,y,w,h]] of Object.entries(seg)){
+      cc.fillStyle=on.includes(k)?"#20382b":"#20382b14";cc.fillRect(x,y,w,h);
+    }
+    return c;
+  }},
+  {name:"LED 跑馬燈",boil:true,draw:n=>{
+    const c=canvas(13,17),cc=c.getContext("2d");cc.fillStyle="#1a0d0d";cc.fillRect(0,0,13,17);
+    smallDigit(n).forEach((r,y)=>[...r].forEach((ch,x)=>{
+      cc.fillStyle=ch==="1"?(Math.random()<.08?"#ff9a7a":"#ff4a3a"):"#4a1d1d";cc.fillRect(2+x*2,2+y*2,1,1);
+    }));
+    return c;
+  }},
+  {name:"糖果描邊",draw:n=>{
+    const color=["#ff6fae","#5fd3b0","#ffcf3a","#b79cf0"][n%4];
+    return outlined(outlined(digitImage(boldDigits[n],"#ffffff"),color,2),"#26352d",1);
+  }},
+  {name:"立體字",draw:n=>{
+    const c=canvas(10,13),cc=c.getContext("2d");
+    ["#1b2f6b","#2f4f9a","#2f6fd0"].forEach((color,i)=>drawRows(cc,boldDigits[n],3-i,3-i,color));
+    drawRows(cc,boldDigits[n],0,0,"#bfe6ff");return c;
+  }},
+  {name:"手寫抖抖",boil:true,draw:n=>{
+    const c=canvas(16,20),cc=c.getContext("2d"),j=()=>rand(-1,1);cc.fillStyle="#20382b";
+    const paths={1:[[[5,5],[9,2],[9,17]],[[5,17],[13,17]]],
+                 2:[[[3,6],[5,2],[10,2],[12,5],[11,9],[3,17],[13,17]]],
+                 3:[[[3,3],[8,2],[12,4],[11,8],[7,9],[12,11],[12,15],[8,18],[3,16]]]}[n];
+    for(const p of paths)for(let i=1;i<p.length;i++)strokeLine(cc,p[i-1][0]+j(),p[i-1][1]+j(),p[i][0]+j(),p[i][1]+j(),2);
+    return c;
+  }},
+  {name:"骰子",draw:n=>{
+    const c=canvas(15,15),cc=c.getContext("2d");
+    cc.fillStyle="#26352d";cc.fillRect(1,0,13,15);cc.fillRect(0,1,15,13);
+    cc.fillStyle="#f6f3e6";cc.fillRect(2,1,11,13);cc.fillRect(1,2,13,11);
+    cc.fillStyle=n===1?"#d8343a":"#26352d";
+    for(const [x,y] of {1:[[6,6]],2:[[3,3],[9,9]],3:[[3,3],[6,6],[9,9]]}[n])cc.fillRect(x,y,3,3);
+    return c;
+  }},
+  {name:"羅馬數字",draw:n=>{
+    const I=["111",".1.",".1.",".1.",".1.",".1.","111"],c=canvas(n*4+1,9),cc=c.getContext("2d");
+    for(let i=0;i<n;i++){drawRows(cc,I,i*4+2,2,"#24362c");drawRows(cc,I,i*4+1,1,"#f4efe0")}
+    return c;
+  }},
+  {name:"香蕉",draw:n=>{
+    // 剩幾秒就排幾根；只剩一根時在畫面上會顯得特別大
+    const b=stickerMap.get("banana"),c=canvas(n*(b.width+1)-1,b.height),cc=c.getContext("2d");
+    for(let i=0;i<n;i++)cc.drawImage(b,i*(b.width+1),0);
+    return c;
+  }},
+  {name:"霓虹燈管",boil:true,draw:n=>{
+    const glow=outlined(outlined(digitImage(boldDigits[n],"#ffffff"),"#ff4fd8",1),"rgba(255,79,216,.35)",1);
+    const c=canvas(glow.width+2,glow.height+2),cc=c.getContext("2d");
+    cc.fillStyle="#1d1030";cc.fillRect(0,0,c.width,c.height);
+    if(Math.random()<.12)cc.globalAlpha=.35;
+    cc.drawImage(glow,1,1);return c;
+  }},
+  {name:"勒索信",draw:n=>{
+    const [paper,ink]=[["#f4efe0","#1d1d1d"],["#d8343a","#ffffff"],["#e3c27a","#1d1d1d"]][n-1];
+    const c=canvas(11,13),cc=c.getContext("2d");
+    cc.fillStyle="rgba(0,0,0,.35)";cc.fillRect(1,1,10,12);cc.fillStyle=paper;cc.fillRect(0,0,10,12);
+    drawRows(cc,boldDigits[n],2,2,ink);return c;
+  }},
+  {name:"號碼牌",draw:n=>{
+    const c=canvas(13,13),cc=c.getContext("2d");
+    cc.fillStyle="#26352d";cc.fillRect(0,0,13,13);cc.fillStyle="#3a4a3e";cc.fillRect(1,1,11,11);
+    drawRows(cc,boldDigits[n],4,2,"#ff5040");cc.fillStyle="#ff504066";cc.fillRect(1,11,11,1);
+    return c;
+  }}
+];
+let countTimer=0,lastCountStyle=-1;
+const calmMotion=matchMedia("(prefers-reduced-motion: reduce)");
+function showCount(n){
+  clearInterval(countTimer);
+  let i;do i=rand(0,countStyles.length-1);while(i===lastCountStyle);lastCountStyle=i;
+  const style=countStyles[i],el=$("countdownDigit");
+  const paint=()=>{
+    const img=style.draw(n);el.width=img.width;el.height=img.height;
+    el.getContext("2d").drawImage(img,0,0);
+  };
+  paint();el.setAttribute("aria-label",String(n));
+  el.style.transform="";$("countdown").hidden=false;
+  if(calmMotion.matches)return;
+  // 剛出現先放大彈一下，之後每格畫面隨機晃一個點陣格
+  let frame=0;
+  countTimer=setInterval(()=>{
+    frame++;if(style.boil)paint();
+    // 晃一格點陣，但粗字的一格很大，最多只晃數字高度的 4%
+    const step=Math.min(el.clientHeight/el.height,el.clientHeight*.04),pop=Math.max(1,1.6-frame*.15);
+    el.style.transform=`translate(${rand(-1,1)*step}px,${rand(-1,1)*step}px) scale(${pop})`;
+  },90);
+}
+function hideCount(){
+  clearInterval(countTimer);$("countdown").hidden=true;
+}
+
 /* ---------- 拍照 ---------- */
 async function takePhoto(){
   if(review||counting||importing||cameraStarting||!hasFrame)return;
   if(timerEnabled){
     counting=true;const generation=++countGeneration;updateUI();
     for(let n=3;n>=1;n--){
-      $("countdown").textContent=n;$("countdown").hidden=false;
+      showCount(n);
       await new Promise(r=>setTimeout(r,1000));
       if(generation!==countGeneration||document.hidden)return;
     }
-    counting=false;$("countdown").hidden=true;
+    counting=false;hideCount();
   }
   if(document.hidden||(!stream&&!sourceImage)||!hasFrame){
     updateUI();return;
