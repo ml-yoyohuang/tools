@@ -23,20 +23,74 @@ body[data-theme=hara]{--accent:#a04dd3;--second:#d3fa65;--bg:#e9d7fb;--paper:#ff
 @media(max-width:760px){.topbar{height:62px;padding:0 20px}.topbar .tag{display:none}.arcade{padding:27px 0 20px}.intro{padding:0 23px;margin-bottom:24px}.intro h1{font-size:34px;letter-spacing:-2px}.intro{display:block}.intro p{max-width:none!important;margin-top:12px}.intro p br{display:none}.intro .ticket{display:none}.intro p{max-width:135px;font-size:11px}.machines{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding:8px 25px 16px;gap:22px;scroll-padding:25px}.machine{flex:0 0 85%;scroll-snap-align:center;min-height:535px}.machine .machine-title{font-size:65px}.cyber .machine-title{font-size:57px}.arcade-foot{padding:0 25px;gap:12px;line-height:1.6}.workspace{padding:22px 16px 32px}.steps{gap:8px;font-size:9px;letter-spacing:0;margin-bottom:24px}.console{padding:17px 12px;box-shadow:4px 5px 0 var(--line);border-radius:20px}.mode-grid{gap:10px}.mode{padding:5px;border-radius:9px}.mode .mode-label{padding:10px 3px 4px;font-size:12px}.mode small{font-size:9px}.mode em{font-size:16px}.station-head h1{font-size:30px}.station-head.row{flex-wrap:nowrap}.station-head.row>div:first-child{min-width:0}.station-head.row h1{font-size:27px;letter-spacing:-1px}.station-head .eyebrow{font-size:9px;letter-spacing:1px}.station-head p{font-size:12px}.four-grid{grid-template-columns:repeat(2,1fr)}.editor{grid-template-columns:1fr;gap:18px}.photo-tabs{margin-bottom:14px}.toolbox{padding:14px}.stickers{grid-template-columns:repeat(6,1fr);gap:6px}.sticker-button canvas{width:36px;height:36px}.sticker-button{min-height:59px}.edit-footer{position:sticky;bottom:0;padding:13px 0;background:var(--bg);z-index:4}.edit-footer .primary{min-width:180px}.print-layout{grid-template-columns:1fr;gap:22px}.sheet-stage{min-height:250px;padding:20px}.sheet-stage canvas{max-height:55vh}.print-panel{max-width:600px;width:100%;margin:auto}.layout-choices{grid-template-columns:repeat(3,1fr);gap:8px}.layout-choices button{display:block;text-align:center;padding:12px 5px}.layout-icon{margin:0 auto 8px!important}.layout-choices strong{font-size:12px}.layout-choices small{font-size:9px}.print-panel h2{font-size:19px}.import-grid{gap:12px}.camera-hud{font-size:10px}.count-number{-webkit-text-stroke:2px var(--line)}.timer{width:57px;height:57px}.topbar .coin{font-size:9px}.brand{font-size:20px}}
 @media(max-width:760px){body[data-stage=edit] .topbar,body[data-stage=edit] .marquee,body[data-stage=edit] .steps{display:none}body[data-stage=edit] .workspace{padding:12px 14px 16px}body[data-stage=edit] .station-head{margin-bottom:12px}body[data-stage=edit] .station-head h1{font-size:24px}body[data-stage=edit] .editor{gap:10px}body[data-stage=edit] .photo-tabs{margin-bottom:12px}body[data-stage=edit] .photo-tabs canvas{max-height:49px;object-fit:cover}body[data-stage=edit] .selected-info{margin:10px 0}body[data-stage=edit] .toolbox{padding:12px}body[data-stage=edit] .tool-tabs{margin-bottom:12px}body[data-stage=edit] .edit-footer{margin-top:12px;padding:10px 0}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.foil-card{transform:none!important}}
+/* The lobby is an edge-to-edge booth selector. Keep the shared chrome for later steps. */
+body[data-stage=lobby]{overflow:hidden}
+body[data-stage=lobby] .topbar,body[data-stage=lobby] .marquee,body[data-stage=lobby] .status{display:none}
+body[data-stage=lobby] main{height:100dvh}
+.arcade{position:relative;height:100dvh;min-height:0;padding:0;background:var(--ink)}
+.machines{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;max-width:none;height:100%;margin:0}
+.machine{height:100%;min-height:0;padding:clamp(24px,4vh,48px) 0 clamp(24px,4vh,48px);border:0;border-right:3px solid #391c32;border-radius:0;box-shadow:none;transition:none}
+.machine:last-child{border-right:0}
+.machine:hover:not(:disabled){transform:none}
+.machine .machine-title{margin:clamp(12px,3vh,30px) 10px 0;font-size:clamp(42px,5.2vw,88px);flex-shrink:0}
+.machine .portal{flex:1;min-height:150px;max-height:52vh;width:78%;height:auto;margin:clamp(20px,4vh,42px) auto 20px}
+.machine .deco{z-index:2}
+.machine .d1{top:42%}.machine .d2{top:50%}
+.machine .choose{position:relative;z-index:3;flex-shrink:0;width:calc(100% - 48px);max-width:330px;margin:0 24px;padding:14px 20px;border:3px solid #391c32;border-radius:999px;background:#fff7db;color:#391c32;font-size:16px;letter-spacing:.04em;box-shadow:4px 5px 0 #391c32}
+.machine .choose:hover{transform:translateY(-3px)}
+.machine .choose:active{transform:translate(2px,2px)}
+.machine .choose span{margin-left:12px;font-size:20px}
+.lobby-nav{display:none}
+@media(max-width:760px){
+ .arcade{padding:0}
+ .machines{display:block;overflow:hidden;padding:0}
+ .machine{display:none;width:100%;height:100%;min-height:0;padding:clamp(24px,5vh,48px) 0 max(28px,env(safe-area-inset-bottom));border:0}
+ .machine.is-active{display:flex}
+ .machine .machine-title{margin:clamp(18px,5vh,44px) 10px 0;font-size:clamp(62px,17vw,86px)}
+ .cyber .machine-title{font-size:clamp(56px,15vw,76px)}
+ .machine .portal{width:76%;max-height:none;min-height:170px;margin:clamp(22px,4vh,40px) auto 24px}
+ .machine .choose{width:calc(100% - 80px);margin:0 40px;min-height:56px}
+ .lobby-nav{display:block;position:absolute;inset:0;z-index:5;pointer-events:none}
+ .lobby-arrow{position:absolute;top:53%;width:48px;height:48px;min-height:48px;padding:0;border:2px solid #391c32;border-radius:50%;background:#fff7db;color:#391c32;font:900 29px/1 Arial,sans-serif;box-shadow:3px 4px 0 #391c32;transform:translateY(-50%);pointer-events:auto}
+ .lobby-arrow:hover{transform:translateY(calc(-50% - 2px))}
+ .lobby-arrow:active{transform:translate(2px,calc(-50% + 2px))}
+ .lobby-arrow.prev{left:10px}.lobby-arrow.next{right:10px}
+}
+/* Concept booth art is the lobby's main visual; logos and controls stay separate. */
+.machine{display:block;padding:0;background:#eeb6ca}
+.machine.hara{background:#f7cce5}.machine.cyber{background:#a4b6e8}
+.machine-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;display:block}
+.machine-heading{position:absolute;z-index:2;top:clamp(10px,2vh,24px);left:50%;width:66%;max-width:340px;margin:0;transform:translateX(-50%);line-height:0}
+.machine-heading img{display:block;width:100%;height:auto;filter:drop-shadow(0 7px 10px #3c123e55)}
+.machine.hara .machine-heading{top:clamp(26px,6vh,64px);width:87%;max-width:430px}
+.machine.cyber .machine-heading{top:clamp(16px,3vh,34px);width:84%;max-width:410px}
+.machine.cyber .machine-heading img{filter:drop-shadow(0 7px 11px #243e7d99)}
+.machine .choose{position:absolute;left:50%;bottom:clamp(20px,4vh,42px);width:calc(100% - 50px);max-width:340px;min-height:58px;margin:0;padding:12px 17px;transform:translateX(-50%);border:2px solid #5a1c38;background:#fff4dc;color:#452336;box-shadow:0 5px 0 #692c4d,0 9px 22px #34172b55;white-space:nowrap}
+.machine .choose:hover{transform:translate(-50%,-3px)}
+.machine .choose:active{transform:translate(-50%,2px)}
+.machine.hara .choose{border-color:#42195d;background:#faffbd;color:#301242;box-shadow:0 5px 0 #6a2f8e,0 9px 22px #2b163a66}
+.machine.cyber .choose{border-color:#6676b5;background:#f2f9ffed;color:#2a3b77;box-shadow:0 5px 0 #6681bc,0 9px 22px #24386866}
+@media(max-width:760px){
+ .machine{display:none;padding:0}
+ .machine.is-active{display:block}
+ .machine-heading{top:clamp(10px,2vh,18px);width:72%}
+ .machine.hara .machine-heading{top:clamp(24px,6vh,54px);width:91%}
+ .machine.cyber .machine-heading{top:clamp(16px,3vh,26px);width:88%}
+ .machine .choose{bottom:max(22px,env(safe-area-inset-bottom));width:calc(100% - 68px);max-width:340px;min-height:56px}
+}
 </style>
 </head>
-<body data-theme="gal">
+<body data-theme="gal" data-stage="lobby">
 <header class="topbar"><div class="brand">PURI CLUB<span>2000</span></div><span class="tag">今天的可愛，永久保存。</span><span class="coin">NO COINS NEEDED ♡</span></header>
 <div class="marquee">★ MAKE A MEMORY, MAKE IT KAWAII ★ &nbsp; きょうのかわいいを、ずっと。 &nbsp; ★ PURI CLUB 2000 ★</div>
 <main>
 <section id="lobbySection" class="arcade">
- <div class="intro"><div><span class="eyebrow">WELCOME TO THE PURI FLOOR / 01</span><h1>CHOOSE YOUR<br>HAPPY PLACE.</h1></div><p>布簾後面，是今天最可愛的你。<br>選一台，跟朋友一起擠進來！</p><span class="ticket">4 SHOTS<br>無限可愛 ♡</span></div>
- <div class="machines">
-  <button class="machine gal" data-machine="gal" aria-label="進入 109 STYLE 機台"><span class="unit">MACHINE 01 / SHIBUYA</span><span class="machine-title"><strong>109</strong>STYLE</span><span class="strap">盛れる！辣妹的閃亮主場</span><span class="deco d1">♥</span><span class="deco d2">✦</span><span class="portal"><span class="peek">HELLO,<b>GAL!</b>COME ON IN ♡</span></span><span class="enter">豹紋・粉紅・超上相 <span>↗</span></span></button>
-  <button class="machine hara" data-machine="hara" aria-label="進入 HARAJUKU MIX 機台"><span class="unit">MACHINE 02 / HARAJUKU</span><span class="machine-title">HARA<br>JUKU<br>MIX!</span><span class="strap">かわいいに、ルールなし。</span><span class="deco d1">✿</span><span class="deco d2">★</span><span class="portal"><span class="peek">MORE IS<b>MORE!</b>LET'S PLAY ☆</span></span><span class="enter">撞色・亂貼・可愛過量 <span>↗</span></span></button>
-  <button class="machine cyber" data-machine="cyber" aria-label="進入 CYBER ANGEL 機台"><span class="unit">MACHINE 03 / TOKYO 2000</span><span class="machine-title">CYBER<br>ANGEL<br><span style="font-size:.65em;letter-spacing:5px">.・゜✧</span></span><span class="strap">天使、接続中。ANGEL ONLINE</span><span class="deco d1">✧</span><span class="deco d2">♡</span><span class="portal"><span class="peek">YOU ARE<b>ANGEL</b>CONNECT WITH ME</span></span><span class="enter">銀白・冰藍・未來天使 <span>↗</span></span></button>
+ <div class="machines" id="lobbyMachines">
+  <article class="machine gal is-active" aria-labelledby="galTitle"><img class="machine-art" src="assets/puri-club/109-style-background.png" width="1024" height="1536" alt=""><h1 class="machine-heading" id="galTitle"><img src="assets/puri-club/109-style-logo.png" width="1536" height="1024" alt="109 STYLE"></h1><button class="choose" data-machine="gal" aria-label="選擇 109 STYLE 機台">選擇這台機台 <span aria-hidden="true">↗</span></button></article>
+  <article class="machine hara" aria-labelledby="haraTitle"><img class="machine-art" src="assets/puri-club/harajuku-mix-background.png" width="1024" height="1536" alt=""><h1 class="machine-heading" id="haraTitle"><img src="assets/puri-club/harajuku-mix-logo.png" width="1774" height="887" alt="HARAJUKU MIX"></h1><button class="choose" data-machine="hara" aria-label="選擇 HARAJUKU MIX 機台">選擇這台機台 <span aria-hidden="true">↗</span></button></article>
+  <article class="machine cyber" aria-labelledby="cyberTitle"><img class="machine-art" src="assets/puri-club/cyber-angel-background.png" width="1024" height="1536" alt=""><h1 class="machine-heading" id="cyberTitle"><img src="assets/puri-club/cyber-angel-logo.png" width="1942" height="809" alt="CYBER ANGEL"></h1><button class="choose" data-machine="cyber" aria-label="選擇 CYBER ANGEL 機台">選擇這台機台 <span aria-hidden="true">↗</span></button></article>
  </div>
- <div class="arcade-foot"><span>← PICK A BOOTH / 選一台進入，手機可左右滑動 →</span><span>EST. 2000 · MADE FOR YOUR BFF</span></div>
+ <nav class="lobby-nav" aria-label="切換機台"><button class="lobby-arrow prev" id="prevMachine" aria-label="上一台機台">‹</button><button class="lobby-arrow next" id="nextMachine" aria-label="下一台機台">›</button></nav>
 </section>
 <div id="workspace" class="workspace" hidden><div class="station">
  <nav class="steps" aria-label="拍貼流程"><span data-step="start">01 進入機台</span><span>→</span><span data-step="shoot">02 拍照</span><span>→</span><span data-step="edit">03 裝飾</span><span>→</span><span data-step="layout">04 排版</span><span>→</span><span data-step="result">05 印刷</span></nav>
@@ -407,6 +461,12 @@ function resetTilt(){$("foilCard").style.transform="";$("foilCard").style.setPro
 $("tiltArea").addEventListener("pointermove",e=>{const r=$("tiltArea").getBoundingClientRect();tilt(clamp((e.clientX-r.left)/r.width*2-1,-1,1),clamp((e.clientY-r.top)/r.height*2-1,-1,1))});$("tiltArea").addEventListener("pointerleave",resetTilt);
 window.addEventListener("deviceorientation",e=>{if(motionEnabled&&e.gamma!==null&&e.beta!==null)tilt(clamp(e.gamma/30,-1,1),clamp((e.beta-40)/35,-1,1))});
 $("motionBtn").onclick=async()=>{try{if(typeof DeviceOrientationEvent.requestPermission==="function"&&await DeviceOrientationEvent.requestPermission()!=="granted"){status("感應器未開啟，仍然可以用手指移動光澤。");return}motionEnabled=!motionEnabled;$("motionBtn").textContent=motionEnabled?"✧ 手機感應已開啟 · 點一下關閉":"✧ 跟著手機轉動";if(!motionEnabled)resetTilt()}catch(e){status("此裝置無法使用方向感應，試著用手指移動看看。")}};
+const machineCards=[...document.querySelectorAll(".machine")];
+let visibleMachine=0;
+function showMachine(index){visibleMachine=(index+machineCards.length)%machineCards.length;machineCards.forEach((card,i)=>card.classList.toggle("is-active",i===visibleMachine));$("lobbyMachines").setAttribute("aria-label","目前顯示 "+THEMES[machineCards[visibleMachine].querySelector("[data-machine]").dataset.machine].name)}
+showMachine(0);
+$("prevMachine").onclick=()=>showMachine(visibleMachine-1);
+$("nextMachine").onclick=()=>showMachine(visibleMachine+1);
 document.querySelectorAll("[data-machine]").forEach(b=>b.onclick=()=>{theme=b.dataset.machine;syncTheme();placeholder($("oldPreview"),"CAMERA / WAITING FOR YOU");placeholder($("softPreview"),"CAMERA / WAITING FOR YOU");setStage("start");$("cameraMessage").textContent="開啟鏡頭，看見兩種質感的自己。";startCamera()});
 document.querySelectorAll("[data-look]").forEach(b=>b.onclick=()=>{look=b.dataset.look;selectButtons("[data-look]","look",look)});
 $("timeToggle").onclick=()=>{duration=duration===90?0:90;$("timeToggle").innerHTML="<small>⏱</small><b>"+(duration===0?"∞":"90")+"</b>";$("timeToggle").setAttribute("aria-label",duration===0?"不限時編輯，點擊切換 90 秒":"編輯時間 90 秒，點擊切換不限時")};
