@@ -734,14 +734,16 @@ function textBitmap(text,dark,light,tiny=false){
     if(dark){cc.fillStyle=dark;cc.fillRect(0,0,c.width,c.height)}
     pixelText(cc,text,2,2,light,tiny);
   }else{
+    // MS Gothic 小字級內建點陣字，硬邊最好讀；沒有時退回細明體、系統字體。
+    const font='10px "MS Gothic","MingLiU",sans-serif';
     const measure=canvas(1,1).getContext("2d");
-    measure.font="bold 10px sans-serif";
+    measure.font=font;
     c=canvas(Math.ceil(measure.measureText(text).width)+6,15);
     const cc=c.getContext("2d");
     if(dark){cc.fillStyle=dark;cc.fillRect(0,0,c.width,c.height)}
     // 系統字體一定有反鋸齒：先畫在暫存畫布，再按透明度切成硬邊像素。
     const t=canvas(c.width,c.height),tc=t.getContext("2d");
-    tc.font="bold 10px sans-serif";tc.textBaseline="top";tc.fillText(text,3,2);
+    tc.font=font;tc.textBaseline="top";tc.fillText(text,3,2);
     const a=tc.getImageData(0,0,c.width,c.height).data;
     cc.fillStyle=light;
     for(let i=3;i<a.length;i+=4)if(a[i]>=110)cc.fillRect((i>>2)%c.width,Math.floor((i>>2)/c.width),1,1);
