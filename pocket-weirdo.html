@@ -169,7 +169,7 @@ dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;paddin
             <input id="brightness" type="range" min="-80" max="80" value="0">
           </div>
           <div class="setting" data-setting="細節" hidden>
-            <div class="setting-head"><label for="smooth">原本的我 ↔ 簡化成角色</label><output id="smoothValue">0</output></div>
+            <div class="setting-head"><label for="smooth">細節多 ↔ 細節少</label><output id="smoothValue">0</output></div>
             <input id="smooth" type="range" min="0" max="100" value="0">
           </div>
           <div class="setting" data-setting="顆粒" hidden>
@@ -187,7 +187,7 @@ dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;paddin
           </div>
           <canvas id="ramp" width="256" height="12" aria-label="明暗色階分布" hidden></canvas>
           <div class="setting-buttons" id="settingPresets" hidden>
-            <button id="smoothPresetBtn">平滑角色</button>
+            <button id="smoothPresetBtn">平滑配方</button>
             <button id="resetBtn">還原配方</button>
           </div>
         </section>
@@ -214,7 +214,7 @@ dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;paddin
         </div>
         <p id="reviewHint">貼紙可以直接拖移。</p>
       </section>
-      <div id="message" role="status" aria-live="polite">左右選風格。拍下去，就定案。</div>
+      <div id="message" role="status" aria-live="polite">左右選色盤。選好了就拍。</div>
     </div>
     <div class="bezel-bottom">
       <span class="power"><i class="led" id="led"></i><span id="powerText">STANDBY</span></span>
@@ -235,7 +235,7 @@ dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;paddin
           <button id="padRight" class="pad right" aria-label="方向鍵：右"><span aria-hidden="true">▶</span></button>
           <button id="padDown" class="pad down" aria-label="方向鍵：下"><span aria-hidden="true">▼</span></button>
         </div>
-        <small id="dpadHint">左右換風格 · 上下調明暗</small>
+        <small id="dpadHint">左右換色盤 · 上下調明暗</small>
       </div>
       <div class="action-unit">
         <div class="hardware-key key-b">
@@ -248,7 +248,7 @@ dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;paddin
               <path d="M12 6L5 13L12 20M6 13H20A7 7 0 0 1 20 27H16" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
-          <span id="diceLabel">B · 驚喜</span>
+          <span id="diceLabel">B · 抽一組</span>
         </div>
         <div class="hardware-key key-a">
           <button id="shutter" aria-label="拍照" disabled></button>
@@ -291,7 +291,7 @@ dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;paddin
     <li>這些是風格選項，不是完整的原機顯色模擬。</li>
     <li>按 TUNE 調一調：上下選設定，左右調數值。也可以直接拖動滑桿；預覽會一直留在上方。</li>
     <li>一般模式左右換風格、上下調明暗。色盤預設展開；點風格名稱可收合或展開。</li>
-    <li>先開啟相機或匯入照片，再按 B「驚喜」隨機換色盤、明暗與顆粒；尺寸與色階不變。按 BACK「上一組」可還原。</li>
+    <li>先開啟相機或匯入照片，再按 B「抽一組」隨機換色盤、明暗與顆粒；尺寸與色階不變。按 BACK「上一組」可還原。</li>
     <li>匯入照片會自動中央裁切，不套自拍鏡像。先選好風格，再按快門定案。</li>
     <li>按快門後影像就定案，只能加裝飾。貼紙可直接拖移，或用十字鍵一格一格移動；A 完成、B 復原裝飾。</li>
     <li>保存預設 4 倍放大，也能下載原始像素 PNG。</li>
@@ -354,8 +354,12 @@ function withDefaults(p){
   return {...p,brightness:0,dark:25,light:75,smooth:0};
 }
 let config=withDefaults(profiles[0]),configHistory=[];
-// 文案原則：平靜敘述不合理的日常，不自稱「怪」、不評價使用者，
-// 也不替笑話解釋。操作、保存與錯誤提示保持直白。
+// 文案原則：
+// 色盤小句子平靜敘述不合理的日常，不自稱「怪」、不評價使用者，也不替笑話解釋。
+// 不要只換主詞重複同一種笑話。
+// 介面以口語、具體、好操作為主，不要求每句都有趣。按鈕與功能名稱保持固定；
+// 一般回饋可少量輪替，偶爾帶一點性格。
+// 權限、限制、保存、錯誤與無障礙文字優先準確，不用笑話代替資訊，不宣稱尚未確認的結果。
 const paletteNotes=[
   [
     "存檔裡住著一個不肯搬家的星期二。",
@@ -394,13 +398,35 @@ const paletteNotes=[
     "火星沒有下雨，只有忘了關的灑水器。"
   ]
 ];
-const lastPaletteNotes=palettes.map(()=>-1);
-function paletteNote(index){
-  const notes=paletteNotes[index];
-  const choices=notes.map((_,i)=>i).filter(i=>i!==lastPaletteNotes[index]);
+// 一般回饋的輪替句。按鈕、錯誤、限制與保存結果維持固定字句，不放進來。
+const feedback={
+  idle:["左右選色盤。選好了就拍。","先挑個色盤，再按快門。","色盤可以左右換。快門是 A。"],
+  cameraReady:["相機開了。選好色盤就可以拍。","畫面有了。挑個色盤，按 A 拍照。","可以拍了。也可以先調一調。"],
+  imported:["照片進來了。選好色盤，再按快門。","照片放好了。還可以換色盤，按 A 拍下來。"],
+  next:["可以拍下一張了。","下一張。色盤沿用剛才那組。"],
+  previous:["已還原上一組設定。","換回剛才那組了。","上一組回來了。"],
+  reset:["已恢復這個色盤的原始設定。","換回這個色盤原本的設定了。"],
+  brightness:["明暗 {v}。按 TUNE 還可以調其他設定。","明暗調到 {v}。其他設定在 TUNE。"],
+  captured:["拍好了。可以加相框、貼紙或文字。","這張拍好了。接著可以加裝飾。","拍好了。直接保存也可以。"],
+  sticker:["貼紙放好了，可以直接拖。","加上去了。拖一下可以換位置。"],
+  banana:["香蕉放好了。拖一下可以換位置。","香蕉在這裡。可以拖走。"],
+  undo:["已復原上一步裝飾。","剛才那一步，收回了。","回到上一步了。"],
+  done:["裝飾好了。按 SAVE 保存 PNG。","好了。按 SAVE 存下來。","這張可以存了。按 SAVE。"]
+};
+// 同一組不連續出現同一句。
+const lastPicks={};
+function pickFresh(pool,key){
+  const choices=pool.map((_,i)=>i).filter(i=>i!==lastPicks[key]);
   const chosen=pick(choices);
-  lastPaletteNotes[index]=chosen;
-  return notes[chosen];
+  lastPicks[key]=chosen;
+  return pool[chosen];
+}
+function line(key,vars={}){
+  return pickFresh(feedback[key],key).replace(/\{(\w+)\}/g,(_,k)=>vars[k]);
+}
+const say=(key,vars)=>message(line(key,vars));
+function paletteNote(index){
+  return pickFresh(paletteNotes[index],"palette"+index);
 }
 
 const screen=$("screen"),ctx=screen.getContext("2d");
@@ -477,13 +503,13 @@ function directionKey(direction){
     useProfile((config.palette+(direction==="left"?-1:1)+profiles.length)%profiles.length);
   }else{
     adjustSetting("brightness",direction==="up"?4:-4);
-    message("明暗 "+(config.brightness>0?"+":"")+config.brightness+"。按 TUNE 可繼續調整。");
+    say("brightness",{v:(config.brightness>0?"+":"")+config.brightness});
   }
 }
 function finishDecoration(){
   if(!review||drag)return;
   selectedId=null;renderReview(false);
-  message("裝飾完成。按 SAVE 保存 PNG。");
+  say("done");
 }
 
 /* ---------- Bayer 矩陣 ---------- */
@@ -706,7 +732,7 @@ function standby(){
   for(let y=0;y<H;y+=4)for(let x=0;x<W;x+=4){
     if((x+y)%8===0)ctx.fillRect(x,y,1,1);
   }
-  centeredLabel(ctx,"WEIRDO",Math.floor(H*.35),"#d5dfa8","#20382b");
+  centeredLabel(ctx,"PW-02",Math.floor(H*.35),"#d5dfa8","#20382b");
   centeredLabel(ctx,"PRESS START",Math.floor(H*.66),"#d5dfa8","#526b3b");
 }
 
@@ -788,7 +814,7 @@ function useProfile(i){
 function dice(){
   if(previewLocked())return;
   if(!hasFrame){
-    message("先開啟相機或匯入照片，再按 B 隨機換效果。");
+    message("先開相機或匯入照片，再按 B 抽一組效果。");
     return;
   }
   rememberConfig();
@@ -803,13 +829,13 @@ function dice(){
   });
   config.smooth=pick([0,20,45,70]);
   syncSettings();refreshPreview();
-  message("抽到「"+palettes[config.palette].name+"」。"+paletteNote(config.palette)+" BACK 可還原。");
+  message("抽到「"+palettes[config.palette].name+"」。"+paletteNote(config.palette)+" 按 BACK 可還原上一組。");
 }
 function previousConfig(){
   if(previewLocked()||!configHistory.length)return;
   config={...configHistory.pop()};
   syncSettings();refreshPreview();
-  message("已還原上一組設定。");
+  say("previous");
 }
 function smoothPreset(){
   if(previewLocked())return;
@@ -820,12 +846,12 @@ function smoothPreset(){
     dark:18,light:82,smooth:75,dither:8,matrix:4,invert:false
   };
   syncSettings();refreshPreview();
-  message("已套用平滑配方。五官、頭髮與陰影的細節會一起減少。");
+  message("已套用平滑配方。五官、頭髮和陰影的細節都會少一些。");
 }
 function resetProfile(){
   if(previewLocked())return;
   rememberConfig();config=withDefaults(profiles[config.palette]);
-  syncSettings();refreshPreview();message("恢復這個風格的原始配方。");
+  syncSettings();refreshPreview();say("reset");
 }
 function bindRange(id,key){
   const input=$(id);
@@ -864,8 +890,8 @@ function updateUI(){
   }
   $("dpadHint").textContent=review
     ?(selectedObject()?"十字鍵微移 · 也可以直接拖":"方向鍵切換裝飾工具")
-    :settingsOpen?"上下選設定 · 左右調數值":"左右換風格 · 上下調明暗";
-  $("diceLabel").textContent=review?"B · 復原":"B · 驚喜";
+    :settingsOpen?"上下選設定 · 左右調數值":"左右換色盤 · 上下調明暗";
+  $("diceLabel").textContent=review?"B · 復原":"B · 抽一組";
   $("diceBtn").classList.toggle("is-review",review);
   $("diceBtn").setAttribute("aria-label",review?"復原裝飾":"隨機風格");
   $("diceBtn").title=review?"復原上一步裝飾":"隨機換色盤、明暗與顆粒；BACK 可還原";
@@ -953,7 +979,7 @@ async function startCamera(){
     $("startOverlay").hidden=true;
     lastProcess=0;lastVideoTime=-1;
     refreshPreview();
-    message("相機已開啟。選好風格就可以拍照。");
+    say("cameraReady");
   }catch(e){
     console.warn(e);acquired?.getTracks().forEach(t=>t.stop());
     if(generation===cameraGeneration){
@@ -974,7 +1000,7 @@ document.addEventListener("visibilitychange",()=>{
     if(stream||cameraStarting){
       stopCamera();
       if(!review&&!sourceImage){
-        showStart("離開畫面時已關閉相機。按一下重新開啟。");
+        showStart("剛才離開畫面，相機已關閉。按一下重新開啟。");
       }
     }
   }
@@ -985,7 +1011,7 @@ async function loadImage(url){
   return new Promise((resolve,reject)=>{
     const img=new Image();
     img.onload=()=>resolve(img);
-    img.onerror=()=>reject(new Error("這張圖片讀取失敗"));
+    img.onerror=()=>reject(new Error("這張圖片讀取失敗。請換一張試試。"));
     img.src=url;
   });
 }
@@ -1003,7 +1029,7 @@ async function importPhoto(file){
   try{
     const img=await loadImage(url);
     if(img.naturalWidth*img.naturalHeight>40000000){
-      throw new Error("圖片像素太多，請先縮小再匯入");
+      throw new Error("圖片像素太多，請先縮小再匯入。");
     }
     // 留一份靜態來源，避免動畫圖片在預覽裡自行播放。
     const staticImage=canvas(img.naturalWidth,img.naturalHeight);
@@ -1011,7 +1037,7 @@ async function importPhoto(file){
     if(review)leaveReview();
     stopCamera();sourceImage=staticImage;
     $("startOverlay").hidden=true;
-    message("照片已匯入。選好風格，按快門就定案。");
+    say("imported");
   }catch(e){
     alert(e.message);message("換一張照片試試看。");
   }finally{
@@ -1049,7 +1075,7 @@ async function takePhoto(){
   $("retakeBtn").setAttribute("aria-label",captureSource==="photo"?"換照片":"拍下一張");
   $("originalBtn").textContent="下載原始 "+W+"×"+H;
   selectTab("frame");renderReview();renderFrameSelection();updateUI();
-  message("拍好了。可以選相框、貼紙或文字。");
+  say("captured");
 }
 function leaveReview(){
   cancelCountdown();review=false;sourceImage=null;
@@ -1066,7 +1092,7 @@ function retake(){
     $("fileInput").click();return;
   }
   leaveReview();
-  standby();showStart("準備拍下一張。");
+  standby();showStart(line("next"));
   syncSettings();startCamera();
 }
 
@@ -1214,7 +1240,7 @@ function undoEdit(){
   selectedId=old.selectedId;
   $("undoBtn").disabled=!editHistory.length;
   renderReview();renderFrameSelection();
-  message("剛才那一步，收回了。");
+  say("undo");
 }
 function bitmap(o){
   return o.type==="sticker"?stickerMap.get(o.key):o.bitmap;
@@ -1251,7 +1277,7 @@ function updateSelection(){
   }
   $("reviewHint").textContent=o
     ?"直接拖移或用十字鍵微移。A 完成，B 復原。"
-    :"照片已定案。可加相框、貼紙或文字。";
+    :"拍完不能再調色，可以加相框、貼紙或文字。";
   updateUI();
 }
 function renderReview(changed=true){
@@ -1274,7 +1300,7 @@ function addSticker(key){
   const scale=Math.min(preferred,(W-4)/img.width,(H-4)/img.height);
   const o={id:objectId++,type:"sticker",key,x:W/2,y:H/2,scale};
   objects.push(o);selectedId=o.id;renderReview();
-  message(key==="banana"?"香蕉放好了。拖一下可以換位置。":"貼紙加入，直接拖到你喜歡的位置。");
+  say(key==="banana"?"banana":"sticker");
 }
 function addText(){
   if(!canAdd())return;
@@ -1361,7 +1387,7 @@ function outputCanvas(scale){
 function pngBlob(scale){
   return new Promise((resolve,reject)=>{
     outputCanvas(scale).toBlob(b=>
-      b?resolve(b):reject(new Error("PNG 產生失敗")),"image/png"
+      b?resolve(b):reject(new Error("PNG 產生失敗。請再試一次。")),"image/png"
     );
   });
 }
@@ -1387,7 +1413,7 @@ function queueExport(){
     }catch(e){
       console.warn(e);
       if(version===exportVersion){
-        $("shareBtn").textContent="用 SAVE";
+        $("shareBtn").textContent="改用 SAVE";
       }
     }
   },180);
@@ -1575,7 +1601,7 @@ window.addEventListener("keydown",e=>{
 });
 
 buildStyleButtons();buildFrameButtons();buildStickerButtons();
-showSetting(0);syncSettings();standby();requestAnimationFrame(loop);
+showSetting(0);syncSettings();standby();say("idle");requestAnimationFrame(loop);
 if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia){
   $("startDescription").textContent=
     "這個開啟方式可能無法使用相機。請放上 HTTPS 網站，或先匯入照片玩。";
