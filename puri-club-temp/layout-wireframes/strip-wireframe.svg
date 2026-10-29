@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="1240" viewBox="0 0 360 1240" role="img" aria-labelledby="title desc">
+<title id="title">口袋長條拍貼版型對位稿</title>
+<desc id="desc">與網站輸出同尺寸的線框；藍框是照片顯示區，虛線是相紙邊界，粉紅線是文字基線。</desc>
+<rect width="360" height="1240" fill="#fffdf9"/>
+<rect x=".5" y=".5" width="359" height="1239" fill="none" stroke="#1b2433"/>
+<line x1="180.0" y1="0" x2="180.0" y2="1240" stroke="#718096" stroke-width=".7" stroke-dasharray="5 5" opacity=".65"/>
+<rect x="50.4" y="19" width="259.2" height="42" rx="21" fill="none" stroke="#a23570" stroke-width="1.5" stroke-dasharray="5 3"/>
+<text x="180.0" y="43" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#a23570">LOGO / TITLE AREA</text>
+<line x1="12" y1="78" x2="348" y2="78" stroke="#a23570" stroke-width="1" stroke-dasharray="4 4"/>
+<g data-photo="1" data-x="28" data-y="105" data-width="304" data-height="228" data-rotation-radians="0">
+<rect x="21" y="98" width="318" height="258" rx="6" fill="none" stroke="#764d70" stroke-width="1.5" stroke-dasharray="6 4"/>
+<rect x="28" y="105" width="304" height="228" fill="#edf7ff" fill-opacity=".55" stroke="#087eae" stroke-width="2"/>
+<line x1="28" y1="105" x2="332" y2="333" stroke="#087eae" stroke-width=".7" opacity=".4"/>
+<line x1="332" y1="105" x2="28" y2="333" stroke="#087eae" stroke-width=".7" opacity=".4"/>
+<text x="180" y="217" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#075878">PHOTO 01</text>
+<text x="180" y="234" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#075878">304 × 228</text>
+<line x1="31" y1="347" x2="329" y2="347" stroke="#a23570" stroke-width="1" stroke-dasharray="3 3"/>
+</g>
+<circle cx="28" cy="101" r="3" fill="#a23570" data-decoration-anchor="1"/>
+<g data-photo="2" data-x="28" data-y="370" data-width="304" data-height="228" data-rotation-radians="0">
+<rect x="21" y="363" width="318" height="258" rx="6" fill="none" stroke="#764d70" stroke-width="1.5" stroke-dasharray="6 4"/>
+<rect x="28" y="370" width="304" height="228" fill="#edf7ff" fill-opacity=".55" stroke="#087eae" stroke-width="2"/>
+<line x1="28" y1="370" x2="332" y2="598" stroke="#087eae" stroke-width=".7" opacity=".4"/>
+<line x1="332" y1="370" x2="28" y2="598" stroke="#087eae" stroke-width=".7" opacity=".4"/>
+<text x="180" y="482" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#075878">PHOTO 02</text>
+<text x="180" y="499" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#075878">304 × 228</text>
+<line x1="31" y1="612" x2="329" y2="612" stroke="#a23570" stroke-width="1" stroke-dasharray="3 3"/>
+</g>
+<circle cx="332" cy="366" r="3" fill="#a23570" data-decoration-anchor="2"/>
+<g data-photo="3" data-x="28" data-y="635" data-width="304" data-height="228" data-rotation-radians="0">
+<rect x="21" y="628" width="318" height="258" rx="6" fill="none" stroke="#764d70" stroke-width="1.5" stroke-dasharray="6 4"/>
+<rect x="28" y="635" width="304" height="228" fill="#edf7ff" fill-opacity=".55" stroke="#087eae" stroke-width="2"/>
+<line x1="28" y1="635" x2="332" y2="863" stroke="#087eae" stroke-width=".7" opacity=".4"/>
+<line x1="332" y1="635" x2="28" y2="863" stroke="#087eae" stroke-width=".7" opacity=".4"/>
+<text x="180" y="747" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#075878">PHOTO 03</text>
+<text x="180" y="764" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#075878">304 × 228</text>
+<line x1="31" y1="877" x2="329" y2="877" stroke="#a23570" stroke-width="1" stroke-dasharray="3 3"/>
+</g>
+<circle cx="28" cy="631" r="3" fill="#a23570" data-decoration-anchor="3"/>
+<g data-photo="4" data-x="28" data-y="900" data-width="304" data-height="228" data-rotation-radians="0">
+<rect x="21" y="893" width="318" height="258" rx="6" fill="none" stroke="#764d70" stroke-width="1.5" stroke-dasharray="6 4"/>
+<rect x="28" y="900" width="304" height="228" fill="#edf7ff" fill-opacity=".55" stroke="#087eae" stroke-width="2"/>
+<line x1="28" y1="900" x2="332" y2="1128" stroke="#087eae" stroke-width=".7" opacity=".4"/>
+<line x1="332" y1="900" x2="28" y2="1128" stroke="#087eae" stroke-width=".7" opacity=".4"/>
+<text x="180" y="1012" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#075878">PHOTO 04</text>
+<text x="180" y="1029" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#075878">304 × 228</text>
+<line x1="31" y1="1142" x2="329" y2="1142" stroke="#a23570" stroke-width="1" stroke-dasharray="3 3"/>
+</g>
+<circle cx="332" cy="896" r="3" fill="#a23570" data-decoration-anchor="4"/>
+<line x1="12" y1="1197" x2="348" y2="1197" stroke="#a23570" stroke-width="1" stroke-dasharray="5 3"/>
+<text x="180.0" y="1191" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#a23570">TAGLINE BASELINE</text>
+<line x1="12" y1="1221" x2="348" y2="1221" stroke="#a23570" stroke-width="1" stroke-dasharray="5 3"/>
+<text x="180.0" y="1217" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#a23570">DATE BASELINE</text>
+</svg>
