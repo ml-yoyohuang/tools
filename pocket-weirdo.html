@@ -739,8 +739,12 @@ function textBitmap(text,dark,light,tiny=false){
     c=canvas(Math.ceil(measure.measureText(text).width)+6,15);
     const cc=c.getContext("2d");
     if(dark){cc.fillStyle=dark;cc.fillRect(0,0,c.width,c.height)}
-    cc.font="bold 10px sans-serif";cc.textBaseline="top";
-    cc.fillStyle=light;cc.fillText(text,3,2);
+    // 系統字體一定有反鋸齒：先畫在暫存畫布，再按透明度切成硬邊像素。
+    const t=canvas(c.width,c.height),tc=t.getContext("2d");
+    tc.font="bold 10px sans-serif";tc.textBaseline="top";tc.fillText(text,3,2);
+    const a=tc.getImageData(0,0,c.width,c.height).data;
+    cc.fillStyle=light;
+    for(let i=3;i<a.length;i+=4)if(a[i]>=110)cc.fillRect((i>>2)%c.width,Math.floor((i>>2)/c.width),1,1);
   }
   return c;
 }
