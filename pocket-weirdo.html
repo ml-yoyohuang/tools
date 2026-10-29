@@ -752,7 +752,9 @@ function textBitmap(text,dark,light,tiny=false){
   return c;
 }
 function centeredLabel(c,text,y,dark,light,maxWidth=W-8,canvasWidth=W){
-  const img=textBitmap(text,dark,light);
+  // 放不下時先換 3×5 小字；非整數縮放會讓像素字少掉上下幾排。
+  let img=textBitmap(text,dark,light);
+  if(img.width>maxWidth&&/^[A-Za-z0-9 !?.:/-]+$/.test(text))img=textBitmap(text,dark,light,true);
   const scale=Math.min(1,maxWidth/img.width);
   const w=Math.round(img.width*scale),h=Math.round(img.height*scale);
   c.imageSmoothingEnabled=false;
@@ -772,13 +774,16 @@ function standby(){
 function previewLocked(){
   return review||counting||importing||cameraStarting;
 }
-function applySize(){
-  ({w:W,h:H}=sizes[sizeIndex]);
+function resizeCanvases(w,h){
+  W=w;H=h;
   for(const c of [screen,sample,base]){c.width=W;c.height=H}
   imageOutput=ctx.createImageData(W,H);
   lumA=new Float32Array(W*H);lumB=new Float32Array(W*H);
   lumC=new Float32Array(W*H);
   $("screenWrap").style.aspectRatio=W+"/"+H;
+}
+function applySize(){
+  resizeCanvases(sizes[sizeIndex].w,sizes[sizeIndex].h);
   hasFrame=false;
   syncSettings();standby();refreshPreview();
 }
@@ -802,7 +807,8 @@ function rememberConfig(){
 }
 function syncSettings(){
   rebuildConversion();
-  $("sizeBtn").textContent=["粗粗","經典","細細"][sizeIndex]+" · "+W+" × "+H;
+  const size=sizes[sizeIndex];
+  $("sizeBtn").textContent=["粗粗","經典","細細"][sizeIndex]+" · "+size.w+" × "+size.h;
   $("tonesBtn").textContent=tones+" TONES";
   $("brightness").value=config.brightness;
   $("darkPoint").value=config.dark;$("lightPoint").value=config.light;
@@ -1095,6 +1101,12 @@ async function takePhoto(){
   }
   // 複製當下已處理畫面：不在快門時偷偷改解析度。
   bctx.clearRect(0,0,W,H);bctx.drawImage(screen,0,0);
+  // 超粗像素拍完後等比放大兩倍再編輯，相框、貼紙和文字才有足夠的空間。
+  if(W===64){
+    const shot=canvas(W,H);shot.getContext("2d").drawImage(base,0,0);
+    resizeCanvases(W*2,H*2);
+    bctx.imageSmoothingEnabled=false;bctx.drawImage(shot,0,0,W,H);
+  }
   captureColors=palettes[config.palette].colors.slice();
   captureSource=sourceImage?"photo":"camera";
   review=true;cancelCountdown();stopCamera();
@@ -1111,6 +1123,7 @@ async function takePhoto(){
 }
 function leaveReview(){
   cancelCountdown();review=false;sourceImage=null;
+  if(W!==sizes[sizeIndex].w)applySize();
   objects=[];selectedId=null;editHistory=[];
   invalidateExport();revokeImageURL();
   $("selectionBox").hidden=true;
