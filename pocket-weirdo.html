@@ -30,6 +30,11 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;min-height:100dvh;background:#a9aca0;color:var(--ink);background-image:linear-gradient(90deg,#ffffff08 1px,transparent 1px),linear-gradient(#ffffff08 1px,transparent 1px);background-size:8px 8px;font-family:system-ui,-apple-system,sans-serif}
+/* 手機上點按鈕、拖貼紙時不要框選到字；輸入框照常可選，保存用的圖片保留長按選單 */
+body{-webkit-user-select:none;user-select:none}
+button,canvas{-webkit-touch-callout:none}
+input,textarea{-webkit-user-select:text;user-select:text}
+#savedImage{-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
 button,input{font:inherit}
 button{min-height:44px;padding:8px 10px;border:2px solid var(--line);border-radius:5px;background:var(--paper);color:var(--ink);box-shadow:0 3px 0 #898a7a;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 button:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 #898a7a}
