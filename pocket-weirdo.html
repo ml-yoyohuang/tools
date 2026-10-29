@@ -129,6 +129,13 @@ dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;paddin
 @media(min-width:600px){#machine{margin:22px auto}}
 /* 手機上照片是主角：螢幕撐滿寬度，下面的按鈕往下捲 */
 @media(max-width:599px){.screen-wrap,#machine.is-settings .screen-wrap,#machine.is-review .screen-wrap{max-width:100%}}
+/* 「整台」模式：照手機高度算螢幕大小，整台相機不用捲動 */
+@media(max-width:599px){
+  #machine.is-compact .screen-wrap{max-width:calc(max(190px,100svh - 500px)*8/7)}
+  #machine.is-compact.is-settings .screen-wrap,#machine.is-compact.is-review .screen-wrap{max-width:calc(max(170px,100svh - 610px)*8/7)}
+}
+#fitBtn svg{display:block;width:14px;height:14px;margin:auto;pointer-events:none}
+@media(min-width:600px){#fitBtn{display:none}}
 @media(max-width:360px){#machine{padding-left:10px;padding-right:10px}.utility-keys{gap:9px}.deck{padding-left:0;padding-right:0}.action-unit{gap:8px}#shutter{width:64px;height:64px}.round{width:46px;height:46px}.direction-unit small{max-width:125px}}
 @media(prefers-reduced-motion:reduce){button:active:not(:disabled){transform:none}}
 </style>
@@ -140,6 +147,7 @@ dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;paddin
       <small>口袋相機 / 02</small>
     </div>
     <div class="top-actions">
+      <button id="fitBtn" aria-pressed="false"></button>
       <button id="flipBtn" aria-label="切換前後鏡頭">↻ 鏡頭</button>
       <button id="helpBtn" aria-label="使用說明">?</button>
     </div>
@@ -3152,10 +3160,12 @@ async function pressA(){
   if(matchMedia("(pointer:coarse)").matches&&navigator.share&&typeof File==="function"){
     if(!exportCache){message("圖片準備中，請再按一次 A。");return}
     if(navigator.canShare?.({files:[exportCache.file]})){
+      message("分享選單打開了。存進相簿或傳出去都可以。");
       navigator.share({files:[exportCache.file]}).then(()=>{
         markSaved(version);message("圖片已交給分享選單。"+nextHint());
       }).catch(e=>{
-        if(e.name!=="AbortError")message("分享沒成功，請改用 SAVE 或開圖長按。");
+        message(e.name==="AbortError"?"分享選單關掉了。按 A 可以再打開。"
+          :"分享沒成功，請改用 SAVE 或開圖長按。");
       });
       return;
     }
@@ -3225,12 +3235,11 @@ function sharePNG(){
   if(file&&navigator.share&&navigator.canShare?.({files:[file]})){
     $("shareBtn").disabled=true;
     const version=exportVersion;
+    message("分享選單打開了。存進相簿或傳出去都可以。");
     navigator.share({files:[file]}).then(()=>{
       markSaved(version);message("圖片已交給分享選單。");
     }).catch(e=>{
-      if(e.name!=="AbortError"){
-        message("分享沒成功，請改用保存 PNG 或開圖長按。");
-      }
+      message(e.name==="AbortError"?"分享選單關掉了。":"分享沒成功，請改用保存 PNG 或開圖長按。");
     }).finally(()=>{
       $("shareBtn").disabled=!exportCache;
     });
@@ -3371,6 +3380,22 @@ $("originalBtn").onclick=()=>savePNG(1);
 $("shareBtn").onclick=sharePNG;$("viewImageBtn").onclick=viewImage;
 $("closeImage").onclick=()=>$("imageDialog").close();
 $("imageDialog").addEventListener("close",revokeImageURL);
+/* 手機上切換「大畫面」與「整台」；選擇記在這個瀏覽器 */
+const fitIcons={
+  shrink:'<svg viewBox="0 0 14 14" aria-hidden="true" focusable="false"><path d="M1 5H5V1M13 5H9V1M1 9H5V13M13 9H9V13" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+  grow:'<svg viewBox="0 0 14 14" aria-hidden="true" focusable="false"><path d="M1 5V1H5M13 5V1H9M1 9V13H5M13 9V13H9" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
+};
+function setCompact(on,announce=false){
+  $("machine").classList.toggle("is-compact",on);
+  $("fitBtn").innerHTML=on?fitIcons.grow:fitIcons.shrink;
+  $("fitBtn").setAttribute("aria-label",on?"放大照片畫面":"縮小相機，整台放進畫面");
+  $("fitBtn").setAttribute("aria-pressed",String(on));
+  try{localStorage.setItem("pw-compact",on?"1":"0")}catch{}
+  if(announce)message(on?"整台放進畫面了。照片會小一點。":"照片放大了。按鈕在下面。");
+}
+$("fitBtn").onclick=()=>setCompact(!$("machine").classList.contains("is-compact"),true);
+let savedCompact=false;try{savedCompact=localStorage.getItem("pw-compact")==="1"}catch{}
+setCompact(savedCompact);
 $("helpBtn").onclick=()=>{cancelCountdown();$("helpDialog").showModal()};
 $("closeHelp").onclick=()=>$("helpDialog").close();
 
