@@ -1,0 +1,140 @@
+<meta charset="utf-8">
+<title>Pocket Weirdo 字體實測</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* 版面：上方一列控制項，下面每個字體一張橫條，左邊名稱與判定，右邊放大的像素字 */
+:root{
+  --bg:#e8ecd3;--panel:#f3f5e4;--fg:#26352d;--muted:#5d6b5c;--line:#c8cfaa;--accent:#5f7d33;--ink:#26352d;--paper:#edf1c8;
+  --ui:system-ui,-apple-system,"Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#18201b;--panel:#202a24;--fg:#dfe6c4;--muted:#9aa78f;--line:#35423a;--accent:#a6c46a;--ink:#dfe6c4;--paper:#26352d;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#18201b;--panel:#202a24;--fg:#dfe6c4;--muted:#9aa78f;--line:#35423a;--accent:#a6c46a;--ink:#dfe6c4;--paper:#26352d;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--ui);line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+main{max-width:1100px;margin:0 auto;display:grid;gap:18px}
+h1{font-size:1.35rem;margin:0;text-wrap:balance}
+p{margin:0;max-width:65ch;color:var(--muted)}
+.ua{font:12px var(--mono);color:var(--muted);overflow-wrap:anywhere}
+.controls{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:end;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+.controls label{display:grid;gap:4px;font-size:12px;letter-spacing:.04em;color:var(--muted)}
+.controls .grow{flex:1 1 260px;min-width:0}
+input[type=text]{font:15px var(--ui);padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);width:100%;box-sizing:border-box}
+input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.check{display:flex!important;grid-auto-flow:column;align-items:center;gap:6px}
+output{font-variant-numeric:tabular-nums;color:var(--fg)}
+.list{display:grid;gap:8px}
+.row{display:grid;grid-template-columns:200px minmax(0,1fr);gap:12px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.row.missing{opacity:.45}
+.name{font-weight:600;font-size:14px}
+.meta{font-size:12px;color:var(--muted)}
+.tag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:4px;border:1px solid var(--line);margin-top:4px}
+.tag.bitmap{border-color:var(--accent);color:var(--accent);font-weight:600}
+.samples{display:grid;gap:6px;min-width:0;overflow-x:auto}
+.sample{display:flex;align-items:center;gap:8px}
+.sample span{font:11px var(--mono);color:var(--muted);width:34px;flex-shrink:0}
+canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+@media (max-width:640px){.row{grid-template-columns:minmax(0,1fr)}}
+</style>
+<main>
+  <header style="display:grid;gap:6px">
+    <h1>Pocket Weirdo 字體實測</h1>
+    <p>每個字體先用系統方式畫字，再把半透明的邊切成硬邊像素，跟相機裡的做法一樣。標著「原生點陣」的字體本身就沒有反鋸齒。灰掉的列表示這台裝置沒有這個字體。</p>
+    <div class="ua" id="ua"></div>
+  </header>
+  <section class="controls" aria-label="測試設定">
+    <label class="grow">測試文字<input id="textIn" type="text" value="這裡們嗎 臺灣雞鍋 今天吃香蕉 あいうえお カキクケコ"></label>
+    <label>門檻 <output id="thOut">110</output><input id="thIn" type="range" min="40" max="220" value="110"></label>
+    <label>放大 <output id="scOut">3</output>×<input id="scIn" type="range" min="1" max="6" value="3"></label>
+    <label class="check"><input id="hideIn" type="checkbox">隱藏沒有的字體</label>
+  </section>
+  <section class="list" id="list" aria-label="字體比較"></section>
+</main>
+<script>
+const fonts=[
+  ["MS Gothic","Windows",[400]],
+  ["MingLiU","Windows 細明體",[400]],
+  ["Microsoft JhengHei","Windows 正黑體",[400,700]],
+  ["Hiragino Sans","iOS / macOS 冬青黑體",[300,400,600]],
+  ["PingFang TC","iOS / macOS 蘋方-繁",[300,400,600]],
+  ["Hiragino Maru Gothic ProN","iOS / macOS 冬青圓體",[400]],
+  ["Hiragino Mincho ProN","iOS / macOS 冬青明朝",[400]],
+  ["Heiti TC","macOS 黑體-繁",[300,500]],
+  ["Osaka","macOS",[400]],
+  ["GB18030 Bitmap","macOS 純點陣（簡體）",[400]],
+  ["Apple LiGothic","macOS 蘋果儷中黑（需下載）",[400]],
+  ["system-ui","系統預設介面字體",[400,700]],
+  ["sans-serif","瀏覽器預設無襯線",[400,700]],
+];
+const sizes=[10,11,12];
+const $=id=>document.getElementById(id);
+$("ua").textContent=navigator.userAgent;
+const probe=document.createElement("canvas").getContext("2d");
+function installed(f){
+  if(f==="system-ui"||f==="sans-serif")return true;
+  const s="這裡們あいうカキ永abcMWi";
+  return ["monospace","serif"].some(g=>{
+    probe.font=`40px ${g}`;const a=probe.measureText(s).width;
+    probe.font=`40px "${f}",${g}`;return probe.measureText(s).width!==a;
+  });
+}
+const fam=f=>f==="system-ui"||f==="sans-serif"?f:`"${f}",sans-serif`;
+// 回傳硬邊畫布，以及原生畫字時半透明像素的比例
+function render(text,font,th,ink){
+  probe.font=font;
+  const w=Math.max(8,Math.ceil(probe.measureText(text).width)+6),h=18;
+  const t=document.createElement("canvas");t.width=w;t.height=h;
+  const tc=t.getContext("2d",{willReadFrequently:true});
+  tc.font=font;tc.textBaseline="top";tc.fillText(text,3,3);
+  const a=tc.getImageData(0,0,w,h).data;
+  const o=document.createElement("canvas");o.width=w;o.height=h;
+  const oc=o.getContext("2d");oc.fillStyle=ink;
+  let lit=0,soft=0;
+  for(let i=3;i<a.length;i+=4){
+    if(a[i])lit++;
+    if(a[i]&&a[i]<255)soft++;
+    if(a[i]>=th)oc.fillRect((i>>2)%w,Math.floor((i>>2)/w),1,1);
+  }
+  return {canvas:o,soft:lit?soft/lit:0};
+}
+const have=Object.fromEntries(fonts.map(([f])=>[f,installed(f)]));
+function draw(){
+  const text=$("textIn").value||" ",th=+$("thIn").value,sc=+$("scIn").value,hide=$("hideIn").checked;
+  $("thOut").textContent=th;$("scOut").textContent=sc;
+  const ink=getComputedStyle(document.documentElement).getPropertyValue("--ink").trim();
+  const list=$("list");list.textContent="";
+  for(const [f,note,weights] of fonts){
+    if(hide&&!have[f])continue;
+    for(const wt of weights){
+      const row=document.createElement("div");row.className="row"+(have[f]?"":" missing");
+      const info=document.createElement("div");
+      const samples=document.createElement("div");samples.className="samples";
+      let soft=0;
+      for(const s of sizes){
+        const r=render(text,`${wt} ${s}px ${fam(f)}`,th,ink);
+        soft=Math.max(soft,r.soft);
+        r.canvas.style.width=r.canvas.width*sc+"px";r.canvas.style.height=r.canvas.height*sc+"px";
+        const line=document.createElement("div");line.className="sample";
+        const lab=document.createElement("span");lab.textContent=s+"px";
+        line.append(lab,r.canvas);samples.append(line);
+      }
+      const native=have[f]&&soft===0;
+      info.innerHTML=`<div class="name"></div><div class="meta"></div>`;
+      info.querySelector(".name").textContent=`${f} · ${wt}`;
+      info.querySelector(".meta").textContent=have[f]?note:`${note}・這台沒有`;
+      if(have[f]){
+        const tag=document.createElement("span");tag.className="tag"+(native?" bitmap":"");
+        tag.textContent=native?"原生點陣":`反鋸齒 ${Math.round(soft*100)}%`;
+        info.append(tag);
+      }
+      row.append(info,samples);list.append(row);
+    }
+  }
+}
+for(const id of ["textIn","thIn","scIn","hideIn"])$(id).addEventListener("input",draw);
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",draw);
+(document.fonts?.ready??Promise.resolve()).then(draw);
+draw();
+</script>
