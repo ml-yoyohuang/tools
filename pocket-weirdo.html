@@ -55,6 +55,7 @@ input[type=text]{width:100%;min-width:0;padding:10px;border:2px solid #526b3b;bo
 #startOverlay button{min-height:40px;padding:6px 12px;font-size:12px}
 #startBtn{background:var(--dark);color:#e1e9b9;border-color:var(--dark)}
 #countdown{position:absolute;inset:0;display:grid;place-items:center;background:#26352d22;pointer-events:none}
+#shutterFx{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
 #countdownDigit{height:62%;max-width:90%;object-fit:contain;image-rendering:pixelated}
 .lcd-ui{margin-top:7px;padding:0 8px;background:var(--screen);border:2px solid #303e2f;box-shadow:inset 1px 1px #ecf2c8;color:var(--dark)}
 .lcd-ui button{border:1px solid #526b3b;border-radius:2px;background:transparent;box-shadow:none;color:var(--dark);font-size:11px}
@@ -151,6 +152,7 @@ dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;paddin
         <button id="startImportBtn">先用照片玩</button>
       </div>
       <div id="countdown" hidden><canvas id="countdownDigit" role="img"></canvas></div>
+      <canvas id="shutterFx" hidden aria-hidden="true"></canvas>
     </div>
     <div class="lcd-ui">
       <section id="liveUI" aria-label="拍照前設定">
@@ -1201,6 +1203,72 @@ function hideCount(){
   clearInterval(countTimer);$("countdown").hidden=true;
 }
 
+/* ---------- 快門效果 ---------- */
+// 拍下時隨機播一種快門效果，接著照片像拍立得從上方出紙口滑出來。
+// 照片在播之前就已存好，效果只畫在蓋住螢幕的 #shutterFx 上。
+let shutterGen=0;
+const shutterWait=(ms,gen)=>new Promise((ok,stop)=>setTimeout(()=>gen===shutterGen?ok():stop(),ms));
+const shutterEffects={
+  async flash(fc,[,,,light],gen){
+    for(const a of [1,.55,.2]){
+      fc.clearRect(0,0,W,H);fc.globalAlpha=a;fc.fillStyle=light;fc.fillRect(0,0,W,H);
+      await shutterWait(60,gen);
+    }
+    fc.globalAlpha=1;
+  },
+  async curtain(fc,[dark,mid],gen){
+    // 上下兩片快門簾一格一格合上，停一下再打開
+    const half=Math.ceil(H/2),steps=[.14,.36,.6,.86,1].map(f=>Math.round(half*f));
+    const draw=h=>{
+      fc.clearRect(0,0,W,H);fc.drawImage(base,0,0);
+      fc.fillStyle=dark;fc.fillRect(0,0,W,h);fc.fillRect(0,H-h,W,h);
+      if(h<half){fc.fillStyle=mid;fc.fillRect(0,h-1,W,1);fc.fillRect(0,H-h,W,1)}
+    };
+    for(const h of steps){draw(h);await shutterWait(35,gen)}
+    await shutterWait(60,gen);
+    for(const h of steps.slice(0,-1).reverse()){draw(h);await shutterWait(35,gen)}
+  },
+  async dissolve(fc,[,,,light],gen){
+    // 2×2 的亮點亂數蓋滿，再亂數消失
+    const cells=[];
+    for(let y=0;y<H;y+=2)for(let x=0;x<W;x+=2)cells.push([x,y]);
+    for(let i=cells.length-1;i>0;i--){const j=rand(0,i);[cells[i],cells[j]]=[cells[j],cells[i]]}
+    const fill=Math.ceil(cells.length/5),clear=Math.ceil(cells.length/4);
+    fc.fillStyle=light;
+    for(let k=0;k<5;k++){
+      for(const [x,y] of cells.slice(k*fill,(k+1)*fill))fc.fillRect(x,y,2,2);
+      await shutterWait(30,gen);
+    }
+    await shutterWait(40,gen);
+    for(let k=0;k<4;k++){
+      for(const [x,y] of cells.slice(k*clear,(k+1)*clear)){fc.clearRect(x,y,2,2);fc.drawImage(base,x,y,2,2,x,y,2,2)}
+      await shutterWait(30,gen);
+    }
+  }
+};
+async function playShutter(){
+  const gen=++shutterGen,fx=$("shutterFx"),fc=fx.getContext("2d"),colors=captureColors;
+  if(calmMotion.matches)return;
+  fx.width=W;fx.height=H;fc.drawImage(base,0,0);fx.hidden=false;
+  try{
+    await shutterEffects[pick(Object.keys(shutterEffects))](fc,colors,gen);
+    fc.clearRect(0,0,W,H);fc.drawImage(base,0,0);
+    await shutterWait(220,gen);
+    // 出紙：深色畫面加一排出紙口，照片快進慢停，最後多滑一格再彈回
+    const [dark,mid]=colors;
+    for(const f of [-1,-.86,-.71,-.57,-.45,-.34,-.24,-.16,-.1,-.05,-.02]){
+      const y=Math.round(f*H);
+      fc.fillStyle=dark;fc.fillRect(0,0,W,H);
+      fc.fillStyle="#0006";for(let x=0;x<W;x+=4)fc.fillRect(x,0,2,1);
+      fc.drawImage(base,0,y);fc.fillStyle=mid;fc.fillRect(0,y+H,W,1);
+      await shutterWait(40,gen);
+    }
+    fc.drawImage(base,0,1);await shutterWait(40,gen);
+  }catch{return}
+  fx.hidden=true;
+}
+function stopShutter(){shutterGen++;$("shutterFx").hidden=true}
+
 /* ---------- 拍照 ---------- */
 async function takePhoto(){
   if(review||counting||importing||cameraStarting||!hasFrame)return;
@@ -1236,10 +1304,11 @@ async function takePhoto(){
   $("retakeBtn").setAttribute("aria-label",captureSource==="photo"?"換照片":"拍下一張");
   $("originalBtn").textContent="下載原始 "+W+"×"+H;
   selectTab("frame");renderReview();renderFrameSelection();updateUI();
+  playShutter();
   say("captured");
 }
 function leaveReview(){
-  cancelCountdown();review=false;sourceImage=null;
+  cancelCountdown();stopShutter();review=false;sourceImage=null;
   if(W!==sizes[sizeIndex].w)applySize();
   objects=[];selectedId=null;editHistory=[];
   invalidateExport();revokeImageURL();
