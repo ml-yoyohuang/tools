@@ -25,7 +25,7 @@
 
 **半透明的地方**
 
-腮紅、三角尺、光束有半透明的顏色。編輯器裡會畫成實心，放回相機時要說哪個顏色要轉回半透明。
+腮紅、三角尺、光束、鮟鱇魚的燈籠光暈有半透明的顏色。編輯器裡會畫成實心，放回相機時要說哪個顏色要轉回半透明。
 
 **日期貼紙**
 
@@ -125,3 +125,16 @@
 | PEACE | [puri-peace.json](puri-peace.json) |
 | OMG | [puri-omg.json](puri-omg.json) |
 | SMILE | [puri-smile.json](puri-smile.json) |
+| 鴿子 | [pigeon.json](pigeon.json) |
+| 青蛙 | [frog.json](frog.json) |
+| 翻車魚 | [sunfish.json](sunfish.json) |
+| 寄居蟹 | [hermitcrab.json](hermitcrab.json) |
+| 獨角仙 | [beetle.json](beetle.json) |
+| 毛毛蟲 | [caterpillar.json](caterpillar.json) |
+| 草履蟲 | [paramecium.json](paramecium.json) |
+| 噬菌體 | [phage.json](phage.json) |
+| 捕蠅草 | [flytrap.json](flytrap.json) |
+| 霸王花 | [dragonflower.json](dragonflower.json) |
+| 皇帶魚 | [oarfish.json](oarfish.json) |
+| 鮟鱇魚 | [angler.json](angler.json) |
+| 鼴鼠 | [mole.json](mole.json) |
