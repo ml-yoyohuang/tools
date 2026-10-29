@@ -122,6 +122,8 @@ dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;paddin
 #savedImage{display:block;width:100%;image-rendering:pixelated;background:var(--screen);border:2px solid #53634c}
 #video{position:fixed;left:-10px;top:-10px;width:1px;height:1px;opacity:0;pointer-events:none}
 @media(min-width:600px){#machine{margin:22px auto}}
+/* 手機上照片是主角：螢幕撐滿寬度，下面的按鈕往下捲 */
+@media(max-width:599px){.screen-wrap,#machine.is-settings .screen-wrap,#machine.is-review .screen-wrap{max-width:100%}}
 @media(max-width:360px){#machine{padding-left:10px;padding-right:10px}.utility-keys{gap:9px}.deck{padding-left:0;padding-right:0}.action-unit{gap:8px}#shutter{width:64px;height:64px}.round{width:46px;height:46px}.direction-unit small{max-width:125px}}
 @media(prefers-reduced-motion:reduce){button:active:not(:disabled){transform:none}}
 </style>
@@ -143,7 +145,7 @@ dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;paddin
       <canvas id="screen" width="128" height="112"
               aria-label="像素相機畫面"></canvas>
       <div id="selectionBox" hidden></div>
-      <div id="startOverlay">
+      <div id="startOverlay" hidden>
         <h1>HELLO,<br>THERE!</h1>
         <p id="startDescription">
           選個色盤，再按快門。<br>照片在裝置上處理，不上傳。
@@ -300,7 +302,7 @@ dialog{width:min(430px,calc(100vw - 28px));max-height:85dvh;overflow:auto;paddin
     <li>一般模式左右換風格、上下調明暗。色盤預設展開；點風格名稱可收合或展開。</li>
     <li>先開啟相機或匯入照片，再按 B「抽一組」隨機換色盤、明暗與顆粒；尺寸與色階不變。按 BACK「上一組」可還原。</li>
     <li>匯入照片會自動中央裁切，不套自拍鏡像。先選好風格，再按快門定案。</li>
-    <li>按快門後影像就定案，只能加裝飾。貼紙可直接拖移，或用十字鍵一格一格移動；A 完成、B 復原裝飾。</li>
+    <li>按快門後影像就定案，只能加裝飾。貼紙可直接拖移，或用十字鍵一格一格移動；A 保存，保存後再按 A 拍下一張；B 復原裝飾。</li>
     <li>保存預設 4 倍放大，也能下載原始像素 PNG。</li>
   </ul>
   <p>
@@ -417,7 +419,7 @@ const feedback={
   captured:["拍好了。可以加相框、貼紙或文字。","這張拍好了。接著可以加裝飾。","拍好了。直接保存也可以。"],
   sticker:["{name}放好了。拖一下可以換位置。","{name}在這裡。可以拖走。"],
   undo:["已復原上一步裝飾。","剛才那一步，收回了。","回到上一步了。"],
-  done:["裝飾好了。按 SAVE 保存 PNG。","好了。按 SAVE 存下來。","這張可以存了。按 SAVE。"]
+  done:["裝飾好了。按 A 保存。","好了。按 A 存下來。","這張可以存了。按 A。"]
 };
 // 同一組不連續出現同一句。
 const lastPicks={};
@@ -762,14 +764,33 @@ function centeredLabel(c,text,y,dark,light,maxWidth=W-8,canvasWidth=W){
   c.imageSmoothingEnabled=false;
   c.drawImage(img,Math.floor((canvasWidth-w)/2),y,w,h);
 }
-function standby(){
+function standby(showPress=true){
   ctx.fillStyle="#d5dfa8";ctx.fillRect(0,0,W,H);
   ctx.fillStyle="#b7c687";
   for(let y=0;y<H;y+=4)for(let x=0;x<W;x+=4){
     if((x+y)%8===0)ctx.fillRect(x,y,1,1);
   }
   centeredLabel(ctx,"PW-02",Math.floor(H*.35),"#d5dfa8","#20382b");
-  centeredLabel(ctx,"PRESS START",Math.floor(H*.66),"#d5dfa8","#526b3b");
+  if(showPress)centeredLabel(ctx,"PRESS START",Math.floor(H*.66),"#d5dfa8","#526b3b");
+}
+
+/* ---------- 開機畫面 ---------- */
+// 打開網頁先停在 PRESS START；按 A、任一鍵、點螢幕，或等 3 秒，才進到 HELLO THERE。
+let booting=true,bootTimer=0,bootBlink=0;
+function startBoot(){
+  let on=true;
+  if(!matchMedia("(prefers-reduced-motion: reduce)").matches)
+    bootBlink=setInterval(()=>{if(booting){on=!on;standby(on)}},500);
+  bootTimer=setTimeout(endBoot,3000);
+}
+function endBoot(){
+  if(!booting)return;
+  booting=false;clearTimeout(bootTimer);clearInterval(bootBlink);
+  // 開機期間已經開了相機或匯入照片，就不再蓋上 HELLO THERE
+  if(!stream&&!sourceImage&&!review&&!importing&&!cameraStarting){
+    standby();$("startOverlay").hidden=false;
+  }
+  updateUI();
 }
 
 /* ---------- 尺寸與色階 ---------- */
@@ -935,15 +956,14 @@ function updateUI(){
   $("diceBtn").classList.toggle("is-review",review);
   $("diceBtn").setAttribute("aria-label",review?"復原裝飾":"隨機風格");
   $("diceBtn").title=review?"復原上一步裝飾":"隨機換色盤、明暗與顆粒；BACK 可還原";
-  $("shutterLabel").textContent=review?"A · 完成":"A · 拍照";
-  $("shutter").setAttribute("aria-label",review?"完成裝飾":"拍照");
+  setALabel();
   $("shutter").classList.toggle("review-action",review);
   $("led").classList.toggle("on",!!stream&&!review);
   $("powerText").textContent=review?"CAPTURED":sourceImage?"PHOTO":stream?"LIVE":"OFF";
   $("startBtn").disabled=cameraStarting||importing||counting;
   $("startImportBtn").disabled=importing||cameraStarting||counting;
   $("flipBtn").disabled=locked;
-  $("shutter").disabled=review?(importing||!!drag):counting||importing||cameraStarting||!hasFrame;
+  $("shutter").disabled=booting?false:review?(importing||!!drag):counting||importing||cameraStarting||!hasFrame;
   $("sizeBtn").disabled=locked;$("tonesBtn").disabled=locked;
   for(const id of [
     "smoothPresetBtn","resetBtn","matrixBtn",
@@ -2517,7 +2537,7 @@ function updateSelection(){
   }
   if(o?.type==="text"&&o.style!==textStyle){textStyle=o.style;renderTextStyles()}
   $("reviewHint").textContent=o
-    ?"直接拖移或用十字鍵微移。A 完成，B 復原。"
+    ?"直接拖移或用十字鍵微移。A 保存，B 復原。"
     :"拍完不能再調色，可以加相框、貼紙或文字。";
   updateUI();
 }
@@ -2736,6 +2756,46 @@ function filename(){
 function invalidateExport(){
   exportVersion++;clearTimeout(exportTimer);exportCache=null;
   $("shareBtn").disabled=true;$("shareBtn").textContent="準備中";
+  setALabel();
+}
+/* A 一路往前：拍照 → 保存 → 下一張。保存後又改了裝飾，A 會回到保存。 */
+let savedVersion=-1;
+const isSaved=()=>review&&savedVersion===exportVersion;
+const nextHint=()=>captureSource==="photo"?"再按 A 換照片。":"再按 A 拍下一張。";
+function markSaved(version){
+  if(version===exportVersion)savedVersion=version;
+  setALabel();
+}
+function setALabel(){
+  const [label,aria]=booting?["A · 開始","開始"]:!review?["A · 拍照","拍照"]
+    :isSaved()?(captureSource==="photo"?["A · 換照片","換照片"]:["A · 下一張","拍下一張"])
+    :["A · 保存","保存照片"];
+  $("shutterLabel").textContent=label;$("shutter").setAttribute("aria-label",aria);
+}
+async function pressA(){
+  if(booting){endBoot();return}
+  if(!review){takePhoto();return}
+  if(drag)return;
+  if(isSaved()){retake();return}
+  selectedId=null;renderReview(false);
+  const version=exportVersion;
+  // 手機上用分享選單（iPhone 要從這裡存進相簿）；電腦直接下載
+  if(matchMedia("(pointer:coarse)").matches&&navigator.share&&typeof File==="function"){
+    if(!exportCache){message("圖片準備中，請再按一次 A。");return}
+    if(navigator.canShare?.({files:[exportCache.file]})){
+      navigator.share({files:[exportCache.file]}).then(()=>{
+        markSaved(version);message("圖片已交給分享選單。"+nextHint());
+      }).catch(e=>{
+        if(e.name!=="AbortError")message("分享沒成功，請改用 SAVE 或開圖長按。");
+      });
+      return;
+    }
+  }
+  try{
+    const blob=exportCache?.blob??await pngBlob(4);
+    download(blob,filename());
+    markSaved(version);message("已送出 PNG 下載。"+nextHint());
+  }catch(e){alert(e.message)}
 }
 function queueExport(){
   invalidateExport();
@@ -2767,7 +2827,9 @@ async function savePNG(scale){
   try{
     const blob=scale===4&&exportCache
       ?exportCache.blob:await pngBlob(scale);
+    const version=exportVersion;
     download(blob,filename());
+    if(scale===4)markSaved(version);
     message("已送出 PNG 下載。若沒出現，可用「開圖／長按保存」。");
   }catch(e){alert(e.message)}
 }
@@ -2793,8 +2855,9 @@ function sharePNG(){
   // 直接在點擊事件內呼叫分享，避免 await 編碼後失去使用者啟動狀態。
   if(file&&navigator.share&&navigator.canShare?.({files:[file]})){
     $("shareBtn").disabled=true;
+    const version=exportVersion;
     navigator.share({files:[file]}).then(()=>{
-      message("圖片已交給分享選單。");
+      markSaved(version);message("圖片已交給分享選單。");
     }).catch(e=>{
       if(e.name!=="AbortError"){
         message("分享沒成功，請改用保存 PNG 或開圖長按。");
@@ -2917,7 +2980,7 @@ $("styleMenuBtn").onclick=()=>{
 for(const [id,direction] of [["padUp","up"],["padDown","down"],["padLeft","left"],["padRight","right"]]){
   $(id).onclick=()=>directionKey(direction);
 }
-$("shutter").onclick=()=>review?finishDecoration():takePhoto();
+$("shutter").onclick=pressA;
 $("importBtn").onclick=chooseFile;$("startImportBtn").onclick=chooseFile;
 $("fileInput").onchange=e=>{
   const file=e.target.files[0];e.target.value="";importPhoto(file);
@@ -2944,6 +3007,7 @@ $("closeHelp").onclick=()=>$("helpDialog").close();
 
 window.addEventListener("keydown",e=>{
   if($("helpDialog").open||$("imageDialog").open)return;
+  if(booting&&e.key!=="Tab"){e.preventDefault();endBoot();return}
   const isPad=e.target.closest?.(".dpad");
   if(["INPUT","TEXTAREA","SELECT","SUMMARY"].includes(e.target.tagName)||
     (e.target.tagName==="BUTTON"&&!isPad))return;
@@ -2957,6 +3021,8 @@ window.addEventListener("keydown",e=>{
 
 buildStyleButtons();buildFrameButtons();buildStickerButtons();buildTextStyleButtons();
 showSetting(0);syncSettings();standby();say("idle");requestAnimationFrame(loop);
+$("screenWrap").addEventListener("pointerdown",()=>{if(booting)endBoot()});
+startBoot();setALabel();
 if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia){
   $("startDescription").textContent=
     "這個開啟方式可能無法使用相機。請放上 HTTPS 網站，或先匯入照片玩。";
