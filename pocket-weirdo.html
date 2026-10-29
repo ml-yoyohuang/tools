@@ -412,8 +412,7 @@ const feedback={
   reset:["已恢復這個色盤的原始設定。","換回這個色盤原本的設定了。"],
   brightness:["明暗 {v}。按 TUNE 還可以調其他設定。","明暗調到 {v}。其他設定在 TUNE。"],
   captured:["拍好了。可以加相框、貼紙或文字。","這張拍好了。接著可以加裝飾。","拍好了。直接保存也可以。"],
-  sticker:["貼紙放好了，可以直接拖。","加上去了。拖一下可以換位置。"],
-  banana:["香蕉放好了。拖一下可以換位置。","香蕉在這裡。可以拖走。"],
+  sticker:["{name}放好了。拖一下可以換位置。","{name}在這裡。可以拖走。"],
   undo:["已復原上一步裝飾。","剛才那一步，收回了。","回到上一步了。"],
   done:["裝飾好了。按 SAVE 保存 PNG。","好了。按 SAVE 存下來。","這張可以存了。按 SAVE。"]
 };
@@ -2355,7 +2354,7 @@ function addSticker(key){
   const scale=Math.min(preferred,(W-4)/img.width,(H-4)/img.height);
   const o={id:objectId++,type:"sticker",key,x:W/2,y:H/2,scale};
   objects.push(o);selectedId=o.id;renderReview();
-  say(key==="banana"?"banana":"sticker");
+  say("sticker",{name:stickerDefs.find(d=>d.key===key).name});
 }
 /* ---------- 文字框樣式 ---------- */
 const textStyles=[
