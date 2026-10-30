@@ -5,10 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ff469c">
 <title>PURI CLUB 2000｜今天的可愛，永久保存。</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Mochiy+Pop+One&display=swap">
 <style>
 :root{--pink:#ff469c;--ink:#331528;--paper:#fff5d9;--accent:#f52b8d;--second:#ffe562;--line:#411832;--bg:#ffc7e1}
 *{box-sizing:border-box} [hidden]{display:none!important}
-body{margin:0;color:var(--ink);background:var(--bg);font-family:"Arial Rounded MT Bold","Microsoft JhengHei",system-ui,sans-serif}button,input,select{font:inherit}button{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}button:disabled{cursor:not-allowed;opacity:.45}button:focus-visible,input:focus-visible,select:focus-visible{outline:4px solid #467cff;outline-offset:4px}
+body{margin:0;color:var(--ink);background:var(--bg);font-family:var(--round)}button,input,select{font:inherit}button{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}button:disabled{cursor:not-allowed;opacity:.45}button:focus-visible,input:focus-visible,select:focus-visible{outline:4px solid #467cff;outline-offset:4px}
 button{border:2px solid var(--line);background:#fffaf1;color:var(--ink);border-radius:12px;padding:12px 17px;font-weight:800;min-height:46px;box-shadow:3px 4px 0 var(--line);transition:transform .16s,box-shadow .16s}button:hover:not(:disabled){transform:translateY(-2px)}button:active:not(:disabled){transform:translate(2px,2px);box-shadow:1px 2px 0 var(--line)}button.primary{background:var(--accent);color:#fff;text-shadow:0 1px 1px #66203f;font-size:17px}button.active,button[aria-pressed=true]{background:var(--second);color:var(--ink)}button.quiet{box-shadow:none;background:transparent;border-color:transparent;font-size:12px}button.icon{padding:8px 12px;box-shadow:none;border-radius:50%}.full{width:100%}.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.row.between{justify-content:space-between}.small{font-size:12px;line-height:1.7}.eyebrow{font:800 11px/1.5 monospace;letter-spacing:2px}h1,h2,h3,p{margin-top:0}h1{font-size:clamp(30px,4vw,48px);letter-spacing:-2px;line-height:1.1;margin-bottom:10px}h2{font-size:22px}p{line-height:1.65}canvas{display:block;max-width:100%}svg{display:block}
 .topbar{height:72px;padding:0 4vw;display:flex;align-items:center;justify-content:space-between;background:#fff7db;border-bottom:2px solid var(--ink);gap:12px}.brand{font:1000 italic 23px/.9 Arial,sans-serif;letter-spacing:-1.4px}.brand span{display:inline-block;font:800 10px monospace;background:var(--pink);color:white;transform:rotate(-8deg);padding:6px;margin-left:6px;letter-spacing:0}.topbar .tag{font-size:11px;font-weight:800;letter-spacing:2px}.coin{font:800 11px monospace;border:1px solid;padding:8px 13px;border-radius:50%}
 .marquee{background:var(--ink);color:#fff7dd;text-align:center;font:700 11px/28px monospace;letter-spacing:3px;white-space:nowrap;overflow:hidden}
@@ -94,7 +95,7 @@ body[data-stage=lobby] main{height:100dvh}
 .selector-marquee.bottom{border-top:1px solid #fff7e966}
 .selector-marquee-track{display:flex;width:max-content;white-space:nowrap;animation:selectorScroll 32s linear infinite}
 .selector-marquee.bottom .selector-marquee-track{animation-direction:reverse}
-.selector-marquee-unit{display:inline-block;flex:none;min-width:300px;text-align:center;font:800 12px/27px "Arial Rounded MT Bold","Microsoft JhengHei",system-ui,sans-serif;letter-spacing:.12em}
+.selector-marquee-unit{display:inline-block;flex:none;min-width:300px;text-align:center;font:800 12px/27px var(--round);letter-spacing:.12em}
 .machine.gal{--cta-glow:#ff6bb5}.machine.hara{--cta-glow:#ff70ef}.machine.cyber{--cta-glow:#c5f4ff}
 .machine .choose{animation:ctaGlow 3.2s ease-in-out infinite}
 .machine.hara .choose{animation-delay:-1s}.machine.cyber .choose{animation-delay:-2s}
@@ -160,7 +161,7 @@ body[data-stage=start] .mode canvas{aspect-ratio:auto;border-radius:0;background
 body[data-stage=start] #startSection[data-camera-ready=true] .mode canvas{opacity:1}
 body[data-stage=start] .mode[data-look=old] canvas{image-rendering:pixelated}
 body[data-stage=start] .mode::after{content:"";position:absolute;inset:55% 0 0;z-index:1;pointer-events:none;background:linear-gradient(transparent,#100c22a8)}
-body[data-stage=start] .mode-label{position:absolute;z-index:2;left:50%;bottom:clamp(22px,5vh,52px);display:flex;align-items:center;justify-content:center;gap:8px;width:min(calc(100% - 32px),300px);min-height:54px;padding:10px 12px;border:2px solid #fff;border-radius:999px;background:var(--accent);color:#fff;box-shadow:0 8px 20px #160c2599;text-shadow:0 1px 2px #130a1d;font:900 clamp(12px,1.6vw,18px)/1.1 "Arial Rounded MT Bold","Microsoft JhengHei",system-ui,sans-serif;white-space:nowrap;transform:translateX(-50%)}
+body[data-stage=start] .mode-label{position:absolute;z-index:2;left:50%;bottom:clamp(22px,5vh,52px);display:flex;align-items:center;justify-content:center;gap:8px;width:min(calc(100% - 32px),300px);min-height:54px;padding:10px 12px;border:2px solid #fff;border-radius:999px;background:var(--accent);color:#fff;box-shadow:0 8px 20px #160c2599;text-shadow:0 1px 2px #130a1d;font:900 clamp(12px,1.6vw,18px)/1.1 var(--round);white-space:nowrap;transform:translateX(-50%)}
 body[data-stage=start] .mode[data-look=soft] .mode-label{background:var(--paper);color:var(--ink);text-shadow:none}
 body[data-stage=start] .mode:hover .mode-label,body[data-stage=start] .mode:focus-visible .mode-label{box-shadow:0 0 0 5px #fff8,0 10px 22px #160c25a6}
 /* The camera fills the shoot step; only the fixed progress strip stays outside it. */
@@ -172,7 +173,7 @@ body[data-stage=shoot] .camera-stage{width:100%;height:100%;max-width:none;margi
 body[data-stage=shoot] .camera-stage canvas{width:100%;height:100%;max-width:none;aspect-ratio:auto;object-fit:cover}
 body[data-stage=shoot] .camera-hud{inset:0;display:block;pointer-events:none}
 body[data-stage=shoot] #shotNumber{position:absolute;top:20px;right:24px;z-index:5;display:grid;place-items:center;min-width:108px;min-height:48px;padding:8px 16px;border:2px solid #fff;border-radius:999px;background:#241329de;color:#fff;box-shadow:0 5px 16px #160b24a8;font:900 20px/1 monospace;letter-spacing:.04em;text-shadow:none}
-body[data-stage=shoot] #poseHint{position:absolute;bottom:clamp(18px,4vh,42px);left:50%;z-index:3;max-width:calc(100% - 32px);padding:10px 20px;border:2px solid #fff;border-radius:999px;background:#241329d9;color:#fff;text-align:center;font:900 clamp(14px,2vw,19px)/1.4 "Arial Rounded MT Bold","Microsoft JhengHei",system-ui,sans-serif;white-space:nowrap;box-shadow:0 5px 16px #160b24a8;transform:translateX(-50%)}
+body[data-stage=shoot] #poseHint{position:absolute;bottom:clamp(18px,4vh,42px);left:50%;z-index:3;max-width:calc(100% - 32px);padding:10px 20px;border:2px solid #fff;border-radius:999px;background:#241329d9;color:#fff;text-align:center;font:900 clamp(14px,2vw,19px)/1.4 var(--round);white-space:nowrap;box-shadow:0 5px 16px #160b24a8;transform:translateX(-50%)}
 body[data-stage=shoot] #shootSection[data-paused=true] #poseHint{display:none}
 body[data-stage=shoot] .count-overlay{z-index:2;background:#150c2633}
 body[data-stage=shoot] .count-number{font-size:clamp(104px,25vw,240px)}
@@ -254,7 +255,7 @@ body[data-stage=edit] .station{max-width:1200px}
 #startSection #permission p{margin:0 0 2px;font-size:14px;font-weight:800;line-height:1.55;text-align:center}
 #startSection #permission button{display:block;width:100%;min-height:48px;margin:0}
 #startSection #permission .quiet{border:2px solid var(--line);border-radius:12px;background:#fffaf1;color:var(--ink);box-shadow:none;font-size:13px}
-#startSection #backLobby{flex:0 0 calc(30px + env(safe-area-inset-bottom));width:100%;height:calc(30px + env(safe-area-inset-bottom));min-height:30px;margin:0;padding:0 0 env(safe-area-inset-bottom);border:0;border-radius:0;background:#241329;color:#fff7e9;box-shadow:none;font:800 12px/30px "Arial Rounded MT Bold","Microsoft JhengHei",system-ui,sans-serif;letter-spacing:.08em}
+#startSection #backLobby{flex:0 0 calc(30px + env(safe-area-inset-bottom));width:100%;height:calc(30px + env(safe-area-inset-bottom));min-height:30px;margin:0;padding:0 0 env(safe-area-inset-bottom);border:0;border-radius:0;background:#241329;color:#fff7e9;box-shadow:none;font:800 12px/30px var(--round);letter-spacing:.08em}
 #startSection #backLobby:hover:not(:disabled),#startSection #backLobby:active:not(:disabled){transform:none;background:#452449;box-shadow:none}
 @media(max-width:760px){body:not([data-stage=lobby]) .steps{font-size:7px;letter-spacing:0}#startSection #flipBtn{top:10px;left:10px;width:42px;height:42px;min-height:42px;font-size:25px}#startSection #timeToggle{top:10px;right:10px;width:66px;height:66px;min-height:66px}#startSection #timeToggle .ic{width:34px;height:34px}body[data-stage=start] .mode-label{bottom:22px;min-height:48px;padding:8px 6px;font-size:12px}}
 /* Shared SVG icons, sparkle-framed buttons and no accidental text selection. */
@@ -354,6 +355,47 @@ body[data-stage=start][data-theme=cyber] .mode+.mode{background-image:linear-gra
 .count-art.digit{width:min(44vw,300px);max-height:34vh}
 /* Portrait sessions: photo canvases outside the full-bleed start and shoot views follow the 3:4 frame. */
 body[data-orient=portrait] :is(.photo-tile,.import-grid,.photo-tabs,.edit-canvas-wrap) canvas,body[data-orient=portrait] #editSection .edit-canvas-wrap canvas{aspect-ratio:3/4}
+/* =========================
+   Heisei booth skin: rounded POP type with white rims, jelly buttons, blinking picks,
+   a last-10-second alarm and the print-out screen.
+========================= */
+:root{--round:"Huninn","Arial Rounded MT Bold","Microsoft JhengHei",system-ui,sans-serif;--pop:"Mochiy Pop One","Huninn",sans-serif;
+ --white-rim:1.5px 0 #fff,-1.5px 0 #fff,0 1.5px #fff,0 -1.5px #fff,1px 1px #fff,-1px 1px #fff,1px -1px #fff,-1px -1px #fff;
+ --dark-rim:1.5px 0 var(--line),-1.5px 0 var(--line),0 1.5px var(--line),0 -1.5px var(--line),1px 1px var(--line),-1px 1px var(--line),1px -1px var(--line),-1px -1px var(--line),0 3px 0 var(--line);
+ --jelly:linear-gradient(180deg,#ffffffc4 0%,#ffffff59 44%,#fff0 50%,#fff0 76%,#0000001f 100%)}
+h1,h2,.step-head,.layout-title{font-family:var(--round);font-style:normal;text-shadow:2.5px 0 #fff,-2.5px 0 #fff,0 2.5px #fff,0 -2.5px #fff,2px 2px #fff,-2px 2px #fff,2px -2px #fff,-2px -2px #fff,3px 4px 0 var(--accent)}
+/* STEP panels are pale already, so their titles drop the pink offset that would smear on cream. */
+.step-head{text-shadow:var(--white-rim)}
+.step-head b{font-family:var(--pop);font-weight:400;text-shadow:none}
+body .steps,.timer b{font-family:var(--pop);font-weight:400}
+/* POP digits run wider than monospace, so the small phone clock shrinks them to keep "300" inside the circle. */
+@media(max-width:760px){#editSection #clock b{font-size:15px}}
+button{text-shadow:var(--white-rim)}
+/* Gloss sits on top of each button's own colour; lobby buttons, previews and colour swatches keep their own faces. */
+button:not(.quiet):not(.text-link):not(.mode):not(.swatch):not(.choose):not(.lobby-arrow){background-image:var(--jelly)!important}
+button.primary{border-radius:999px;color:#fff;text-shadow:var(--dark-rim)}
+button.primary:not(:disabled){animation:keyGlow 1.6s ease-in-out infinite}
+@keyframes keyGlow{50%{filter:drop-shadow(0 0 5px #fff) drop-shadow(0 0 10px var(--accent))}}
+.mode,.choose,.text-link,#backLobby,#flipBtn,.motion-toggle[aria-pressed=true]{text-shadow:none}
+/* The chosen film, paper, tool, colour, stamp or photo blinks its frame like a booth's selection cursor. */
+:is(.film-choices,.layout-choices,.tool-tabs,.brush-categories,.pattern-presets,.photo-tabs,.stamps,.swatches) button:is(.active,[aria-pressed=true]){outline:3px solid var(--accent);outline-offset:2px;animation:pickBlink .9s steps(1) infinite}
+@keyframes pickBlink{50%{outline-color:#fff}}
+/* Last ten seconds: the clock turns red and jumps every second while the screen edge flashes. */
+.timer.final{background:#ff3b5c!important;border-color:#fff;color:#fff;animation:finalBeat 1s ease-in-out infinite}
+@keyframes finalBeat{0%,100%{transform:scale(1)}12%{transform:scale(1.22) rotate(-6deg)}24%{transform:scale(1.06) rotate(4deg)}}
+body[data-hurry=true]::after{content:"";position:fixed;inset:0;z-index:60;pointer-events:none;box-shadow:inset 0 0 0 5px #ff3b5c,inset 0 0 60px #ff3b5c99;animation:hurryFlash 1s steps(1) infinite}
+@keyframes hurryFlash{50%{opacity:.2}}
+/* Print-out: the sheet feeds out of the booth slot in jerky steps, like a dye printer. */
+.printing{position:fixed;inset:0;z-index:70;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 50% 30%,color-mix(in srgb,var(--accent) 55%,#140a1d),#140a1d 72%);color:#fff;cursor:pointer}
+.printer{display:flex;flex-direction:column;align-items:center;width:min(86vw,440px)}
+.printer-slot{position:relative;z-index:2;width:100%;height:30px;border:3px solid #fff;border-radius:999px;background:linear-gradient(#050308,#3a2440);box-shadow:0 6px 0 #0006,inset 0 -6px 10px #000}
+.printer-slot span{position:absolute;top:-26px;left:50%;transform:translateX(-50%);font:12px/1 var(--pop);letter-spacing:.12em;white-space:nowrap}
+.printer-feed{display:flex;justify-content:center;align-items:flex-start;width:86%;height:min(50vh,400px);margin-top:-12px;overflow:hidden}
+.printer-feed canvas{max-width:100%;max-height:100%;box-shadow:0 10px 24px #0009;transform:translateY(-102%);animation:printFeed 2.4s steps(18,end) forwards}
+@keyframes printFeed{to{transform:translateY(0)}}
+.printing-text{margin:18px 0 0;text-align:center}
+.printing-text b{display:block;font:26px/1.3 var(--round);text-shadow:var(--dark-rim)}
+.printing-text small{display:block;margin-top:6px;font:13px/1.4 var(--pop)}
 </style>
 </head>
 <body data-theme="gal" data-stage="lobby">
@@ -393,6 +435,7 @@ body[data-orient=portrait] :is(.photo-tile,.import-grid,.photo-tabs,.edit-canvas
 </div></div>
 </main>
 <div id="entryFlash" class="entry-flash" hidden aria-hidden="true"></div>
+<div id="printing" class="printing" role="status" aria-live="polite" hidden><div class="printer"><div class="printer-slot"><span>取り出し口</span></div><div class="printer-feed"><canvas id="printingSheet" aria-hidden="true"></canvas></div><p class="printing-text"><b id="printingTitle">列印中…</b><small id="printingSub">プリント中　しばらくお待ちください</small></p></div></div>
 <div id="status" class="status" role="status" aria-live="polite">今天想成為哪一種可愛？</div>
 <video id="sourceVideo" autoplay muted playsinline aria-hidden="true"></video>
 <input id="fileInput" type="file" accept="image/*" hidden>
@@ -549,7 +592,8 @@ function drawObject(c,o){
   c.restore();
 }
 
-function setStage(next){stage=next;document.body.dataset.stage=next;$("lobbySection").hidden=next!=="lobby";$("workspace").hidden=next==="lobby";for(const name of ["start","shoot","review","import","edit","layout","result"])$(name+"Section").hidden=name!==next;document.querySelectorAll("[data-step]").forEach(el=>el.classList.toggle("current",el.dataset.step===(["review","import"].includes(next)?"shoot":next)));if(!["start","shoot","review"].includes(next))stopCamera();window.scrollTo({top:0,behavior:"instant"})}
+function setHurry(on){document.body.dataset.hurry=String(on)}
+function setStage(next){stage=next;setHurry(false);document.body.dataset.stage=next;$("lobbySection").hidden=next!=="lobby";$("workspace").hidden=next==="lobby";for(const name of ["start","shoot","review","import","edit","layout","result"])$(name+"Section").hidden=name!==next;document.querySelectorAll("[data-step]").forEach(el=>el.classList.toggle("current",el.dataset.step===(["review","import"].includes(next)?"shoot":next)));if(!["start","shoot","review"].includes(next))stopCamera();window.scrollTo({top:0,behavior:"instant"})}
 // Holding the phone upright gives portrait photos; the choice holds until the player is back in the lobby.
 function setOrientation(next){orient=next;[PW,PH]=next==="portrait"?[600,800]:[800,600];document.body.dataset.orient=next;for(const c of [editCanvas,$("cameraCanvas"),maskLayer,doodleLayer]){c.width=PW;c.height=PH}for(const id of ["oldPreview","softPreview"]){const c=$(id);c.width=PW*.6;c.height=PH*.6}wallpapers.clear()}
 function syncTheme(){document.body.dataset.theme=theme;for(const src of Object.values(PAPER_ART[theme]||{}))paperImage(src);document.querySelectorAll(".machine-name").forEach(el=>el.textContent=THEMES[theme].name+" / PURI CLUB 2000");drawColor=THEMES[theme].accent;if(!STAMP_SETS[theme].some(([key])=>key===stampKey))stampKey=STAMP_SETS[theme][0][0];buildSwatches();buildStampButtons()}
@@ -584,7 +628,7 @@ async function captureSequence(slots,isRetake=false){if(running||!slots.length)r
  }
  running=false;pendingSlots=[];retakeSlot=null;showReview();
 }
-function updateReviewClock(){if(stage!=="review"||!timed)return;const seconds=Math.max(0,Math.ceil((reviewDeadline-performance.now())/1000));$("reviewClock").querySelector("b").textContent=seconds;$("reviewClock").setAttribute("aria-label",seconds?"檢查剩餘 "+seconds+" 秒":"檢查時間已結束");$("reviewClock").classList.toggle("urgent",seconds>0&&seconds<=15);$("reviewClock").classList.toggle("time-up",seconds===0);$("reviewSection").dataset.timeUp=String(seconds===0);if(seconds===0&&!reviewLocked){reviewLocked=true;$("reviewGrid").querySelectorAll("button").forEach((b,i)=>{b.disabled=true;if(!retakes[i]){b.textContent="時間到";b.setAttribute("aria-label","檢查時間已結束，無法重拍第 "+(i+1)+" 張")}});status("檢查時間到了，照片已保留。按「完成，開始裝飾」繼續。")}}
+function updateReviewClock(){if(stage!=="review"||!timed)return;const seconds=Math.max(0,Math.ceil((reviewDeadline-performance.now())/1000));$("reviewClock").querySelector("b").textContent=seconds;$("reviewClock").setAttribute("aria-label",seconds?"檢查剩餘 "+seconds+" 秒":"檢查時間已結束");$("reviewClock").classList.toggle("urgent",seconds>0&&seconds<=15);$("reviewClock").classList.toggle("final",seconds>0&&seconds<=10);setHurry(seconds>0&&seconds<=10);$("reviewClock").classList.toggle("time-up",seconds===0);$("reviewSection").dataset.timeUp=String(seconds===0);if(seconds===0&&!reviewLocked){reviewLocked=true;$("reviewGrid").querySelectorAll("button").forEach((b,i)=>{b.disabled=true;if(!retakes[i]){b.textContent="時間到";b.setAttribute("aria-label","檢查時間已結束，無法重拍第 "+(i+1)+" 張")}});status("檢查時間到了，照片已保留。按「完成，開始裝飾」繼續。")}}
 function showReview(){setStage("review");if(timed&&!reviewDeadline)reviewDeadline=performance.now()+REVIEW_SECONDS*1000;$("reviewClock").hidden=!timed;reviewLocked=timed&&performance.now()>=reviewDeadline;$("reviewSection").dataset.timeUp=String(reviewLocked);$("reviewClock").classList.toggle("time-up",reviewLocked);const grid=$("reviewGrid");grid.replaceChildren();for(let i=0;i<4;i++){const tile=document.createElement("div");tile.className="photo-tile";const c=makeCanvas(PW*.4,PH*.4);drawProcessed(c.getContext("2d"),processed[i],0,0,c.width,c.height);const label=document.createElement("div");label.className="tile-label";label.textContent=String(i+1).padStart(2,"0")+" / 04";const b=document.createElement("button");b.className="spark";b.textContent=retakes[i]?"已重拍":reviewLocked?"時間到":"重拍（剩1次）";b.setAttribute("aria-label",retakes[i]?"第 "+(i+1)+" 張已重拍":reviewLocked?"檢查時間已結束，無法重拍第 "+(i+1)+" 張":"重拍第 "+(i+1)+" 張，每張限一次");b.disabled=reviewLocked||retakes[i]>=1;b.onclick=()=>{updateReviewClock();if(!reviewLocked)captureSequence([i],true)};tile.append(c,label,b);grid.append(tile)}updateReviewClock();status(reviewLocked?"檢查時間到了，照片已保留。按「完成，開始裝飾」繼續。":"四張都拍好了，可以選擇重拍或開始裝飾。");}
 function renderImport(){const grid=$("importGrid");grid.replaceChildren();for(let i=0;i<4;i++){const b=document.createElement("button"),c=makeCanvas(PW/2,PH/2);if(processed[i])drawProcessed(c.getContext("2d"),processed[i],0,0,c.width,c.height);else placeholder(c,"＋ SELECT PHOTO 0"+(i+1));const label=document.createElement("span");label.textContent=photos[i]?"第 "+(i+1)+" 張 · 更換照片":"第 "+(i+1)+" 張 · 選擇照片";b.disabled=importBusy;b.append(c,label);b.onclick=()=>{if(importBusy)return;importSlot=i;$("fileInput").click()};grid.append(b)}$("importDone").disabled=importBusy||!photos.every(Boolean);$("importBack").disabled=importBusy}
 async function importPhoto(file){if(!file||stage!=="import"||importBusy)return;const slot=importSlot;importBusy=true;renderImport();const url=URL.createObjectURL(file);try{if(file.size>35*1024*1024)throw Error("照片超過 35 MB，請先縮小。");const img=new Image();img.src=url;await img.decode();if(img.naturalWidth*img.naturalHeight>40000000)throw Error("照片尺寸過大，請先縮小。");const raw=makeCanvas(PW,PH),c=raw.getContext("2d");c.fillStyle="white";c.fillRect(0,0,PW,PH);cropDraw(c,img,0,0,PW,PH);photos[slot]=raw;processed[slot]=processPhoto(raw);status("第 "+(slot+1)+" 張放好了。"+(photos.every(Boolean)?"可以開始裝飾囉！":"繼續選擇下一格。"))}catch(e){status("這張無法讀取："+e.message)}finally{URL.revokeObjectURL(url);importBusy=false;renderImport()}}
@@ -592,8 +636,8 @@ function objects(){return decorations[activePhoto]}
 function remember(){histories[activePhoto].push(structuredClone(objects()));if(histories[activePhoto].length>35)histories[activePhoto].shift();syncEditControls()}
 function canEdit(){if(stage!=="edit"||editLocked)return false;if(timed&&performance.now()>=deadline){lockEditing();return false}return true}
 function finishGesture(){adjustPointers.clear();if(gesture){gesture=null;renderEditor()}}
-function lockEditing(){if(editLocked)return;editLocked=true;finishGesture();$("clock").innerHTML="<small>"+icon("timer")+"</small><b>0</b>";$("clock").setAttribute("aria-label","裝飾時間已結束");$("clock").classList.remove("urgent");$("clock").classList.add("time-up");$("editCaption").textContent="作品已保留，按「完成裝飾」繼續。";syncEditControls();renderEditor();status("作品已保留，按「完成裝飾」繼續。")}
-function updateClock(){if(stage!=="edit"||editLocked)return;const seconds=!timed?Infinity:Math.max(0,Math.ceil((deadline-performance.now())/1000));if(seconds===0){lockEditing();return}$("clock").innerHTML="<small>"+icon("timer")+"</small><b>"+(seconds===Infinity?icon("infinity"):seconds)+"</b>";$("clock").setAttribute("aria-label",seconds===Infinity?"不限時編輯":"編輯剩餘 "+seconds+" 秒");$("clock").classList.toggle("urgent",seconds<=15)}
+function lockEditing(){if(editLocked)return;editLocked=true;finishGesture();$("clock").innerHTML="<small>"+icon("timer")+"</small><b>0</b>";$("clock").setAttribute("aria-label","裝飾時間已結束");$("clock").classList.remove("urgent","final");setHurry(false);$("clock").classList.add("time-up");$("editCaption").textContent="作品已保留，按「完成裝飾」繼續。";syncEditControls();renderEditor();status("作品已保留，按「完成裝飾」繼續。")}
+function updateClock(){if(stage!=="edit"||editLocked)return;const seconds=!timed?Infinity:Math.max(0,Math.ceil((deadline-performance.now())/1000));if(seconds===0){lockEditing();return}$("clock").innerHTML="<small>"+icon("timer")+"</small><b>"+(seconds===Infinity?icon("infinity"):seconds)+"</b>";$("clock").setAttribute("aria-label",seconds===Infinity?"不限時編輯":"編輯剩餘 "+seconds+" 秒");$("clock").classList.toggle("urgent",seconds<=15);$("clock").classList.toggle("final",seconds<=10);setHurry(seconds<=10)}
 function beginEdit(){if(!photos.every(Boolean)||importBusy||running)return;finalPhotos=null;activePhoto=0;magicTurns=[0,0,0,0];editLocked=false;deadline=performance.now()+EDIT_SECONDS*1000;setStage("edit");$("clock").classList.remove("time-up");$("editCaption").textContent="DECORATE YOUR PHOTOS · STAMP & DRAW";buildPhotoTabs();setTool("stamp");updateClock();renderEditor();syncEditControls();status(!timed?"慢慢裝飾，今天不限時":"5 分鐘裝飾開始！四張各自裝飾，點縮圖切換。")}
 function decoratedPhoto(i){const c=makeCanvas(PW,PH),ctx=c.getContext("2d");drawProcessed(ctx,processed[i],0,0,PW,PH);drawDecorations(ctx,decorations[i]);return c}
 function buildPhotoTabs(){const tabs=$("photoTabs");tabs.replaceChildren();for(let i=0;i<4;i++){const b=document.createElement("button"),c=makeCanvas(PW/5,PH/5),small=document.createElement("small");small.textContent="PHOTO 0"+(i+1);c.getContext("2d").drawImage(decoratedPhoto(i),0,0,c.width,c.height);b.append(c,small);b.setAttribute("aria-label","裝飾第 "+(i+1)+" 張");b.onclick=()=>{finishGesture();activePhoto=i;selectedId=null;renderEditor()};tabs.append(b)}}
@@ -834,7 +878,13 @@ $("autoDecor").onclick=()=>{if(!canEdit())return;const sets=MAGIC_SETS[theme].fi
 // Authoring aid for MAGIC_SETS: ?magic-dev shows a button that copies the current photo's stamps as one set.
 if(new URLSearchParams(location.search).has("magic-dev")){const b=$("exportMagic");b.hidden=false;b.onclick=async()=>{const r=n=>Math.round(n*1000)/1000,short=Math.min(PW,PH),stamps=objects().filter(o=>o.type==="stamp").map(o=>[o.key,r(o.x/PW),r(o.y/PH),r(o.size/short),Math.round(normAngle(o.rotation)*180/Math.PI)]),text=JSON.stringify({stamps});
  try{await navigator.clipboard.writeText(text);status("已複製 "+stamps.length+" 個印章的套組資料（"+(orient==="portrait"?"直式":"橫式")+"照片）。")}catch(e){prompt("複製這段套組資料：",text)}}}
-$("editDone").onclick=finishEdit;document.querySelectorAll("[data-layout]").forEach(b=>b.onclick=()=>{layout=b.dataset.layout;selectButtons("[data-layout]","layout",layout);renderSheet($("layoutCanvas"))});$("printBtn").onclick=showResult;
+$("editDone").onclick=finishEdit;document.querySelectorAll("[data-layout]").forEach(b=>b.onclick=()=>{layout=b.dataset.layout;selectButtons("[data-layout]","layout",layout);renderSheet($("layoutCanvas"))});// 印這張 plays a short print-out: the finished sheet feeds out of the booth slot before the film step shows.
+// The result page renders and starts exporting underneath, and a tap anywhere skips the wait.
+let printTimers=[];
+function endPrinting(){printTimers.forEach(clearTimeout);printTimers=[];$("printing").hidden=true}
+function printSheet(){showResult();if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;const c=$("printingSheet");renderSheet(c,2);c.style.animation="none";void c.offsetWidth;c.style.animation="";$("printingTitle").textContent="列印中…";$("printingSub").textContent="プリント中　しばらくお待ちください";$("printing").hidden=false;
+ printTimers=[setTimeout(()=>{$("printingTitle").textContent="印好了！從取出口拿取吧";$("printingSub").textContent="取り出し口からお取りください"},2500),setTimeout(endPrinting,3700)]}
+$("printing").onclick=endPrinting;$("printBtn").onclick=printSheet;
 document.querySelectorAll("button[data-film]").forEach(b=>b.onclick=()=>{film=b.dataset.film;selectButtons("button[data-film]","film",film);$("foilCard").dataset.film=film;resetTilt();prepareExport()});
 $("saveBtn").onclick=savePNG;$("shareBtn").onclick=share;$("closeImage").onclick=()=>$("imageDialog").close();$("imageDialog").addEventListener("close",()=>{if(imageURL)URL.revokeObjectURL(imageURL);imageURL=null;$("saveImage").removeAttribute("src")});
 $("backLayout").onclick=()=>{clearExport();setStage("layout");buildLayoutIcons();renderSheet($("layoutCanvas"))};
