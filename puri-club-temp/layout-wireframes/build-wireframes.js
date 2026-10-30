@@ -2,7 +2,7 @@
 const fs=require("fs"),path=require("path");
 const [,,html,outDir]=process.argv;
 const src=fs.readFileSync(html,"utf8");
-const block=src.slice(src.indexOf("const SHEET_HEAD"),src.indexOf("function stickerPath("));
+const block=src.slice(src.indexOf("const SHEET_MARGIN"),src.indexOf("function stickerPath("));
 const heart="M12 20.5C6 16.6 2.5 13.2 2.5 9 2.5 6.2 4.6 4 7.3 4c2 0 3.6 1.1 4.7 2.8C13.1 5.1 14.7 4 16.7 4c2.7 0 4.8 2.2 4.8 5 0 4.2-3.5 7.6-9.5 11.5z";
 const r1=n=>Math.round(n*10)/10;
 function shape(kind,x,y,w,h,attrs){
@@ -16,24 +16,18 @@ function shape(kind,x,y,w,h,attrs){
 const names={split:"大中小分割",eight:"8 分割"},orients={portrait:"直式照片",landscape:"橫式照片"};
 for(const orient of ["portrait","landscape"])for(const layout of ["split","eight"]){
  const [PW,PH]=orient==="portrait"?[600,800]:[800,600];
- const {sheetSpec,SHEET_HEAD,SHEET_FOOT}=new Function("PW","PH","orient","layout",block+";return {sheetSpec,SHEET_HEAD,SHEET_FOOT}")(PW,PH,orient,layout);
+ const {sheetSpec,SHEET_BLEED}=new Function("PW","PH","orient","layout",block+";return {sheetSpec,SHEET_BLEED}")(PW,PH,orient,layout);
  const s=sheetSpec(layout),out=[];
  out.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${s.w}" height="${s.h}" viewBox="0 0 ${s.w} ${s.h}" role="img" aria-labelledby="title desc">`,
  `<title id="title">${names[layout]}（${orients[orient]}）拍貼版型對位稿</title>`,
- `<desc id="desc">與網站輸出同尺寸的線框；藍色是照片窗，紫色實線是貼紙外形，紫色虛線是半斷割線，粉紅虛線是標題與頁尾區。</desc>`,
+ `<desc id="desc">與網站輸出同尺寸的線框；藍色是照片印刷範圍，紫色實線是半斷割線。</desc>`,
  `<rect width="${s.w}" height="${s.h}" fill="#fffdf9"/>`,
  `<rect x=".5" y=".5" width="${s.w-1}" height="${s.h-1}" fill="none" stroke="#1b2433"/>`);
- // Bare sheets are photos edge to edge with no title or tagline area.
- if(!s.bare)out.push(`<rect x="${r1(s.w*.14)}" y="15" width="${r1(s.w*.72)}" height="42" rx="21" fill="none" stroke="#a23570" stroke-width="1.5" stroke-dasharray="5 3"/>`,
- `<text x="${s.w/2}" y="41" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#a23570">LOGO / TITLE AREA</text>`,
- `<line x1="0" y1="${SHEET_HEAD}" x2="${s.w}" y2="${SHEET_HEAD}" stroke="#a23570" stroke-width="1" stroke-dasharray="4 4"/>`,
- `<line x1="0" y1="${s.h-SHEET_FOOT}" x2="${s.w}" y2="${s.h-SHEET_FOOT}" stroke="#a23570" stroke-width="1" stroke-dasharray="4 4"/>`,
- `<text x="${s.w/2}" y="${s.h-20}" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="700" fill="#a23570">TAGLINE / DATE AREA</text>`);
- s.pieces.forEach(p=>{const base=Math.min(p.w,p.h),stamp=p.shape==="stamp",f=p.flush?0:stamp?base*.09:Math.max(2.5,base*.035),o=Math.max(2.5,base*.025),inner=stamp?"square":p.shape;
-  out.push(`<g data-photo="${p.photo+1}" data-shape="${p.shape}" data-x="${r1(p.x)}" data-y="${r1(p.y)}" data-width="${r1(p.w)}" data-height="${r1(p.h)}" data-window-inset="${r1(f)}">`,
-  p.flush?"":shape(stamp?"square":p.shape,p.x-o,p.y-o,p.w+o*2,p.h+o*2,'fill="none" stroke="#764d70" stroke-width="1" stroke-dasharray="4 3"'),
-  shape(p.shape,p.x,p.y,p.w,p.h,'fill="#fff" stroke="#764d70" stroke-width="1.2"'),
-  shape(inner,p.x+f,p.y+f,p.w-f*2,p.h-f*2,'fill="#edf7ff" stroke="#087eae" stroke-width="1.5"'),
+ // Flush pieces print exactly to their cut line; shaped pieces bleed SHEET_BLEED past it (the stamp bleeds as a rectangle).
+ s.pieces.forEach(p=>{const base=Math.min(p.w,p.h),b=p.flush?0:SHEET_BLEED;
+  out.push(`<g data-photo="${p.photo+1}" data-shape="${p.shape}" data-x="${r1(p.x)}" data-y="${r1(p.y)}" data-width="${r1(p.w)}" data-height="${r1(p.h)}" data-bleed="${b}">`,
+  shape(p.shape==="stamp"?"square":p.shape,p.x-b,p.y-b,p.w+b*2,p.h+b*2,'fill="#edf7ff" stroke="#087eae" stroke-width="1"'),
+  shape(p.shape,p.x,p.y,p.w,p.h,'fill="none" stroke="#764d70" stroke-width="1.2"'),
   `<text x="${r1(p.x+p.w/2)}" y="${r1(p.y+p.h/2+4)}" text-anchor="middle" font-family="Arial,sans-serif" font-size="${base>100?14:9}" font-weight="700" fill="#087eae">P${p.photo+1}</text>`,
   `</g>`)});
  out.push("</svg>","");

@@ -1,59 +1,46 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="868" height="662" viewBox="0 0 868 662" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="868" height="576" viewBox="0 0 868 576" role="img" aria-labelledby="title desc">
 <title id="title">8 分割（直式照片）拍貼版型對位稿</title>
-<desc id="desc">與網站輸出同尺寸的線框；藍色是照片窗，紫色實線是貼紙外形，紫色虛線是半斷割線，粉紅虛線是標題與頁尾區。</desc>
-<rect width="868" height="662" fill="#fffdf9"/>
-<rect x=".5" y=".5" width="867" height="661" fill="none" stroke="#1b2433"/>
-<rect x="121.5" y="15" width="625" height="42" rx="21" fill="none" stroke="#a23570" stroke-width="1.5" stroke-dasharray="5 3"/>
-<text x="434" y="41" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#a23570">LOGO / TITLE AREA</text>
-<line x1="0" y1="72" x2="868" y2="72" stroke="#a23570" stroke-width="1" stroke-dasharray="4 4"/>
-<line x1="0" y1="608" x2="868" y2="608" stroke="#a23570" stroke-width="1" stroke-dasharray="4 4"/>
-<text x="434" y="642" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="700" fill="#a23570">TAGLINE / DATE AREA</text>
-<g data-photo="1" data-shape="rect" data-x="20" data-y="72" data-width="195" data-height="260" data-window-inset="6.8">
-<rect x="15.1" y="67.1" width="204.8" height="269.8" rx="16.4" fill="none" stroke="#764d70" stroke-width="1" stroke-dasharray="4 3"/>
-<rect x="20" y="72" width="195" height="260" rx="15.6" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
-<rect x="26.8" y="78.8" width="181.4" height="246.4" rx="14.5" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
-<text x="117.5" y="206" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P1</text>
+<desc id="desc">與網站輸出同尺寸的線框；藍色是照片印刷範圍，紫色實線是半斷割線。</desc>
+<rect width="868" height="576" fill="#fffdf9"/>
+<rect x=".5" y=".5" width="867" height="575" fill="none" stroke="#1b2433"/>
+<g data-photo="1" data-shape="rect" data-x="20" data-y="20" data-width="195" data-height="260" data-bleed="6">
+<rect x="14" y="14" width="207" height="272" rx="16.6" fill="#edf7ff" stroke="#087eae" stroke-width="1"/>
+<rect x="20" y="20" width="195" height="260" rx="15.6" fill="none" stroke="#764d70" stroke-width="1.2"/>
+<text x="117.5" y="154" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P1</text>
 </g>
-<g data-photo="1" data-shape="oval" data-x="20" data-y="348" data-width="195" data-height="260" data-window-inset="6.8">
-<ellipse cx="117.5" cy="478" rx="102.4" ry="134.9" fill="none" stroke="#764d70" stroke-width="1" stroke-dasharray="4 3"/>
-<ellipse cx="117.5" cy="478" rx="97.5" ry="130" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
-<ellipse cx="117.5" cy="478" rx="90.7" ry="123.2" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
-<text x="117.5" y="482" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P1</text>
+<g data-photo="1" data-shape="oval" data-x="20" data-y="296" data-width="195" data-height="260" data-bleed="6">
+<ellipse cx="117.5" cy="426" rx="103.5" ry="136" fill="#edf7ff" stroke="#087eae" stroke-width="1"/>
+<ellipse cx="117.5" cy="426" rx="97.5" ry="130" fill="none" stroke="#764d70" stroke-width="1.2"/>
+<text x="117.5" y="430" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P1</text>
 </g>
-<g data-photo="2" data-shape="rect" data-x="231" data-y="348" data-width="195" data-height="260" data-window-inset="6.8">
-<rect x="226.1" y="343.1" width="204.8" height="269.8" rx="16.4" fill="none" stroke="#764d70" stroke-width="1" stroke-dasharray="4 3"/>
-<rect x="231" y="348" width="195" height="260" rx="15.6" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
-<rect x="237.8" y="354.8" width="181.4" height="246.4" rx="14.5" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
-<text x="328.5" y="482" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P2</text>
+<g data-photo="2" data-shape="rect" data-x="231" data-y="296" data-width="195" data-height="260" data-bleed="6">
+<rect x="225" y="290" width="207" height="272" rx="16.6" fill="#edf7ff" stroke="#087eae" stroke-width="1"/>
+<rect x="231" y="296" width="195" height="260" rx="15.6" fill="none" stroke="#764d70" stroke-width="1.2"/>
+<text x="328.5" y="430" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P2</text>
 </g>
-<g data-photo="2" data-shape="arch" data-x="231" data-y="72" data-width="195" data-height="260" data-window-inset="6.8">
-<path d="M226.1 169.5A102.4 102.4 0 0 1 430.9 169.5V320.5Q430.9 336.9 414.5 336.9H242.5Q226.1 336.9 226.1 320.5Z" fill="none" stroke="#764d70" stroke-width="1" stroke-dasharray="4 3"/>
-<path d="M231 169.5A97.5 97.5 0 0 1 426 169.5V316.4Q426 332 410.4 332H246.6Q231 332 231 316.4Z" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
-<path d="M237.8 169.5A90.7 90.7 0 0 1 419.2 169.5V310.7Q419.2 325.2 404.7 325.2H252.3Q237.8 325.2 237.8 310.7Z" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
-<text x="328.5" y="206" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P2</text>
+<g data-photo="2" data-shape="arch" data-x="231" data-y="20" data-width="195" data-height="260" data-bleed="6">
+<path d="M225 117.5A103.5 103.5 0 0 1 432 117.5V269.4Q432 286 415.4 286H241.6Q225 286 225 269.4Z" fill="#edf7ff" stroke="#087eae" stroke-width="1"/>
+<path d="M231 117.5A97.5 97.5 0 0 1 426 117.5V264.4Q426 280 410.4 280H246.6Q231 280 231 264.4Z" fill="none" stroke="#764d70" stroke-width="1.2"/>
+<text x="328.5" y="154" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P2</text>
 </g>
-<g data-photo="3" data-shape="rect" data-x="442" data-y="72" data-width="195" data-height="260" data-window-inset="6.8">
-<rect x="437.1" y="67.1" width="204.8" height="269.8" rx="16.4" fill="none" stroke="#764d70" stroke-width="1" stroke-dasharray="4 3"/>
-<rect x="442" y="72" width="195" height="260" rx="15.6" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
-<rect x="448.8" y="78.8" width="181.4" height="246.4" rx="14.5" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
-<text x="539.5" y="206" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P3</text>
+<g data-photo="3" data-shape="rect" data-x="442" data-y="20" data-width="195" data-height="260" data-bleed="6">
+<rect x="436" y="14" width="207" height="272" rx="16.6" fill="#edf7ff" stroke="#087eae" stroke-width="1"/>
+<rect x="442" y="20" width="195" height="260" rx="15.6" fill="none" stroke="#764d70" stroke-width="1.2"/>
+<text x="539.5" y="154" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P3</text>
 </g>
-<g data-photo="3" data-shape="pill" data-x="442" data-y="348" data-width="195" data-height="260" data-window-inset="6.8">
-<rect x="437.1" y="343.1" width="204.8" height="269.8" rx="102.4" fill="none" stroke="#764d70" stroke-width="1" stroke-dasharray="4 3"/>
-<rect x="442" y="348" width="195" height="260" rx="97.5" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
-<rect x="448.8" y="354.8" width="181.4" height="246.4" rx="90.7" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
-<text x="539.5" y="482" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P3</text>
+<g data-photo="3" data-shape="pill" data-x="442" data-y="296" data-width="195" data-height="260" data-bleed="6">
+<rect x="436" y="290" width="207" height="272" rx="103.5" fill="#edf7ff" stroke="#087eae" stroke-width="1"/>
+<rect x="442" y="296" width="195" height="260" rx="97.5" fill="none" stroke="#764d70" stroke-width="1.2"/>
+<text x="539.5" y="430" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P3</text>
 </g>
-<g data-photo="4" data-shape="rect" data-x="653" data-y="348" data-width="195" data-height="260" data-window-inset="6.8">
-<rect x="648.1" y="343.1" width="204.8" height="269.8" rx="16.4" fill="none" stroke="#764d70" stroke-width="1" stroke-dasharray="4 3"/>
-<rect x="653" y="348" width="195" height="260" rx="15.6" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
-<rect x="659.8" y="354.8" width="181.4" height="246.4" rx="14.5" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
-<text x="750.5" y="482" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P4</text>
+<g data-photo="4" data-shape="rect" data-x="653" data-y="296" data-width="195" data-height="260" data-bleed="6">
+<rect x="647" y="290" width="207" height="272" rx="16.6" fill="#edf7ff" stroke="#087eae" stroke-width="1"/>
+<rect x="653" y="296" width="195" height="260" rx="15.6" fill="none" stroke="#764d70" stroke-width="1.2"/>
+<text x="750.5" y="430" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P4</text>
 </g>
-<g data-photo="4" data-shape="stamp" data-x="653" data-y="72" data-width="195" data-height="260" data-window-inset="17.6">
-<rect x="648.1" y="67.1" width="204.8" height="269.8" fill="none" stroke="#764d70" stroke-width="1" stroke-dasharray="4 3"/>
-<path d="M653 72L660.1 72A6.8 6.8 0 0 0 673.8 72L688 72A6.8 6.8 0 0 0 701.6 72L715.8 72A6.8 6.8 0 0 0 729.5 72L743.7 72A6.8 6.8 0 0 0 757.3 72L771.5 72A6.8 6.8 0 0 0 785.2 72L799.4 72A6.8 6.8 0 0 0 813 72L827.2 72A6.8 6.8 0 0 0 840.9 72L848 72L848 79.6A6.8 6.8 0 0 0 848 93.3L848 108.5A6.8 6.8 0 0 0 848 122.2L848 137.4A6.8 6.8 0 0 0 848 151L848 166.3A6.8 6.8 0 0 0 848 179.9L848 195.2A6.8 6.8 0 0 0 848 208.8L848 224.1A6.8 6.8 0 0 0 848 237.7L848 253A6.8 6.8 0 0 0 848 266.6L848 281.8A6.8 6.8 0 0 0 848 295.5L848 310.7A6.8 6.8 0 0 0 848 324.4L848 332L840.9 332A6.8 6.8 0 0 0 827.2 332L813 332A6.8 6.8 0 0 0 799.4 332L785.2 332A6.8 6.8 0 0 0 771.5 332L757.3 332A6.8 6.8 0 0 0 743.7 332L729.5 332A6.8 6.8 0 0 0 715.8 332L701.6 332A6.8 6.8 0 0 0 688 332L673.8 332A6.8 6.8 0 0 0 660.1 332L653 332L653 324.4A6.8 6.8 0 0 0 653 310.7L653 295.5A6.8 6.8 0 0 0 653 281.8L653 266.6A6.8 6.8 0 0 0 653 253L653 237.7A6.8 6.8 0 0 0 653 224.1L653 208.8A6.8 6.8 0 0 0 653 195.2L653 179.9A6.8 6.8 0 0 0 653 166.3L653 151A6.8 6.8 0 0 0 653 137.4L653 122.2A6.8 6.8 0 0 0 653 108.5L653 93.3A6.8 6.8 0 0 0 653 79.6L653 72Z" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
-<rect x="670.6" y="89.6" width="159.9" height="224.9" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
-<text x="750.5" y="206" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P4</text>
+<g data-photo="4" data-shape="stamp" data-x="653" data-y="20" data-width="195" data-height="260" data-bleed="6">
+<rect x="647" y="14" width="207" height="272" fill="#edf7ff" stroke="#087eae" stroke-width="1"/>
+<path d="M653 20L660.1 20A6.8 6.8 0 0 0 673.8 20L688 20A6.8 6.8 0 0 0 701.6 20L715.8 20A6.8 6.8 0 0 0 729.5 20L743.7 20A6.8 6.8 0 0 0 757.3 20L771.5 20A6.8 6.8 0 0 0 785.2 20L799.4 20A6.8 6.8 0 0 0 813 20L827.2 20A6.8 6.8 0 0 0 840.9 20L848 20L848 27.6A6.8 6.8 0 0 0 848 41.3L848 56.5A6.8 6.8 0 0 0 848 70.2L848 85.4A6.8 6.8 0 0 0 848 99L848 114.3A6.8 6.8 0 0 0 848 127.9L848 143.2A6.8 6.8 0 0 0 848 156.8L848 172.1A6.8 6.8 0 0 0 848 185.7L848 201A6.8 6.8 0 0 0 848 214.6L848 229.8A6.8 6.8 0 0 0 848 243.5L848 258.7A6.8 6.8 0 0 0 848 272.4L848 280L840.9 280A6.8 6.8 0 0 0 827.2 280L813 280A6.8 6.8 0 0 0 799.4 280L785.2 280A6.8 6.8 0 0 0 771.5 280L757.3 280A6.8 6.8 0 0 0 743.7 280L729.5 280A6.8 6.8 0 0 0 715.8 280L701.6 280A6.8 6.8 0 0 0 688 280L673.8 280A6.8 6.8 0 0 0 660.1 280L653 280L653 272.4A6.8 6.8 0 0 0 653 258.7L653 243.5A6.8 6.8 0 0 0 653 229.8L653 214.6A6.8 6.8 0 0 0 653 201L653 185.7A6.8 6.8 0 0 0 653 172.1L653 156.8A6.8 6.8 0 0 0 653 143.2L653 127.9A6.8 6.8 0 0 0 653 114.3L653 99A6.8 6.8 0 0 0 653 85.4L653 70.2A6.8 6.8 0 0 0 653 56.5L653 41.3A6.8 6.8 0 0 0 653 27.6L653 20Z" fill="none" stroke="#764d70" stroke-width="1.2"/>
+<text x="750.5" y="154" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P4</text>
 </g>
 </svg>

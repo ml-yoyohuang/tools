@@ -412,7 +412,7 @@ let photos=Array(4).fill(null),processed=Array(4).fill(null),finalPhotos=null,de
 let activePhoto=0,nextId=1,tool="stamp",selectedId=null,stampKey="",brushCategory="solid",brushMode="solid",patternPreset="dots",drawColor="#f73692",glowColor="#ff3d9a",brushSize=7,gesture=null,deadline=0,editLocked=false,reviewDeadline=0,reviewLocked=false;
 let stream=null,cameraBusy=false,cameraToken=0,cameraReady=false,facing="user",mirror=true,sequenceToken=0,running=false,pendingSlots=[],retakeSlot=null,lastPreview=0;
 let importSlot=0,importBusy=false,exportBlob=null,exportFile=null,exportToken=0,imageURL=null,motionEnabled=false;
-const video=$("sourceVideo"),editCanvas=$("editCanvas"),stampDate=new Date().toLocaleDateString("sv-SE").replaceAll("-",".");
+const video=$("sourceVideo"),editCanvas=$("editCanvas");
 // Reused original photo processing and vector sticker artwork.
 function processPhoto(raw,preview=false){
   const retro=look==="old";
@@ -538,7 +538,7 @@ function drawObject(c,o){
 function setStage(next){stage=next;document.body.dataset.stage=next;$("lobbySection").hidden=next!=="lobby";$("workspace").hidden=next==="lobby";for(const name of ["start","shoot","review","import","edit","layout","result"])$(name+"Section").hidden=name!==next;document.querySelectorAll("[data-step]").forEach(el=>el.classList.toggle("current",el.dataset.step===(["review","import"].includes(next)?"shoot":next)));if(!["start","shoot","review"].includes(next))stopCamera();window.scrollTo({top:0,behavior:"instant"})}
 // Holding the phone upright gives portrait photos; the choice holds until the player is back in the lobby.
 function setOrientation(next){orient=next;[PW,PH]=next==="portrait"?[600,800]:[800,600];document.body.dataset.orient=next;for(const c of [editCanvas,$("cameraCanvas"),maskLayer,doodleLayer]){c.width=PW;c.height=PH}for(const id of ["oldPreview","softPreview"]){const c=$(id);c.width=PW*.6;c.height=PH*.6}wallpapers.clear()}
-function syncTheme(){document.body.dataset.theme=theme;document.querySelectorAll(".machine-name").forEach(el=>el.textContent=THEMES[theme].name+" / PURI CLUB 2000");drawColor=THEMES[theme].accent;if(!STAMP_SETS[theme].some(([key])=>key===stampKey))stampKey=STAMP_SETS[theme][0][0];buildSwatches();buildStampButtons()}
+function syncTheme(){document.body.dataset.theme=theme;for(const src of Object.values(PAPER_ART[theme]||{}))paperImage(src);document.querySelectorAll(".machine-name").forEach(el=>el.textContent=THEMES[theme].name+" / PURI CLUB 2000");drawColor=THEMES[theme].accent;if(!STAMP_SETS[theme].some(([key])=>key===stampKey))stampKey=STAMP_SETS[theme][0][0];buildSwatches();buildStampButtons()}
 function selectButtons(selector,key,value){document.querySelectorAll(selector).forEach(b=>{const active=b.dataset[key]===value;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active))})}
 function placeholder(canvas,label){const c=canvas.getContext("2d"),w=canvas.width,h=canvas.height;c.fillStyle=THEMES[theme].ink;c.fillRect(0,0,w,h);c.fillStyle="#ffffff1a";for(let x=0;x<w;x+=25)for(let y=0;y<h;y+=25){c.beginPath();c.arc(x,y,1,0,7);c.fill()}c.textAlign="center";c.textBaseline="middle";drawShape(c,THEMES[theme].symbol,w/2,h*.39,w*.13,THEMES[theme].secondary);if(label){c.fillStyle="#fff";c.font="bold "+w*.028+"px monospace";c.fillText(label,w/2,h*.65)}}
 function cameraError(e){if(!isSecureContext||!navigator.mediaDevices?.getUserMedia)return "相機需要 HTTPS 或 localhost。也可以匯入照片。";return ({NotAllowedError:"請允許使用相機，或匯入照片。",NotFoundError:"找不到相機，改用你喜歡的照片也可以。",NotReadableError:"相機被其他程式使用中，關閉後再試一次。"})[e.name]||"相機暫時無法啟動，請再試一次或匯入照片。"}
@@ -646,7 +646,8 @@ $("deleteStamp").onclick=deleteSelectedStamp;
 // Sheets are sticker sheets: every piece is one photo, cut apart along thin lines.
 // "split" packs square-cornered pieces edge to edge with no backing paper, turned sideways for landscape photos;
 // "eight" prints each photo twice on themed paper, once in a rounded frame and once in a shaped window.
-const SHEET_HEAD=72,SHEET_FOOT=54,SHEET_MARGIN=20;
+// Its photos bleed SHEET_BLEED past the half-cut line, so a slightly off cut never shows paper.
+const SHEET_MARGIN=20,SHEET_BLEED=6;
 // Each 5 × 4 cell quarter of the split sheet holds all four photos (1 large, 2 medium, 3 small), so it can be cut into four full sets.
 // A quarter only tiles four ways, so each one uses a different tiling; pieces are listed large, medium, medium, small, small, small.
 const SPLIT_QUARTERS=[
@@ -655,11 +656,11 @@ const SPLIT_QUARTERS=[
  [[2,1,3],[0,0,2],[0,2,2],[2,0,1],[3,0,1],[4,0,1]],
  [[2,0,3],[0,0,2],[0,2,2],[2,3,1],[3,3,1],[4,3,1]]];
 const WINDOW_SHAPES={portrait:["oval","arch","pill","stamp"],landscape:["oval","heart","pill","stamp"]};
-function sheetSpec(forLayout=layout){const portrait=PH>PW,m=SHEET_MARGIN,top=SHEET_HEAD,pieces=[];
+function sheetSpec(forLayout=layout){const portrait=PH>PW,m=SHEET_MARGIN,pieces=[];
  if(forLayout==="eight"){const gap=16,[w,h]=portrait?[195,260]:[260,195],cols=portrait?4:2,rows=portrait?2:4;
   // Photos 2 and 4 put the shaped window first, so frames and shapes alternate across the sheet.
-  for(let i=0;i<4;i++)for(let k=0;k<2;k++){const slot=i%2?1-k:k,col=portrait?i:slot,row=portrait?slot:i;pieces.push({photo:i,shape:k?WINDOW_SHAPES[orient][i]:"rect",x:m+col*(w+gap),y:top+row*(h+gap),w,h})}
-  return {w:m*2+cols*w+(cols-1)*gap,h:top+rows*h+(rows-1)*gap+SHEET_FOOT,pieces}}
+  for(let i=0;i<4;i++)for(let k=0;k<2;k++){const slot=i%2?1-k:k,col=portrait?i:slot,row=portrait?slot:i;pieces.push({photo:i,shape:k?WINDOW_SHAPES[orient][i]:"rect",x:m+col*(w+gap),y:m+row*(h+gap),w,h})}
+  return {w:m*2+cols*w+(cols-1)*gap,h:m*2+rows*h+(rows-1)*gap,pieces}}
  // Quarter q makes photo q large, the next two medium and the rest small, shuffling which slot each one lands in.
  const cw=portrait?60:80,ch=portrait?80:60,edge=8;
  SPLIT_QUARTERS.forEach((tiles,q)=>{const p=k=>(q+k)%4,small=[p(3),p(0),p(1)],order=[p(0),...(q%2?[p(2),p(1)]:[p(1),p(2)]),...small.slice(q%3),...small.slice(0,q%3)];
@@ -678,18 +679,47 @@ function stickerPath(shape,x,y,w,h){const p=new Path2D();
   p.closePath()}
  else p.roundRect(x,y,w,h,Math.min(w,h)*.08);
  return p}
-// Framed pieces get a white printed border, a thin accent rule around the photo window and a dashed half-cut line just outside;
-// flush pieces fill their whole cell and are split from their neighbours by a thin white line.
-function drawSticker(c,piece,img,t){const {shape,x,y,w,h}=piece,base=Math.min(w,h),stamp=shape==="stamp",f=stamp?base*.09:Math.max(2.5,base*.035),o=Math.max(2.5,base*.025),inner=stamp?"square":shape;
+// Flush pieces fill their whole cell and are split from their neighbours by a thin white line.
+// Shaped pieces print the photo past the half-cut line, which is drawn over it as a thin white line with a soft dark edge;
+// the stamp keeps a solid line so its perforations read.
+function drawSticker(c,piece,img){const {shape,x,y,w,h}=piece,b=SHEET_BLEED,cut=stickerPath(shape,x,y,w,h);
  if(piece.flush){cropDraw(c,img,x,y,w,h);c.strokeStyle="#fff";c.lineWidth=2;c.strokeRect(x,y,w,h);return}
- c.save();c.strokeStyle=t.ink+"80";c.lineWidth=1;c.setLineDash([4,3]);c.stroke(stickerPath(stamp?"square":shape,x-o,y-o,w+o*2,h+o*2));c.restore();
- c.fillStyle="#fff";c.fill(stickerPath(shape,x,y,w,h));
- const win=stickerPath(inner,x+f,y+f,w-f*2,h-f*2);c.save();c.clip(win);cropDraw(c,img,x+f,y+f,w-f*2,h-f*2);c.restore();
- c.strokeStyle=t.accent;c.lineWidth=Math.max(1,base*.012);c.stroke(win)}
-function drawPaper(c,w,h){const t=THEMES[theme];c.fillStyle=t.paper;c.fillRect(0,0,w,h);if(theme==="gal"){c.fillStyle="#f5ba85";c.fillRect(0,0,w,SHEET_HEAD);for(let y=9;y<SHEET_HEAD;y+=22)for(let x=5;x<w;x+=30){c.strokeStyle=t.ink;c.lineWidth=3;c.beginPath();c.ellipse(x+(y%3)*3,y,7,4,.5,.3,5.7);c.stroke()}c.fillStyle="#ffc4df";c.fillRect(0,SHEET_HEAD,10,h-SHEET_HEAD);c.fillRect(w-10,SHEET_HEAD,10,h-SHEET_HEAD)}else if(theme==="hara"){for(let y=0;y<h;y+=18)for(let x=0;x<w;x+=18){c.fillStyle=(x/18+y/18)%2?t.secondary:"#ba87cf";c.fillRect(x,y,18,18)}c.fillStyle=t.paper;roundRect(c,10,SHEET_HEAD-8,w-20,h-SHEET_HEAD,12);c.fill()}else{const g=c.createLinearGradient(0,0,w,h);g.addColorStop(0,"#d0e4ff");g.addColorStop(.28,"#fcfdff");g.addColorStop(.48,"#c0c8e9");g.addColorStop(.7,"#faffff");g.addColorStop(1,"#b1cbec");c.fillStyle=g;c.fillRect(0,0,w,h)}
- c.fillStyle="#fffaf4ed";roundRect(c,w*.14,15,w*.72,42,21);c.fill();c.textAlign="center";c.textBaseline="middle";c.fillStyle=t.ink;c.font="900 italic 33px Arial";c.fillText(t.name,w/2,37);drawShape(c,t.symbol,w*.075,37,22,t.accent);drawShape(c,t.symbol,w*.925,37,22,t.accent);c.font="bold 9px monospace";c.fillStyle=t.ink;c.fillText("PURI CLUB 2000 / "+stampDate,w/2,h-14);
+ c.save();c.clip(stickerPath(shape==="stamp"?"square":shape,x-b,y-b,w+b*2,h+b*2));cropDraw(c,img,x-b,y-b,w+b*2,h+b*2);c.restore();
+ c.save();c.lineJoin="round";c.strokeStyle="#2a181040";c.lineWidth=2.6;c.stroke(cut);c.strokeStyle="#fffdf8";c.lineWidth=1.1;if(shape!=="stamp")c.setLineDash([5,3]);c.stroke(cut);c.restore()}
+// Seeded so the layout preview and the exported PNG show the same spots.
+function seeded(seed){return()=>{seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+// Leopard print: rosettes, each a tawny centre inside a broken ring of tapered dark clumps, with small spots in the gaps.
+// Every outline wobbles with two sine terms so no two rosettes match. Marks go down in three passes (a staggered grid,
+// then smaller rosettes thrown into the holes, then spots), and any candidate that would come within LEOPARD_GAP of a
+// mark already placed is skipped, so spots never touch.
+const LEOPARD_GAP=3.5;
+function drawLeopard(c,w,h){const r=seeded(109),R=(a,b)=>a+r()*(b-a),step=30,dark="#2a1810",TAU=Math.PI*2,placed=[];
+ const fits=(x,y,rad)=>placed.every(p=>Math.hypot(p.x-x,p.y-y)>p.r+rad+LEOPARD_GAP);
+ const g=c.createLinearGradient(0,0,w,h);g.addColorStop(0,"#e0a95c");g.addColorStop(.5,"#ebbd76");g.addColorStop(1,"#d79c52");c.fillStyle=g;c.fillRect(0,0,w,h);
+ const wobble=()=>{const f1=R(0,TAU),f2=R(0,TAU),A=R(.08,.18),B=R(.05,.12);return t=>1+A*Math.sin(2*t+f1)+B*Math.sin(3*t+f2)};
+ const blob=(x,y,rx,ry,color)=>{const k=wobble();c.fillStyle=color;c.beginPath();for(let i=0;i<=20;i++){const t=i/20*TAU;c.lineTo(x+Math.cos(t)*rx*k(t),y+Math.sin(t)*ry*k(t))}c.fill()};
+ // Outline reach: the wobble adds at most 30% and a stroke at most 2.5.
+ const rosette=(cx,cy,rx)=>{const rad=rx*1.3+2.5;if(!fits(cx,cy,rad))return;placed.push({x:cx,y:cy,r:rad});const ry=rx*R(.68,.95),k=wobble();
+  c.save();c.translate(cx,cy);c.rotate(R(0,Math.PI));
+  blob(R(-1,1),R(-1,1),rx*.78,ry*.74,"#c47e2e");
+  const parts=2+Math.floor(r()*3),scale=rx/10;let a=R(0,TAU);
+  for(let i=0;i<parts;i++){const len=TAU/parts*R(.45,.85),thick=R(2.2,4.4)*Math.min(1,scale+.2),outer=[],inner=[];
+   for(let j=0;j<=10;j++){const s=j/10,t=a+len*s,half=(thick*Math.pow(Math.sin(Math.PI*s),.6)+.6)/2;outer.push([Math.cos(t)*(rx*k(t)+half),Math.sin(t)*(ry*k(t)+half)]);inner.unshift([Math.cos(t)*(rx*k(t)-half),Math.sin(t)*(ry*k(t)-half)])}
+   c.fillStyle=dark;c.beginPath();for(const [px,py] of outer.concat(inner))c.lineTo(px,py);c.fill();a+=TAU/parts*R(.9,1.1)}
+  c.restore()};
+ for(let y=-step/2,row=0;y<h+step;y+=step*.86,row++)for(let x=(row%2-1)*step/2;x<w+step;x+=step)rosette(x+R(-9,9),y+R(-8,8),R(7,12));
+ for(let n=w*h/60;n>0;n--)rosette(R(-10,w+10),R(-10,h+10),R(5,8));
+ for(let n=w*h/160;n>0;n--){const x=R(0,w),y=R(0,h),sz=R(1.6,3.6);if(fits(x,y,sz*1.35)){placed.push({x,y,r:sz*1.35});blob(x,y,sz,sz*R(.6,1),dark)}}
 }
-function renderSheet(canvas,scale=2,withFilm=false,forLayout=layout){const s=sheetSpec(forLayout),t=THEMES[theme];canvas.width=Math.round(s.w*scale);canvas.height=Math.round(s.h*scale);const c=canvas.getContext("2d");c.scale(scale,scale);if(s.bare){c.fillStyle="#fff";c.fillRect(0,0,s.w,s.h)}else drawPaper(c,s.w,s.h);const shots=Array.from({length:4},(_,i)=>finalPhotos?.[i]||decoratedPhoto(i));s.pieces.forEach(p=>drawSticker(c,p,shots[p.photo],t));if(!s.bare){c.fillStyle=t.accent;c.textAlign="center";c.textBaseline="middle";c.font="italic bold 19px Georgia";c.fillText(theme==="gal"?"you're my favorite kind of cute":theme==="hara"?"too cute to follow the rules":"a little angel, a little magic",s.w/2,s.h-34)}if(withFilm&&film!=="none")drawFilm(c,s.w,s.h);}
+// Booth artwork used as sheet paper: a 2:3 upright piece, plus a wide piece where the booth has one. A wide sheet without
+// wide art turns the upright piece a quarter turn instead of cropping it. Until a file loads the paper falls back to the
+// drawn pattern, and the layout preview redraws once it arrives.
+const PAPER_ART={hara:{tall:"assets/puri-club/harajuku-mix-flat-background.png"},cyber:{tall:"assets/puri-club/cyber-angel-flat-background.png",wide:"assets/puri-club/cyber-angel-flat-background-landscape.jpg"}},paperImages=new Map();
+function paperImage(src){let img=paperImages.get(src);if(!img){img=new Image();img.decoding="async";img.onload=()=>{if(stage==="layout")renderSheet($("layoutCanvas"))};img.src=src;paperImages.set(src,img)}return img}
+function drawArtPaper(c,w,h,art){const wide=w>h&&art.wide,img=paperImage(wide?art.wide:art.tall);if(!img.naturalWidth)return false;
+ if(w>h&&!wide){c.save();c.translate(w,0);c.rotate(Math.PI/2);cropDraw(c,img,0,0,h,w);c.restore()}else cropDraw(c,img,0,0,w,h);return true}
+function drawPaper(c,w,h){const t=THEMES[theme];c.fillStyle=t.paper;c.fillRect(0,0,w,h);if(theme==="gal")drawLeopard(c,w,h);else if(PAPER_ART[theme]&&drawArtPaper(c,w,h,PAPER_ART[theme]));else if(theme==="hara"){for(let y=0;y<h;y+=18)for(let x=0;x<w;x+=18){c.fillStyle=(x/18+y/18)%2?t.secondary:"#ba87cf";c.fillRect(x,y,18,18)}c.fillStyle=t.paper;roundRect(c,10,10,w-20,h-20,12);c.fill()}else{const g=c.createLinearGradient(0,0,w,h);g.addColorStop(0,"#d0e4ff");g.addColorStop(.28,"#fcfdff");g.addColorStop(.48,"#c0c8e9");g.addColorStop(.7,"#faffff");g.addColorStop(1,"#b1cbec");c.fillStyle=g;c.fillRect(0,0,w,h)}}
+function renderSheet(canvas,scale=2,withFilm=false,forLayout=layout){const s=sheetSpec(forLayout);canvas.width=Math.round(s.w*scale);canvas.height=Math.round(s.h*scale);const c=canvas.getContext("2d");c.scale(scale,scale);if(s.bare){c.fillStyle="#fff";c.fillRect(0,0,s.w,s.h)}else drawPaper(c,s.w,s.h);const shots=Array.from({length:4},(_,i)=>finalPhotos?.[i]||decoratedPhoto(i));s.pieces.forEach(p=>drawSticker(c,p,shots[p.photo]));if(withFilm&&film!=="none")drawFilm(c,s.w,s.h);}
 // Laminate patterns sit on a slanted, staggered lattice.
 function filmPattern(c,w,h,step,draw){c.save();c.translate(w/2,h/2);c.rotate(-.42);const r=Math.hypot(w,h)/2+step;for(let row=0,y=-r;y<r;y+=step/2,row++)for(let x=-r+(row%2?step/2:0);x<r;x+=step)draw(x,y,row);c.restore()}
 function drawFilm(c,w,h){c.save();const g=c.createLinearGradient(0,h*.8,w,h*.1);if(film==="rainbow"){[[0,"#ff86cf"],[.25,"#90d5ff"],[.5,"#fff291"],[.75,"#d49dff"],[1,"#9dffee"]].forEach(p=>g.addColorStop(...p));c.globalCompositeOperation="soft-light";c.globalAlpha=.24}else{g.addColorStop(0,"#ffffff00");g.addColorStop(.4,"#ffffff00");g.addColorStop(.5,"#ffffff");g.addColorStop(.62,"#ffffff00");g.addColorStop(1,"#ffffff00");c.globalAlpha=.18}c.fillStyle=g;c.fillRect(0,0,w,h);
