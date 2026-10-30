@@ -215,7 +215,9 @@ body[data-stage=edit] .workspace{padding-bottom:calc(65px + env(safe-area-inset-
 #editSection .tool-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
 #editSection .stamps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 #editSection .stamp-button{min-height:66px;padding:6px 2px;border-color:#cfb8cc;box-shadow:none}
-#editSection .stamp-button canvas{width:42px;height:42px;margin:auto}
+#editSection .stamp-button img{display:block;width:42px;height:42px;margin:auto;object-fit:contain}
+#editSection .stamp-group{grid-column:1/-1;margin:6px 0 0;font:800 11px/1.4 monospace;letter-spacing:.08em}
+#editSection .stamp-group:first-child{margin-top:0}
 #editSection .stamp-button small{display:block;font-size:9px}
 #editSection .stamp-button.active{background:var(--second);outline:2px solid var(--line);outline-offset:1px}
 #editSection .brush-categories,#editSection .pattern-presets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:13px}#editSection .pattern-presets{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -225,7 +227,7 @@ body[data-stage=edit] .workspace{padding-bottom:calc(65px + env(safe-area-inset-
 #editSection #brushSize{width:100%}
 #editSection .edit-footer{justify-content:flex-end}
 #editCaption{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;place-items:center;min-height:calc(30px + env(safe-area-inset-bottom));padding:3px 12px calc(3px + env(safe-area-inset-bottom));background:#241329;color:#fff7e9;text-align:center;font:800 11px/1.25 monospace;letter-spacing:.08em}
-@media(max-width:760px){#editSection .edit-head{margin-bottom:10px}#editSection #undoBtn{min-width:132px;padding:10px 12px;font-size:14px}#editSection #clock{width:58px;height:58px}#editSection #clock small{font-size:18px}#editSection #clock b{font-size:20px}#editSection .stamps{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}#editSection .stamp-button{min-height:58px}#editSection .stamp-button canvas{width:36px;height:36px}#editSection .brush-categories button,#editSection .pattern-presets button{font-size:11px}body[data-stage=edit] .edit-footer{bottom:calc(30px + env(safe-area-inset-bottom))}#editCaption{font-size:10px;letter-spacing:0}}
+@media(max-width:760px){#editSection .edit-head{margin-bottom:10px}#editSection #undoBtn{min-width:132px;padding:10px 12px;font-size:14px}#editSection #clock{width:58px;height:58px}#editSection #clock small{font-size:18px}#editSection #clock b{font-size:20px}#editSection .stamps{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}#editSection .stamp-button{min-height:58px}#editSection .stamp-button img{width:36px;height:36px}#editSection .brush-categories button,#editSection .pattern-presets button{font-size:11px}body[data-stage=edit] .edit-footer{bottom:calc(30px + env(safe-area-inset-bottom))}#editCaption{font-size:10px;letter-spacing:0}}
 body[data-stage=edit]{height:100dvh;overflow:hidden}
 body[data-stage=edit] .workspace{height:100dvh;min-height:0;padding:42px 16px calc(42px + env(safe-area-inset-bottom));overflow:hidden}
 body[data-stage=edit] .station,#editSection{height:100%;min-height:0}
@@ -238,7 +240,7 @@ body[data-stage=edit] .station{max-width:1200px}
 #editSection .edit-canvas-wrap{display:grid;place-items:center;flex:1;min-height:0}
 #editSection .edit-canvas-wrap canvas{width:auto;height:auto;max-width:100%;max-height:100%;aspect-ratio:4/3}
 #editSection .toolbox{min-height:0;overflow-y:auto;overscroll-behavior:contain}
-#editSection #autoDecor{margin-top:12px}
+#editSection #autoDecor{margin:0 0 12px}
 #editSection .edit-footer{position:static;flex:0 0 auto;justify-content:flex-end;margin-top:10px;padding:0;background:transparent}
 @media(max-width:760px){body[data-stage=edit] .workspace{padding:36px 10px calc(38px + env(safe-area-inset-bottom))}#editSection .edit-head{margin-bottom:5px}#editSection #undoBtn{min-height:40px}#editSection #clock{width:48px;height:48px}#editSection .editor{display:flex;flex-direction:column;gap:8px}#editSection .editor>div:first-child{flex:0 0 59%}#editSection .toolbox{flex:1}#editSection .photo-tabs{margin-bottom:5px}#editSection .photo-tabs button{min-height:38px;padding:2px}#editSection .photo-tabs canvas{max-height:28px}#editSection .photo-tabs small{font-size:7px;padding:1px 0}#editSection .edit-footer{margin-top:6px;padding:0}#editSection #editDone{min-height:42px}}
 #layoutSection .print-layout{grid-template-columns:minmax(0,1fr) 360px;gap:20px}
@@ -349,7 +351,7 @@ button.soft{background:#fffaf1;font-size:14px;min-height:42px;padding:9px 12px;b
  <section id="importSection" hidden><div class="station-head"><div class="eyebrow machine-name"></div><h1>把回憶，一格格放進來。</h1><p class="small">點一格、選一張。四張都放好了，就去裝飾！</p></div><div id="importGrid" class="four-grid import-grid"></div><button id="importDone" class="primary full spark" disabled>完成，開始裝飾</button><button id="importBack" class="quiet spark">返回相機權限畫面</button></section>
  <section id="editSection" hidden><div class="edit-head"><button id="undoBtn" class="spark" disabled>復原上一步</button><div id="clock" class="timer" role="timer" aria-label="編輯剩餘時間"><small><svg class="ic" aria-hidden="true"><use href="#i-timer"/></svg></small><b>90</b></div></div>
   <div class="editor"><div><div id="photoTabs" class="photo-tabs"></div><div class="edit-canvas-wrap"><canvas id="editCanvas" width="800" height="600" aria-label="單張照片裝飾畫布"></canvas></div></div>
-  <div class="toolbox" id="toolbox"><div class="tool-tabs"><button data-tool="stamp" class="active"><svg class="ic" aria-hidden="true"><use href="#i-heart"/></svg><span>印章</span></button><button data-tool="draw"><svg class="ic" aria-hidden="true"><use href="#i-wave"/></svg><span>塗鴉</span></button></div><div id="stampTools"><div id="stampButtons" class="stamps"></div><button id="autoDecor" class="full spark">幫這張加一點魔法</button></div><div id="drawTools" hidden><div class="brush-categories" role="group" aria-label="筆刷類型"><button data-brush-category="solid" class="active">純色</button><button data-brush-category="glow"><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg>強光</button><button data-brush-category="pattern">圖樣</button></div><div id="patternPresets" class="pattern-presets" role="group" aria-label="圖樣筆刷" hidden><button data-brush-preset="dots" class="active"><svg class="ic" aria-hidden="true"><use href="#i-dots"/></svg>點點</button><button data-brush-preset="hearts"><svg class="ic" aria-hidden="true"><use href="#i-heart"/></svg>愛心</button></div><div class="swatches" id="drawColors"></div><label class="small brush-size-label" for="brushSize">筆刷大小 <output id="brushSizeValue" for="brushSize">7</output></label><input type="range" min="1" max="50" value="7" id="brushSize"></div></div></div>
+  <div class="toolbox" id="toolbox"><div class="tool-tabs"><button data-tool="stamp" class="active"><svg class="ic" aria-hidden="true"><use href="#i-heart"/></svg><span>印章</span></button><button data-tool="draw"><svg class="ic" aria-hidden="true"><use href="#i-wave"/></svg><span>塗鴉</span></button></div><div id="stampTools"><button id="autoDecor" class="full spark">幫這張加一點魔法</button><div id="stampButtons" class="stamps"></div></div><div id="drawTools" hidden><div class="brush-categories" role="group" aria-label="筆刷類型"><button data-brush-category="solid" class="active">純色</button><button data-brush-category="glow"><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg>強光</button><button data-brush-category="pattern">圖樣</button></div><div id="patternPresets" class="pattern-presets" role="group" aria-label="圖樣筆刷" hidden><button data-brush-preset="dots" class="active"><svg class="ic" aria-hidden="true"><use href="#i-dots"/></svg>點點</button><button data-brush-preset="hearts"><svg class="ic" aria-hidden="true"><use href="#i-heart"/></svg>愛心</button></div><div class="swatches" id="drawColors"></div><label class="small brush-size-label" for="brushSize">筆刷大小 <output id="brushSizeValue" for="brushSize">7</output></label><input type="range" min="1" max="50" value="7" id="brushSize"></div></div></div>
   <div class="edit-footer"><button id="editDone" class="primary spark">完成裝飾</button></div><div id="editCaption" role="status" aria-live="polite">DECORATE YOUR PHOTOS · STAMP & DRAW</div>
  </section>
  <section id="layoutSection" hidden><div class="print-layout"><div class="sheet-stage"><canvas id="layoutCanvas" aria-label="排版預覽"></canvas></div><div class="print-panel"><h2 class="layout-title">挑選相紙</h2><div class="layout-choices" role="group" aria-label="選擇拍貼版型"><button data-layout="grid" class="active" aria-label="經典四格" aria-pressed="true"><span class="layout-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button><button data-layout="strip" aria-label="口袋長條" aria-pressed="false"><span class="layout-icon strip" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button><button data-layout="scrap" aria-label="剪貼簿" aria-pressed="false"><span class="layout-icon scrap" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button></div><button id="printBtn" class="primary full spark">印這張</button></div></div></section>
@@ -386,7 +388,7 @@ function pickPoseHint(used,shot){const themed=THEMES[theme].poses.filter((line,i
 const STANDBY_ART={gal:"assets/puri-club/standby/109-style.svg",hara:"assets/puri-club/standby/harajuku-mix.svg",cyber:"assets/puri-club/standby/cyber-angel.svg"};
 let stage="lobby",theme="gal",look="old",layout="grid",film="none",duration=90;
 let photos=Array(4).fill(null),processed=Array(4).fill(null),finalPhotos=null,decorations=Array.from({length:4},()=>[]),histories=Array.from({length:4},()=>[]),retakes=[0,0,0,0];
-let activePhoto=0,nextId=1,tool="stamp",stampKey="heart",brushCategory="solid",brushMode="solid",patternPreset="dots",drawColor="#f73692",glowColor="#ff3d9a",brushSize=7,gesture=null,deadline=0,editLocked=false,reviewDeadline=0,reviewLocked=false;
+let activePhoto=0,nextId=1,tool="stamp",stampKey="",brushCategory="solid",brushMode="solid",patternPreset="dots",drawColor="#f73692",glowColor="#ff3d9a",brushSize=7,gesture=null,deadline=0,editLocked=false,reviewDeadline=0,reviewLocked=false;
 let stream=null,cameraBusy=false,cameraToken=0,cameraReady=false,facing="user",mirror=true,sequenceToken=0,running=false,pendingSlots=[],retakeSlot=null,lastPreview=0;
 let importSlot=0,importBusy=false,exportBlob=null,exportFile=null,exportToken=0,imageURL=null,motionEnabled=false;
 const video=$("sourceVideo"),editCanvas=$("editCanvas"),stampDate=new Date().toLocaleDateString("sv-SE").replaceAll("-",".");
@@ -459,144 +461,19 @@ function processPhoto(raw,preview=false){
 }
 function drawProcessed(ctx,img,x,y,w,h,mode=look){ctx.save();ctx.imageSmoothingEnabled=mode!=="old";ctx.drawImage(img,x,y,w,h);ctx.restore()}
 
-const stickerDefs=[
-  ["heart","愛心"],
-  ["star","星星"],
-  ["crown","皇冠"],
-  ["butterfly","蝴蝶"],
-  ["diamond","水鑽"],
-  ["bow","蝴蝶結"],
-  ["wings","翅膀"],
-  ["sparkle","星光"],
-  ["kiss","吻痕"],
-  ["chain","鎖鏈"],
-  ["flower","花朵"],
-  ["ribbon","緞帶"]
-];
-function starPath(c,outer,inner,n=5){
-  c.beginPath();
-  for(let i=0;i<n*2;i++){
-    const a=-Math.PI/2+i*Math.PI/n;
-    const r=i%2?inner:outer;
-    const x=Math.cos(a)*r,y=Math.sin(a)*r;
-    if(i===0)c.moveTo(x,y);else c.lineTo(x,y);
-  }
-  c.closePath();
-}
-function drawSticker(c,key){
-  const t=THEMES[theme];
-  c.lineJoin="round";c.lineCap="round";
-  c.strokeStyle="#fffdfb";c.lineWidth=7;
-  c.fillStyle=t.accent;
-
-  if(key==="heart"){
-    c.beginPath();
-    c.moveTo(0,38);
-    c.bezierCurveTo(-65,0,-40,-48,0,-15);
-    c.bezierCurveTo(40,-48,65,0,0,38);
-    c.closePath();c.stroke();c.fill();
-    c.strokeStyle="#ffffffaa";c.lineWidth=4;
-    c.beginPath();c.moveTo(-25,-12);c.quadraticCurveTo(-15,-24,-6,-14);c.stroke();
-  }else if(key==="star"){
-    starPath(c,43,20);c.stroke();c.fill();
-    c.strokeStyle=t.ink;c.lineWidth=2;c.stroke();
-  }else if(key==="crown"){
-    c.fillStyle=t.secondary;
-    c.beginPath();
-    c.moveTo(-40,25);c.lineTo(-45,-25);c.lineTo(-20,-5);
-    c.lineTo(0,-40);c.lineTo(20,-5);c.lineTo(45,-25);
-    c.lineTo(40,25);c.closePath();c.stroke();c.fill();
-    c.fillStyle=t.accent;
-    for(const x of [-23,0,23]){
-      c.beginPath();c.arc(x,10,5,0,Math.PI*2);c.fill();
-    }
-    c.strokeStyle=t.ink;c.lineWidth=2;
-    c.beginPath();c.moveTo(-35,30);c.lineTo(35,30);c.stroke();
-  }else if(key==="butterfly"){
-    for(const side of [-1,1]){
-      c.save();c.scale(side,1);
-      c.fillStyle=t.secondary;
-      c.beginPath();c.moveTo(0,0);
-      c.bezierCurveTo(42,-65,66,-22,12,10);
-      c.bezierCurveTo(60,6,40,58,0,13);
-      c.closePath();c.stroke();c.fill();
-      c.strokeStyle=t.accent;c.lineWidth=3;
-      c.beginPath();c.moveTo(9,0);c.lineTo(35,-25);c.stroke();
-      c.restore();
-    }
-    c.strokeStyle=t.ink;c.lineWidth=5;
-    c.beginPath();c.moveTo(0,-17);c.lineTo(0,24);c.stroke();
-    c.lineWidth=2;
-    c.beginPath();c.moveTo(0,-12);c.quadraticCurveTo(-12,-35,-18,-28);
-    c.moveTo(0,-12);c.quadraticCurveTo(12,-35,18,-28);c.stroke();
-  }else if(key==="diamond"){
-    c.fillStyle="#d8effb";
-    c.beginPath();c.moveTo(-35,-19);c.lineTo(-19,-36);
-    c.lineTo(19,-36);c.lineTo(35,-19);c.lineTo(0,40);c.closePath();
-    c.stroke();c.fill();
-    c.strokeStyle=t.accent;c.lineWidth=2;
-    c.beginPath();c.moveTo(-35,-19);c.lineTo(35,-19);
-    c.moveTo(-19,-36);c.lineTo(-12,-19);c.lineTo(0,40);
-    c.moveTo(19,-36);c.lineTo(12,-19);c.lineTo(0,40);c.stroke();
-  }else if(key==="bow"){
-    for(const side of [-1,1]){
-      c.save();c.scale(side,1);
-      c.beginPath();c.moveTo(0,0);c.lineTo(42,-28);
-      c.quadraticCurveTo(53,0,42,28);c.closePath();
-      c.stroke();c.fill();c.restore();
-    }
-    c.fillStyle=t.secondary;
-    roundRect(c,-11,-14,22,28,7);c.stroke();c.fill();
-  }else if(key==="wings"){
-    c.fillStyle="#fdf8ff";
-    for(const side of [-1,1]){
-      c.save();c.scale(side,1);
-      c.beginPath();c.moveTo(0,18);
-      c.bezierCurveTo(15,-12,18,-37,48,-43);
-      c.bezierCurveTo(45,-25,44,-20,35,-13);
-      c.lineTo(46,-19);c.quadraticCurveTo(44,-2,28,5);
-      c.lineTo(38,0);c.quadraticCurveTo(30,25,0,18);
-      c.closePath();
-      c.strokeStyle=t.accent;c.lineWidth=3;c.stroke();c.fill();
-      c.restore();
-    }
-  }else if(key==="sparkle"){
-    c.fillStyle=t.secondary;
-    c.beginPath();c.moveTo(0,-45);c.quadraticCurveTo(5,-5,40,0);
-    c.quadraticCurveTo(5,5,0,45);c.quadraticCurveTo(-5,5,-40,0);
-    c.quadraticCurveTo(-5,-5,0,-45);c.closePath();c.stroke();c.fill();
-  }else if(key==="kiss"){
-    c.fillStyle=t.accent;
-    c.beginPath();c.moveTo(-44,0);
-    c.quadraticCurveTo(-18,-32,0,-15);
-    c.quadraticCurveTo(18,-32,44,0);
-    c.quadraticCurveTo(0,36,-44,0);c.closePath();c.stroke();c.fill();
-    c.strokeStyle=t.ink;c.lineWidth=2;
-    c.beginPath();c.moveTo(-36,1);c.quadraticCurveTo(0,11,36,1);c.stroke();
-  }else if(key==="chain"){
-    for(let i=-2;i<=2;i++){
-      c.save();c.translate(i*17,i%2?4:-4);c.rotate(i%2?.5:-.5);
-      c.strokeStyle="#fff";c.lineWidth=10;
-      c.beginPath();c.ellipse(0,0,12,19,0,0,Math.PI*2);c.stroke();
-      c.strokeStyle="#97a4b8";c.lineWidth=5;c.stroke();
-      c.restore();
-    }
-  }else if(key==="flower"){
-    c.fillStyle=t.accent;
-    for(let i=0;i<6;i++){
-      c.save();c.rotate(i*Math.PI/3);
-      c.beginPath();c.ellipse(0,-23,15,23,0,0,Math.PI*2);
-      c.stroke();c.fill();c.restore();
-    }
-    c.fillStyle=t.secondary;c.beginPath();c.arc(0,0,14,0,Math.PI*2);c.fill();
-  }else if(key==="ribbon"){
-    c.beginPath();c.moveTo(-45,-16);c.lineTo(45,-16);
-    c.lineTo(36,0);c.lineTo(45,16);c.lineTo(-45,16);
-    c.lineTo(-36,0);c.closePath();c.stroke();c.fill();
-    c.fillStyle="white";c.textAlign="center";c.textBaseline="middle";
-    c.font="bold 12px Arial";c.fillText("2000",0,0);
-  }
-}
+// Stamps are illustrated WebP files: one set per booth plus a shared Heisei-pop set.
+const STAMP_DIR="assets/puri-club/stamps/web/";
+const STAMP_SETS={
+  gal:[["109-style/109-01-heart","桃紅愛心"],["109-style/109-03-crown","金皇冠"],["109-style/109-04-butterfly","豹紋蝴蝶"],["109-style/109-07-bow","豹紋蝴蝶結"],["109-style/109-09-chain","銀鎖鏈"],["109-style/109-11-pearls","珍珠"],["109-style/109-13-kiss","吻痕"],["109-style/109-14-stars","金色星光"],["109-style/109-16-gems","水鑽"],["109-style/109-19-lace-corner","蕾絲角"],["109-style/109-20-tape","豹紋膠帶"],["109-style/109-21-ribbon","緞帶"]],
+  hara:[["harajuku-mix/01-bubble-star","泡泡星"],["harajuku-mix/02-checker-heart","棋盤愛心"],["harajuku-mix/03-six-flower","彩色花朵"],["harajuku-mix/07-checker-bow","棋盤蝴蝶結"],["harajuku-mix/09-bead-string","彩珠串"],["harajuku-mix/10-star-charm","星星吊飾"],["harajuku-mix/13-three-stars","三顆星"],["harajuku-mix/14-rays","放射線"],["harajuku-mix/18-paper-confetti","紙片"],["harajuku-mix/19-graph-paper","方格紙"],["harajuku-mix/20-stripe-tape","條紋膠帶"],["harajuku-mix/22-wave-underline","波浪線"]],
+  cyber:[["cyber-angel/01-ice-butterfly","冰藍蝴蝶"],["cyber-angel/03-chrome-heart","鉻銀愛心"],["cyber-angel/05-angel-wings","天使翅膀"],["cyber-angel/07-ice-bow","冰藍蝴蝶結"],["cyber-angel/09-teardrop-pendant","水滴墜飾"],["cyber-angel/12-halo","光環"],["cyber-angel/13-ice-stars","冰藍星星"],["cyber-angel/14-glass-bubbles","玻璃泡泡"],["cyber-angel/15-rhinestone-diamond","水鑽菱形"],["cyber-angel/20-gummy-label","果凍標籤"],["cyber-angel/21-rhinestone-corner","水鑽角"],["cyber-angel/23-prism-tape","稜鏡膠帶"]]
+};
+const SHARED_PICTURES=[["shared/PB-01_hand-heart","手繪愛心"],["shared/PB-02_link-hearts","連心"],["shared/PB-03_flying-hearts","飛愛心"],["shared/PB_hearts-stars","愛心星星"],["shared/PB-04_yellow-star","黃色星星"],["shared/PB-05_sparkle-group","閃亮組"],["shared/PB-06_smile-badge","笑臉"],["shared/PB-07_daisy","小雛菊"],["shared/PB-08_cherries","櫻桃"],["shared/PB-09_strawberry","草莓"],["shared/PB-10_music-notes","音符"],["shared/PB-11_v-sign","V 手勢"],["shared/PB-12_gift-box","禮物盒"],["shared/PB-14_mini-camera","迷你相機"]];
+const SHARED_WORDS=[["shared/PW-01_zuttomo","ズッ友"],["shared/PW-02_zutto-issho","ずっと一緒"],["shared/PW-03_nakayoshi","なかよし"],["shared/PW-04_nakayoshi","仲良し"],["shared/PW-05_best-friends","BEST FRIENDS"],["shared/PW-06_itsumen","いつメン"],["shared/PW-07_saikyou-combi","最強コンビ"],["shared/PW-08_muteki","無敵"],["shared/PW-09_kyou-no-shuyaku","今日の主役"],["shared/PW-10_love","LOVE"],["shared/PW-11_rabu","ラブ"],["shared/PW-12_daisuki","だいすき"],["shared/PW-13_heart-times-heart","愛心×愛心"],["shared/PW-14_seishun","青春"],["shared/PW-15_omoide","思い出"],["shared/PW-16_kinenbi","記念日"]];
+const stampImages=new Map();
+function stampImage(key){let img=stampImages.get(key);if(!img){img=new Image();img.decoding="async";img.onload=()=>{if(stage==="edit")queueEditorRender()};img.src=STAMP_DIR+key+".webp";stampImages.set(key,img)}return img}
+// Words read smaller than pictures at the same box size, so they get a little extra room.
+function drawStamp(c,key,x,y,size,rotation=0){const img=stampImage(key);if(!img.complete||!img.naturalWidth)return;const k=size*(key.includes("/PW-")?1.35:1)/Math.max(img.naturalWidth,img.naturalHeight),w=img.naturalWidth*k,h=img.naturalHeight*k;c.save();c.translate(x,y);c.rotate(rotation);c.drawImage(img,-w/2,-h/2,w,h);c.restore()}
 
 /* =========================
    印章與塗鴉筆刷
@@ -612,7 +489,7 @@ function paintPattern(c,o){const m=maskLayer.getContext("2d");m.globalCompositeO
 const GLOW_COLORS=["#ff3d9a","#c43dff","#4d6bff","#13b8e8","#22c26a","#ffab1a","#ff4f4f"];
 function paleTint(hex,amount=.86){const n=parseInt(hex.slice(1),16),mix=v=>Math.round(v+(255-v)*amount);return "rgb("+mix(n>>16&255)+","+mix(n>>8&255)+","+mix(n&255)+")"}
 function drawObject(c,o){
-  if(o.type==="stamp"){c.save();c.translate(o.x,o.y);c.rotate(o.rotation);c.scale(o.size/100,o.size/100);drawSticker(c,o.key);c.restore();return}
+  if(o.type==="stamp"){drawStamp(c,o.key,o.x,o.y,o.size,o.rotation);return}
   if(o.type!=="stroke"||!o.points.length)return;
   c.save();c.lineCap="round";c.lineJoin="round";c.lineWidth=o.width;
   if(o.brush==="glow"){
@@ -633,7 +510,7 @@ function drawObject(c,o){
 }
 
 function setStage(next){stage=next;document.body.dataset.stage=next;$("lobbySection").hidden=next!=="lobby";$("workspace").hidden=next==="lobby";for(const name of ["start","shoot","review","import","edit","layout","result"])$(name+"Section").hidden=name!==next;document.querySelectorAll("[data-step]").forEach(el=>el.classList.toggle("current",el.dataset.step===(["review","import"].includes(next)?"shoot":next)));if(!["start","shoot","review"].includes(next))stopCamera();window.scrollTo({top:0,behavior:"instant"})}
-function syncTheme(){document.body.dataset.theme=theme;document.querySelectorAll(".machine-name").forEach(el=>el.textContent=THEMES[theme].name+" / PURI CLUB 2000");document.querySelectorAll(".standby-art").forEach(img=>{if(img.getAttribute("src")!==STANDBY_ART[theme])img.src=STANDBY_ART[theme]});drawColor=THEMES[theme].accent;buildSwatches();buildStampButtons()}
+function syncTheme(){document.body.dataset.theme=theme;document.querySelectorAll(".machine-name").forEach(el=>el.textContent=THEMES[theme].name+" / PURI CLUB 2000");document.querySelectorAll(".standby-art").forEach(img=>{if(img.getAttribute("src")!==STANDBY_ART[theme])img.src=STANDBY_ART[theme]});drawColor=THEMES[theme].accent;if(!STAMP_SETS[theme].some(([key])=>key===stampKey))stampKey=STAMP_SETS[theme][0][0];buildSwatches();buildStampButtons()}
 function selectButtons(selector,key,value){document.querySelectorAll(selector).forEach(b=>{const active=b.dataset[key]===value;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active))})}
 function placeholder(canvas,label){const c=canvas.getContext("2d"),w=canvas.width,h=canvas.height;c.fillStyle=THEMES[theme].ink;c.fillRect(0,0,w,h);c.fillStyle="#ffffff1a";for(let x=0;x<w;x+=25)for(let y=0;y<h;y+=25){c.beginPath();c.arc(x,y,1,0,7);c.fill()}c.textAlign="center";c.textBaseline="middle";drawShape(c,THEMES[theme].symbol,w/2,h*.39,w*.13,THEMES[theme].secondary);if(label){c.fillStyle="#fff";c.font="bold "+w*.028+"px monospace";c.fillText(label,w/2,h*.65)}}
 function cameraError(e){if(!isSecureContext||!navigator.mediaDevices?.getUserMedia)return "相機需要 HTTPS 或 localhost。也可以匯入照片。";return ({NotAllowedError:"請允許使用相機，或匯入照片。",NotFoundError:"找不到相機，改用你喜歡的照片也可以。",NotReadableError:"相機被其他程式使用中，關閉後再試一次。"})[e.name]||"相機暫時無法啟動，請再試一次或匯入照片。"}
@@ -682,7 +559,7 @@ function placeStamp(p,pointerId){if(!canEdit()||objects().length>=200)return;rem
 // Holding a stamp keeps it under the finger and slowly blows it up.
 function growStamp(now){if(!gesture?.stamp)return;const held=now-gesture.start;if(held>STAMP_HOLD_MS){gesture.object.size=Math.round(Math.min(STAMP_MAX,gesture.base*(1+(held-STAMP_HOLD_MS)/850)));queueEditorRender()}requestAnimationFrame(growStamp)}
 function undo(){if(!canEdit()||!histories[activePhoto].length)return;finishGesture();decorations[activePhoto]=histories[activePhoto].pop();renderEditor()}
-function buildStampButtons(){$("stampButtons").replaceChildren();for(const [key,name] of stickerDefs){const b=document.createElement("button");b.className="stamp-button"+(key===stampKey?" active":"");b.dataset.stamp=key;b.setAttribute("aria-label","選擇"+name+"印章");b.setAttribute("aria-pressed",String(key===stampKey));const c=makeCanvas(100,100),ctx=c.getContext("2d"),small=document.createElement("small");ctx.translate(50,50);ctx.scale(.85,.85);drawSticker(ctx,key);small.textContent=name;b.append(c,small);b.onclick=()=>selectStamp(key);$("stampButtons").append(b)}}
+function buildStampButtons(){$("stampButtons").replaceChildren();for(const [title,set] of [[THEMES[theme].name+" 限定",STAMP_SETS[theme]],["共用圖案",SHARED_PICTURES],["共用文字",SHARED_WORDS]]){const heading=document.createElement("p");heading.className="stamp-group";heading.textContent=title;$("stampButtons").append(heading);for(const [key,name] of set){const b=document.createElement("button"),img=document.createElement("img"),small=document.createElement("small");b.className="stamp-button"+(key===stampKey?" active":"");b.dataset.stamp=key;b.setAttribute("aria-label","選擇"+name+"印章");b.setAttribute("aria-pressed",String(key===stampKey));img.src=STAMP_DIR+key+".webp";img.alt="";img.loading="lazy";small.textContent=name;b.append(img,small);b.onclick=()=>selectStamp(key);$("stampButtons").append(b);stampImage(key)}}}
 function buildSwatches(){const glow=brushMode==="glow",current=glow?glowColor:drawColor;$("drawColors").replaceChildren();const colors=glow?GLOW_COLORS:[THEMES[theme].accent,"#7547a2","#302532","#ffffff","#7cbbea","#b0d756","#ffcb4d"];if(brushMode!=="dots"&&brushMode!=="hearts")colors.push("rainbow");else if(current==="rainbow")drawColor=colors[0];for(const color of colors){const rainbow=color==="rainbow",b=document.createElement("button");b.className="swatch"+(glow?" glow":"")+(rainbow?" rainbow":"")+(color===(glow?glowColor:drawColor)?" active":"");if(!rainbow)b.style.background=glow?"radial-gradient(circle,#fffdf8 0 30%,"+color+" 72%)":color;b.setAttribute("aria-label",rainbow?(glow?"彩虹強光":"彩虹"):(glow?"光暈顏色 ":"畫筆顏色 ")+color);b.onclick=()=>{if(!canEdit())return;if(glow)glowColor=color;else drawColor=color;[...$("drawColors").children].forEach(el=>el.classList.toggle("active",el===b))};$("drawColors").append(b)}}
 function syncBrushUI(){buildSwatches();syncEditControls();selectButtons("[data-brush-category]","brushCategory",brushCategory);selectButtons("[data-brush-preset]","brushPreset",patternPreset);$("patternPresets").hidden=brushCategory!=="pattern";$("brushSizeValue").value=brushSize}
 function point(e){const r=editCanvas.getBoundingClientRect();return {x:clamp((e.clientX-r.left)/r.width*800,0,800),y:clamp((e.clientY-r.top)/r.height*600,0,600)}}
@@ -693,7 +570,7 @@ function sheetSpec(forLayout=layout){if(forLayout==="strip")return {w:360,h:1240
 function drawPaper(c,w,h){const t=THEMES[theme];c.fillStyle=t.paper;c.fillRect(0,0,w,h);if(theme==="gal"){c.fillStyle="#f5ba85";c.fillRect(0,0,w,78);for(let y=9;y<78;y+=22)for(let x=5;x<w;x+=30){c.strokeStyle=t.ink;c.lineWidth=3;c.beginPath();c.ellipse(x+(y%3)*3,y,7,4,.5,.3,5.7);c.stroke()}c.fillStyle="#ffc4df";c.fillRect(0,78,12,h-78);c.fillRect(w-12,78,12,h-78)}else if(theme==="hara"){for(let y=0;y<h;y+=18)for(let x=0;x<w;x+=18){if(y<78||y>h-26||x<18||x>w-25){c.fillStyle=(x/18+y/18)%2?t.secondary:"#ba87cf";c.fillRect(x,y,18,18)}}}else{const g=c.createLinearGradient(0,0,w,h);g.addColorStop(0,"#d0e4ff");g.addColorStop(.28,"#fcfdff");g.addColorStop(.48,"#c0c8e9");g.addColorStop(.7,"#faffff");g.addColorStop(1,"#b1cbec");c.fillStyle=g;c.fillRect(0,0,w,h)}
  c.fillStyle="#fffaf4ed";roundRect(c,w*.14,19,w*.72,42,21);c.fill();c.textAlign="center";c.textBaseline="middle";c.fillStyle=t.ink;c.font="900 italic "+(w<400?24:33)+"px Arial";c.fillText(t.name,w/2,41);drawShape(c,t.symbol,w*.075,41,22,t.accent);drawShape(c,t.symbol,w*.925,41,22,t.accent);c.font="bold 9px monospace";c.fillStyle=t.ink;c.fillText("PURI CLUB 2000 / "+stampDate,w/2,h-19);
 }
-function renderSheet(canvas,scale=2,withFilm=false,forLayout=layout){const s=sheetSpec(forLayout),t=THEMES[theme];canvas.width=Math.round(s.w*scale);canvas.height=Math.round(s.h*scale);const c=canvas.getContext("2d");c.scale(scale,scale);drawPaper(c,s.w,s.h);s.frames.forEach((r,i)=>{c.save();c.translate(r.x+r.w/2,r.y+r.h/2);c.rotate(r.a);c.fillStyle="#40203b25";roundRect(c,-r.w/2-7,-r.h/2-6,r.w+20,r.h+35,7);c.fill();c.fillStyle="#fffdf9";c.strokeStyle=t.border;c.lineWidth=2;roundRect(c,-r.w/2-7,-r.h/2-7,r.w+14,r.h+30,6);c.fill();c.stroke();c.drawImage(finalPhotos?.[i]||decoratedPhoto(i),-r.w/2,-r.h/2,r.w,r.h);c.fillStyle=t.ink;c.textAlign="left";c.font="bold 8px monospace";c.fillText("0"+(i+1)+" / "+["BESTIES FOREVER","SO CUTE, SO US","LOVE YOU","HAPPY LITTLE DAYS"][i],-r.w/2+3,r.h/2+14);c.restore();c.save();c.translate(r.x+(i%2?r.w:0),r.y-4);c.scale(.42,.42);drawSticker(c,theme==="gal"?(i%2?"bow":"heart"):theme==="hara"?(i%2?"flower":"star"):(i%2?"wings":"sparkle"));c.restore()});c.fillStyle=t.accent;c.textAlign="center";c.font="italic bold "+(s.w<400?15:19)+"px Georgia";c.fillText(theme==="gal"?"you're my favorite kind of cute":theme==="hara"?"too cute to follow the rules":"a little angel, a little magic",s.w/2,s.h-43);if(withFilm&&film!=="none")drawFilm(c,s.w,s.h);}
+function renderSheet(canvas,scale=2,withFilm=false,forLayout=layout){const s=sheetSpec(forLayout),t=THEMES[theme];canvas.width=Math.round(s.w*scale);canvas.height=Math.round(s.h*scale);const c=canvas.getContext("2d");c.scale(scale,scale);drawPaper(c,s.w,s.h);s.frames.forEach((r,i)=>{c.save();c.translate(r.x+r.w/2,r.y+r.h/2);c.rotate(r.a);c.fillStyle="#40203b25";roundRect(c,-r.w/2-7,-r.h/2-6,r.w+20,r.h+35,7);c.fill();c.fillStyle="#fffdf9";c.strokeStyle=t.border;c.lineWidth=2;roundRect(c,-r.w/2-7,-r.h/2-7,r.w+14,r.h+30,6);c.fill();c.stroke();c.drawImage(finalPhotos?.[i]||decoratedPhoto(i),-r.w/2,-r.h/2,r.w,r.h);c.fillStyle=t.ink;c.textAlign="left";c.font="bold 8px monospace";c.fillText("0"+(i+1)+" / "+["BESTIES FOREVER","SO CUTE, SO US","LOVE YOU","HAPPY LITTLE DAYS"][i],-r.w/2+3,r.h/2+14);c.restore();drawStamp(c,STAMP_SETS[theme][i%2?3:0][0],r.x+(i%2?r.w:0),r.y-4,46,i%2?.12:-.12)});c.fillStyle=t.accent;c.textAlign="center";c.font="italic bold "+(s.w<400?15:19)+"px Georgia";c.fillText(theme==="gal"?"you're my favorite kind of cute":theme==="hara"?"too cute to follow the rules":"a little angel, a little magic",s.w/2,s.h-43);if(withFilm&&film!=="none")drawFilm(c,s.w,s.h);}
 // Laminate patterns sit on a slanted, staggered lattice.
 function filmPattern(c,w,h,step,draw){c.save();c.translate(w/2,h/2);c.rotate(-.42);const r=Math.hypot(w,h)/2+step;for(let row=0,y=-r;y<r;y+=step/2,row++)for(let x=-r+(row%2?step/2:0);x<r;x+=step)draw(x,y,row);c.restore()}
 function drawFilm(c,w,h){c.save();const g=c.createLinearGradient(0,h*.8,w,h*.1);if(film==="rainbow"){[[0,"#ff86cf"],[.25,"#90d5ff"],[.5,"#fff291"],[.75,"#d49dff"],[1,"#9dffee"]].forEach(p=>g.addColorStop(...p));c.globalCompositeOperation="soft-light";c.globalAlpha=.24}else{g.addColorStop(0,"#ffffff00");g.addColorStop(.4,"#ffffff00");g.addColorStop(.5,"#ffffff");g.addColorStop(.62,"#ffffff00");g.addColorStop(1,"#ffffff00");c.globalAlpha=.18}c.fillStyle=g;c.fillRect(0,0,w,h);
@@ -776,18 +653,18 @@ document.querySelectorAll("[data-brush-category]").forEach(b=>b.onclick=()=>{if(
 document.querySelectorAll("[data-brush-preset]").forEach(b=>b.onclick=()=>{if(!canEdit())return;patternPreset=b.dataset.brushPreset;brushCategory="pattern";brushMode=patternPreset;syncBrushUI()});
 $("brushSize").oninput=e=>{if(!canEdit())return;brushSize=Number(e.target.value);syncBrushUI()};$("undoBtn").onclick=undo;
 // Each tap scatters a few random stamps around the edges, so three quick taps decorate a photo.
-const MAGIC_KEYS={gal:["bow","heart","crown","kiss","diamond","sparkle"],hara:["flower","star","bow","heart","butterfly","ribbon"],cyber:["wings","sparkle","diamond","butterfly","chain","star"]};
+
 function magicSpot(placed){let best=null,bestGap=-1;for(let tries=0;tries<28;tries++){const x=rand(40,760),y=rand(40,560),dx=(x-400)/235,dy=(y-290)/185;if(dx*dx+dy*dy<1)continue;const gap=Math.min(Infinity,...placed.map(o=>Math.hypot(o.x-x,o.y-y)-o.size*.42));if(gap>40)return {x,y};if(gap>bestGap){bestGap=gap;best={x,y}}}return best||{x:pick([60,740]),y:pick([60,540])}}
-$("autoDecor").onclick=()=>{if(!canEdit())return;const count=Math.min(Math.floor(rand(3,6)),200-objects().length);if(count<=0)return;remember();const placed=objects().filter(o=>o.type==="stamp");for(let i=0;i<count;i++){const spot=magicSpot(placed),key=Math.random()<.7?pick(MAGIC_KEYS[theme]):pick(stickerDefs)[0],o={id:nextId++,type:"stamp",key,x:spot.x,y:spot.y,size:Math.round(Math.random()<.25?rand(44,70):rand(78,165)),rotation:rand(-.9,.9)};objects().push(o);placed.push(o)}renderEditor()};
+$("autoDecor").onclick=()=>{if(!canEdit())return;const count=Math.min(Math.floor(rand(3,6)),200-objects().length);if(count<=0)return;remember();const placed=objects().filter(o=>o.type==="stamp");for(let i=0;i<count;i++){const spot=magicSpot(placed),roll=Math.random(),key=pick(roll<.62?STAMP_SETS[theme]:roll<.9?SHARED_PICTURES:SHARED_WORDS)[0],o={id:nextId++,type:"stamp",key,x:spot.x,y:spot.y,size:Math.round(Math.random()<.25?rand(44,70):rand(78,165)),rotation:rand(-.9,.9)};objects().push(o);placed.push(o)}renderEditor()};
 $("editDone").onclick=finishEdit;document.querySelectorAll("[data-layout]").forEach(b=>b.onclick=()=>{layout=b.dataset.layout;selectButtons("[data-layout]","layout",layout);renderSheet($("layoutCanvas"))});$("printBtn").onclick=showResult;
 document.querySelectorAll("button[data-film]").forEach(b=>b.onclick=()=>{film=b.dataset.film;selectButtons("button[data-film]","film",film);$("foilCard").dataset.film=film;resetTilt();prepareExport()});
 $("saveBtn").onclick=savePNG;$("shareBtn").onclick=share;$("openImageBtn").onclick=openImage;$("closeImage").onclick=()=>$("imageDialog").close();$("imageDialog").addEventListener("close",()=>{if(imageURL)URL.revokeObjectURL(imageURL);imageURL=null;$("saveImage").removeAttribute("src")});
 $("backLayout").onclick=()=>{clearExport();setStage("layout");renderSheet($("layoutCanvas"))};
 $("restartBtn").onclick=()=>$("restartDialog").showModal();$("restartNo").onclick=()=>$("restartDialog").close();
-$("restartYes").onclick=()=>{$("restartDialog").close();sequenceToken++;running=false;clearExport();photos=Array(4).fill(null);processed=Array(4).fill(null);finalPhotos=null;decorations=Array.from({length:4},()=>[]);histories=Array.from({length:4},()=>[]);retakes=[0,0,0,0];gesture=null;editLocked=false;reviewDeadline=0;reviewLocked=false;tool="stamp";stampKey="heart";brushCategory="solid";brushMode="solid";patternPreset="dots";drawColor="#f73692";brushSize=7;$("brushSize").value=7;glowColor=GLOW_COLORS[0];syncBrushUI();film="none";layout="grid";duration=90;setMotion(false);$("timeToggle").dataset.unlimited="false";$("timeToggle").innerHTML="<small>"+icon("timer")+"</small><b>90</b>";$("timeToggle").setAttribute("aria-label","編輯時間 90 秒，點擊切換不限時");selectButtons("button[data-film]","film",film);selectButtons("[data-layout]","layout",layout);resetTilt();setStage("lobby");status("再選一台，製造新的回憶")};
+$("restartYes").onclick=()=>{$("restartDialog").close();sequenceToken++;running=false;clearExport();photos=Array(4).fill(null);processed=Array(4).fill(null);finalPhotos=null;decorations=Array.from({length:4},()=>[]);histories=Array.from({length:4},()=>[]);retakes=[0,0,0,0];gesture=null;editLocked=false;reviewDeadline=0;reviewLocked=false;tool="stamp";stampKey=STAMP_SETS[theme][0][0];brushCategory="solid";brushMode="solid";patternPreset="dots";drawColor="#f73692";brushSize=7;$("brushSize").value=7;glowColor=GLOW_COLORS[0];syncBrushUI();film="none";layout="grid";duration=90;setMotion(false);$("timeToggle").dataset.unlimited="false";$("timeToggle").innerHTML="<small>"+icon("timer")+"</small><b>90</b>";$("timeToggle").setAttribute("aria-label","編輯時間 90 秒，點擊切換不限時");selectButtons("button[data-film]","film",film);selectButtons("[data-layout]","layout",layout);resetTilt();setStage("lobby");status("再選一台，製造新的回憶")};
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&["start","shoot","review"].includes(stage))interruptCapture("相機已暫停，回來後重新開啟就能繼續。");if(stage==="edit")updateClock()});window.addEventListener("pagehide",()=>{sequenceToken++;running=false;stopCamera()});
 window.addEventListener("keydown",e=>{if(["INPUT","SELECT","TEXTAREA"].includes(e.target.tagName))return;if(stage==="edit"&&(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"){e.preventDefault();undo()}});
-buildStampButtons();syncBrushUI();setInterval(()=>{updateClock();updateReviewClock()},150);requestAnimationFrame(previewLoop);
+stampKey=STAMP_SETS[theme][0][0];buildStampButtons();syncBrushUI();setInterval(()=>{updateClock();updateReviewClock()},150);requestAnimationFrame(previewLoop);
 </script>
 </body>
 </html>
