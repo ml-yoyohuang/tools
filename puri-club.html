@@ -323,6 +323,7 @@ button.soft{background:#fffaf1;font-size:14px;min-height:42px;padding:9px 12px;b
 /* Countdown artwork replaces the italic digits and pops in on every tick. */
 .count-number:has(.count-art){transform:none;-webkit-text-stroke:0;text-shadow:none}
 .count-art{display:block;width:min(88vw,760px);max-height:62vh;height:auto;object-fit:contain;filter:drop-shadow(0 10px 18px #1d0a1a99);animation:countPop .38s cubic-bezier(.2,1.4,.4,1) both}
+.count-art.shot-done{width:min(56vw,340px);max-height:40vh}
 @keyframes countPop{from{opacity:0;transform:scale(.6) rotate(-6deg)}to{opacity:1;transform:scale(1) rotate(0)}}
 </style>
 </head>
@@ -532,14 +533,17 @@ function interruptCapture(message){sequenceToken++;running=false;stopCamera();if
 async function sequenceWait(ms,token){await sleep(ms);return token===sequenceToken&&stage==="shoot"&&!document.hidden&&cameraReady&&video.readyState>=2}
 // Booths with countdown artwork show it for READY and 5–1; the rest use the theme symbol and plain digits.
 const COUNTDOWN_ART={gal:"assets/puri-club/countdown/web/109-style-",hara:"assets/puri-club/countdown/web/harajuku-mix-",cyber:"assets/puri-club/countdown/web/cyber-angel-"};
-function preloadCountdown(){const base=COUNTDOWN_ART[theme];if(base)for(const step of ["ready",5,4,3,2,1])new Image().src=base+step+".webp"}
+function preloadCountdown(){new Image().src=SHOT_DONE_ART[theme];const base=COUNTDOWN_ART[theme];if(base)for(const step of ["ready",5,4,3,2,1])new Image().src=base+step+".webp"}
+// After each shot one of the booth's stamps pops up next to the GET! label.
+const SHOT_DONE_ART={gal:STAMP_DIR+"109-style/109-01-heart.webp",hara:STAMP_DIR+"harajuku-mix/13-three-stars.webp",cyber:STAMP_DIR+"cyber-angel/07-ice-bow.webp"};
+function showShotDone(){const img=new Image();img.className="count-art shot-done";img.src=SHOT_DONE_ART[theme];img.alt="";$("countNumber").replaceChildren(img)}
 function showCount(step){const el=$("countNumber"),base=COUNTDOWN_ART[theme];if(base){const img=new Image();img.className="count-art";img.src=base+step+".webp";img.alt=step==="ready"?"READY":String(step);el.replaceChildren(img)}else if(step==="ready")el.innerHTML=icon(THEMES[theme].symbol);else el.textContent=step}
 async function captureSequence(slots,isRetake=false){if(running||!slots.length)return;if(isRetake&&retakes[slots[0]]>=1)return;pendingSlots=[...slots];retakeSlot=isRetake?slots[0]:null;setStage("shoot");$("shootSection").dataset.paused="false";$("resumeBtn").hidden=true;$("shootNote").hidden=true;$("countOverlay").hidden=false;$("countLabel").hidden=false;if(!cameraReady){$("countNumber").innerHTML=icon(THEMES[theme].symbol);$("countLabel").textContent="正在連接鏡頭…";if(!await startCamera()){$("shootSection").dataset.paused="true";$("countOverlay").hidden=true;$("resumeBtn").hidden=false;$("shootNote").hidden=false;$("shootNote").textContent="請允許鏡頭後繼續；已拍攝的照片會保留。";return}}
  running=true;const token=++sequenceToken,usedPoseHints=new Set();const wait=async ms=>{const ok=await sequenceWait(ms,token);if(!ok&&token===sequenceToken)interruptCapture("拍攝已暫停，回來後繼續就好。");return ok};
  for(let n=0;n<slots.length;n++){const i=slots[n],poseHint=pickPoseHint(usedPoseHints,i);$("shotNumber").textContent=String(i+1).padStart(2,"0")+" / 04";$("poseHint").textContent=poseHint;showCount("ready");$("countLabel").hidden=false;$("countLabel").textContent=n===0?"準備好你的姿勢！":"換個姿勢，下一張來囉！";if(!await wait(n===0?2200:3000))return;
   $("countLabel").hidden=true;for(let count=5;count>=1;count--){showCount(count);if(!await wait(1000))return}
   try{const raw=rawFromCamera();const image=processPhoto(raw);photos[i]=raw;processed[i]=image;if(isRetake)retakes[i]=1;pendingSlots=pendingSlots.filter(s=>s!==i)}catch(e){interruptCapture("這張還沒拍到，請重新連接相機再試一次。");return}
-  $("cameraStage").classList.remove("flash");void $("cameraStage").offsetWidth;$("cameraStage").classList.add("flash");$("countNumber").innerHTML=icon(THEMES[theme].symbol);$("countLabel").hidden=false;$("countLabel").textContent="GET! 第 "+(i+1)+" 張好可愛";if(!await wait(950))return;
+  $("cameraStage").classList.remove("flash");void $("cameraStage").offsetWidth;$("cameraStage").classList.add("flash");showShotDone();$("countLabel").hidden=false;$("countLabel").textContent="GET! 第 "+(i+1)+" 張好可愛";if(!await wait(950))return;
  }
  running=false;pendingSlots=[];retakeSlot=null;showReview();
 }
