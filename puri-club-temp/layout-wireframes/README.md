@@ -17,7 +17,7 @@
 
 5 × 4 格要剛好放進 1 大 2 中 3 小，只有四種排法：大張在四個角落之一，兩張中張疊在長邊，三張小張排在短邊。四個 1/4 區各用一種，讓大張和中小張的位置互相錯開。
 
-8 分割的貼紙間距 16、外圍留 20，沒有標題和標語，整面都是機台底紙：109 STYLE 是程式繪製的豹紋；HARAJUKU MIX 是 `assets/puri-club/harajuku-mix-flat-background.png`，橫向相紙會把這張 2:3 直式圖轉 90° 鋪滿；CYBER ANGEL 直向相紙用 `assets/puri-club/cyber-angel-flat-background.png`，橫向相紙用 `assets/puri-club/cyber-angel-flat-background-landscape.jpg`。照片沒有白色印刷邊，直接印到割線外 6 px 的出血範圍，割線是畫在照片上的白色細線；郵票的出血範圍是長方形，割線保留齒孔形狀。
+8 分割的貼紙間距 16、外圍留 20，沒有標題和標語，整面都是機台底紙：109 STYLE 是 `assets/puri-club/109-style-leopard-paper.jpg`，直向相紙會把這張橫式豹紋圖轉 90° 鋪滿；HARAJUKU MIX 是 `assets/puri-club/harajuku-mix-flat-background.png`，橫向相紙會把這張 2:3 直式圖轉 90° 鋪滿；CYBER ANGEL 直向相紙用 `assets/puri-club/cyber-angel-flat-background.png`，橫向相紙用 `assets/puri-club/cyber-angel-flat-background-landscape.jpg`。照片沒有白色印刷邊，直接印到割線外 6 px 的出血範圍，割線是畫在照片上的白色細線；郵票的出血範圍是長方形，割線保留齒孔形狀。
 
 圖例：
 
