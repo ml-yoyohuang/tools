@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="616" height="656" viewBox="0 0 616 656" role="img" aria-labelledby="title desc">
+<title id="title">大中小分割（直式照片）拍貼版型對位稿</title>
+<desc id="desc">與網站輸出同尺寸的線框；藍色是照片窗，紫色實線是貼紙外形，紫色虛線是半斷割線，粉紅虛線是標題與頁尾區。</desc>
+<rect width="616" height="656" fill="#fffdf9"/>
+<rect x=".5" y=".5" width="615" height="655" fill="none" stroke="#1b2433"/>
+<g data-photo="1" data-shape="square" data-x="8" data-y="8" data-width="180" data-height="240" data-window-inset="0">
+
+<rect x="8" y="8" width="180" height="240" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="8" y="8" width="180" height="240" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="98" y="132" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P1</text>
+<text x="184" y="242" text-anchor="end" font-family="Arial,sans-serif" font-size="9" fill="#a23570">DATE</text>
+</g>
+<g data-photo="2" data-shape="square" data-x="188" data-y="8" data-width="120" data-height="160" data-window-inset="0">
+
+<rect x="188" y="8" width="120" height="160" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="188" y="8" width="120" height="160" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="248" y="92" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P2</text>
+</g>
+<g data-photo="3" data-shape="square" data-x="188" data-y="168" data-width="120" data-height="160" data-window-inset="0">
+
+<rect x="188" y="168" width="120" height="160" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="188" y="168" width="120" height="160" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="248" y="252" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P3</text>
+</g>
+<g data-photo="4" data-shape="square" data-x="8" data-y="248" data-width="60" data-height="80" data-window-inset="0">
+
+<rect x="8" y="248" width="60" height="80" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="8" y="248" width="60" height="80" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="38" y="292" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" font-weight="700" fill="#087eae">P4</text>
+</g>
+<g data-photo="1" data-shape="square" data-x="68" data-y="248" data-width="60" data-height="80" data-window-inset="0">
+
+<rect x="68" y="248" width="60" height="80" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="68" y="248" width="60" height="80" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="98" y="292" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" font-weight="700" fill="#087eae">P1</text>
+</g>
+<g data-photo="2" data-shape="square" data-x="128" data-y="248" data-width="60" data-height="80" data-window-inset="0">
+
+<rect x="128" y="248" width="60" height="80" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="128" y="248" width="60" height="80" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="158" y="292" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" font-weight="700" fill="#087eae">P2</text>
+</g>
+<g data-photo="2" data-shape="square" data-x="308" data-y="88" data-width="180" data-height="240" data-window-inset="0">
+
+<rect x="308" y="88" width="180" height="240" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="308" y="88" width="180" height="240" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="398" y="212" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P2</text>
+<text x="484" y="322" text-anchor="end" font-family="Arial,sans-serif" font-size="9" fill="#a23570">DATE</text>
+</g>
+<g data-photo="4" data-shape="square" data-x="488" data-y="8" data-width="120" data-height="160" data-window-inset="0">
+
+<rect x="488" y="8" width="120" height="160" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="488" y="8" width="120" height="160" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="548" y="92" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P4</text>
+</g>
+<g data-photo="3" data-shape="square" data-x="488" data-y="168" data-width="120" data-height="160" data-window-inset="0">
+
+<rect x="488" y="168" width="120" height="160" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="488" y="168" width="120" height="160" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="548" y="252" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P3</text>
+</g>
+<g data-photo="2" data-shape="square" data-x="308" data-y="8" data-width="60" data-height="80" data-window-inset="0">
+
+<rect x="308" y="8" width="60" height="80" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="308" y="8" width="60" height="80" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="338" y="52" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" font-weight="700" fill="#087eae">P2</text>
+</g>
+<g data-photo="3" data-shape="square" data-x="368" data-y="8" data-width="60" data-height="80" data-window-inset="0">
+
+<rect x="368" y="8" width="60" height="80" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="368" y="8" width="60" height="80" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="398" y="52" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" font-weight="700" fill="#087eae">P3</text>
+</g>
+<g data-photo="1" data-shape="square" data-x="428" data-y="8" data-width="60" data-height="80" data-window-inset="0">
+
+<rect x="428" y="8" width="60" height="80" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="428" y="8" width="60" height="80" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="458" y="52" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" font-weight="700" fill="#087eae">P1</text>
+</g>
+<g data-photo="3" data-shape="square" data-x="128" data-y="408" data-width="180" data-height="240" data-window-inset="0">
+
+<rect x="128" y="408" width="180" height="240" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="128" y="408" width="180" height="240" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="218" y="532" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P3</text>
+<text x="304" y="642" text-anchor="end" font-family="Arial,sans-serif" font-size="9" fill="#a23570">DATE</text>
+</g>
+<g data-photo="4" data-shape="square" data-x="8" data-y="328" data-width="120" data-height="160" data-window-inset="0">
+
+<rect x="8" y="328" width="120" height="160" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="8" y="328" width="120" height="160" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="68" y="412" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P4</text>
+</g>
+<g data-photo="1" data-shape="square" data-x="8" data-y="488" data-width="120" data-height="160" data-window-inset="0">
+
+<rect x="8" y="488" width="120" height="160" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="8" y="488" width="120" height="160" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="68" y="572" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P1</text>
+</g>
+<g data-photo="4" data-shape="square" data-x="128" data-y="328" data-width="60" data-height="80" data-window-inset="0">
+
+<rect x="128" y="328" width="60" height="80" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="128" y="328" width="60" height="80" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="158" y="372" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" font-weight="700" fill="#087eae">P4</text>
+</g>
+<g data-photo="2" data-shape="square" data-x="188" data-y="328" data-width="60" data-height="80" data-window-inset="0">
+
+<rect x="188" y="328" width="60" height="80" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="188" y="328" width="60" height="80" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="218" y="372" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" font-weight="700" fill="#087eae">P2</text>
+</g>
+<g data-photo="3" data-shape="square" data-x="248" data-y="328" data-width="60" data-height="80" data-window-inset="0">
+
+<rect x="248" y="328" width="60" height="80" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="248" y="328" width="60" height="80" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="278" y="372" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" font-weight="700" fill="#087eae">P3</text>
+</g>
+<g data-photo="4" data-shape="square" data-x="428" data-y="328" data-width="180" data-height="240" data-window-inset="0">
+
+<rect x="428" y="328" width="180" height="240" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="428" y="328" width="180" height="240" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="518" y="452" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P4</text>
+<text x="604" y="562" text-anchor="end" font-family="Arial,sans-serif" font-size="9" fill="#a23570">DATE</text>
+</g>
+<g data-photo="2" data-shape="square" data-x="308" data-y="328" data-width="120" data-height="160" data-window-inset="0">
+
+<rect x="308" y="328" width="120" height="160" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="308" y="328" width="120" height="160" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="368" y="412" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P2</text>
+</g>
+<g data-photo="1" data-shape="square" data-x="308" data-y="488" data-width="120" data-height="160" data-window-inset="0">
+
+<rect x="308" y="488" width="120" height="160" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="308" y="488" width="120" height="160" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="368" y="572" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P1</text>
+</g>
+<g data-photo="3" data-shape="square" data-x="428" data-y="568" data-width="60" data-height="80" data-window-inset="0">
+
+<rect x="428" y="568" width="60" height="80" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="428" y="568" width="60" height="80" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="458" y="612" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" font-weight="700" fill="#087eae">P3</text>
+</g>
+<g data-photo="4" data-shape="square" data-x="488" data-y="568" data-width="60" data-height="80" data-window-inset="0">
+
+<rect x="488" y="568" width="60" height="80" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="488" y="568" width="60" height="80" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="518" y="612" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" font-weight="700" fill="#087eae">P4</text>
+</g>
+<g data-photo="1" data-shape="square" data-x="548" data-y="568" data-width="60" data-height="80" data-window-inset="0">
+
+<rect x="548" y="568" width="60" height="80" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
+<rect x="548" y="568" width="60" height="80" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
+<text x="578" y="612" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" font-weight="700" fill="#087eae">P1</text>
+</g>
+</svg>
