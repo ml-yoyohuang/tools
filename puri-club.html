@@ -155,13 +155,9 @@ body[data-stage=start] .mode:first-child{border-right:2px solid #241329}
 body[data-stage=start] .mode.active,body[data-stage=start] .mode[aria-pressed=true]{background:#211a2d}
 body[data-stage=start] .mode:hover:not(:disabled),body[data-stage=start] .mode:active:not(:disabled){transform:none;box-shadow:none}
 body[data-stage=start] .mode:focus-visible{outline:4px solid #fff;outline-offset:-5px;z-index:4}
-body[data-stage=start] .standby-art,body[data-stage=start] .mode canvas{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;pointer-events:none}
-body[data-stage=start] .standby-art{opacity:1;transition:opacity .2s ease}
-body[data-stage=start] .mode[data-look=old] .standby-art{filter:sepia(.13) saturate(1.18) contrast(1.08)}
-body[data-stage=start] .mode[data-look=soft] .standby-art{filter:brightness(1.07) saturate(.86)}
+body[data-stage=start] .mode canvas{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;pointer-events:none}
 body[data-stage=start] .mode canvas{aspect-ratio:auto;border-radius:0;background:transparent;opacity:0;transition:opacity .2s ease}
 body[data-stage=start] #startSection[data-camera-ready=true] .mode canvas{opacity:1}
-body[data-stage=start] #startSection[data-camera-ready=true] .standby-art{opacity:0}
 body[data-stage=start] .mode[data-look=old] canvas{image-rendering:pixelated}
 body[data-stage=start] .mode::after{content:"";position:absolute;inset:55% 0 0;z-index:1;pointer-events:none;background:linear-gradient(transparent,#100c22a8)}
 body[data-stage=start] .mode-label{position:absolute;z-index:2;left:50%;bottom:clamp(22px,5vh,52px);display:flex;align-items:center;justify-content:center;gap:8px;width:min(calc(100% - 32px),300px);min-height:54px;padding:10px 12px;border:2px solid #fff;border-radius:999px;background:var(--accent);color:#fff;box-shadow:0 8px 20px #160c2599;text-shadow:0 1px 2px #130a1d;font:900 clamp(12px,1.6vw,18px)/1.1 "Arial Rounded MT Bold","Microsoft JhengHei",system-ui,sans-serif;white-space:nowrap;transform:translateX(-50%)}
@@ -334,6 +330,15 @@ button.soft{background:#fffaf1;font-size:14px;min-height:42px;padding:9px 12px;b
 .stamp-actions .round-tool .ic{width:20px;height:20px}
 .adjust-hint{margin:8px 0;font-size:13px;text-align:center;opacity:.75}
 #editCanvas[data-tool=adjust]{cursor:default}
+/* Before the camera connects, each booth shows its lobby colour block instead of artwork. */
+body[data-stage=start] .mode,body[data-stage=start] .mode.active,body[data-stage=start] .mode[aria-pressed=true]{background:linear-gradient(135deg,#6d184c,#261428)}
+body[data-stage=start][data-theme=hara] .mode{background:linear-gradient(135deg,#602477,#26183d)}
+body[data-stage=start][data-theme=cyber] .mode{background:linear-gradient(135deg,#315797,#16234f)}
+body[data-stage=start] .mode+.mode{background-image:linear-gradient(225deg,#6d184c,#261428)}
+body[data-stage=start][data-theme=hara] .mode+.mode{background-image:linear-gradient(225deg,#602477,#26183d)}
+body[data-stage=start][data-theme=cyber] .mode+.mode{background-image:linear-gradient(225deg,#315797,#16234f)}
+/* Digits stay small enough to keep the player's face visible; READY may cover the frame. */
+.count-art.digit{width:min(44vw,300px);max-height:34vh}
 </style>
 </head>
 <body data-theme="gal" data-stage="lobby">
@@ -356,7 +361,7 @@ button.soft{background:#fffaf1;font-size:14px;min-height:42px;padding:9px 12px;b
  <section id="startSection" hidden>
   <button id="flipBtn" class="quiet" aria-label="切換鏡頭" title="切換鏡頭"><svg class="ic" aria-hidden="true"><use href="#i-flip"/></svg></button>
   <button id="timeToggle" class="timer" aria-label="編輯時間 90 秒，點擊切換不限時" title="切換編輯時間"><small><svg class="ic" aria-hidden="true"><use href="#i-timer"/></svg></small><b>90</b></button>
-  <div class="mode-grid"><button class="mode active" data-look="old" aria-pressed="true" aria-label="選擇復古低清模式並開始拍攝"><img class="standby-art" src="assets/puri-club/standby/109-style.svg" width="800" height="1200" alt="" aria-hidden="true"><canvas id="oldPreview" width="480" height="360" aria-hidden="true"></canvas><span class="mode-label spark">復古低清模式</span></button><button class="mode" data-look="soft" aria-pressed="false" aria-label="選擇天生柔亮模式並開始拍攝"><img class="standby-art" src="assets/puri-club/standby/109-style.svg" width="800" height="1200" alt="" aria-hidden="true"><canvas id="softPreview" width="480" height="360" aria-hidden="true"></canvas><span class="mode-label spark">天生柔亮模式</span></button></div>
+  <div class="mode-grid"><button class="mode active" data-look="old" aria-pressed="true" aria-label="選擇復古低清模式並開始拍攝"><canvas id="oldPreview" width="480" height="360" aria-hidden="true"></canvas><span class="mode-label spark">復古低清模式</span></button><button class="mode" data-look="soft" aria-pressed="false" aria-label="選擇天生柔亮模式並開始拍攝"><canvas id="softPreview" width="480" height="360" aria-hidden="true"></canvas><span class="mode-label spark">天生柔亮模式</span></button></div>
   <div id="permission" class="permission"><p id="cameraMessage">開啟相機後，選一邊開始拍攝。</p><button id="enableCamera" class="primary spark">開啟相機</button><button id="importEntry" class="quiet spark">沒有相機？匯入照片</button></div>
   <button id="backLobby" class="quiet spark">回去選機台</button>
  </section>
@@ -399,7 +404,6 @@ function cropDraw(c,img,x,y,w,h){const sw=img.videoWidth||img.naturalWidth||img.
 const THEMES={gal:{name:"109 STYLE",paper:"#fff0df",accent:"#f73692",ink:"#3d2036",secondary:"#ffe16c",border:"#392334",symbol:"heart",poses:["看鏡頭，笑一個","比個辣妹 peace！","靠近一點點","最後一張，最閃亮！"]},hara:{name:"HARAJUKU MIX",paper:"#fffce1",accent:"#ef59a5",ink:"#51316c",secondary:"#b9e858",border:"#69418c",symbol:"star",poses:["準備你的招牌表情","換一個超怪可愛 pose！","跟朋友擠在一起！","最後一張，放膽玩！"]},cyber:{name:"CYBER ANGEL",paper:"#edf5ff",accent:"#7c89d8",ink:"#414e7c",secondary:"#b2e8f5",border:"#8196bc",symbol:"spark",poses:["天使準備連線","輕輕歪個頭","發送一個愛心！","最後一張，閃耀吧！"]}};
 const EXTRA_POSES=["發送一個愛心！","來個只有你會的表情","眼神對上鏡頭","比個小小的心","偷偷眨一下眼睛！","這張就做鬼臉吧！","換個角度，再可愛一點","呀吼！","看旁邊！"];
 function pickPoseHint(used,shot){const themed=THEMES[theme].poses.filter((line,index)=>(index<3||shot===3)&&!used.has(line));const extra=EXTRA_POSES.filter(line=>!used.has(line)&&!themed.includes(line));const pool=Math.random()<.5&&themed.length?themed:extra.length?extra:themed;const choice=pool[Math.floor(Math.random()*pool.length)];used.add(choice);return choice}
-const STANDBY_ART={gal:"assets/puri-club/standby/109-style.svg",hara:"assets/puri-club/standby/harajuku-mix.svg",cyber:"assets/puri-club/standby/cyber-angel.svg"};
 let stage="lobby",theme="gal",look="old",layout="grid",film="none",duration=90;
 let photos=Array(4).fill(null),processed=Array(4).fill(null),finalPhotos=null,decorations=Array.from({length:4},()=>[]),histories=Array.from({length:4},()=>[]),retakes=[0,0,0,0];
 let activePhoto=0,nextId=1,tool="stamp",selectedId=null,stampKey="",brushCategory="solid",brushMode="solid",patternPreset="dots",drawColor="#f73692",glowColor="#ff3d9a",brushSize=7,gesture=null,deadline=0,editLocked=false,reviewDeadline=0,reviewLocked=false;
@@ -528,7 +532,7 @@ function drawObject(c,o){
 }
 
 function setStage(next){stage=next;document.body.dataset.stage=next;$("lobbySection").hidden=next!=="lobby";$("workspace").hidden=next==="lobby";for(const name of ["start","shoot","review","import","edit","layout","result"])$(name+"Section").hidden=name!==next;document.querySelectorAll("[data-step]").forEach(el=>el.classList.toggle("current",el.dataset.step===(["review","import"].includes(next)?"shoot":next)));if(!["start","shoot","review"].includes(next))stopCamera();window.scrollTo({top:0,behavior:"instant"})}
-function syncTheme(){document.body.dataset.theme=theme;document.querySelectorAll(".machine-name").forEach(el=>el.textContent=THEMES[theme].name+" / PURI CLUB 2000");document.querySelectorAll(".standby-art").forEach(img=>{if(img.getAttribute("src")!==STANDBY_ART[theme])img.src=STANDBY_ART[theme]});drawColor=THEMES[theme].accent;if(!STAMP_SETS[theme].some(([key])=>key===stampKey))stampKey=STAMP_SETS[theme][0][0];buildSwatches();buildStampButtons()}
+function syncTheme(){document.body.dataset.theme=theme;document.querySelectorAll(".machine-name").forEach(el=>el.textContent=THEMES[theme].name+" / PURI CLUB 2000");drawColor=THEMES[theme].accent;if(!STAMP_SETS[theme].some(([key])=>key===stampKey))stampKey=STAMP_SETS[theme][0][0];buildSwatches();buildStampButtons()}
 function selectButtons(selector,key,value){document.querySelectorAll(selector).forEach(b=>{const active=b.dataset[key]===value;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active))})}
 function placeholder(canvas,label){const c=canvas.getContext("2d"),w=canvas.width,h=canvas.height;c.fillStyle=THEMES[theme].ink;c.fillRect(0,0,w,h);c.fillStyle="#ffffff1a";for(let x=0;x<w;x+=25)for(let y=0;y<h;y+=25){c.beginPath();c.arc(x,y,1,0,7);c.fill()}c.textAlign="center";c.textBaseline="middle";drawShape(c,THEMES[theme].symbol,w/2,h*.39,w*.13,THEMES[theme].secondary);if(label){c.fillStyle="#fff";c.font="bold "+w*.028+"px monospace";c.fillText(label,w/2,h*.65)}}
 function cameraError(e){if(!isSecureContext||!navigator.mediaDevices?.getUserMedia)return "相機需要 HTTPS 或 localhost。也可以匯入照片。";return ({NotAllowedError:"請允許使用相機，或匯入照片。",NotFoundError:"找不到相機，改用你喜歡的照片也可以。",NotReadableError:"相機被其他程式使用中，關閉後再試一次。"})[e.name]||"相機暫時無法啟動，請再試一次或匯入照片。"}
@@ -550,7 +554,7 @@ function preloadCountdown(){new Image().src=SHOT_DONE_ART[theme];const base=COUN
 // After each shot one of the booth's stamps pops up next to the GET! label.
 const SHOT_DONE_ART={gal:STAMP_DIR+"109-style/109-01-heart.webp",hara:STAMP_DIR+"harajuku-mix/13-three-stars.webp",cyber:STAMP_DIR+"cyber-angel/07-ice-bow.webp"};
 function showShotDone(){const img=new Image();img.className="count-art shot-done";img.src=SHOT_DONE_ART[theme];img.alt="";$("countNumber").replaceChildren(img)}
-function showCount(step){const el=$("countNumber"),base=COUNTDOWN_ART[theme];if(base){const img=new Image();img.className="count-art";img.src=base+step+".webp";img.alt=step==="ready"?"READY":String(step);el.replaceChildren(img)}else if(step==="ready")el.innerHTML=icon(THEMES[theme].symbol);else el.textContent=step}
+function showCount(step){const el=$("countNumber"),base=COUNTDOWN_ART[theme];if(base){const img=new Image();img.className=step==="ready"?"count-art":"count-art digit";img.src=base+step+".webp";img.alt=step==="ready"?"READY":String(step);el.replaceChildren(img)}else if(step==="ready")el.innerHTML=icon(THEMES[theme].symbol);else el.textContent=step}
 async function captureSequence(slots,isRetake=false){if(running||!slots.length)return;if(isRetake&&retakes[slots[0]]>=1)return;pendingSlots=[...slots];retakeSlot=isRetake?slots[0]:null;setStage("shoot");$("shootSection").dataset.paused="false";$("resumeBtn").hidden=true;$("shootNote").hidden=true;$("countOverlay").hidden=false;$("countLabel").hidden=false;if(!cameraReady){$("countNumber").innerHTML=icon(THEMES[theme].symbol);$("countLabel").textContent="正在連接鏡頭…";if(!await startCamera()){$("shootSection").dataset.paused="true";$("countOverlay").hidden=true;$("resumeBtn").hidden=false;$("shootNote").hidden=false;$("shootNote").textContent="請允許鏡頭後繼續；已拍攝的照片會保留。";return}}
  running=true;const token=++sequenceToken,usedPoseHints=new Set();const wait=async ms=>{const ok=await sequenceWait(ms,token);if(!ok&&token===sequenceToken)interruptCapture("拍攝已暫停，回來後繼續就好。");return ok};
  for(let n=0;n<slots.length;n++){const i=slots[n],poseHint=pickPoseHint(usedPoseHints,i);$("shotNumber").textContent=String(i+1).padStart(2,"0")+" / 04";$("poseHint").textContent=poseHint;showCount("ready");$("countLabel").hidden=false;$("countLabel").textContent=n===0?"準備好你的姿勢！":"換個姿勢，下一張來囉！";if(!await wait(n===0?2200:3000))return;
