@@ -35,7 +35,6 @@ for(const orient of ["portrait","landscape"])for(const layout of ["split","eight
   shape(p.shape,p.x,p.y,p.w,p.h,'fill="#fff" stroke="#764d70" stroke-width="1.2"'),
   shape(inner,p.x+f,p.y+f,p.w-f*2,p.h-f*2,'fill="#edf7ff" stroke="#087eae" stroke-width="1.5"'),
   `<text x="${r1(p.x+p.w/2)}" y="${r1(p.y+p.h/2+4)}" text-anchor="middle" font-family="Arial,sans-serif" font-size="${base>100?14:9}" font-weight="700" fill="#087eae">P${p.photo+1}</text>`,
-  ...(p.date?[`<text x="${r1(p.x+p.w-f-4)}" y="${r1(p.y+p.h-f-6)}" text-anchor="end" font-family="Arial,sans-serif" font-size="9" fill="#a23570">DATE</text>`]:[]),
   `</g>`)});
  out.push("</svg>","");
  const file=path.join(outDir,`${layout}-${orient}-wireframe.svg`);fs.writeFileSync(file,out.join("\n"));console.log(file,s.w+"×"+s.h,s.pieces.length+" pieces");

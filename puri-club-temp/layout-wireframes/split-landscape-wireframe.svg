@@ -8,7 +8,6 @@
 <rect x="8" y="8" width="240" height="180" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
 <rect x="8" y="8" width="240" height="180" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
 <text x="128" y="102" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P1</text>
-<text x="244" y="182" text-anchor="end" font-family="Arial,sans-serif" font-size="9" fill="#a23570">DATE</text>
 </g>
 <g data-photo="2" data-shape="square" data-x="8" data-y="188" data-width="160" data-height="120" data-window-inset="0">
 
@@ -45,7 +44,6 @@
 <rect x="88" y="308" width="240" height="180" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
 <rect x="88" y="308" width="240" height="180" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
 <text x="208" y="402" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P2</text>
-<text x="324" y="482" text-anchor="end" font-family="Arial,sans-serif" font-size="9" fill="#a23570">DATE</text>
 </g>
 <g data-photo="4" data-shape="square" data-x="8" data-y="488" data-width="160" data-height="120" data-window-inset="0">
 
@@ -82,7 +80,6 @@
 <rect x="408" y="128" width="240" height="180" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
 <rect x="408" y="128" width="240" height="180" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
 <text x="528" y="222" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P3</text>
-<text x="644" y="302" text-anchor="end" font-family="Arial,sans-serif" font-size="9" fill="#a23570">DATE</text>
 </g>
 <g data-photo="4" data-shape="square" data-x="328" data-y="8" data-width="160" data-height="120" data-window-inset="0">
 
@@ -119,7 +116,6 @@
 <rect x="328" y="428" width="240" height="180" fill="#fff" stroke="#764d70" stroke-width="1.2"/>
 <rect x="328" y="428" width="240" height="180" fill="#edf7ff" stroke="#087eae" stroke-width="1.5"/>
 <text x="448" y="522" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P4</text>
-<text x="564" y="602" text-anchor="end" font-family="Arial,sans-serif" font-size="9" fill="#a23570">DATE</text>
 </g>
 <g data-photo="2" data-shape="square" data-x="328" data-y="308" data-width="160" data-height="120" data-window-inset="0">
 

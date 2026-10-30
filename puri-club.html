@@ -655,15 +655,15 @@ const SPLIT_QUARTERS=[
  [[2,1,3],[0,0,2],[0,2,2],[2,0,1],[3,0,1],[4,0,1]],
  [[2,0,3],[0,0,2],[0,2,2],[2,3,1],[3,3,1],[4,3,1]]];
 const WINDOW_SHAPES={portrait:["oval","arch","pill","stamp"],landscape:["oval","heart","pill","stamp"]};
-const today=new Date(),dateBadge=today.getFullYear()+" "+(today.getMonth()+1)+"/"+today.getDate()+" "+["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][today.getDay()];
 function sheetSpec(forLayout=layout){const portrait=PH>PW,m=SHEET_MARGIN,top=SHEET_HEAD,pieces=[];
  if(forLayout==="eight"){const gap=16,[w,h]=portrait?[195,260]:[260,195],cols=portrait?4:2,rows=portrait?2:4;
-  for(let i=0;i<4;i++)for(let k=0;k<2;k++){const col=portrait?i:k,row=portrait?k:i;pieces.push({photo:i,shape:k?WINDOW_SHAPES[orient][i]:"rect",x:m+col*(w+gap),y:top+row*(h+gap),w,h,date:!k})}
+  // Photos 2 and 4 put the shaped window first, so frames and shapes alternate across the sheet.
+  for(let i=0;i<4;i++)for(let k=0;k<2;k++){const slot=i%2?1-k:k,col=portrait?i:slot,row=portrait?slot:i;pieces.push({photo:i,shape:k?WINDOW_SHAPES[orient][i]:"rect",x:m+col*(w+gap),y:top+row*(h+gap),w,h})}
   return {w:m*2+cols*w+(cols-1)*gap,h:top+rows*h+(rows-1)*gap+SHEET_FOOT,pieces}}
  // Quarter q makes photo q large, the next two medium and the rest small, shuffling which slot each one lands in.
  const cw=portrait?60:80,ch=portrait?80:60,edge=8;
  SPLIT_QUARTERS.forEach((tiles,q)=>{const p=k=>(q+k)%4,small=[p(3),p(0),p(1)],order=[p(0),...(q%2?[p(2),p(1)]:[p(1),p(2)]),...small.slice(q%3),...small.slice(0,q%3)];
-  tiles.forEach(([c0,r0,n],k)=>{let c=(q%2)*5+c0,r=Math.floor(q/2)*4+r0;if(!portrait)[c,r]=[r,c];pieces.push({photo:order[k],shape:"square",flush:true,x:edge+c*cw,y:edge+r*ch,w:n*cw,h:n*ch,date:n===3})})});
+  tiles.forEach(([c0,r0,n],k)=>{let c=(q%2)*5+c0,r=Math.floor(q/2)*4+r0;if(!portrait)[c,r]=[r,c];pieces.push({photo:order[k],shape:"square",flush:true,x:edge+c*cw,y:edge+r*ch,w:n*cw,h:n*ch})})});
  return {w:edge*2+(portrait?10:8)*cw,h:edge*2+(portrait?8:10)*ch,pieces,bare:true}}
 function stickerPath(shape,x,y,w,h){const p=new Path2D();
  if(shape==="square")p.rect(x,y,w,h);
@@ -678,16 +678,14 @@ function stickerPath(shape,x,y,w,h){const p=new Path2D();
   p.closePath()}
  else p.roundRect(x,y,w,h,Math.min(w,h)*.08);
  return p}
-function drawDateBadge(c,right,bottom,base,t){const size=base*.085;c.save();c.font="900 italic "+size+"px Arial";const tw=c.measureText(dateBadge).width,bh=size*1.7,bw=tw+size*1.4,x=right-bw-size*.5,y=bottom-bh-size*.5;roundRect(c,x,y,bw,bh,bh/2);c.fillStyle="#fffdf8e6";c.fill();c.lineWidth=Math.max(1,size*.14);c.strokeStyle=t.accent;c.stroke();c.fillStyle=t.accent;c.textAlign="center";c.textBaseline="middle";c.fillText(dateBadge,x+bw/2,y+bh/2+size*.05);c.restore()}
 // Framed pieces get a white printed border, a thin accent rule around the photo window and a dashed half-cut line just outside;
 // flush pieces fill their whole cell and are split from their neighbours by a thin white line.
 function drawSticker(c,piece,img,t){const {shape,x,y,w,h}=piece,base=Math.min(w,h),stamp=shape==="stamp",f=stamp?base*.09:Math.max(2.5,base*.035),o=Math.max(2.5,base*.025),inner=stamp?"square":shape;
- if(piece.flush){cropDraw(c,img,x,y,w,h);c.strokeStyle="#fff";c.lineWidth=2;c.strokeRect(x,y,w,h);if(piece.date)drawDateBadge(c,x+w-1,y+h-1,base,t);return}
+ if(piece.flush){cropDraw(c,img,x,y,w,h);c.strokeStyle="#fff";c.lineWidth=2;c.strokeRect(x,y,w,h);return}
  c.save();c.strokeStyle=t.ink+"80";c.lineWidth=1;c.setLineDash([4,3]);c.stroke(stickerPath(stamp?"square":shape,x-o,y-o,w+o*2,h+o*2));c.restore();
  c.fillStyle="#fff";c.fill(stickerPath(shape,x,y,w,h));
  const win=stickerPath(inner,x+f,y+f,w-f*2,h-f*2);c.save();c.clip(win);cropDraw(c,img,x+f,y+f,w-f*2,h-f*2);c.restore();
- c.strokeStyle=t.accent;c.lineWidth=Math.max(1,base*.012);c.stroke(win);
- if(piece.date)drawDateBadge(c,x+w-f,y+h-f,base,t)}
+ c.strokeStyle=t.accent;c.lineWidth=Math.max(1,base*.012);c.stroke(win)}
 function drawPaper(c,w,h){const t=THEMES[theme];c.fillStyle=t.paper;c.fillRect(0,0,w,h);if(theme==="gal"){c.fillStyle="#f5ba85";c.fillRect(0,0,w,SHEET_HEAD);for(let y=9;y<SHEET_HEAD;y+=22)for(let x=5;x<w;x+=30){c.strokeStyle=t.ink;c.lineWidth=3;c.beginPath();c.ellipse(x+(y%3)*3,y,7,4,.5,.3,5.7);c.stroke()}c.fillStyle="#ffc4df";c.fillRect(0,SHEET_HEAD,10,h-SHEET_HEAD);c.fillRect(w-10,SHEET_HEAD,10,h-SHEET_HEAD)}else if(theme==="hara"){for(let y=0;y<h;y+=18)for(let x=0;x<w;x+=18){c.fillStyle=(x/18+y/18)%2?t.secondary:"#ba87cf";c.fillRect(x,y,18,18)}c.fillStyle=t.paper;roundRect(c,10,SHEET_HEAD-8,w-20,h-SHEET_HEAD,12);c.fill()}else{const g=c.createLinearGradient(0,0,w,h);g.addColorStop(0,"#d0e4ff");g.addColorStop(.28,"#fcfdff");g.addColorStop(.48,"#c0c8e9");g.addColorStop(.7,"#faffff");g.addColorStop(1,"#b1cbec");c.fillStyle=g;c.fillRect(0,0,w,h)}
  c.fillStyle="#fffaf4ed";roundRect(c,w*.14,15,w*.72,42,21);c.fill();c.textAlign="center";c.textBaseline="middle";c.fillStyle=t.ink;c.font="900 italic 33px Arial";c.fillText(t.name,w/2,37);drawShape(c,t.symbol,w*.075,37,22,t.accent);drawShape(c,t.symbol,w*.925,37,22,t.accent);c.font="bold 9px monospace";c.fillStyle=t.ink;c.fillText("PURI CLUB 2000 / "+stampDate,w/2,h-14);
 }
