@@ -296,7 +296,8 @@ button.soft{background:#fffaf1;font-size:14px;min-height:42px;padding:9px 12px;b
 .film-sample.stars{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='17'%3E%3Cpath fill='white' d='M4.5 1.2l.95 1.95 2.15.3-1.55 1.5.37 2.13L4.5 6.07 2.58 7.08l.37-2.13L1.4 3.45l2.15-.3z'/%3E%3Cpath fill='white' d='M12.5 9q.3 2.6 3 3q-2.7.4-3 3q-.3-2.6-3-3q2.7-.4 3-3z'/%3E%3C/svg%3E") 0 0/17px 17px,linear-gradient(100deg,#8ea7ff,#d9a9ff,#ffc0e4)}
 .film-sample.hearts{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath fill='white' d='M4.5 7.3C2.7 6.2 1.6 5.2 1.6 3.9c0-.8.6-1.5 1.4-1.5.6 0 1.1.4 1.5.9.4-.5.9-.9 1.5-.9.8 0 1.4.7 1.4 1.5 0 1.3-1.1 2.3-2.9 3.4z'/%3E%3Cpath fill='white' d='M12.5 15.3c-1.8-1.1-2.9-2.1-2.9-3.4 0-.8.6-1.5 1.4-1.5.6 0 1.1.4 1.5.9.4-.5.9-.9 1.5-.9.8 0 1.4.7 1.4 1.5 0 1.3-1.1 2.3-2.9 3.4z'/%3E%3C/svg%3E") 0 0/16px 16px,linear-gradient(100deg,#ff9ccc,#ffd0e6,#ffb3d4)}
 .foil-shine{overflow:hidden}
-.foil-shine::before{content:"";position:absolute;inset:-45%;opacity:0;transform:translate(calc(var(--tilt-x,0)*18px),calc(var(--tilt-y,0)*18px)) rotate(-24deg)}
+/* The dot, star and heart print is part of the film, so it stays fixed to the sheet; only the shine sweeps with the tilt. */
+.foil-shine::before{content:"";position:absolute;inset:-45%;opacity:0;transform:rotate(-24deg)}
 .foil-card[data-film=dots] .foil-shine,.foil-card[data-film=stars] .foil-shine,.foil-card[data-film=hearts] .foil-shine{opacity:.75;background-image:linear-gradient(115deg,transparent 20%,#f8cfff55 38%,#e4ffffaa 48%,#fff9cf66 56%,transparent 70%)}
 .foil-card[data-film=dots] .foil-shine::before{opacity:.4;background:radial-gradient(circle,#fff 0 2.6px,transparent 3.4px) 0 0/24px 24px,radial-gradient(circle,#fff 0 2.6px,transparent 3.4px) 12px 12px/24px 24px}
 .foil-card[data-film=stars] .foil-shine::before{opacity:.42;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36'%3E%3Cpath fill='white' d='M9 2.5l1.9 3.9 4.3.6-3.1 3 .7 4.3L9 12.3l-3.8 2 .7-4.3-3.1-3 4.3-.6z'/%3E%3Cpath fill='white' d='M27 19q.6 5 5.5 5.6q-4.9.6-5.5 5.6q-.6-5-5.5-5.6q4.9-.6 5.5-5.6z'/%3E%3C/svg%3E") 0 0/36px 36px}
@@ -396,6 +397,16 @@ body[data-hurry=true]::after{content:"";position:fixed;inset:0;z-index:60;pointe
 .printing-text{margin:18px 0 0;text-align:center}
 .printing-text b{display:block;font:26px/1.3 var(--round);text-shadow:var(--dark-rim)}
 .printing-text small{display:block;margin-top:6px;font:13px/1.4 var(--pop)}
+/* Shooting cues sit at the top, near the phone's front camera: faces stay clear and eyes drift toward the lens. */
+body[data-stage=shoot] .count-overlay{justify-content:flex-start;padding-top:76px}
+body[data-stage=shoot] .count-number{font-size:clamp(64px,14vw,120px)}
+body[data-stage=shoot] .count-art{width:min(60vw,420px);max-height:24vh}
+body[data-stage=shoot] .count-art.digit{width:min(26vw,170px);max-height:20vh}
+body[data-stage=shoot] .count-art.shot-done{width:min(30vw,190px);max-height:18vh}
+body[data-stage=shoot] .count-label{margin-top:10px}
+@media(max-width:760px){body[data-stage=shoot] .count-overlay{padding-top:64px}}
+/* Wide screens are short, so the cues shrink further to stay above the face. */
+@media(orientation:landscape){body[data-stage=shoot] .count-art{max-height:15vh}body[data-stage=shoot] .count-art.digit{max-height:13vh}body[data-stage=shoot] .count-art.shot-done{max-height:12vh}}
 </style>
 </head>
 <body data-theme="gal" data-stage="lobby">
@@ -569,8 +580,16 @@ function paintPattern(c,o){const m=maskLayer.getContext("2d");m.globalCompositeO
 const GLOW_COLORS=["#ff3d9a","#c43dff","#4d6bff","#13b8e8","#22c26a","#ffab1a","#ff4f4f"];
 function paleTint(hex,amount=.86){const n=parseInt(hex.slice(1),16),mix=v=>Math.round(v+(255-v)*amount);return "rgb("+mix(n>>16&255)+","+mix(n>>8&255)+","+mix(n&255)+")"}
 const doodleLayer=makeCanvas(800,600);
-// Stamps sit on the photo and doodles get their own layer above them, so the eraser only ever removes pen strokes.
-function drawDecorations(c,list){for(const o of list)if(o.type==="stamp")drawObject(c,o);const strokes=list.filter(o=>o.type==="stroke");if(!strokes.length)return;const d=doodleLayer.getContext("2d");d.clearRect(0,0,PW,PH);for(const o of strokes){if(o.brush==="eraser"){d.save();d.globalCompositeOperation="destination-out";d.lineCap=d.lineJoin="round";d.lineWidth=o.width;d.strokeStyle=d.fillStyle="#000";paintStroke(d,o.points);d.restore()}else drawObject(d,o)}c.drawImage(doodleLayer,0,0)}
+// Stamps and pen strokes stack in the order they were made, so a new stamp can sit on an earlier doodle; the eraser only ever removes pen strokes.
+function eraseStroke(d,o){d.save();d.globalCompositeOperation="destination-out";d.lineCap=d.lineJoin="round";d.lineWidth=o.width;d.strokeStyle=d.fillStyle="#000";paintStroke(d,o.points);d.restore()}
+function drawDecorations(c,list){
+ for(let i=0;i<list.length;){if(list[i].type==="stamp"){drawObject(c,list[i++]);continue}
+  // A run of strokes between stamps shares one layer. Every eraser stroke made later also applies to it, so the
+  // eraser still reaches ink under a newer stamp without ever touching the stamp itself.
+  const d=doodleLayer.getContext("2d");d.clearRect(0,0,PW,PH);let j=i;
+  for(;j<list.length&&list[j].type!=="stamp";j++)if(list[j].brush==="eraser")eraseStroke(d,list[j]);else drawObject(d,list[j]);
+  for(let k=j;k<list.length;k++)if(list[k].brush==="eraser")eraseStroke(d,list[k]);
+  c.drawImage(doodleLayer,0,0);i=j}}
 function drawObject(c,o){
   if(o.type==="stamp"){drawStamp(c,o.key,o.x,o.y,o.size,o.rotation);return}
   if(o.type!=="stroke"||!o.points.length)return;
@@ -653,7 +672,7 @@ function placeStamp(p,pointerId){if(!canEdit()||objects().length>=200)return;rem
 function growStamp(now){if(!gesture?.stamp)return;const held=now-gesture.start;if(held>STAMP_HOLD_MS){gesture.object.size=Math.round(Math.min(STAMP_MAX,gesture.base*(1+(held-STAMP_HOLD_MS)/850)));queueEditorRender()}requestAnimationFrame(growStamp)}
 function undo(){if(!canEdit()||!histories[activePhoto].length)return;finishGesture();decorations[activePhoto]=histories[activePhoto].pop();renderEditor()}
 function buildStampButtons(){$("stampButtons").replaceChildren();for(const [title,set] of [[THEMES[theme].name+" 限定",STAMP_SETS[theme]],["共用圖案",SHARED_PICTURES],["共用文字",SHARED_WORDS]]){const heading=document.createElement("p");heading.className="stamp-group";heading.textContent=title;$("stampButtons").append(heading);for(const [key,name] of set){const b=document.createElement("button"),img=document.createElement("img"),small=document.createElement("small");b.className="stamp-button"+(key===stampKey?" active":"");b.dataset.stamp=key;b.setAttribute("aria-label","選擇"+name+"印章");b.setAttribute("aria-pressed",String(key===stampKey));img.src=STAMP_DIR+key+".webp";img.alt="";img.loading="lazy";small.textContent=name;b.append(img,small);b.onclick=()=>selectStamp(key);$("stampButtons").append(b);stampImage(key)}}}
-function buildSwatches(){const glow=brushMode==="glow",current=glow?glowColor:drawColor;$("drawColors").replaceChildren();const colors=glow?GLOW_COLORS:[THEMES[theme].accent,"#7547a2","#302532","#ffffff","#7cbbea","#b0d756","#ffcb4d"];if(brushMode!=="dots"&&brushMode!=="hearts")colors.push("rainbow");else if(current==="rainbow")drawColor=colors[0];for(const color of colors){const rainbow=color==="rainbow",b=document.createElement("button");b.className="swatch"+(glow?" glow":"")+(rainbow?" rainbow":"")+(color===(glow?glowColor:drawColor)?" active":"");if(!rainbow)b.style.background=glow?"radial-gradient(circle,#fffdf8 0 30%,"+color+" 72%)":color;b.setAttribute("aria-label",rainbow?(glow?"彩虹強光":"彩虹"):(glow?"光暈顏色 ":"畫筆顏色 ")+color);b.onclick=()=>{if(!canEdit())return;if(glow)glowColor=color;else drawColor=color;[...$("drawColors").children].forEach(el=>el.classList.toggle("active",el===b))};$("drawColors").append(b)}}
+function buildSwatches(){const glow=brushMode==="glow",current=glow?glowColor:drawColor;$("drawColors").replaceChildren();const colors=glow?[...GLOW_COLORS]:[THEMES[theme].accent,"#7547a2","#302532","#ffffff","#7cbbea","#b0d756","#ffcb4d"];if(brushMode!=="dots"&&brushMode!=="hearts")colors.push("rainbow");else if(current==="rainbow")drawColor=colors[0];for(const color of colors){const rainbow=color==="rainbow",b=document.createElement("button");b.className="swatch"+(glow?" glow":"")+(rainbow?" rainbow":"")+(color===(glow?glowColor:drawColor)?" active":"");if(!rainbow)b.style.background=glow?"radial-gradient(circle,#fffdf8 0 30%,"+color+" 72%)":color;b.setAttribute("aria-label",rainbow?(glow?"彩虹強光":"彩虹"):(glow?"光暈顏色 ":"畫筆顏色 ")+color);b.onclick=()=>{if(!canEdit())return;if(glow)glowColor=color;else drawColor=color;[...$("drawColors").children].forEach(el=>el.classList.toggle("active",el===b))};$("drawColors").append(b)}}
 function syncBrushUI(){buildSwatches();syncEditControls();selectButtons("[data-brush-category]","brushCategory",brushCategory);selectButtons("[data-brush-preset]","brushPreset",patternPreset);$("patternPresets").hidden=brushCategory!=="pattern";$("drawColors").hidden=brushMode==="eraser";$("brushSizeValue").value=brushSize}
 function point(e){const r=editCanvas.getBoundingClientRect();return {x:clamp((e.clientX-r.left)/r.width*PW,0,PW),y:clamp((e.clientY-r.top)/r.height*PH,0,PH)}}
 editCanvas.addEventListener("pointerdown",e=>{if(!canEdit()||e.button>0)return;if(tool==="adjust"){adjustDown(e);return}if(gesture)return;e.preventDefault();const p=point(e);if(tool==="stamp"){placeStamp(p,e.pointerId);return}if(objects().length>=200)return;editCanvas.setPointerCapture(e.pointerId);remember();const color=brushMode==="glow"?glowColor:drawColor,o={id:nextId++,type:"stroke",points:[p],width:brushSize,color,brush:brushMode==="solid"&&color==="rainbow"?"rainbow":brushMode};objects().push(o);gesture={id:e.pointerId,object:o};renderEditor()});
