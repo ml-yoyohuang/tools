@@ -8,15 +8,15 @@
 <rect x="20" y="20" width="195" height="260" rx="15.6" fill="none" stroke="#764d70" stroke-width="1.2"/>
 <text x="117.5" y="154" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P1</text>
 </g>
-<g data-photo="1" data-shape="oval" data-x="20" data-y="296" data-width="195" data-height="260" data-bleed="6">
+<g data-photo="3" data-shape="oval" data-x="20" data-y="296" data-width="195" data-height="260" data-bleed="6">
 <ellipse cx="117.5" cy="426" rx="103.5" ry="136" fill="#edf7ff" stroke="#087eae" stroke-width="1"/>
 <ellipse cx="117.5" cy="426" rx="97.5" ry="130" fill="none" stroke="#764d70" stroke-width="1.2"/>
-<text x="117.5" y="430" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P1</text>
+<text x="117.5" y="430" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P3</text>
 </g>
-<g data-photo="2" data-shape="rect" data-x="231" data-y="296" data-width="195" data-height="260" data-bleed="6">
+<g data-photo="4" data-shape="rect" data-x="231" data-y="296" data-width="195" data-height="260" data-bleed="6">
 <rect x="225" y="290" width="207" height="272" rx="16.6" fill="#edf7ff" stroke="#087eae" stroke-width="1"/>
 <rect x="231" y="296" width="195" height="260" rx="15.6" fill="none" stroke="#764d70" stroke-width="1.2"/>
-<text x="328.5" y="430" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P2</text>
+<text x="328.5" y="430" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P4</text>
 </g>
 <g data-photo="2" data-shape="arch" data-x="231" data-y="20" data-width="195" data-height="260" data-bleed="6">
 <path d="M225 117.5A103.5 103.5 0 0 1 432 117.5V269.4Q432 286 415.4 286H241.6Q225 286 225 269.4Z" fill="#edf7ff" stroke="#087eae" stroke-width="1"/>
@@ -28,15 +28,15 @@
 <rect x="442" y="20" width="195" height="260" rx="15.6" fill="none" stroke="#764d70" stroke-width="1.2"/>
 <text x="539.5" y="154" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P3</text>
 </g>
-<g data-photo="3" data-shape="pill" data-x="442" data-y="296" data-width="195" data-height="260" data-bleed="6">
+<g data-photo="1" data-shape="pill" data-x="442" data-y="296" data-width="195" data-height="260" data-bleed="6">
 <rect x="436" y="290" width="207" height="272" rx="103.5" fill="#edf7ff" stroke="#087eae" stroke-width="1"/>
 <rect x="442" y="296" width="195" height="260" rx="97.5" fill="none" stroke="#764d70" stroke-width="1.2"/>
-<text x="539.5" y="430" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P3</text>
+<text x="539.5" y="430" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P1</text>
 </g>
-<g data-photo="4" data-shape="rect" data-x="653" data-y="296" data-width="195" data-height="260" data-bleed="6">
+<g data-photo="2" data-shape="rect" data-x="653" data-y="296" data-width="195" data-height="260" data-bleed="6">
 <rect x="647" y="290" width="207" height="272" rx="16.6" fill="#edf7ff" stroke="#087eae" stroke-width="1"/>
 <rect x="653" y="296" width="195" height="260" rx="15.6" fill="none" stroke="#764d70" stroke-width="1.2"/>
-<text x="750.5" y="430" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P4</text>
+<text x="750.5" y="430" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#087eae">P2</text>
 </g>
 <g data-photo="4" data-shape="stamp" data-x="653" data-y="20" data-width="195" data-height="260" data-bleed="6">
 <rect x="647" y="14" width="207" height="272" fill="#edf7ff" stroke="#087eae" stroke-width="1"/>

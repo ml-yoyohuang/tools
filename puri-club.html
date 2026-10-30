@@ -738,8 +738,9 @@ const SPLIT_QUARTERS=[
 const WINDOW_SHAPES={portrait:["oval","arch","pill","stamp"],landscape:["oval","heart","pill","stamp"]};
 function sheetSpec(forLayout=layout){const portrait=PH>PW,m=SHEET_MARGIN,pieces=[];
  if(forLayout==="eight"){const gap=16,[w,h]=portrait?[195,260]:[260,195],cols=portrait?4:2,rows=portrait?2:4;
-  // Photos 2 and 4 put the shaped window first, so frames and shapes alternate across the sheet.
-  for(let i=0;i<4;i++)for(let k=0;k<2;k++){const slot=i%2?1-k:k,col=portrait?i:slot,row=portrait?slot:i;pieces.push({photo:i,shape:k?WINDOW_SHAPES[orient][i]:"rect",x:m+col*(w+gap),y:m+row*(h+gap),w,h})}
+  // Line i holds a rounded frame and the i-th shaped window; lines 2 and 4 put the shape first so frames and shapes
+  // alternate. The second line of pieces runs 3·4·1·2, so each photo's two copies sit apart.
+  for(let i=0;i<4;i++)for(let k=0;k<2;k++){const slot=i%2?1-k:k,col=portrait?i:slot,row=portrait?slot:i;pieces.push({photo:slot?(i+2)%4:i,shape:k?WINDOW_SHAPES[orient][i]:"rect",x:m+col*(w+gap),y:m+row*(h+gap),w,h})}
   return {w:m*2+cols*w+(cols-1)*gap,h:m*2+rows*h+(rows-1)*gap,pieces}}
  // Quarter q makes photo q large, the next two medium and the rest small, shuffling which slot each one lands in.
  const cw=portrait?60:80,ch=portrait?80:60,edge=8;
