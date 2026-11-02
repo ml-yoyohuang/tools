@@ -1,0 +1,982 @@
+/* Booth flow: progress strip, camera, photo review and the decorating editor. */
+/* One fixed progress strip replaces the shared chrome throughout the photo flow. */
+body:not([data-stage="lobby"]) .topbar,
+body:not([data-stage="lobby"]) .marquee,
+body:not([data-stage="lobby"]) .machine-name {
+  display: none;
+}
+body:not([data-stage="lobby"]) .status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  padding: 0;
+  border: 0;
+}
+body:not([data-stage="lobby"]) .workspace {
+  min-height: 100dvh;
+  padding-top: 54px;
+}
+body:not([data-stage="lobby"]) .steps {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  height: 30px;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+  background: #241329;
+  color: #fff7e9;
+  font: 800 clamp(7px, 0.8vw, 11px)/1 monospace;
+  letter-spacing: 0.06em;
+}
+body:not([data-stage="lobby"]) .steps span[data-step] {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  white-space: nowrap;
+  opacity: 0.62;
+}
+body:not([data-stage="lobby"]) .steps .current {
+  background: var(--accent);
+  color: #fff;
+  opacity: 1;
+  box-shadow: none;
+  padding: 0;
+  transform: none;
+}
+body[data-stage="start"] {
+  overflow: hidden;
+}
+body[data-stage="start"] .workspace {
+  height: 100dvh;
+  min-height: 0;
+  padding: 30px 0 0;
+  background: #171322;
+  overflow: hidden;
+}
+body[data-stage="start"] .station {
+  max-width: none;
+  width: 100%;
+  height: 100%;
+}
+#startSection {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+body[data-stage="start"] .mode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+body[data-stage="start"] .mode {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: #211a2d;
+  color: #fff;
+  text-align: center;
+  box-shadow: none;
+  transform: none;
+}
+body[data-stage="start"] .mode:first-child {
+  border-right: 2px solid #241329;
+}
+body[data-stage="start"] .mode.active,
+body[data-stage="start"] .mode[aria-pressed="true"] {
+  background: #211a2d;
+}
+body[data-stage="start"] .mode:hover:not(:disabled),
+body[data-stage="start"] .mode:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+}
+body[data-stage="start"] .mode:focus-visible {
+  outline: 4px solid #fff;
+  outline-offset: -5px;
+  z-index: 4;
+}
+body[data-stage="start"] .mode canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+body[data-stage="start"] .mode canvas {
+  aspect-ratio: auto;
+  border-radius: 0;
+  background: transparent;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+body[data-stage="start"] #startSection[data-camera-ready="true"] .mode canvas {
+  opacity: 1;
+}
+body[data-stage="start"] .mode[data-look="old"] canvas {
+  image-rendering: pixelated;
+}
+body[data-stage="start"] .mode::after {
+  content: "";
+  position: absolute;
+  inset: 55% 0 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(transparent, #100c22a8);
+}
+body[data-stage="start"] .mode-label {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: clamp(22px, 5vh, 52px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: min(calc(100% - 32px), 300px);
+  min-height: 54px;
+  padding: 10px 12px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 8px 20px #160c2599;
+  text-shadow: 0 1px 2px #130a1d;
+  font: 900 clamp(12px, 1.6vw, 18px)/1.1 var(--round);
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+body[data-stage="start"] .mode[data-look="soft"] .mode-label {
+  background: var(--paper);
+  color: var(--ink);
+  text-shadow: none;
+}
+body[data-stage="start"] .mode:hover .mode-label,
+body[data-stage="start"] .mode:focus-visible .mode-label {
+  box-shadow:
+    0 0 0 5px #fff8,
+    0 10px 22px #160c25a6;
+}
+/* The camera fills the shoot step; only the fixed progress strip stays outside it. */
+body[data-stage="shoot"] {
+  overflow: hidden;
+}
+body[data-stage="shoot"] .workspace {
+  height: 100dvh;
+  min-height: 0;
+  padding: 30px 0 0;
+  background: #171322;
+  overflow: hidden;
+}
+body[data-stage="shoot"] .station,
+body[data-stage="shoot"] #shootSection {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  min-height: 0;
+}
+body[data-stage="shoot"] #shootSection {
+  position: relative;
+}
+body[data-stage="shoot"] .camera-stage {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  margin: 0;
+  border: 0;
+  outline: 0;
+  border-radius: 0;
+  background: #171322;
+  overflow: hidden;
+}
+body[data-stage="shoot"] .camera-stage canvas {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  aspect-ratio: auto;
+  object-fit: cover;
+}
+body[data-stage="shoot"] .camera-hud {
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+body[data-stage="shoot"] #shotNumber {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  min-width: 108px;
+  min-height: 48px;
+  padding: 8px 16px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: #241329de;
+  color: #fff;
+  box-shadow: 0 5px 16px #160b24a8;
+  font: 900 20px/1 monospace;
+  letter-spacing: 0.04em;
+  text-shadow: none;
+}
+body[data-stage="shoot"] #poseHint {
+  position: absolute;
+  bottom: clamp(18px, 4vh, 42px);
+  left: 50%;
+  z-index: 3;
+  max-width: calc(100% - 32px);
+  padding: 10px 20px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: #241329d9;
+  color: #fff;
+  text-align: center;
+  font: 900 clamp(14px, 2vw, 19px)/1.4 var(--round);
+  white-space: nowrap;
+  box-shadow: 0 5px 16px #160b24a8;
+  transform: translateX(-50%);
+}
+body[data-stage="shoot"] #shootSection[data-paused="true"] #poseHint {
+  display: none;
+}
+body[data-stage="shoot"] .count-overlay {
+  z-index: 2;
+  background: #150c2633;
+}
+body[data-stage="shoot"] .count-number {
+  font-size: clamp(104px, 25vw, 240px);
+}
+body[data-stage="shoot"] .count-label {
+  max-width: calc(100% - 32px);
+  text-align: center;
+}
+body[data-stage="shoot"] .shoot-footer {
+  position: absolute;
+  z-index: 7;
+  left: 50%;
+  bottom: clamp(18px, 4vh, 42px);
+  width: min(450px, calc(100% - 32px));
+  margin: 0;
+  transform: translateX(-50%);
+}
+body[data-stage="shoot"] .shoot-footer:has(#resumeBtn:not([hidden])) {
+  padding: 16px;
+  border: 2px solid var(--line);
+  border-radius: 18px;
+  background: var(--paper);
+  box-shadow: 5px 6px 0 var(--line);
+}
+body[data-stage="shoot"] .shoot-footer p {
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-weight: 800;
+}
+@media (max-width: 760px) {
+  body[data-stage="shoot"] #shotNumber {
+    top: 12px;
+    right: 12px;
+    min-width: 88px;
+    min-height: 42px;
+    padding: 7px 11px;
+    font-size: 16px;
+  }
+  body[data-stage="shoot"] #poseHint {
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    padding: 9px 14px;
+    font-size: 13px;
+  }
+  body[data-stage="shoot"] .count-number {
+    font-size: clamp(100px, 33vw, 170px);
+  }
+  body[data-stage="shoot"] .count-label {
+    font-size: 12px;
+  }
+}
+/* Review keeps the four full photos visible while the retake window counts down. */
+body[data-stage="review"] {
+  overflow: hidden;
+}
+body[data-stage="review"] .workspace {
+  height: 100dvh;
+  min-height: 0;
+  padding: 30px 0 0;
+  overflow: hidden;
+}
+body[data-stage="review"] .station {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+}
+#reviewSection {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 76px clamp(14px, 3vw, 36px) calc(48px + env(safe-area-inset-bottom));
+}
+#reviewClock {
+  position: absolute;
+  top: 12px;
+  right: clamp(14px, 3vw, 36px);
+  width: 56px;
+  height: 56px;
+  box-shadow: 2px 3px 0 var(--line);
+}
+#reviewClock small {
+  font-size: 20px;
+}
+#reviewClock b {
+  font-size: 22px;
+}
+#reviewClock.time-up {
+  border-color: #fff;
+  background: #ff5471;
+  color: #fff;
+  box-shadow:
+    0 0 0 5px #ff547166,
+    3px 4px 0 var(--line);
+}
+#reviewGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  flex: 1;
+  gap: 12px;
+  width: min(100%, 900px);
+  min-height: 0;
+  margin: 0;
+}
+#reviewGrid .photo-tile {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 6px;
+}
+#reviewGrid .photo-tile canvas {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  aspect-ratio: auto;
+  object-fit: contain;
+  background: #241b30;
+}
+#reviewGrid .tile-label {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: block;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #241329d9;
+  color: #fff;
+  font: 900 12px/1.2 monospace;
+  letter-spacing: 0.04em;
+}
+#reviewGrid .photo-tile button {
+  flex: 0 0 42px;
+  width: 100%;
+  min-height: 42px;
+  margin-top: 6px;
+  padding: 5px;
+  font-size: 13px;
+}
+#reviewDone {
+  flex: 0 0 auto;
+  min-width: 210px;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 12px 22px;
+}
+#reviewSection[data-time-up="true"] #reviewDone {
+  box-shadow:
+    0 0 0 4px #fff8,
+    3px 4px 0 var(--line);
+}
+#reviewSection[data-time-up="true"] #reviewDone::after {
+  animation: reviewArrowNudge 2.4s ease-in-out infinite;
+}
+@keyframes reviewArrowNudge {
+  0%,
+  72%,
+  100% {
+    transform: translateX(0);
+  }
+  82% {
+    transform: translateX(5px);
+  }
+  91% {
+    transform: translateX(0);
+  }
+}
+#reviewCaption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  place-items: center;
+  height: calc(30px + env(safe-area-inset-bottom));
+  padding: 0 8px env(safe-area-inset-bottom);
+  overflow: hidden;
+  background: #241329;
+  color: #fff7e9;
+  text-align: center;
+  white-space: nowrap;
+  font: 800 10px/1 monospace;
+  letter-spacing: 0.16em;
+}
+@media (max-width: 760px) {
+  #reviewSection {
+    gap: 10px;
+    padding: 62px 10px calc(42px + env(safe-area-inset-bottom));
+  }
+  #reviewClock {
+    top: 8px;
+    right: 10px;
+    width: 48px;
+    height: 48px;
+  }
+  #reviewClock small {
+    font-size: 17px;
+  }
+  #reviewClock b {
+    font-size: 18px;
+  }
+  #reviewGrid {
+    gap: 8px;
+  }
+  #reviewGrid .photo-tile {
+    padding: 4px;
+  }
+  #reviewGrid .tile-label {
+    top: 8px;
+    left: 8px;
+    font-size: 10px;
+  }
+  #reviewGrid .photo-tile button {
+    flex-basis: 40px;
+    min-height: 40px;
+    margin-top: 4px;
+    font-size: 11px;
+  }
+  #reviewDone {
+    min-width: 0;
+    font-size: 15px;
+  }
+  #reviewCaption {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+  }
+}
+/* The editor keeps its actions next to the canvas and its timeout note at the bottom. */
+body[data-stage="edit"] .workspace {
+  padding-bottom: calc(65px + env(safe-area-inset-bottom));
+}
+#editSection .edit-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+#editSection #undoBtn {
+  min-width: 158px;
+  background: var(--second);
+  font-size: 16px;
+  box-shadow: 4px 5px 0 var(--line);
+}
+#editSection #undoBtn:disabled {
+  opacity: 0.55;
+}
+#editSection #clock {
+  width: 70px;
+  height: 70px;
+}
+#editSection #clock small {
+  font-size: 22px;
+}
+#editSection #clock b {
+  font-size: 23px;
+}
+#editSection #clock.time-up {
+  border-color: #fff;
+  background: #ff5471;
+  color: #fff;
+  box-shadow:
+    0 0 0 5px #ff547166,
+    3px 4px 0 var(--line);
+}
+#editSection .tool-tabs {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+#editSection .stamps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+#editSection .stamp-button {
+  min-height: 66px;
+  padding: 6px 2px;
+  border-color: #cfb8cc;
+  box-shadow: none;
+}
+#editSection .stamp-button img {
+  display: block;
+  width: 42px;
+  height: 42px;
+  margin: auto;
+  object-fit: contain;
+}
+#editSection .stamp-group {
+  grid-column: 1/-1;
+  margin: 6px 0 0;
+  font: 800 11px/1.4 monospace;
+  letter-spacing: 0.08em;
+}
+#editSection .stamp-group:first-child {
+  margin-top: 0;
+}
+#editSection .stamp-button small {
+  display: block;
+  font-size: 9px;
+}
+#editSection .stamp-button.active {
+  background: var(--second);
+  outline: 2px solid var(--line);
+  outline-offset: 1px;
+}
+#editSection .brush-categories,
+#editSection .pattern-presets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin-bottom: 13px;
+}
+#editSection .pattern-presets {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+#editSection .brush-categories button,
+#editSection .pattern-presets button {
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 4px;
+  font-size: 12px;
+  line-height: 1.2;
+  box-shadow: none;
+}
+/* Brush size: label and number above the slider, or all three on one row on phones to save height. */
+#editSection .brush-size {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "label value" "range range";
+  align-items: center;
+  row-gap: 5px;
+  margin-top: 12px;
+}
+#editSection .brush-size label {
+  grid-area: label;
+}
+#editSection .brush-size output {
+  grid-area: value;
+  font: 900 14px/1 monospace;
+}
+#editSection #brushSize {
+  grid-area: range;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+@media (max-width: 760px) {
+  #editSection .brush-size {
+    grid-template-columns: auto minmax(0, 1fr) 2.2em;
+    grid-template-areas: "label range value";
+    column-gap: 10px;
+    margin-top: 8px;
+  }
+  #editSection .brush-size output {
+    text-align: right;
+  }
+}
+#editSection .edit-footer {
+  justify-content: flex-end;
+}
+#editCaption {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  min-height: calc(30px + env(safe-area-inset-bottom));
+  padding: 3px 12px calc(3px + env(safe-area-inset-bottom));
+  background: #241329;
+  color: #fff7e9;
+  text-align: center;
+  font: 800 11px/1.25 monospace;
+  letter-spacing: 0.08em;
+}
+@media (max-width: 760px) {
+  #editSection .edit-head {
+    margin-bottom: 10px;
+  }
+  #editSection #undoBtn {
+    min-width: 132px;
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+  #editSection #clock {
+    width: 58px;
+    height: 58px;
+  }
+  #editSection #clock small {
+    font-size: 18px;
+  }
+  #editSection #clock b {
+    font-size: 20px;
+  }
+  #editSection .stamps {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+  #editSection .stamp-button {
+    min-height: 58px;
+  }
+  #editSection .stamp-button img {
+    width: 36px;
+    height: 36px;
+  }
+  #editSection .brush-categories button,
+  #editSection .pattern-presets button {
+    font-size: 11px;
+  }
+  body[data-stage="edit"] .edit-footer {
+    bottom: calc(30px + env(safe-area-inset-bottom));
+  }
+  #editCaption {
+    font-size: 10px;
+    letter-spacing: 0;
+  }
+}
+body[data-stage="edit"] {
+  height: 100dvh;
+  overflow: hidden;
+}
+body[data-stage="edit"] .workspace {
+  height: 100dvh;
+  min-height: 0;
+  padding: 42px 16px calc(42px + env(safe-area-inset-bottom));
+  overflow: hidden;
+}
+body[data-stage="edit"] .station,
+#editSection {
+  height: 100%;
+  min-height: 0;
+}
+body[data-stage="edit"] .station {
+  max-width: 1200px;
+}
+#editSection {
+  display: flex;
+  flex-direction: column;
+}
+#editSection .edit-head {
+  flex: 0 0 auto;
+  margin-bottom: 8px;
+}
+#editSection .editor {
+  flex: 1;
+  min-height: 0;
+  gap: 16px;
+}
+#editSection .editor > div:first-child {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+#editSection .photo-tabs {
+  flex: 0 0 auto;
+  margin-bottom: 8px;
+}
+#editSection .edit-canvas-wrap {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  place-items: center;
+  flex: 1;
+  min-height: 0;
+}
+#editSection .edit-canvas-wrap canvas {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 4/3;
+}
+#editSection .toolbox {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+#editSection #autoDecor {
+  margin: 0 0 12px;
+}
+#editSection .edit-footer {
+  position: static;
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  margin-top: 10px;
+  padding: 0;
+  background: transparent;
+}
+@media (max-width: 760px) {
+  body[data-stage="edit"] .workspace {
+    padding: 36px 10px calc(38px + env(safe-area-inset-bottom));
+  }
+  #editSection .edit-head {
+    margin-bottom: 5px;
+  }
+  #editSection #undoBtn {
+    min-height: 40px;
+  }
+  #editSection #clock {
+    width: 48px;
+    height: 48px;
+  }
+  #editSection .editor {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  #editSection .editor > div:first-child {
+    flex: 0 0 59%;
+  }
+  #editSection .toolbox {
+    flex: 1;
+  }
+  #editSection .photo-tabs {
+    margin-bottom: 5px;
+  }
+  #editSection .photo-tabs button {
+    min-height: 38px;
+    padding: 2px;
+  }
+  #editSection .photo-tabs canvas {
+    max-height: 28px;
+  }
+  #editSection .photo-tabs small {
+    font-size: 7px;
+    padding: 1px 0;
+  }
+  #editSection .edit-footer {
+    margin-top: 6px;
+    padding: 0;
+  }
+  #editSection #editDone {
+    min-height: 42px;
+  }
+}
+#layoutSection .print-layout {
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 20px;
+}
+#layoutSection .layout-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+#layoutSection .layout-choices button {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  min-width: 0;
+  height: 132px;
+  padding: 8px;
+}
+#layoutSection .layout-icon {
+  display: block;
+  width: auto;
+  height: 76px;
+  max-width: 100%;
+  margin: 0 !important;
+  padding: 0;
+  border: 0;
+  background: none;
+  overflow: visible;
+}
+#layoutSection #printBtn {
+  margin-top: 16px;
+}
+@media (max-width: 760px) {
+  #layoutSection .print-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  #layoutSection .layout-choices button {
+    height: 112px;
+  }
+  #layoutSection .layout-icon {
+    height: 60px;
+  }
+  #layoutSection #printBtn {
+    margin-top: 12px;
+  }
+}
+#startSection #flipBtn {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  z-index: 8;
+  width: 50px;
+  height: 50px;
+  min-height: 50px;
+  padding: 0;
+  border: 1px solid #fff9;
+  border-radius: 50%;
+  background: #241329cc;
+  color: #fff;
+  box-shadow: none;
+  font:
+    800 30px/1 Arial,
+    sans-serif;
+}
+#startSection #timeToggle {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  z-index: 8;
+  width: 76px;
+  height: 76px;
+  min-height: 76px;
+  padding: 3px;
+  background: #fffaf1f2;
+  box-shadow: 0 5px 12px #130b2866;
+}
+
+#startSection #timeToggle .ic {
+  width: 40px;
+  height: 40px;
+  stroke-width: 2.3;
+}
+
+#startSection #permission {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 7;
+  display: grid;
+  gap: 12px;
+  width: min(380px, calc(100% - 32px));
+  padding: 22px;
+  transform: translate(-50%, -50%);
+  border: 3px solid var(--line);
+  border-radius: 26px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 7px 8px 0 var(--line);
+}
+#startSection #permission p {
+  margin: 0 0 2px;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.55;
+  text-align: center;
+}
+#startSection #permission button {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  margin: 0;
+}
+#startSection #permission .quiet {
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: #fffaf1;
+  color: var(--ink);
+  box-shadow: none;
+  font-size: 13px;
+}
+#startSection #backLobby {
+  flex: 0 0 calc(30px + env(safe-area-inset-bottom));
+  width: 100%;
+  height: calc(30px + env(safe-area-inset-bottom));
+  min-height: 30px;
+  margin: 0;
+  padding: 0 0 env(safe-area-inset-bottom);
+  border: 0;
+  border-radius: 0;
+  background: #241329;
+  color: #fff7e9;
+  box-shadow: none;
+  font: 800 12px/30px var(--round);
+  letter-spacing: 0.08em;
+}
+#startSection #backLobby:hover:not(:disabled),
+#startSection #backLobby:active:not(:disabled) {
+  transform: none;
+  background: #452449;
+  box-shadow: none;
+}
+@media (max-width: 760px) {
+  body:not([data-stage="lobby"]) .steps {
+    font-size: 7px;
+    letter-spacing: 0;
+  }
+  #startSection #flipBtn {
+    top: 10px;
+    left: 10px;
+    width: 42px;
+    height: 42px;
+    min-height: 42px;
+    font-size: 25px;
+  }
+  #startSection #timeToggle {
+    top: 10px;
+    right: 10px;
+    width: 66px;
+    height: 66px;
+    min-height: 66px;
+  }
+  #startSection #timeToggle .ic {
+    width: 34px;
+    height: 34px;
+  }
+  body[data-stage="start"] .mode-label {
+    bottom: 22px;
+    min-height: 48px;
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+}

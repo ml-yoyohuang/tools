@@ -1,7 +1,7 @@
-// Builds layout wireframes from the sheetSpec() in puri-club.html so the art templates match the site exactly.
+// Builds layout wireframes from the sheetSpec() in the site source (puri-club/src/main.js) so the art templates match the site exactly.
 const fs=require("fs"),path=require("path");
-const [,,html,outDir]=process.argv;
-const src=fs.readFileSync(html,"utf8");
+const [,,source,outDir]=process.argv;
+const src=fs.readFileSync(source,"utf8");
 const block=src.slice(src.indexOf("const SHEET_MARGIN"),src.indexOf("function stickerPath("));
 const heart="M12 20.5C6 16.6 2.5 13.2 2.5 9 2.5 6.2 4.6 4 7.3 4c2 0 3.6 1.1 4.7 2.8C13.1 5.1 14.7 4 16.7 4c2.7 0 4.8 2.2 4.8 5 0 4.2-3.5 7.6-9.5 11.5z";
 const r1=n=>Math.round(n*10)/10;

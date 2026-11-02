@@ -1,0 +1,263 @@
+/* Icons, sparkle buttons, the phone tool rail, paper and film pickers, and the tilting result photo. */
+/* Shared SVG icons, sparkle-framed buttons and no accidental text selection. */
+:root {
+  --spark-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1Q13 11 23 12Q13 13 12 23Q11 13 1 12Q11 11 12 1Z'/%3E%3C/svg%3E");
+}
+body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+img {
+  -webkit-user-drag: none;
+}
+#saveImage {
+  -webkit-user-select: auto;
+  user-select: auto;
+  -webkit-touch-callout: default;
+  -webkit-user-drag: auto;
+}
+.ic {
+  display: inline-block;
+  flex: none;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.14em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.spark::before,
+.spark::after {
+  content: "";
+  display: inline-block;
+  flex: none;
+  width: 0.72em;
+  height: 0.72em;
+  vertical-align: -0.02em;
+  background: currentColor;
+  -webkit-mask: var(--spark-mask) center/contain no-repeat;
+  mask: var(--spark-mask) center/contain no-repeat;
+}
+.spark::before {
+  margin-right: 0.5em;
+}
+.spark::after {
+  margin-left: 0.5em;
+}
+button.soft {
+  background: #fffaf1;
+  font-size: 14px;
+  min-height: 42px;
+  padding: 9px 12px;
+  box-shadow: 2px 3px 0 var(--line);
+}
+.selector-marquee-unit .ic {
+  width: 0.78em;
+  height: 0.78em;
+  margin: 0 0.8em;
+  vertical-align: -0.08em;
+}
+.lobby-arrow {
+  display: grid;
+  place-items: center;
+}
+.lobby-arrow .ic {
+  width: 26px;
+  height: 26px;
+  stroke-width: 2.8;
+}
+#startSection #flipBtn {
+  display: grid;
+  place-items: center;
+}
+#startSection #flipBtn .ic {
+  width: 26px;
+  height: 26px;
+}
+.timer small {
+  display: block;
+  line-height: 1;
+}
+.timer small .ic {
+  display: block;
+  margin: 0 auto;
+  width: 0.8em;
+  height: 0.8em;
+}
+.timer b .ic {
+  width: 1.3em;
+  height: 1em;
+  stroke-width: 2.6;
+  vertical-align: -0.12em;
+}
+
+#reviewClock small .ic,
+#editSection #clock small .ic {
+  width: 0.75em;
+  height: 0.75em;
+}
+.count-number .ic {
+  width: 0.78em;
+  height: 0.78em;
+  color: var(--second);
+  stroke: var(--line);
+  stroke-width: 0.7;
+  filter: drop-shadow(4px 5px 0 #fff) drop-shadow(4px 5px 0 var(--accent));
+}
+.tool-tabs button,
+.brush-categories button,
+.pattern-presets button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.tool-tabs .ic,
+.brush-categories .ic,
+.pattern-presets .ic {
+  width: 1.15em;
+  height: 1.15em;
+}
+#editSection #autoDecor {
+  min-height: 44px;
+  background: var(--second);
+  font-size: 14px;
+  box-shadow: 3px 4px 0 var(--line);
+}
+.swatch.glow {
+  border-color: #fff;
+  box-shadow: 0 0 0 1px var(--line);
+}
+.swatch.rainbow {
+  background: conic-gradient(#ff5c8a, #ffb03b, #ffe94d, #5fe07a, #3fc3ff, #8a6bff, #ff5c8a);
+}
+.swatch.glow.rainbow {
+  background:
+    radial-gradient(circle, #fff 0 34%, transparent 36%),
+    conic-gradient(#ff5c8a, #ffb03b, #ffe94d, #5fe07a, #3fc3ff, #8a6bff, #ff5c8a);
+}
+/* Long-press stamps grow, so the canvas should never start a scroll or a selection. */
+#editCanvas {
+  -webkit-touch-callout: none;
+}
+/* On phones the stamp/draw switch is a vertical rail on the toolbox edge. */
+@media (max-width: 760px) {
+  #editSection .toolbox {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: 10px;
+    overflow: hidden;
+    padding: 10px 10px 10px 8px;
+  }
+  #editSection .tool-tabs {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin: 0;
+  }
+  #editSection .tool-tabs button {
+    flex: 1;
+    min-height: 0;
+    padding: 6px 0;
+    gap: 4px;
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    letter-spacing: 0.08em;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  #editSection #stampTools,
+  #editSection #drawTools {
+    grid-column: 2;
+    grid-row: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+/* Paper picker title and laminate films. */
+.layout-title {
+  margin: 0 0 12px;
+  font-size: 20px;
+}
+.film-sample.dots {
+  background:
+    radial-gradient(circle, #fff 0 1.6px, transparent 2.3px) 0 0/10px 10px,
+    radial-gradient(circle, #fff 0 1.6px, transparent 2.3px) 5px 5px/10px 10px,
+    linear-gradient(100deg, #ffb4da, #b9dcff);
+}
+.film-sample.stars {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='17'%3E%3Cpath fill='white' d='M4.5 1.2l.95 1.95 2.15.3-1.55 1.5.37 2.13L4.5 6.07 2.58 7.08l.37-2.13L1.4 3.45l2.15-.3z'/%3E%3Cpath fill='white' d='M12.5 9q.3 2.6 3 3q-2.7.4-3 3q-.3-2.6-3-3q2.7-.4 3-3z'/%3E%3C/svg%3E")
+      0 0/17px 17px,
+    linear-gradient(100deg, #8ea7ff, #d9a9ff, #ffc0e4);
+}
+.film-sample.hearts {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath fill='white' d='M4.5 7.3C2.7 6.2 1.6 5.2 1.6 3.9c0-.8.6-1.5 1.4-1.5.6 0 1.1.4 1.5.9.4-.5.9-.9 1.5-.9.8 0 1.4.7 1.4 1.5 0 1.3-1.1 2.3-2.9 3.4z'/%3E%3Cpath fill='white' d='M12.5 15.3c-1.8-1.1-2.9-2.1-2.9-3.4 0-.8.6-1.5 1.4-1.5.6 0 1.1.4 1.5.9.4-.5.9-.9 1.5-.9.8 0 1.4.7 1.4 1.5 0 1.3-1.1 2.3-2.9 3.4z'/%3E%3C/svg%3E")
+      0 0/16px 16px,
+    linear-gradient(100deg, #ff9ccc, #ffd0e6, #ffb3d4);
+}
+.foil-shine {
+  overflow: hidden;
+}
+/* The dot, star and heart print is part of the film, so it stays fixed to the sheet; only the shine sweeps with the tilt. */
+.foil-shine::before {
+  content: "";
+  position: absolute;
+  inset: -45%;
+  opacity: 0;
+  transform: rotate(-24deg);
+}
+.foil-card[data-film="dots"] .foil-shine,
+.foil-card[data-film="stars"] .foil-shine,
+.foil-card[data-film="hearts"] .foil-shine {
+  opacity: 0.75;
+  background-image: linear-gradient(
+    115deg,
+    transparent 20%,
+    #f8cfff55 38%,
+    #e4ffffaa 48%,
+    #fff9cf66 56%,
+    transparent 70%
+  );
+}
+.foil-card[data-film="dots"] .foil-shine::before {
+  opacity: 0.4;
+  background:
+    radial-gradient(circle, #fff 0 2.6px, transparent 3.4px) 0 0/24px 24px,
+    radial-gradient(circle, #fff 0 2.6px, transparent 3.4px) 12px 12px/24px 24px;
+}
+.foil-card[data-film="stars"] .foil-shine::before {
+  opacity: 0.42;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36'%3E%3Cpath fill='white' d='M9 2.5l1.9 3.9 4.3.6-3.1 3 .7 4.3L9 12.3l-3.8 2 .7-4.3-3.1-3 4.3-.6z'/%3E%3Cpath fill='white' d='M27 19q.6 5 5.5 5.6q-4.9.6-5.5 5.6q-.6-5-5.5-5.6q4.9-.6 5.5-5.6z'/%3E%3C/svg%3E")
+    0 0/36px 36px;
+}
+.foil-card[data-film="hearts"] .foil-shine::before {
+  opacity: 0.4;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='34'%3E%3Cpath fill='rgb(255,232,244)' d='M9 14.6C5.4 12.4 3.2 10.4 3.2 7.8c0-1.6 1.2-3 2.8-3 1.2 0 2.2.8 3 1.8.8-1 1.8-1.8 3-1.8 1.6 0 2.8 1.4 2.8 3 0 2.6-2.2 4.6-5.8 6.8z'/%3E%3Cpath fill='rgb(255,232,244)' d='M26 31.6c-3.6-2.2-5.8-4.2-5.8-6.8 0-1.6 1.2-3 2.8-3 1.2 0 2.2.8 3 1.8.8-1 1.8-1.8 3-1.8 1.6 0 2.8 1.4 2.8 3 0 2.6-2.2 4.6-5.8 6.8z'/%3E%3C/svg%3E")
+    0 0/34px 34px;
+}
+/* The result photo is a drag toy: it must not scroll the page or trigger long-press menus. */
+#tiltArea {
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
+#tiltArea .foil-card {
+  transition: transform 0.2s ease-out;
+}
+#tiltArea.dragging .foil-card {
+  transition: transform 0.06s linear;
+}
+#tiltArea {
+  position: relative;
+}
+#importBack {
+  margin-top: 12px;
+}

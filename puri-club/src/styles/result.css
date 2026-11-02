@@ -1,0 +1,238 @@
+/* Result STEP panels, dialogs, countdown art, the adjust tool and start-screen details. */
+/* Result page: numbered STEP panels like a booth's control deck, then quiet text links to leave. */
+.step-panel {
+  margin: 0 0 14px;
+  padding: 12px 12px 14px;
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+  box-shadow: 3px 4px 0 var(--line);
+}
+.step-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px !important;
+  font-size: 16px !important;
+}
+.step-head b {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font: 900 11px/1.4 monospace;
+  letter-spacing: 0.06em;
+}
+#resultSection .film-choices {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin: 0;
+}
+#resultSection .film-choices button {
+  min-height: 0;
+  padding: 7px 4px 6px;
+  font-size: 11px;
+  line-height: 1.2;
+  box-shadow: 2px 2px 0 var(--line);
+}
+#resultSection .film-sample {
+  height: 22px;
+  margin-bottom: 5px;
+}
+#resultSection #saveBtn {
+  margin-top: 0;
+  min-height: 54px;
+  font-size: 19px;
+}
+#resultSection #shareBtn {
+  margin-top: 10px;
+  min-height: 38px;
+  font-size: 13px;
+}
+.motion-toggle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  min-height: 42px;
+  padding: 0;
+  border-radius: 50%;
+  box-shadow: 2px 3px 0 var(--line);
+}
+.motion-toggle[hidden] {
+  display: none;
+}
+.motion-toggle .ic {
+  width: 22px;
+  height: 22px;
+}
+.motion-toggle[aria-pressed="true"] {
+  background: var(--accent);
+  color: #fff;
+}
+.result-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 6px 4px;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.text-link .ic {
+  width: 15px;
+  height: 15px;
+}
+/* Confirmation card matches the camera permission card. */
+.confirm-dialog {
+  width: min(380px, calc(100% - 32px));
+  height: fit-content;
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  overflow: auto;
+  padding: 22px;
+  border: 3px solid var(--line);
+  border-radius: 26px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 7px 8px 0 var(--line);
+}
+/* Flex with fixed-height children: a grid here stretched its rows while iOS Safari settled the viewport height. */
+.confirm-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.confirm-dialog > * {
+  flex: none;
+}
+.confirm-dialog p {
+  margin: 0 0 2px;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.55;
+  text-align: center;
+}
+.confirm-dialog button {
+  width: 100%;
+  height: 48px;
+  min-height: 48px;
+  margin: 0;
+}
+.confirm-dialog .soft {
+  border-radius: 12px;
+  box-shadow: none;
+  font-size: 13px;
+}
+/* Countdown artwork replaces the italic digits and pops in on every tick. */
+.count-number:has(.count-art) {
+  transform: none;
+  -webkit-text-stroke: 0;
+  text-shadow: none;
+}
+.count-art {
+  display: block;
+  width: min(88vw, 760px);
+  max-height: 62vh;
+  height: auto;
+  object-fit: contain;
+  animation: countPop 0.38s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.count-art.shot-done {
+  width: min(56vw, 340px);
+  max-height: 40vh;
+}
+@keyframes countPop {
+  from {
+    opacity: 0;
+    transform: scale(0.6) rotate(-6deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+/* 調整 tool: floating stamp actions and the eraser in the brush row. */
+#editSection .brush-categories {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.stamp-actions {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  gap: 6px;
+  transform: translate(-50%, -100%);
+}
+.stamp-actions.below {
+  transform: translate(-50%, 0);
+}
+.stamp-actions .round-tool {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  background: #fffaf1;
+  box-shadow: 2px 3px 0 var(--line);
+}
+.stamp-actions .round-tool .ic {
+  width: 20px;
+  height: 20px;
+}
+.adjust-hint {
+  margin: 8px 0;
+  font-size: 13px;
+  text-align: center;
+  opacity: 0.75;
+}
+#editCanvas[data-tool="adjust"] {
+  cursor: default;
+}
+/* Before the camera connects, each booth shows its lobby colour block instead of artwork. */
+body[data-stage="start"] .mode,
+body[data-stage="start"] .mode.active,
+body[data-stage="start"] .mode[aria-pressed="true"] {
+  background: linear-gradient(135deg, #6d184c, #261428);
+}
+body[data-stage="start"][data-theme="hara"] .mode {
+  background: linear-gradient(135deg, #602477, #26183d);
+}
+body[data-stage="start"][data-theme="cyber"] .mode {
+  background: linear-gradient(135deg, #315797, #16234f);
+}
+body[data-stage="start"] .mode + .mode {
+  background-image: linear-gradient(225deg, #6d184c, #261428);
+}
+body[data-stage="start"][data-theme="hara"] .mode + .mode {
+  background-image: linear-gradient(225deg, #602477, #26183d);
+}
+body[data-stage="start"][data-theme="cyber"] .mode + .mode {
+  background-image: linear-gradient(225deg, #315797, #16234f);
+}
+/* Digits stay small enough to keep the player's face visible; READY may cover the frame. */
+.count-art.digit {
+  width: min(44vw, 300px);
+  max-height: 34vh;
+}
+/* Portrait sessions: photo canvases outside the full-bleed start and shoot views follow the 3:4 frame. */
+body[data-orient="portrait"] :is(.photo-tile, .import-grid, .photo-tabs, .edit-canvas-wrap) canvas,
+body[data-orient="portrait"] #editSection .edit-canvas-wrap canvas {
+  aspect-ratio: 3/4;
+}

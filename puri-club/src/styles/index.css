@@ -1,0 +1,7 @@
+/* Imported in cascade order: later files override earlier ones. */
+@import "./base.css";
+@import "./lobby.css";
+@import "./booth.css";
+@import "./components.css";
+@import "./result.css";
+@import "./heisei.css";
