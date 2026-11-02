@@ -222,9 +222,9 @@ window.InvoiceArtwork.push({
 });
 window.InvoiceArtwork.push({
   id:'unit-beta-todays-find',name:'一片大發現',kind:'illustration',color:'#e7edc6',
-  src:'thumbs/unit-beta-todays-find.jpg',
-  portraitSrc:'artworks/unit-beta-todays-find-portrait.jpg',
-  landscapeSrc:'artworks/unit-beta-todays-find-landscape.jpg'
+  src:'thumbs/unit-beta-todays-find.png',
+  portraitSrc:'artworks/unit-beta-todays-find-portrait.png',
+  landscapeSrc:'artworks/unit-beta-todays-find-landscape.png'
 });
 window.prepareInvoiceArtworkGallery=function(root){
   const button=root.querySelector('[data-image="study-riso"]');
