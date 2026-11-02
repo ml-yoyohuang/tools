@@ -1,6 +1,6 @@
 # 拍貼版型對位稿
 
-四張 SVG 的 `width`、`height`、`viewBox` 與網站輸出的基準座標一致；網站預覽以 2 倍、匯出 PNG 以 3 倍解析度繪製。對位資料由網站原始碼 `puri-club/src/main.js` 的 `sheetSpec()` 直接產生（2026-10-30）。
+四張 SVG 的 `width`、`height`、`viewBox` 與網站輸出的基準座標一致；網站預覽以 2 倍、匯出 PNG 以 3 倍解析度繪製。對位資料由網站原始碼 `puri-club/src/sheet.js` 的 `sheetSpec()` 直接產生（2026-10-30）。
 
 照片方向在進入機台時依螢幕方向決定並鎖定：直拿手機拍 600 × 800 直式照片，其他情況拍 800 × 600 橫式照片。每個方向各有兩種版型，所以總共四張對位稿。
 
@@ -29,5 +29,5 @@
 這些是結構對位稿，沒有綁定三台機台的風格。美術可以在 8 分割的同尺寸畫布上設計底紙，但割線與出血範圍的座標應維持不變。要調整版型，請修改網站的 `sheetSpec()`，再重新產生這四張 SVG：
 
 ```bash
-node puri-club-temp/layout-wireframes/build-wireframes.js puri-club/src/main.js puri-club-temp/layout-wireframes
+node puri-club-temp/layout-wireframes/build-wireframes.js puri-club/src/sheet.js puri-club-temp/layout-wireframes
 ```

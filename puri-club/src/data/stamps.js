@@ -1,0 +1,85 @@
+// Stamp artwork lists: each booth's set plus the shared pictures and words.
+
+// Stamps are illustrated WebP files: one set per booth plus a shared Heisei-pop set.
+export const STAMP_DIR = "assets/stamps/web/";
+
+export const STAMP_SETS = {
+  gal: [
+    ["109-style/109-01-heart", "桃紅愛心"],
+    ["109-style/109-03-crown", "金皇冠"],
+    ["109-style/109-04-butterfly", "豹紋蝴蝶"],
+    ["109-style/109-07-bow", "豹紋蝴蝶結"],
+    ["109-style/109-09-chain", "銀鎖鏈"],
+    ["109-style/109-11-pearls", "珍珠"],
+    ["109-style/109-13-kiss", "吻痕"],
+    ["109-style/109-14-stars", "金色星光"],
+    ["109-style/109-16-gems", "水鑽"],
+    ["109-style/109-19-lace-corner", "蕾絲角"],
+    ["109-style/109-20-tape", "豹紋膠帶"],
+    ["109-style/109-21-ribbon", "緞帶"],
+  ],
+  hara: [
+    ["harajuku-mix/01-bubble-star", "泡泡星"],
+    ["harajuku-mix/02-checker-heart", "棋盤愛心"],
+    ["harajuku-mix/03-six-flower", "彩色花朵"],
+    ["harajuku-mix/07-checker-bow", "棋盤蝴蝶結"],
+    ["harajuku-mix/09-bead-string", "彩珠串"],
+    ["harajuku-mix/10-star-charm", "星星吊飾"],
+    ["harajuku-mix/13-three-stars", "三顆星"],
+    ["harajuku-mix/14-rays", "放射線"],
+    ["harajuku-mix/18-paper-confetti", "紙片"],
+    ["harajuku-mix/19-graph-paper", "方格紙"],
+    ["harajuku-mix/20-stripe-tape", "條紋膠帶"],
+    ["harajuku-mix/22-wave-underline", "波浪線"],
+  ],
+  cyber: [
+    ["cyber-angel/01-ice-butterfly", "冰藍蝴蝶"],
+    ["cyber-angel/03-chrome-heart", "鉻銀愛心"],
+    ["cyber-angel/05-angel-wings", "天使翅膀"],
+    ["cyber-angel/07-ice-bow", "冰藍蝴蝶結"],
+    ["cyber-angel/09-teardrop-pendant", "水滴墜飾"],
+    ["cyber-angel/12-halo", "光環"],
+    ["cyber-angel/13-ice-stars", "冰藍星星"],
+    ["cyber-angel/14-glass-bubbles", "玻璃泡泡"],
+    ["cyber-angel/15-rhinestone-diamond", "水鑽菱形"],
+    ["cyber-angel/20-gummy-label", "果凍標籤"],
+    ["cyber-angel/21-rhinestone-corner", "水鑽角"],
+    ["cyber-angel/23-prism-tape", "稜鏡膠帶"],
+  ],
+};
+
+export const SHARED_PICTURES = [
+  ["shared/PB-01_hand-heart", "手繪愛心"],
+  ["shared/PB-02_link-hearts", "連心"],
+  ["shared/PB-03_flying-hearts", "飛愛心"],
+  ["shared/PB_hearts-stars", "愛心星星"],
+  ["shared/PB-04_yellow-star", "黃色星星"],
+  ["shared/PB-05_sparkle-group", "閃亮組"],
+  ["shared/PB-06_smile-badge", "笑臉"],
+  ["shared/PB-07_daisy", "小雛菊"],
+  ["shared/PB-08_cherries", "櫻桃"],
+  ["shared/PB-09_strawberry", "草莓"],
+  ["shared/PB-10_music-notes", "音符"],
+  ["shared/PB-11_v-sign", "V 手勢"],
+  ["shared/PB-12_gift-box", "禮物盒"],
+  ["shared/PB-14_mini-camera", "迷你相機"],
+];
+
+export const SHARED_WORDS = [
+  ["shared/PW-01_zuttomo", "ズッ友"],
+  ["shared/PW-02_zutto-issho", "ずっと一緒"],
+  ["shared/PW-03_nakayoshi", "なかよし"],
+  ["shared/PW-04_nakayoshi", "仲良し"],
+  ["shared/PW-05_best-friends", "BEST FRIENDS"],
+  ["shared/PW-06_itsumen", "いつメン"],
+  ["shared/PW-07_saikyou-combi", "最強コンビ"],
+  ["shared/PW-08_muteki", "無敵"],
+  ["shared/PW-09_kyou-no-shuyaku", "今日の主役"],
+  ["shared/PW-10_love", "LOVE"],
+  ["shared/PW-11_rabu", "ラブ"],
+  ["shared/PW-12_daisuki", "だいすき"],
+  ["shared/PW-13_heart-times-heart", "愛心×愛心"],
+  ["shared/PW-14_seishun", "青春"],
+  ["shared/PW-15_omoide", "思い出"],
+  ["shared/PW-16_kinenbi", "記念日"],
+];

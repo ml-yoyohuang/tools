@@ -1,8 +1,9 @@
-// Builds layout wireframes from the sheetSpec() in the site source (puri-club/src/main.js) so the art templates match the site exactly.
+// Builds layout wireframes from the sheetSpec() in the site source (puri-club/src/sheet.js) so the art templates match the site exactly.
 const fs=require("fs"),path=require("path");
 const [,,source,outDir]=process.argv;
 const src=fs.readFileSync(source,"utf8");
-const block=src.slice(src.indexOf("const SHEET_MARGIN"),src.indexOf("function stickerPath("));
+// The layout constants and sheetSpec() sit between SHEET_MARGIN and stickerPath(); they only read state.PW, PH, orient and layout.
+const block=src.slice(src.indexOf("export const SHEET_MARGIN"),src.indexOf("export function stickerPath(")).replace(/^export /gm,"");
 const heart="M12 20.5C6 16.6 2.5 13.2 2.5 9 2.5 6.2 4.6 4 7.3 4c2 0 3.6 1.1 4.7 2.8C13.1 5.1 14.7 4 16.7 4c2.7 0 4.8 2.2 4.8 5 0 4.2-3.5 7.6-9.5 11.5z";
 const r1=n=>Math.round(n*10)/10;
 function shape(kind,x,y,w,h,attrs){
@@ -16,7 +17,7 @@ function shape(kind,x,y,w,h,attrs){
 const names={split:"大中小分割",eight:"8 分割"},orients={portrait:"直式照片",landscape:"橫式照片"};
 for(const orient of ["portrait","landscape"])for(const layout of ["split","eight"]){
  const [PW,PH]=orient==="portrait"?[600,800]:[800,600];
- const {sheetSpec,SHEET_BLEED}=new Function("PW","PH","orient","layout",block+";return {sheetSpec,SHEET_BLEED}")(PW,PH,orient,layout);
+ const {sheetSpec,SHEET_BLEED}=new Function("state",block+";return {sheetSpec,SHEET_BLEED}")({PW,PH,orient,layout});
  const s=sheetSpec(layout),out=[];
  out.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${s.w}" height="${s.h}" viewBox="0 0 ${s.w} ${s.h}" role="img" aria-labelledby="title desc">`,
  `<title id="title">${names[layout]}（${orients[orient]}）拍貼版型對位稿</title>`,
