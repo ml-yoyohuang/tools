@@ -12,7 +12,13 @@ const phone = () => innerWidth <= 860;
 const damp = (x, goal, k, dt) => x + (goal - x) * (1 - Math.exp(-k * dt));
 
 const DEFAULT_PLACE = '大安森林公園';
-const DEFAULT_DATE = '2026-11-06';
+// Always tomorrow, in the visitor's local time zone
+function tomorrow() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
 const MAX_TURTLES = 7;
 
 body.classList.add('loading');
@@ -354,17 +360,17 @@ function syncAdd() {
 }
 
 addBtn.addEventListener('click', () => {
-  if (state.step === 'finale' || state.done) return;
+  if (state.step !== 'intro') return;
   addTurtle();
 });
 
 /* ---------- Step 1 ---------- */
 
 placeEl.value = DEFAULT_PLACE;
-dateEl.value = DEFAULT_DATE;
+dateEl.value = tomorrow();
 
 function syncDate() {
-  if (!dateEl.value) dateEl.value = DEFAULT_DATE;
+  if (!dateEl.value) dateEl.value = tomorrow();
   dateText.textContent = cnDate(dateEl.value);
 }
 syncDate();

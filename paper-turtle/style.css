@@ -129,12 +129,11 @@ body[data-step="finale"] .steps li { background: var(--gold); }
 .add:hover::before,
 .add:hover::after { transform: rotate(90deg); }
 .add:active { background: radial-gradient(circle, rgba(200, 163, 95, 0.12) 20.5px, rgba(200, 163, 95, 0.8) 21px, transparent 21.5px); }
-.add:disabled { opacity: 0.25 !important; cursor: default; }
+body[data-step="intro"] .add:disabled { opacity: 0.25; cursor: default; }
 .add:disabled::before,
 .add:disabled::after { transform: none; }
 
-body[data-step="intro"] .add,
-body[data-step="burn"]:not(.done) .add {
+body[data-step="intro"] .add {
   opacity: 1;
   visibility: visible;
   transition: opacity 1.2s var(--ease) 0.25s, visibility 0s;
