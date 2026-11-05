@@ -748,6 +748,19 @@ body[data-stage="edit"] .station {
   overflow-y: auto;
   overscroll-behavior: contain;
 }
+/* Desktop: the tool switch stays pinned to the top of the scrolling toolbox. */
+@media (min-width: 761px) {
+  #editSection .tool-tabs {
+    position: sticky;
+    top: -18px;
+    z-index: 2;
+    margin: -18px -18px 14px;
+    padding: 18px 18px 12px;
+    background: var(--paper);
+    border-bottom: 2px dashed #cfb8cc;
+    border-radius: 12px 12px 0 0;
+  }
+}
 #editSection #autoDecor {
   margin: 0 0 12px;
 }
