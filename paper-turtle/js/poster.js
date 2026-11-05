@@ -9,6 +9,11 @@ function cnNumber(n) {
   return DIGITS[t] + '十' + (o ? DIGITS[o] : '');
 }
 
+/** 12 → 十二, 128 → 一二八 (digit by digit past 99, like the year) */
+export function cnCount(n) {
+  return n < 100 ? cnNumber(n) : String(n).split('').map((c) => DIGITS[+c]).join('');
+}
+
 /** 2026-11-05 → 二〇二六年十一月五日 */
 export function cnDate(iso) {
   const [y, m, d] = iso.split('-').map(Number);

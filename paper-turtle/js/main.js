@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { SPAN, turtleTriangles, buildGeometry, rasterize, samplePoints, paperTextures, colorPaperTextures, createPaperMaterial } from './turtle.js';
 import { BurnSim } from './burn.js';
 import { Pool, KINDS, Dust, GoldTurtle, pointUniforms } from './particles.js';
-import { cnDate, makeSeal, composePoster } from './poster.js';
+import { cnDate, cnCount, makeSeal, composePoster } from './poster.js';
 
 const $ = (s) => document.querySelector(s);
 const body = document.body;
@@ -574,6 +574,21 @@ function updateBurn(dt, time) {
 
 /* ---------- Step 3: finale ---------- */
 
+// Lifetime tally of burned turtles, kept on this device only
+const TALLY_KEY = 'paper-turtle:burned';
+
+function tallyBurned(n) {
+  const el = $('#f-tally');
+  try {
+    const total = (parseInt(localStorage.getItem(TALLY_KEY), 10) || 0) + n;
+    localStorage.setItem(TALLY_KEY, String(total));
+    el.textContent = `累計焚化 ${cnCount(total)}隻`;
+    el.hidden = false;
+  } catch {
+    el.hidden = true; // storage blocked: leave the finale as it is
+  }
+}
+
 function finish(time) {
   state.done = true;
   state.doneAt = time;
@@ -593,6 +608,7 @@ function finish(time) {
   });
   $('#f-place').textContent = placeEl.value.trim();
   $('#f-date').textContent = cnDate(dateEl.value);
+  tallyBurned(turtles.length);
   posterBlob = null;
 }
 
