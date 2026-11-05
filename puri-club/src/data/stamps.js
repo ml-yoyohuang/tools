@@ -103,6 +103,8 @@ export const SHARED_PICTURES = [
   ["shared/PB-51_spiral-lollipop", "棒棒糖"],
   ["shared/PB-52_french-fries", "薯條"],
   ["shared/PB-53_school-bow", "制服蝴蝶結"],
+  ["shared/PB-54_american-hotdog", "熱狗堡"],
+  ["shared/PB-55_donut", "甜甜圈"],
 ];
 
 export const SHARED_WORDS = [
