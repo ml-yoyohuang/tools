@@ -3,6 +3,7 @@ import { SPAN, turtleTriangles, buildGeometry, rasterize, samplePoints, paperTex
 import { BurnSim } from './burn.js';
 import { Pool, KINDS, Dust, GoldTurtle, pointUniforms } from './particles.js';
 import { cnDate, cnCount, makeSeal, composePoster } from './poster.js';
+import { Sky, drift } from './gallery.js';
 
 const $ = (s) => document.querySelector(s);
 const body = document.body;
@@ -306,6 +307,14 @@ function frame(step) {
     }
     g.elev = step === 'finale' ? 0.42 : 0.5;
     g.ty = step === 'finale' ? LIFT + 0.1 : 0.15;
+  } else if (step === 'gallery') {
+    // Frame the whole drifting ball, lifted a little clear of the caption below
+    const half = (gallery.sky?.radius ?? 0) + 0.8;
+    g.ox = 0;
+    g.oy = p ? 0.07 : 0.04;
+    g.dist = Math.max(half / (tanH * (p ? 0.9 : 0.68)), (half * 0.7) / (tanV * (p ? 0.55 : 0.66)));
+    g.elev = 0.5;
+    g.ty = SKY_Y;
   } else {
     g.ox = 0;
     g.oy = p ? 0.02 : 0;
@@ -574,19 +583,55 @@ function updateBurn(dt, time) {
 
 /* ---------- Step 3: finale ---------- */
 
-// Lifetime tally of burned turtles, kept on this device only
+// Every turtle burned on this device: the count, and each one's wish (oldest first).
+// Turtles burned before wishes were kept, or trimmed past MAX_WISHES, stay wordless.
 const TALLY_KEY = 'paper-turtle:burned';
+const WISHES_KEY = 'paper-turtle:wishes';
+const MAX_WISHES = 2000;
+const tallyBtn = $('#f-tally');
+
+/** { total, wishes } or null when storage is unavailable */
+function readLedger() {
+  let total;
+  let raw;
+  try {
+    total = parseInt(localStorage.getItem(TALLY_KEY), 10) || 0;
+    raw = localStorage.getItem(WISHES_KEY);
+  } catch {
+    return null;
+  }
+  let wishes = [];
+  try {
+    const parsed = JSON.parse(raw || '[]');
+    if (Array.isArray(parsed)) wishes = parsed.filter((w) => typeof w === 'string');
+  } catch {
+    /* unreadable list: keep the count, lose the words */
+  }
+  return { total: Math.max(total, wishes.length), wishes };
+}
+
+function recordBurn(wish, n) {
+  const ledger = readLedger();
+  if (!ledger) return null;
+  const total = ledger.total + n;
+  const wishes = ledger.wishes.concat(Array(n).fill(wish)).slice(-MAX_WISHES);
+  try {
+    localStorage.setItem(WISHES_KEY, JSON.stringify(wishes));
+    localStorage.setItem(TALLY_KEY, String(total));
+  } catch {
+    return null;
+  }
+  return total;
+}
+
+const tallyText = (total) => `累計焚化 ${cnCount(total)}隻`;
 
 function tallyBurned(n) {
-  const el = $('#f-tally');
-  try {
-    const total = (parseInt(localStorage.getItem(TALLY_KEY), 10) || 0) + n;
-    localStorage.setItem(TALLY_KEY, String(total));
-    el.textContent = `累計焚化 ${cnCount(total)}隻`;
-    el.hidden = false;
-  } catch {
-    el.hidden = true; // storage blocked: leave the finale as it is
-  }
+  const total = recordBurn(wishEl.value.trim(), n);
+  tallyBtn.hidden = !total; // storage blocked: leave the finale as it is
+  if (!total) return;
+  tallyBtn.querySelector('span').textContent = tallyText(total);
+  tallyBtn.setAttribute('aria-label', `${tallyText(total)}，觀看已焚化的紙龜`);
 }
 
 function finish(time) {
@@ -783,6 +828,250 @@ $('#again').addEventListener('click', () => {
   setStep('intro');
 });
 
+/* ---------- Gallery: every turtle burned here, drifting as gold ---------- */
+
+const SKY_Y = 0.7;
+const SKY_MAX = coarse ? 600 : 1000;
+const SKY_BUDGET = coarse ? 22000 : 40000;
+const skyGroup = new THREE.Group();
+skyGroup.position.y = SKY_Y;
+skyGroup.visible = false;
+scene.add(skyGroup);
+// A warm breath of light behind the flock, like the pool under the finale
+const skyGlow = new THREE.Sprite(
+  new THREE.SpriteMaterial({
+    map: radialTexture([[0, 'rgba(255,176,92,0.5)'], [0.35, 'rgba(190,120,50,0.16)'], [1, 'rgba(0,0,0,0)']]),
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  })
+);
+skyGlow.renderOrder = 3;
+skyGlow.visible = false;
+scene.add(skyGlow);
+
+const gallery = { sky: null, entries: [], from: 'intro', sel: -1, vel: 0, drag: null, hinted: false };
+const gWish = $('#g-wish');
+const gCount = $('#g-count');
+const hiddenInGallery = [floor, flock, goldFlock, halo];
+let shownBefore = [];
+
+let skyPoints = null;
+function skySample() {
+  if (skyPoints) return skyPoints;
+  skyPoints = samplePoints(tris, 2600);
+  // Shuffle whole points so any run of them mixes outline and surface
+  for (let i = skyPoints.length / 3 - 1; i > 0; i--) {
+    const j = (Math.random() * (i + 1)) | 0;
+    for (let c = 0; c < 3; c++) [skyPoints[i * 3 + c], skyPoints[j * 3 + c]] = [skyPoints[j * 3 + c], skyPoints[i * 3 + c]];
+  }
+  return skyPoints;
+}
+
+let fading = null;
+/** Fade through the ink veil, swap the scene underneath, fade back. */
+function transition(fn, instant) {
+  if (fading) {
+    clearTimeout(fading.t);
+    fading.fn();
+    fading = null;
+  }
+  if (instant || reduced) {
+    fn();
+    return;
+  }
+  body.classList.add('fading');
+  fading = {
+    fn,
+    t: setTimeout(() => {
+      fading = null;
+      fn();
+      requestAnimationFrame(() => body.classList.remove('fading'));
+    }, 520),
+  };
+}
+
+function openGallery(instant) {
+  const ledger = readLedger();
+  if (!ledger || !ledger.total) return false;
+  transition(() => {
+    gallery.from = state.step === 'gallery' ? gallery.from : state.step;
+    shownBefore = hiddenInGallery.map((o) => o.visible);
+    hiddenInGallery.forEach((o) => (o.visible = false));
+    // Newest first; turtles from before wishes were kept are the oldest, and wordless
+    const wordless = ledger.total - ledger.wishes.length;
+    gallery.entries = ledger.wishes.slice().reverse().concat(Array(wordless).fill(null)).slice(0, SKY_MAX);
+    gallery.sky?.dispose();
+    gallery.sky = new Sky(skySample(), gallery.entries.length, SKY_BUDGET);
+    gallery.sky.uniforms.uMinPx.value = 1.3 * renderer.getPixelRatio();
+    skyGroup.add(gallery.sky.points);
+    skyGroup.rotation.y = 0;
+    skyGroup.visible = true;
+    skyGlow.position.set(0, SKY_Y, 0);
+    skyGlow.scale.setScalar(4 + gallery.sky.radius * 2.6);
+    skyGlow.material.opacity = 0;
+    skyGlow.visible = true;
+    gallery.sel = -1;
+    gallery.vel = 0;
+    gCount.textContent = tallyText(ledger.total);
+    showWish(null);
+    setStep('gallery');
+    Object.assign(view, goal);
+  }, instant);
+  return true;
+}
+
+function closeGallery() {
+  transition(() => {
+    skyGroup.visible = false;
+    skyGlow.visible = false;
+    gallery.sky?.dispose();
+    gallery.sky = null;
+    hiddenInGallery.forEach((o, i) => (o.visible = shownBefore[i]));
+    body.classList.remove('dragging', 'over-turtle');
+    setStep(gallery.from);
+    Object.assign(view, goal);
+  });
+}
+
+const clearHash = () => history.replaceState(null, '', location.pathname + location.search);
+
+function leaveGallery() {
+  if (state.step !== 'gallery') return;
+  if (history.state?.gallery) history.back();
+  else {
+    clearHash();
+    closeGallery();
+  }
+}
+
+tallyBtn.addEventListener('click', () => {
+  if (state.step !== 'gallery' && openGallery()) history.pushState({ gallery: true }, '', '#gallery');
+});
+$('#g-back').addEventListener('click', leaveGallery);
+
+addEventListener('popstate', () => {
+  const want = location.hash === '#gallery';
+  if (want && state.step !== 'gallery') {
+    if (!openGallery()) clearHash();
+  } else if (!want && state.step === 'gallery') closeGallery();
+});
+
+let wishTimer = 0;
+function showWish(i) {
+  clearTimeout(wishTimer);
+  const had = gWish.classList.contains('on');
+  gWish.classList.remove('on');
+  wishTimer = setTimeout(() => {
+    gWish.classList.toggle('hint', i == null);
+    if (i == null) gWish.textContent = gallery.hinted ? '' : `${coarse ? '輕觸' : '點選'}一隻紙龜，看它的心願`;
+    else gWish.textContent = gallery.entries[i] ?? '祈願'; // turtles from before wishes were kept
+    if (gWish.textContent) gWish.classList.add('on');
+  }, had ? 320 : 0);
+}
+
+function select(i) {
+  if (i === gallery.sel) return;
+  gallery.sel = i;
+  if (i >= 0) gallery.hinted = true;
+  showWish(i < 0 ? null : i);
+}
+
+const pv = new THREE.Vector3();
+/** The turtle under a screen point, by each one's drifting centre; -1 for none. */
+function pickTurtle(x, y) {
+  const sky = gallery.sky;
+  if (!sky) return -1;
+  skyGroup.updateMatrixWorld();
+  const t = pointUniforms.uTime.value;
+  const tanV = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  let best = -1;
+  let bestScore = 1;
+  for (let i = 0; i < sky.count; i++) {
+    const c = sky.centers;
+    drift(pv, c[i * 3], c[i * 3 + 1], c[i * 3 + 2], sky.seeds[i], t).applyMatrix4(skyGroup.matrixWorld);
+    const d = pv.distanceTo(camera.position);
+    pv.project(camera);
+    if (pv.z > 1) continue;
+    const reach = Math.max(24, (0.55 / (d * tanV)) * (innerHeight / 2));
+    const score = Math.hypot(((pv.x + 1) / 2) * innerWidth - x, ((1 - pv.y) / 2) * innerHeight - y) / reach;
+    if (score < bestScore) {
+      bestScore = score;
+      best = i;
+    }
+  }
+  return best;
+}
+
+// Drag to turn the sky; a tap (no real movement) picks a turtle
+canvas.addEventListener('pointerdown', (e) => {
+  if (state.step !== 'gallery') return;
+  gallery.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, lastX: e.clientX, lastT: e.timeStamp, moved: false };
+  canvas.setPointerCapture(e.pointerId);
+});
+
+canvas.addEventListener('pointermove', (e) => {
+  if (state.step !== 'gallery') return;
+  const d = gallery.drag;
+  if (!d || d.id !== e.pointerId) {
+    if (e.pointerType === 'mouse') body.classList.toggle('over-turtle', pickTurtle(e.clientX, e.clientY) >= 0);
+    return;
+  }
+  if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 8) {
+    d.moved = true;
+    body.classList.add('dragging');
+  }
+  if (!d.moved) return;
+  const turn = ((e.clientX - d.lastX) / innerWidth) * 4;
+  const dt = Math.max(1, e.timeStamp - d.lastT) / 1000;
+  skyGroup.rotation.y += turn;
+  gallery.vel = damp(gallery.vel, turn / dt, 18, dt);
+  d.lastX = e.clientX;
+  d.lastT = e.timeStamp;
+});
+
+const endDrag = (e) => {
+  const d = gallery.drag;
+  if (!d || d.id !== e.pointerId) return;
+  gallery.drag = null;
+  body.classList.remove('dragging');
+  if (e.timeStamp - d.lastT > 80) gallery.vel = 0; // held still before letting go
+  if (!d.moved && e.type === 'pointerup') select(pickTurtle(e.clientX, e.clientY));
+};
+canvas.addEventListener('pointerup', endDrag);
+canvas.addEventListener('pointercancel', endDrag);
+
+// Keyboard: arrows step through the turtles, newest first; Escape goes back
+addEventListener('keydown', (e) => {
+  if (state.step !== 'gallery') return;
+  const n = gallery.entries.length;
+  if (e.key === 'Escape') leaveGallery();
+  else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') select((gallery.sel + 1) % n);
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') select(gallery.sel <= 0 ? n - 1 : gallery.sel - 1);
+  else return;
+  e.preventDefault();
+});
+
+const skyDust = new THREE.Color(1, 0.8, 0.5);
+function updateGallery(dt) {
+  const sky = gallery.sky;
+  if (!sky) return;
+  const u = sky.uniforms;
+  u.uIntro.value = Math.min(1, u.uIntro.value + dt / (reduced ? 0.8 : 2.8));
+  u.uAlpha.value = damp(u.uAlpha.value, 1, 3, dt);
+  skyGlow.material.opacity = damp(skyGlow.material.opacity, 0.85, 0.8, dt);
+  if (gallery.sel >= 0) u.uSel.value = gallery.sel; // keep the last one lit while it fades back
+  u.uSelT.value = damp(u.uSelT.value, gallery.sel >= 0 ? 1 : 0, 4, dt);
+  u.uFar.value = view.dist + sky.radius;
+  if (!gallery.drag) {
+    skyGroup.rotation.y += (gallery.vel + (reduced ? 0.01 : 0.035)) * dt;
+    gallery.vel = damp(gallery.vel, 0, 1.4, dt);
+  }
+  dust.uniforms.uColor.value.lerp(skyDust, dt);
+  dust.uniforms.uAlpha.value = damp(dust.uniforms.uAlpha.value, 0.8, 1, dt);
+}
+
 /* ---------- Loop ---------- */
 
 $('#seal').src = seal.toDataURL();
@@ -804,7 +1093,9 @@ function tick() {
   }
 
   const s = state.step;
-  if (s === 'intro') {
+  if (s === 'gallery') {
+    updateGallery(dt);
+  } else if (s === 'intro') {
     flock.rotation.y += dt * (reduced ? 0.05 : 0.14) / Math.max(1, Math.sqrt(turtles.length) * 0.8);
     halo.material.opacity = damp(halo.material.opacity, 0, 2, dt);
     goldLight.intensity = damp(goldLight.intensity, 0, 2, dt);
@@ -853,5 +1144,6 @@ Object.assign(view, goal);
 grow();
 validate();
 requestAnimationFrame(tick);
+if (location.hash === '#gallery' && !openGallery(true)) clearHash();
 document.fonts.ready.then(() => requestAnimationFrame(() => body.classList.remove('loading')));
 setTimeout(() => body.classList.remove('loading'), 1200);
