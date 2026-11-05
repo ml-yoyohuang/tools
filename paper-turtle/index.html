@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>紙龜祈福</title>
+  <meta name="description" content="以金紙摺一隻烏龜，寫下心願，親手點燃。">
+  <meta property="og:title" content="紙龜祈福">
+  <meta property="og:description" content="以金紙摺一隻烏龜，寫下心願，親手點燃。">
+  <meta name="theme-color" content="#090807">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23090807'/%3E%3Cpath d='M32 14 48 24 48 40 32 50 16 40 16 24Z' fill='none' stroke='%23c8a35f' stroke-width='2.5'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.min.js" } }
+  </script>
+</head>
+<body data-step="intro">
+  <canvas id="gl" aria-hidden="true"></canvas>
+
+  <header class="mark">紙龜祈福</header>
+  <ol class="steps" aria-hidden="true"><li></li><li></li><li></li></ol>
+  <button class="add" id="add" type="button" aria-label="多加一隻紙龜"></button>
+
+  <form class="panel p-intro" id="wish-form" autocomplete="off" novalidate>
+    <label class="field">
+      <span>地點</span>
+      <input id="place" name="place" maxlength="20" enterkeyhint="next">
+    </label>
+    <label class="field">
+      <span>心願</span>
+      <textarea id="wish" name="wish" rows="1" maxlength="40" enterkeyhint="done"></textarea>
+    </label>
+    <div class="field">
+      <span id="date-label">日期</span>
+      <div class="date">
+        <output id="date-text" aria-hidden="true"></output>
+        <input id="date" type="date" aria-labelledby="date-label" required>
+      </div>
+    </div>
+    <button class="ignite" type="submit" disabled>點火</button>
+  </form>
+
+  <section class="panel p-burn" aria-live="polite">
+    <p class="burn-wish" id="burn-wish"></p>
+    <div class="burn-foot">
+      <p class="hint" id="hint">按住拖曳，點燃紙龜</p>
+      <div class="meter" role="progressbar" aria-label="焚化進度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="meter"></i></div>
+    </div>
+  </section>
+
+  <section class="panel p-finale" aria-live="polite">
+    <p class="f-wish" id="f-wish"></p>
+    <div class="f-rule"></div>
+    <div class="f-row">
+      <p class="f-meta"><span id="f-place"></span><span id="f-date"></span></p>
+      <img class="seal" id="seal" alt="所願皆成">
+    </div>
+    <div class="f-actions">
+      <button type="button" id="save" class="primary">保存</button>
+      <button type="button" id="share" hidden>分享</button>
+      <button type="button" id="again">再祈一願</button>
+    </div>
+  </section>
+
+  <div class="viewer" id="viewer" hidden>
+    <img alt="祈福圖像">
+    <p>長按圖片即可儲存</p>
+  </div>
+
+  <div class="flame" id="flame" aria-hidden="true"></div>
+  <div class="veil" aria-hidden="true"></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
