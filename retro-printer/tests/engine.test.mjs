@@ -13,7 +13,8 @@ import { mixRGB, makeMixedInk } from '../src/engine/ink.js';
 import { prepare, computeMasks, suggestInks, computeTones, computeLayers, defaultModes, halftone } from '../src/engine/separate.js';
 import { PALETTE } from '../src/inks.js';
 import { fitRect, panBy, shuffle } from '../src/plates/fit.js';
-import { addWork } from '../src/works.js';
+import { addWork, wallItems } from '../src/works.js';
+import { paletteByHue } from '../src/inks.js';
 import { CONFIG as C } from '../src/config.js';
 
 /* ───────── 測試用的版與刮印 ───────── */
@@ -396,6 +397,27 @@ test('作品說明：編號、色數、媒材、日期', () => {
   assert.deepEqual([a.label.no, a.label.line, a.label.date, a.label.file], ['No. 01', '絹印・帆布袋・三色', '2026.11.06', 'print-01.png']);
   assert.deepEqual([b.label.no, b.label.line, b.label.date], ['No. 02', '絹印・紙卡・單色', '2026.01.09']);
   assert.deepEqual(a.label.inks.map(i => i.name), ['水藍', '橘', '海軍藍']);
+});
+
+/* ───────── 入口 ───────── */
+test('作品牆：這次的作品在最前面（新的在前），圖庫每次打亂', () => {
+  const works = [{ no: 1 }, { no: 2 }, { no: 3 }];
+  const lib = Array.from({ length: 27 }, (_, i) => ({ id: 'l' + i }));
+  const a = wallItems(works, lib, seeded(1)), b = wallItems(works, lib, seeded(2));
+  assert.equal(a.length, 30);
+  assert.deepEqual(a.slice(0, 3).map(x => x.work.no), [3, 2, 1]);
+  assert.ok(a.slice(3).every(x => x.kind === 'library'));
+  assert.equal(new Set(a.slice(3).map(x => x.item.id)).size, 27);
+  assert.notDeepEqual(a.slice(3).map(x => x.item.id), b.slice(3).map(x => x.item.id));
+});
+
+test('墨水牆：有彩度的墨依色相排列，大地色與灰黑排在最後', () => {
+  const sorted = paletteByHue(PALETTE);
+  assert.equal(sorted.length, PALETTE.length);
+  const names = sorted.map(i => i.name);
+  assert.ok(names.indexOf('朱紅') < names.indexOf('金黃') && names.indexOf('金黃') < names.indexOf('草綠') &&
+    names.indexOf('草綠') < names.indexOf('群青') && names.indexOf('群青') < names.indexOf('紫'), names.join(' '));
+  assert.deepEqual(names.slice(-5), ['淺灰', '灰', '棕', '深青', '墨黑']);
 });
 
 /* ───────── 執行 ───────── */

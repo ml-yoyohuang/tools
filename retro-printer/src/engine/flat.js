@@ -1,11 +1,11 @@
 import { PW } from './geometry.js';
 
 // 平塊疊色：遮罩直接以墨色相乘，不算任何瑕疵。用於試配色與分色預覽。
-//   masks  每層 PW × PW 的遮罩（0..1）
+//   masks  每層遮罩（0..1），大小與 out 相同（預設 PW × PW）
 //   rgbs   每層墨色
 export function flatComposite(masks, rgbs, paper, out = new Uint8ClampedArray(PW * PW * 4)) {
-  const cs = rgbs.map(c => c.map(v => v / 255));
-  for (let i = 0; i < PW * PW; i++) {
+  const cs = rgbs.map(c => c.map(v => v / 255)), N = out.length / 4;
+  for (let i = 0; i < N; i++) {
     let r = paper[0], g = paper[1], b = paper[2];
     for (let n = 0; n < masks.length; n++) {
       const a = masks[n][i];

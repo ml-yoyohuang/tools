@@ -5,7 +5,8 @@
 //   onNewImage  回到提供圖片
 const css = rgb => `rgb(${rgb.join(',')})`;
 
-export function mountFinish(root, { works, current, onAgain, onNewImage }) {
+//   onHome   回到入口
+export function mountFinish(root, { works, current, onAgain, onNewImage, onHome }) {
   const stage = document.createElement('section');
   stage.className = 'stage';
   stage.innerHTML = `<div class="sheet finish-sheet"><img class="work" alt=""></div>`;
@@ -33,6 +34,7 @@ export function mountFinish(root, { works, current, onAgain, onNewImage }) {
     <div class="foot">
       <button class="text again" type="button">再印一張</button>
       <button class="text new-image" type="button">換一張圖</button>
+      <button class="text home" type="button">回到入口</button>
     </div>`;
   root.appendChild(panel);
   const $ = s => panel.querySelector(s);
@@ -76,10 +78,15 @@ export function mountFinish(root, { works, current, onAgain, onNewImage }) {
     download.href = w.url;
     download.download = l.file;
     for (const t of thumbs) t.b.setAttribute('aria-checked', String(t.w === w));
+    syncAgain(w);
   }
 
-  $('.again').addEventListener('click', onAgain);
+  // 「再印一張」用的是最近一次的版與墨，所以只在展示最新一件時出現
+  const again = $('.again');
+  if (onAgain) again.addEventListener('click', onAgain);
+  const syncAgain = w => { again.hidden = !onAgain || w !== works[works.length - 1]; };
   $('.new-image').addEventListener('click', onNewImage);
+  if (onHome) $('.home').addEventListener('click', onHome); else $('.home').hidden = true;
 
   show(current);
   return { destroy() { root.innerHTML = ''; } };

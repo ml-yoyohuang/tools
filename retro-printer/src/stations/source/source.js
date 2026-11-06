@@ -9,7 +9,7 @@ import { fitRect, panBy, shuffle } from '../../plates/fit.js';
 const PAPER = [245, 240, 230];
 const THUMB = 112;
 
-export function mountSource(root, { source, onNext }) {
+export function mountSource(root, { source, onNext, onBack }) {
   const stage = document.createElement('section');
   stage.className = 'stage';
   stage.innerHTML = `<div class="sheet source-sheet"><canvas class="paper" width="${PW}" height="${PW}"></canvas></div>`;
@@ -30,8 +30,14 @@ export function mountSource(root, { source, onNext }) {
       <span class="label">放置</span>
       <div class="seg" role="radiogroup" aria-label="放置"></div>
     </div>
-    <button class="primary" type="button">製版</button>`;
+    <button class="primary" type="button">製版</button>
+    <div class="foot"><button class="text back" type="button" hidden>入口</button></div>`;
   root.appendChild(panel);
+  if (onBack) {
+    const back = panel.querySelector('.back');
+    back.hidden = false;
+    back.addEventListener('click', onBack);
+  }
   const lib = panel.querySelector('.lib'), note = panel.querySelector('.note');
   const fileInput = panel.querySelector('input[type=file]'), fitRow = panel.querySelector('.fit');
 

@@ -1,3 +1,5 @@
+import { labOf } from './engine/color.js';
+
 // 墨水色票。原創配色，飽和、略帶粉感；入口的墨水牆之後也用這份。
 export const PALETTE = [
   { id: 'pink',      name: '螢光粉', rgb: [255, 72, 176] },
@@ -29,5 +31,29 @@ export const PALETTE = [
 ];
 
 export const inkById = id => PALETTE.find(i => i.id === id);
+
+// 依色相排列（墨水牆用）：有彩度的墨由紅到紫，低彩度的大地色與灰黑排在最後、由淺到深
+export function paletteByHue(list = PALETTE) {
+  const info = ink => {
+    const [r, g, b] = ink.rgb.map(v => v / 255);
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+    let h = 0;
+    if (d > 0) {
+      if (max === r) h = ((g - b) / d) % 6;
+      else if (max === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h *= 60;
+      if (h < 0) h += 360;
+    }
+    if (h > 320) h -= 360;          // 桃紅、酒紅接在紅色前面
+    // 以 Lab 彩度判斷：灰、以及偏暗又不太飽和的大地色（棕、深青）
+    const [L, a, bb] = labOf(ink.rgb), C = Math.hypot(a, bb);
+    return { ink, h, neutral: C < 15 || (L < 45 && C < 26), light: L };
+  };
+  const all = list.map(info);
+  const chroma = all.filter(x => !x.neutral).sort((a, b) => a.h - b.h);
+  const neutral = all.filter(x => x.neutral).sort((a, b) => b.light - a.light);
+  return [...chroma, ...neutral].map(x => x.ink);
+}
 
 export const DEFAULT_INKS = [inkById('pink'), inkById('blue')];

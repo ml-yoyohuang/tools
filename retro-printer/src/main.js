@@ -5,12 +5,14 @@ import { mountInks } from './stations/inks/inks.js';
 import { mountMedia } from './stations/media/media.js';
 import { mountWorkbench } from './stations/workbench/workbench.js';
 import { mountFinish } from './stations/finish/finish.js';
+import { mountEntrance } from './stations/entrance/entrance.js';
 import { MEDIA } from './state.js';
 import { addWork } from './works.js';
 
 // 各站依 brief.md 的流程串接：
-//   提供圖片 → 製版 → 欣賞版子 → 選墨水 → 選媒材 → 工作桌 → 完成
+//   入口 → 提供圖片 → 製版 → 欣賞版子 → 選墨水 → 選媒材 → 工作桌 → 完成
 const stations = {
+  entrance: mountEntrance,
   finish: mountFinish,
   source: mountSource,
   plates: mountPlates,
@@ -42,8 +44,20 @@ const session = {
   works: []                     // 這次瀏覽留下的作品（之後入口的作品牆也讀這份）
 };
 
+function toEntrance() {
+  go('entrance', {
+    works: session.works,
+    onStart: toSource,
+    onOpenWork: work => toFinish(work),
+    onPickImage: id => { Object.assign(session.source, { kind: 'library', id }); toSource(); }
+  });
+}
 function toSource() {
-  go('source', { source: session.source, onNext: image => { session.image = image; toPlates(); } });
+  go('source', {
+    source: session.source,
+    onNext: image => { session.image = image; toPlates(); },
+    onBack: toEntrance
+  });
 }
 function toPlates() {
   const image = session.image;
@@ -97,8 +111,9 @@ function toFinish(work) {
   go('finish', {
     works: session.works, current: work,
     onAgain: () => toWorkbench(MEDIA[session.medium]),
-    onNewImage: toSource
+    onNewImage: toSource,
+    onHome: toEntrance
   });
 }
 
-toSource();
+toEntrance();
