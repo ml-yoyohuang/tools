@@ -10,6 +10,8 @@ import { printLayer, compositeJob, surfaceOf } from '../src/engine/print.js';
 import { textureField } from '../src/engine/texture.js';
 import { MEDIA } from '../src/state.js';
 import { mixRGB, makeMixedInk } from '../src/engine/ink.js';
+import { prepare, computeMasks, suggestInks } from '../src/engine/separate.js';
+import { PALETTE } from '../src/inks.js';
 import { CONFIG as C } from '../src/config.js';
 
 /* ───────── 測試用的版與刮印 ───────── */
@@ -255,6 +257,58 @@ test('調墨：一般墨水不受影響，成品與之前完全相同', () => {
   const job = twoLayerJob(0);
   assert.equal(job.layers[1].inkMap, null);
   assert.deepEqual(compositeJob(job, C), a);
+});
+
+/* ───────── 分色 ───────── */
+// 120 × 120 的合成圖：紙色底，左上黃、右上青、下方深藍
+function syntheticImage() {
+  const w = 120, h = 120, data = new Uint8ClampedArray(w * h * 4);
+  const region = (x, y) => (y < 50 ? (x < 55 ? 'yellow' : x > 65 ? 'teal' : 'paper') : y > 70 ? 'navy' : 'paper');
+  const RGB = { paper: [246, 242, 233], yellow: [242, 182, 50], teal: [42, 140, 140], navy: [44, 61, 98] };
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const c = RGB[region(x, y)], i = (y * w + x) * 4;
+    data[i] = c[0]; data[i + 1] = c[1]; data[i + 2] = c[2]; data[i + 3] = 255;
+  }
+  return { image: { data, w, h }, region };
+}
+const coverage = m => m.reduce((s, v) => s + v, 0) / m.length;
+
+test('分色：每層對應正確區域，由淺到深，紙色不印', () => {
+  const { image, region } = syntheticImage();
+  const prep = prepare(image, 3);
+  assert.equal(prep.centers.length, 3);
+  const Ls = prep.centers.map(c => c[0]);
+  assert.ok(Ls[0] >= Ls[1] && Ls[1] >= Ls[2], `亮度順序 ${Ls.map(v => v.toFixed(0))}`);
+  const masks = computeMasks(prep, [0.5, 0.5, 0.5]);
+  const expect = ['yellow', 'teal', 'navy'];
+  masks.forEach((m, k) => {
+    let hit = 0, total = 0, stray = 0;
+    for (let y = 2; y < 118; y++) for (let x = 2; x < 118; x++) {
+      const r = region(x, y), v = m[y * 120 + x];
+      if (r === expect[k]) { total++; hit += v > 0.5; } else if (r === 'paper' && Math.abs(x - 60) > 8 && Math.abs(y - 60) > 14) stray += v > 0.5;
+    }
+    assert.ok(hit / total > 0.95, `第 ${k + 1} 層命中 ${(hit / total).toFixed(3)}`);
+    assert.equal(stray, 0, `第 ${k + 1} 層印到紙色 ${stray} 點`);
+  });
+});
+
+test('分色：門檻越大，這層覆蓋越多', () => {
+  const { image } = syntheticImage();
+  const prep = prepare(image, 3);
+  let prev = -1;
+  for (const c of [0.1, 0.3, 0.5, 0.7, 0.9]) {
+    const cov = coverage(computeMasks(prep, [0.5, c, 0.5])[1]);
+    assert.ok(cov >= prev, `門檻 ${c} 覆蓋 ${cov.toFixed(3)} < ${prev.toFixed(3)}`);
+    prev = cov;
+  }
+});
+
+test('分色：同一張圖每次結果相同；建議墨色是最接近的色票', () => {
+  const { image } = syntheticImage();
+  const a = prepare(image, 3), b = prepare(image, 3);
+  assert.deepEqual(a.centers, b.centers);
+  const names = suggestInks(a, PALETTE).map(i => i.id);
+  assert.deepEqual(names, ['gold', 'teal', 'navy']);
 });
 
 /* ───────── 執行 ───────── */

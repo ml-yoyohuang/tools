@@ -1,6 +1,7 @@
 import { CONFIG as C } from '../../config.js';
 import { PW } from '../../engine/geometry.js';
 import { makeMixedInk } from '../../engine/ink.js';
+import { flatComposite } from '../../engine/flat.js';
 import { PALETTE, inkById } from '../../inks.js';
 import { createMixer } from './mixer.js';
 
@@ -11,7 +12,7 @@ const SLAB = [226, 224, 219];   // 調墨台台面
 const two = n => String(n).padStart(2, '0');
 const css = rgb => `rgb(${rgb.join(',')})`;
 
-export function mountInks(root, { plates, session, onNext }) {
+export function mountInks(root, { plates, session, onNext, onBack }) {
   // session：在各站之間保留的選擇 { inks, customInks }
   const L = plates.length;
   let active = 0;
@@ -35,16 +36,7 @@ export function mountInks(root, { plates, session, onNext }) {
   const masks = plates.map(p => p.m);
   const previewImg = pctx.createImageData(PW, PW);
   function drawPreview(inks) {
-    const d = previewImg.data, cs = inks.map(i => i.rgb.map(v => v / 255));
-    for (let i = 0; i < PW * PW; i++) {
-      let r = PREVIEW_PAPER[0], g = PREVIEW_PAPER[1], b = PREVIEW_PAPER[2];
-      for (let n = 0; n < masks.length; n++) {
-        const a = masks[n][i];
-        if (a > 0) { const c = cs[n]; r *= 1 - a + a * c[0]; g *= 1 - a + a * c[1]; b *= 1 - a + a * c[2]; }
-      }
-      const j = i * 4;
-      d[j] = r; d[j + 1] = g; d[j + 2] = b; d[j + 3] = 255;
-    }
+    flatComposite(masks, inks.map(i => i.rgb), PREVIEW_PAPER, previewImg.data);
     pctx.putImageData(previewImg, 0, 0);
   }
   const showSelection = () => drawPreview(session.inks);
@@ -91,7 +83,13 @@ export function mountInks(root, { plates, session, onNext }) {
       <div class="act">
         <button class="text mix-open" type="button">調墨台</button>
         <button class="primary" type="button">使用這組墨</button>
-      </div>`;
+      </div>
+      <div class="foot"><button class="text back" type="button" hidden>回到版子</button></div>`;
+    if (onBack) {
+      const back = panel.querySelector('.back');
+      back.hidden = false;
+      back.addEventListener('click', onBack);
+    }
     const layersEl = panel.querySelector('.layers');
     session.inks.forEach((ink, i) => {
       const row = document.createElement('button');
