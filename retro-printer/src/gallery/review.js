@@ -6,7 +6,8 @@ import { drawWallPrint } from './render.js';
 const PER = 12, SIZE = 300;
 const root = document.getElementById('review');
 const only = decodeURIComponent(location.hash.slice(1));
-const gens = GENERATORS.filter(g => !only || g.name === only || g.id === only);
+// #葉、#leaves 只看一個圖案；#characters 只看一個主題
+const gens = GENERATORS.filter(g => !only || g.name === only || g.id === only || g.theme === only);
 
 const jobs = [];
 for (const gen of gens) {

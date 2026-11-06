@@ -38,7 +38,7 @@ export const LAYOUTS = {
       const a = k / 36 * Math.PI * 2;
       edge.beginPath(); edge.arc(180 + Math.cos(a) * 145, 180 + Math.sin(a) * 145, 3, 0, Math.PI * 2); edge.fill();
     }
-    unit({ x: 95, y: 95, s: 170 }, { seed, shift: 1 });
+    unit({ x: 80, y: 80, s: 200 }, { seed, shift: 1 });
   },
   // 大字疊圖形：一個巨大的字母或數字墊底，圖案疊在上面
   bigtype: ({ unit, seed, L, rnd }) => {

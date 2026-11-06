@@ -15,7 +15,7 @@ import { PALETTE } from '../src/inks.js';
 import { fitRect, panBy, shuffle } from '../src/plates/fit.js';
 import { addWork, wallItems } from '../src/works.js';
 import { paletteByHue } from '../src/inks.js';
-import { pickInks } from '../src/gallery/pick.js';
+import { pickInks, STAR_WEIGHT } from '../src/gallery/pick.js';
 import { makeLibrary } from '../src/gallery/library.js';
 import { GENERATORS, generatorById } from '../src/gallery/registry.js';
 import { labOf, deltaE } from '../src/engine/color.js';
@@ -442,8 +442,10 @@ test('配色：挑出的墨彼此分得開、最深的一支夠深、由淺到�
 test('圖庫：★ 主題出現比例較高，每件作品的組合合法', () => {
   const rnd = seeded(22), items = makeLibrary(3000, rnd);
   const starShare = items.filter(i => generatorById(i.genId).star).length / items.length;
-  const starGens = GENERATORS.filter(g => g.star).length / GENERATORS.length;
-  assert.ok(starShare > starGens * 1.4, `★ 占比 ${starShare.toFixed(2)}，產生器占比 ${starGens.toFixed(2)}`);
+  const s = GENERATORS.filter(g => g.star).length, plain = GENERATORS.length - s;
+  const expected = s * STAR_WEIGHT / (s * STAR_WEIGHT + plain);
+  assert.ok(Math.abs(starShare - expected) < 0.03 && starShare > s / GENERATORS.length,
+    `★ 占比 ${starShare.toFixed(2)}，加權後應約 ${expected.toFixed(2)}`);
   for (const it of items.slice(0, 300)) {
     const g = generatorById(it.genId);
     assert.ok(g.layouts.includes(it.layout) && g.colors.includes(it.n) && it.inks.length === it.n);
