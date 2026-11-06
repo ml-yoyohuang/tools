@@ -1,29 +1,10 @@
-import { S } from '../engine/geometry.js';
-import { DESIGN_PX } from './registration.js';
-
-// 範例圖：用程式畫的原創圖，在「提供圖片」站做好之前暫代圖片來源。
-// 座標為 0..360（圖案區的紙張座標）。
+// 圖庫裡手繪的三張原創圖（其餘由 library.js 生成）。
+// 座標為 0..360（圖案區的紙張座標），底色由呼叫端鋪好。
 export const SAMPLES = [
   { id: 'flower', name: '花', colors: 3, draw: drawFlower },
   { id: 'hills', name: '山', colors: 4, draw: drawHills },
   { id: 'shapes', name: '幾何', colors: 4, draw: drawShapes }
 ];
-
-const cache = new Map();
-export function sampleImage(id) {
-  if (cache.has(id)) return cache.get(id);
-  const s = SAMPLES.find(x => x.id === id) || SAMPLES[0];
-  const c = document.createElement('canvas');
-  c.width = c.height = DESIGN_PX;
-  const x = c.getContext('2d');
-  x.setTransform(S, 0, 0, S, 0, 0);
-  x.fillStyle = '#F6F2E9';
-  x.fillRect(0, 0, 360, 360);
-  s.draw(x);
-  const image = { canvas: c, data: x.getImageData(0, 0, DESIGN_PX, DESIGN_PX).data, w: DESIGN_PX, h: DESIGN_PX };
-  cache.set(s.id, image);
-  return image;
-}
 
 function drawFlower(x) {
   // 莖與葉

@@ -12,6 +12,7 @@ import { MEDIA } from '../src/state.js';
 import { mixRGB, makeMixedInk } from '../src/engine/ink.js';
 import { prepare, computeMasks, suggestInks } from '../src/engine/separate.js';
 import { PALETTE } from '../src/inks.js';
+import { fitRect, panBy, shuffle } from '../src/plates/fit.js';
 import { CONFIG as C } from '../src/config.js';
 
 /* ───────── 測試用的版與刮印 ───────── */
@@ -309,6 +310,33 @@ test('分色：同一張圖每次結果相同；建議墨色是最接近的色�
   assert.deepEqual(a.centers, b.centers);
   const names = suggestInks(a, PALETTE).map(i => i.id);
   assert.deepEqual(names, ['gold', 'teal', 'navy']);
+});
+
+/* ───────── 提供圖片 ───────── */
+test('放置：完整放進方形，置中、不裁切', () => {
+  const r = fitRect(800, 400, 720, 'contain');
+  assert.deepEqual([r.sx, r.sy, r.sw, r.sh], [0, 0, 800, 400]);
+  assert.deepEqual([r.dx, r.dy, r.dw, r.dh], [0, 180, 720, 360]);
+});
+
+test('放置：填滿裁成方形，拖動不會拖出圖外', () => {
+  const mid = fitRect(800, 400, 720, 'cover');
+  assert.deepEqual([mid.sx, mid.sy, mid.sw, mid.sh], [200, 0, 400, 400]);
+  let pan = [0, 0];
+  for (let i = 0; i < 50; i++) pan = panBy(pan, 40, 40, 800, 400, 360);   // 一直往右下拖
+  const r = fitRect(800, 400, 720, 'cover', pan);
+  assert.equal(r.sx, 0);
+  assert.equal(r.sy, 0);
+  assert.deepEqual(pan, [-1, 0]);
+});
+
+test('圖庫打亂：張數不變、沒有重複', () => {
+  const ids = Array.from({ length: 27 }, (_, i) => 'img-' + i);
+  const a = shuffle(ids, seeded(1)), b = shuffle(ids, seeded(2));
+  assert.equal(new Set(a).size, ids.length);
+  assert.deepEqual([...a].sort(), [...ids].sort());
+  assert.notDeepEqual(a, b);
+  assert.deepEqual(ids[0], 'img-0', '原陣列不應被改動');
 });
 
 /* ───────── 執行 ───────── */

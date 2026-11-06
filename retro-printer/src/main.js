@@ -1,3 +1,4 @@
+import { mountSource } from './stations/source/source.js';
 import { mountPlates } from './stations/plates/plates.js';
 import { mountGallery } from './stations/plates/gallery.js';
 import { mountInks } from './stations/inks/inks.js';
@@ -5,9 +6,9 @@ import { mountMedia } from './stations/media/media.js';
 import { mountWorkbench } from './stations/workbench/workbench.js';
 
 // 各站依 brief.md 的流程串接：
-//   製版 → 欣賞版子 → 選墨水 → 選媒材 → 工作桌
-// 圖片暫時用製版站內建的範例圖，之後由「提供圖片」站提供。
+//   提供圖片 → 製版 → 欣賞版子 → 選墨水 → 選媒材 → 工作桌
 const stations = {
+  source: mountSource,
   plates: mountPlates,
   gallery: mountGallery,
   inks: mountInks,
@@ -26,7 +27,9 @@ export function go(name, data) {
 
 // 在各站之間保留的選擇
 const session = {
-  plateState: { sample: 'flower', n: 3, cov: null, view: 'stack', active: 0 },
+  source: { kind: 'library', id: 'flower', bitmap: null, mode: 'contain', pan: [0, 0] },
+  image: null,
+  plateStates: new WeakMap(),   // 每張圖各自的製版設定；換圖就回到那張圖的預設
   plates: null,
   suggested: null,
   inks: null,
@@ -34,9 +37,18 @@ const session = {
   medium: 'paper'
 };
 
+function toSource() {
+  go('source', { source: session.source, onNext: image => { session.image = image; toPlates(); } });
+}
 function toPlates() {
+  const image = session.image;
+  if (!session.plateStates.has(image)) {
+    session.plateStates.set(image, { n: image.colors, cov: null, view: 'stack', active: 0 });
+  }
   go('plates', {
-    state: session.plateState,
+    image,
+    state: session.plateStates.get(image),
+    onBack: toSource,
     onDone: ({ plates, inks }) => {
       session.plates = plates;
       session.suggested = inks;
@@ -66,4 +78,4 @@ function toWorkbench(medium) {
   go('workbench', { plates: session.plates, inks: session.inks, medium, onBack: toMedia });
 }
 
-toPlates();
+toSource();

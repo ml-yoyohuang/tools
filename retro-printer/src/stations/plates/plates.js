@@ -2,20 +2,21 @@ import { S, PW } from '../../engine/geometry.js';
 import { prepare, computeMasks, suggestInks } from '../../engine/separate.js';
 import { flatComposite } from '../../engine/flat.js';
 import { PALETTE } from '../../inks.js';
-import { SAMPLES, sampleImage } from '../../plates/samples.js';
 import { designToSheet, sheetMaskWithMarks, plateFromDesignMask } from '../../plates/registration.js';
 import { screenCanvas, maskCanvas, drawScreen, MESH } from './screen.js';
 
 // 製版：選色數、自動分色、調各層門檻；然後曬版、沖水。
-//   state：在各站之間保留的選擇 { sample, n, cov, view, active }
+//   image：提供圖片站傳來的圖 { id, name, colors, canvas, data, w, h }
+//   state：這張圖的製版設定，在各站之間保留 { n, cov, view, active }
 //   onDone({ plates, inks })：做好的版與建議墨色
+//   onBack：回到提供圖片
 const PAPER = [245, 240, 230];
 const FILM = [26, 26, 26];
 const EXPOSE_MS = 1000, WASH_MS = 1500;
 const two = n => String(n).padStart(2, '0');
 const css = rgb => `rgb(${rgb.join(',')})`;
 
-export function mountPlates(root, { state, onDone }) {
+export function mountPlates(root, { image, state, onDone, onBack }) {
   const stage = document.createElement('section');
   stage.className = 'stage';
   stage.innerHTML = `<div class="sheet"><canvas class="paper" width="${PW}" height="${PW}"></canvas></div>`;
@@ -31,9 +32,8 @@ export function mountPlates(root, { state, onDone }) {
   let prep, masks, inks, raf = 0, alive = true;
 
   function analyse() {
-    const key = state.sample + '/' + state.n;
-    if (!preps.has(key)) preps.set(key, prepare(sampleImage(state.sample), state.n));
-    prep = preps.get(key);
+    if (!preps.has(state.n)) preps.set(state.n, prepare(image, state.n));
+    prep = preps.get(state.n);
     const k = prep.centers.length;
     if (!state.cov || state.cov.length !== k) state.cov = new Array(k).fill(0.5);
     state.active = Math.min(state.active || 0, k - 1);
@@ -63,7 +63,6 @@ export function mountPlates(root, { state, onDone }) {
     sheet.classList.remove('bare');
     panel.innerHTML = `
       <h1>製版</h1>
-      <div class="samples" role="radiogroup" aria-label="範例圖"></div>
       <div class="field">
         <span class="label">色數</span>
         <div class="seg" role="radiogroup" aria-label="色數"></div>
@@ -73,27 +72,12 @@ export function mountPlates(root, { state, onDone }) {
         <div class="seg view" role="radiogroup" aria-label="檢視"></div>
       </div>
       <div class="sep-layers"></div>
-      <button class="primary" type="button">曬版</button>`;
-
-    const samplesEl = panel.querySelector('.samples');
-    for (const s of SAMPLES) {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'sample';
-      b.setAttribute('role', 'radio');
-      b.setAttribute('aria-checked', String(s.id === state.sample));
-      b.setAttribute('aria-label', s.name);
-      b.title = s.name;
-      const t = document.createElement('canvas');
-      t.width = t.height = 112;
-      t.getContext('2d').drawImage(sampleImage(s.id).canvas, 0, 0, 112, 112);
-      b.appendChild(t);
-      b.addEventListener('click', () => {
-        if (state.sample === s.id) return;
-        state.sample = s.id; state.n = s.colors; state.cov = null; state.active = 0;
-        analyse(); renderSeparate();
-      });
-      samplesEl.appendChild(b);
+      <button class="primary" type="button">曬版</button>
+      <div class="foot"><button class="text back" type="button" hidden>換圖片</button></div>`;
+    if (onBack) {
+      const back = panel.querySelector('.back');
+      back.hidden = false;
+      back.addEventListener('click', onBack);
     }
 
     const seg = (el, items, current, onPick) => {
