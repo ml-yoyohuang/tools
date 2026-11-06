@@ -1,0 +1,13 @@
+{
+  "name": "棋鐘 Chess Clock",
+  "short_name": "棋鐘",
+  "description": "面對面雙人下棋用的簡潔棋鐘。",
+  "lang": "zh-Hant",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#10151a",
+  "theme_color": "#10151a",
+  "icons": [{ "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

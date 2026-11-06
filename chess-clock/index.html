@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#10151a" />
+    <meta name="description" content="面對面雙人棋鐘：簡單、清楚、可安裝的 Vue 3 PWA。" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="棋鐘 Chess Clock" />
+    <meta property="og:description" content="面對面雙人下棋用的簡潔棋鐘。" />
+    <meta property="og:image" content="og-image.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="棋鐘 Chess Clock" />
+    <meta name="twitter:description" content="面對面雙人下棋用的簡潔棋鐘。" />
+    <meta name="twitter:image" content="og-image.svg" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="favicon.svg" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="preconnect" href="https://unpkg.com" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>棋鐘 Chess Clock</title>
+  </head>
+  <body>
+    <main id="app" v-cloak>
+      <div class="ambient ambient-left"></div>
+      <div class="ambient ambient-right"></div>
+
+      <header class="topbar">
+        <div class="brand"><span class="brand-mark">♞</span><span>棋鐘 <small>CHESS CLOCK</small></span></div>
+        <div class="top-actions">
+          <button class="icon-button" type="button" @click="toggleTheme" :aria-label="darkMode ? '切換明亮模式' : '切換深色模式'">{{ darkMode ? '☼' : '☾' }}</button>
+          <button class="icon-button" type="button" @click="openSettings" aria-label="開啟設定">⚙</button>
+        </div>
+      </header>
+
+      <section class="clock-shell" :class="{ 'game-over': isGameOver }">
+        <button class="player-card player-top" :class="playerClass(0)" type="button" @click="switchTurn(0, 1)" :disabled="!canTap(0)">
+          <div class="player-meta"><span class="side-label">BLACK</span><span class="player-name">{{ players[0].name }}</span></div>
+          <div class="time" aria-live="polite">{{ formatTime(players[0].time) }}</div>
+          <div class="player-foot"><span>{{ players[0].turnCount }} turns</span><span v-if="players[0].isTurn" class="turn-hint">YOUR MOVE <b>↵</b></span></div>
+          <span class="card-result" v-if="resultFor(0)">{{ resultFor(0) }}</span>
+        </button>
+
+        <div class="control-rail">
+          <div class="match-time">{{ formatLongTime(gameElapsed) }}</div>
+          <div class="control-buttons">
+            <button v-if="!isGameStarted" class="primary-button" type="button" @click="startGame">▶ <span>START</span></button>
+            <button v-else-if="!isGameOver" class="primary-button" :class="{ paused: isPaused }" type="button" @click="togglePause">{{ isPaused ? '▶' : 'Ⅱ' }} <span>{{ isPaused ? 'RESUME' : 'PAUSE' }}</span></button>
+            <button v-if="isGameStarted && !isGameOver" class="secondary-button" type="button" @click="surrender" aria-label="投降">⚑</button>
+            <button v-if="isGameOver" class="primary-button" type="button" @click="reset">↻ <span>NEW GAME</span></button>
+          </div>
+          <div class="status-line"><span class="status-dot" :class="{ active: isGameStarted && !isPaused && !isGameOver }"></span>{{ statusText }}</div>
+        </div>
+
+        <button class="player-card player-bottom" :class="playerClass(1)" type="button" @click="switchTurn(1, 0)" :disabled="!canTap(1)">
+          <div class="player-meta"><span class="side-label">WHITE</span><span class="player-name">{{ players[1].name }}</span></div>
+          <div class="time" aria-live="polite">{{ formatTime(players[1].time) }}</div>
+          <div class="player-foot"><span>{{ players[1].turnCount }} turns</span><span v-if="players[1].isTurn" class="turn-hint">YOUR MOVE <b>↵</b></span></div>
+          <span class="card-result" v-if="resultFor(1)">{{ resultFor(1) }}</span>
+        </button>
+      </section>
+
+      <footer class="helpbar"><span>Tap your clock to pass the turn</span><span><kbd>SPACE</kbd> switch <kbd>R</kbd> reset</span></footer>
+
+      <div class="modal-backdrop" v-if="isShowPopup" @click.self="isShowPopup = false">
+        <section class="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+          <div class="modal-heading"><div><span class="eyebrow">GAME SETUP</span><h2 id="settings-title">設定棋局</h2></div><button class="close-button" type="button" @click="isShowPopup = false">×</button></div>
+          <label>先手 / BLACK<input v-model.trim="players[0].name" maxlength="16" /></label>
+          <label>後手 / WHITE<input v-model.trim="players[1].name" maxlength="16" /></label>
+          <label>每方秒數<input v-model.number="countDownPerSec" type="number" min="10" max="86400" step="10" /></label>
+          <div class="preset-row"><button v-for="preset in presets" :key="preset.value" type="button" @click="countDownPerSec = preset.value" :class="{ selected: countDownPerSec === preset.value }">{{ preset.label }}</button></div>
+          <button class="save-button" type="button" @click="reset">套用並重新開始 <span>→</span></button>
+        </section>
+      </div>
+    </main>
+    <script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
