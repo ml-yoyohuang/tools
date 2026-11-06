@@ -13,9 +13,23 @@ createApp({
     const darkMode = ref(localStorage.getItem('chess-clock-theme') !== 'light');
     const winner = ref(null);
     const finishReason = ref('TIME OUT');
+    const teamPreset = ref(saved.teamPreset || 'chess');
+    const teamOptions = [
+      { value: 'chess', label: '國際象棋｜黑方・白方', labels: ['BLACK', 'WHITE'] },
+      { value: 'xiangqi', label: '中國象棋｜紅方・黑方', labels: ['紅方', '黑方'] },
+      { value: 'shogi', label: '日本將棋｜先手・後手', labels: ['先手', '後手'] },
+      { value: 'go', label: '圍棋｜黑方・白方', labels: ['BLACK', 'WHITE'] },
+      { value: 'othello', label: '黑白棋｜黑方・白方', labels: ['BLACK', 'WHITE'] },
+      { value: 'random', label: '隨機可愛隊名', labels: [] },
+    ];
+    const cuteTeams = [
+      ['貓派', '狗派'], ['奶茶派', '咖啡派'], ['早起鳥', '夜貓子'], ['草莓隊', '芒果隊'],
+      ['恐龍隊', '獨角獸隊'], ['海豹隊', '企鵝隊'], ['珍珠派', '椰果派'], ['太陽隊', '月亮隊'],
+    ];
+    const initialTeamLabels = teamOptions.find((option) => option.value === teamPreset.value)?.labels || ['BLACK', 'WHITE'];
     const players = ref([
-      { name: saved.black || 'Player 1', time: countDownPerSec.value * 1000, turnCount: 0 },
-      { name: saved.white || 'Player 2', time: countDownPerSec.value * 1000, turnCount: 0 },
+      { name: saved.black || 'Player 1', label: saved.blackLabel || initialTeamLabels[0], time: countDownPerSec.value * 1000, turnCount: 0 },
+      { name: saved.white || 'Player 2', label: saved.whiteLabel || initialTeamLabels[1], time: countDownPerSec.value * 1000, turnCount: 0 },
     ]);
     const presets = [{ label: '1 min', value: 60 }, { label: '3 min', value: 180 }, { label: '5 min', value: 300 }, { label: '10 min', value: 600 }];
 
@@ -35,7 +49,7 @@ createApp({
     const playerClass = (index) => ({ active: activeIndex.value === index && !isPaused.value && !isGameOver.value, paused: activeIndex.value === index && isPaused.value, warning: players.value[index].time <= Math.min(10000, safeSeconds() * 1000 * 0.25) && players.value[index].time > 0, loser: isGameOver.value && players.value[index].time <= 0 });
     const canTap = (index) => isGameStarted.value && !isPaused.value && !isGameOver.value && activeIndex.value === index;
     const resultFor = (index) => isGameOver.value ? (winner.value === index ? 'WINNER' : winner.value === null ? '' : 'TIME OUT') : '';
-    const persist = () => localStorage.setItem('chess-clock-settings', JSON.stringify({ seconds: countDownPerSec.value, black: players.value[0].name, white: players.value[1].name }));
+    const persist = () => localStorage.setItem('chess-clock-settings', JSON.stringify({ seconds: countDownPerSec.value, black: players.value[0].name, white: players.value[1].name, blackLabel: players.value[0].label, whiteLabel: players.value[1].label, teamPreset: teamPreset.value }));
     const now = () => performance.now();
 
     function syncClock(timestamp = now()) {
@@ -132,6 +146,18 @@ createApp({
 
     function render(timestamp) { syncClock(timestamp); frame = requestAnimationFrame(render); }
     function openSettings() { pauseGame(); isShowPopup.value = true; }
+    function applyTeamPreset() {
+      if (teamPreset.value === 'random') {
+        const pair = cuteTeams[Math.floor(Math.random() * cuteTeams.length)];
+        players.value[0].label = pair[0];
+        players.value[1].label = pair[1];
+      } else {
+        const selected = teamOptions.find((option) => option.value === teamPreset.value) || teamOptions[0];
+        players.value[0].label = selected.labels[0];
+        players.value[1].label = selected.labels[1];
+      }
+      persist();
+    }
     function toggleTheme() { darkMode.value = !darkMode.value; localStorage.setItem('chess-clock-theme', darkMode.value ? 'dark' : 'light'); document.documentElement.classList.toggle('light', !darkMode.value); }
 
     function handleKey(event) {
@@ -147,7 +173,7 @@ createApp({
     }
 
     watch(countDownPerSec, () => { if (!isGameStarted.value) players.value.forEach((player) => { player.time = safeSeconds() * 1000; }); });
-    watch(() => [countDownPerSec.value, players.value[0].name, players.value[1].name], persist);
+    watch(() => [countDownPerSec.value, players.value[0].name, players.value[1].name, players.value[0].label, players.value[1].label, teamPreset.value], persist);
     onMounted(() => {
       document.documentElement.classList.toggle('light', !darkMode.value);
       window.addEventListener('keydown', handleKey);
@@ -156,7 +182,7 @@ createApp({
     });
     function handleVisibilityChange() { if (!document.hidden) syncClock(); }
     onUnmounted(() => { cancelAnimationFrame(frame); window.removeEventListener('keydown', handleKey); document.removeEventListener('visibilitychange', handleVisibilityChange); });
-    return { countDownPerSec, isShowPopup, isPaused, isGameOver, activeIndex, darkMode, players, presets, gameElapsed, isGameStarted, statusText, formatTime, formatLongTime, playerClass, canTap, resultFor, reset, startGame, togglePause, switchTurn, surrender, openSettings, toggleTheme };
+    return { countDownPerSec, isShowPopup, isPaused, isGameOver, activeIndex, darkMode, players, presets, teamPreset, teamOptions, gameElapsed, isGameStarted, statusText, formatTime, formatLongTime, playerClass, canTap, resultFor, reset, startGame, togglePause, switchTurn, surrender, openSettings, applyTeamPreset, toggleTheme };
   },
 }).mount('#app');
 
