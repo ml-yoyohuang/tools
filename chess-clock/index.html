@@ -25,10 +25,10 @@
       <div class="ambient ambient-right"></div>
 
       <header class="topbar">
-        <div class="brand"><span class="brand-mark">♞</span><span>棋鐘 <small>CHESS CLOCK</small></span></div>
+        <div class="brand"><span class="brand-mark"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#knight"></use></svg></span><span>棋鐘 <small>CHESS CLOCK</small></span></div>
         <div class="top-actions">
-          <button class="icon-button" type="button" @click="toggleTheme" :aria-label="darkMode ? '切換明亮模式' : '切換深色模式'">{{ darkMode ? '☼' : '☾' }}</button>
-          <button class="icon-button" type="button" @click="openSettings" aria-label="開啟設定">⚙</button>
+          <button class="icon-button" type="button" @click="toggleTheme" :aria-label="darkMode ? '切換明亮模式' : '切換深色模式'"><svg class="ui-icon" aria-hidden="true"><use :href="darkMode ? 'icons.svg#sun' : 'icons.svg#moon'"></use></svg></button>
+          <button class="icon-button" type="button" @click="openSettings" aria-label="開啟設定"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#settings"></use></svg></button>
         </div>
       </header>
 
@@ -36,17 +36,17 @@
         <button class="player-card player-top" :class="playerClass(0)" type="button" @click="switchTurn(0, 1)" :disabled="!canTap(0)">
           <div class="player-meta"><span class="side-label">BLACK</span><span class="player-name">{{ players[0].name }}</span></div>
           <div class="time" aria-live="polite">{{ formatTime(players[0].time) }}</div>
-          <div class="player-foot"><span>{{ players[0].turnCount }} turns</span><span v-if="activeIndex === 0" class="turn-hint">YOUR MOVE <b>↵</b></span></div>
+          <div class="player-foot"><span>{{ players[0].turnCount }} turns</span><span v-if="activeIndex === 0" class="turn-hint">YOUR MOVE <b><svg class="key-icon" aria-hidden="true"><use href="icons.svg#enter"></use></svg></b></span></div>
           <span class="card-result" v-if="resultFor(0)">{{ resultFor(0) }}</span>
         </button>
 
         <div class="control-rail">
           <div class="match-time">{{ formatLongTime(gameElapsed) }}</div>
           <div class="control-buttons">
-            <button v-if="!isGameStarted" class="primary-button" type="button" @click="startGame">▶ <span>START</span></button>
-            <button v-else-if="!isGameOver" class="primary-button" :class="{ paused: isPaused }" type="button" @click="togglePause">{{ isPaused ? '▶' : 'Ⅱ' }} <span>{{ isPaused ? 'RESUME' : 'PAUSE' }}</span></button>
-            <button v-if="isGameStarted && !isGameOver" class="secondary-button" type="button" @click="surrender" aria-label="投降">⚑</button>
-            <button v-if="isGameOver" class="primary-button" type="button" @click="reset">↻ <span>NEW GAME</span></button>
+            <button v-if="!isGameStarted" class="primary-button" type="button" @click="startGame" aria-label="開始遊戲"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#play"></use></svg><span>START</span></button>
+            <button v-else-if="!isGameOver" class="primary-button" :class="{ paused: isPaused }" type="button" @click="togglePause" :aria-label="isPaused ? '繼續遊戲' : '暫停遊戲'"><svg class="ui-icon" aria-hidden="true"><use :href="isPaused ? 'icons.svg#play' : 'icons.svg#pause'"></use></svg><span>{{ isPaused ? 'RESUME' : 'PAUSE' }}</span></button>
+            <button v-if="isGameStarted && !isGameOver" class="secondary-button" type="button" @click="surrender" aria-label="投降"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#flag"></use></svg></button>
+            <button v-if="isGameOver" class="primary-button" type="button" @click="reset" aria-label="開始新棋局"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#reset"></use></svg><span>NEW GAME</span></button>
           </div>
           <div class="status-line"><span class="status-dot" :class="{ active: isGameStarted && !isPaused && !isGameOver }"></span>{{ statusText }}</div>
         </div>
@@ -54,7 +54,7 @@
         <button class="player-card player-bottom" :class="playerClass(1)" type="button" @click="switchTurn(1, 0)" :disabled="!canTap(1)">
           <div class="player-meta"><span class="side-label">WHITE</span><span class="player-name">{{ players[1].name }}</span></div>
           <div class="time" aria-live="polite">{{ formatTime(players[1].time) }}</div>
-          <div class="player-foot"><span>{{ players[1].turnCount }} turns</span><span v-if="activeIndex === 1" class="turn-hint">YOUR MOVE <b>↵</b></span></div>
+          <div class="player-foot"><span>{{ players[1].turnCount }} turns</span><span v-if="activeIndex === 1" class="turn-hint">YOUR MOVE <b><svg class="key-icon" aria-hidden="true"><use href="icons.svg#enter"></use></svg></b></span></div>
           <span class="card-result" v-if="resultFor(1)">{{ resultFor(1) }}</span>
         </button>
       </section>
@@ -63,12 +63,12 @@
 
       <div class="modal-backdrop" v-if="isShowPopup" @click.self="isShowPopup = false">
         <section class="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
-          <div class="modal-heading"><div><span class="eyebrow">GAME SETUP</span><h2 id="settings-title">設定棋局</h2></div><button class="close-button" type="button" @click="isShowPopup = false">×</button></div>
+          <div class="modal-heading"><div><span class="eyebrow">GAME SETUP</span><h2 id="settings-title">設定棋局</h2></div><button class="close-button" type="button" @click="isShowPopup = false" aria-label="關閉設定"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#close"></use></svg></button></div>
           <label>先手 / BLACK<input v-model.trim="players[0].name" maxlength="16" /></label>
           <label>後手 / WHITE<input v-model.trim="players[1].name" maxlength="16" /></label>
           <label>每方秒數<input v-model.number="countDownPerSec" type="number" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off" min="10" max="86400" step="10" /></label>
           <div class="preset-row"><button v-for="preset in presets" :key="preset.value" type="button" @click="countDownPerSec = preset.value" :class="{ selected: countDownPerSec === preset.value }">{{ preset.label }}</button></div>
-          <button class="save-button" type="button" @click="reset">套用並重新開始 <span>→</span></button>
+          <button class="save-button" type="button" @click="reset">套用並重新開始 <svg class="ui-icon" aria-hidden="true"><use href="icons.svg#arrow-right"></use></svg></button>
         </section>
       </div>
     </main>
