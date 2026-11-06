@@ -40,6 +40,10 @@ export const CONFIG = {
   clogMax: 0.55,          // 最嚴重時印不出來的面積比例
   clogThin: 0.15,         // 細線條比大色塊更容易塞住的程度
 
+  // 調墨台
+  mixDiffuse: 0.6,        // 攪拌時刮刀下方的擴散強度，越大越快攪勻
+  mixRadius: 16,          // 刮刀影響半徑（調墨台 96 格中的格數）
+
   // 畫面
   wetFrameAlpha: 0.6,     // 第 2 層起網框的不透明度
   maxOffset: 45           // 網框可拖動的最大偏移 px

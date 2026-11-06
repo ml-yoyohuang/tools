@@ -1,8 +1,10 @@
 import { S, PW, CELL, GN } from './geometry.js';
 import { clamp } from './util.js';
+import { toOD } from './ink.js';
 
 // 各層以色彩相乘疊合。
-// layers：[{ alpha, rgb, stains: [{ rgb, raw, k, pick }] }]
+// layers：[{ alpha, rgb, mix?, inkMap?, stains: [{ rgb, raw, k, pick }] }]
+//   mix、inkMap 為沒攪勻的自調墨（見 engine/ink.js）
 //   stains 為這一層印下時，沾到的下層未乾墨：
 //     raw   下層當時的墨量；k 為沾染比例（stain × 濕度）
 //     pick  刮板沿途沾上的程度（刮印網格）
@@ -17,6 +19,10 @@ export function composite(layers, paper, C, surface = null) {
   const Ls = layers.filter(l => l.alpha).map(l => ({
     a: l.alpha,
     c: l.rgb.map(v => v / 255),
+    // 沒攪勻的自調墨：每個像素在 A、B 之間取色（光學密度）
+    map: l.inkMap || null,
+    odA: l.mix ? toOD(l.mix.a) : null,
+    odB: l.mix ? toOD(l.mix.b) : null,
     st: (l.stains || []).map(s => ({ c: s.rgb.map(v => v / 255), raw: s.raw, k: s.k, pick: s.pick }))
   }));
   const gs = 1 / (S * CELL);
@@ -33,6 +39,12 @@ export function composite(layers, paper, C, surface = null) {
       if (!(a > 0)) continue;
       if (surface) a *= inkK;
       let cr = l.c[0], cg = l.c[1], cb = l.c[2];
+      if (l.map) {
+        const t = l.map[i], A = l.odA, B = l.odB;
+        cr = Math.exp(-(A[0] + (B[0] - A[0]) * t));
+        cg = Math.exp(-(A[1] + (B[1] - A[1]) * t));
+        cb = Math.exp(-(A[2] + (B[2] - A[2]) * t));
+      }
       if (l.st.length) {
         const X = i % PW, Y = (i / PW) | 0;
         const gx = clamp(X * gs - 0.5, 0, GN - 1.001), gy = clamp(Y * gs - 0.5, 0, GN - 1.001);

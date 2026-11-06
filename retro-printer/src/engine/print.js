@@ -3,6 +3,7 @@ import { smearLayer } from './wet.js';
 import { coarseCover } from './mask.js';
 import { composite } from './composite.js';
 import { textureField } from './texture.js';
+import { streakMap } from './ink.js';
 
 // 掀框：算出第 L 層的成品，並處理它對下層未乾墨的影響。
 // 直接更新 job.layers 裡的資料（見 state.js）。
@@ -21,11 +22,13 @@ export function printLayer(job, L, C) {
   layer.alpha = alpha;
   layer.vertical = vertical;
   layer.cover = coarseCover(alpha);
+  // 自調墨沒攪勻時的色紋（一般墨水不會多用到亂數，輸出不變）
+  layer.inkMap = layer.ink.mix ? streakMap(layer.ink.mix, vertical) : null;
 }
 
 export function compositeJob(job, C) {
   return composite(
-    job.layers.map(l => ({ alpha: l.alpha, rgb: l.ink.rgb, stains: l.stains })),
+    job.layers.map(l => ({ alpha: l.alpha, rgb: l.ink.rgb, mix: l.ink.mix, inkMap: l.inkMap, stains: l.stains })),
     job.medium.paper, C, surfaceOf(job.medium)
   );
 }

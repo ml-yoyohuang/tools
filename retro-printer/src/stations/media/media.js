@@ -6,7 +6,7 @@ import { samplePrint } from './sample.js';
 // 選媒材：左邊是選取媒材的試印，右邊是媒材卡片。
 const THUMB = 112;
 
-export function mountMedia(root, { plates, inks, selected = 'paper', onPick }) {
+export function mountMedia(root, { plates, inks, selected = 'paper', onPick, onBack }) {
   const stage = document.createElement('section');
   stage.className = 'stage';
   stage.innerHTML = `<div class="sheet"><canvas class="paper" width="${PW}" height="${PW}"></canvas></div>`;
@@ -19,8 +19,14 @@ export function mountMedia(root, { plates, inks, selected = 'paper', onPick }) {
   panel.innerHTML = `
     <h1>選媒材</h1>
     <div class="media-list" role="radiogroup" aria-label="媒材"></div>
-    <button class="primary" type="button">使用這個媒材</button>`;
+    <button class="primary" type="button">使用這個媒材</button>
+    <div class="foot"><button class="text back" type="button" hidden>換墨水</button></div>`;
   root.appendChild(panel);
+  if (onBack) {
+    const back = panel.querySelector('.back');
+    back.hidden = false;
+    back.addEventListener('click', onBack);
+  }
   const list = panel.querySelector('.media-list');
 
   const cards = MEDIA_LIST.map(m => {

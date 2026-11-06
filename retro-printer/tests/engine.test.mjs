@@ -9,6 +9,7 @@ import { renderLayer } from '../src/engine/render.js';
 import { printLayer, compositeJob, surfaceOf } from '../src/engine/print.js';
 import { textureField } from '../src/engine/texture.js';
 import { MEDIA } from '../src/state.js';
+import { mixRGB, makeMixedInk } from '../src/engine/ink.js';
 import { CONFIG as C } from '../src/config.js';
 
 /* ───────── 測試用的版與刮印 ───────── */
@@ -214,6 +215,46 @@ test('媒材：吸墨較多的布，溢墨範圍較大', () => {
   setRandom(seeded(13));
   const hanky = bleedFraction(renderLayer({ plate: CIRCLE, rec, offset: [0, 0], absorb: MEDIA.hanky.absorb }, C).alpha);
   assert.ok(hanky > paper + 0.1, `紙 ${paper.toFixed(3)}，手帕 ${hanky.toFixed(3)}`);
+});
+
+test('混色：以光學密度混合，藍 + 黃偏綠', () => {
+  const [r, g, b] = mixRGB([255, 232, 0], [0, 120, 191], 0.5);
+  assert.ok(g > r && g > b, `藍黃混合得到 ${[r, g, b]}`);
+  assert.deepEqual(mixRGB([255, 72, 176], [50, 85, 164], 0), [255, 72, 176]);
+});
+
+function mixedJob(evenness) {
+  const job = twoLayerJob(0);
+  job.layers[1].ink = makeMixedInk({
+    id: 'm', name: 'm', a: { rgb: [255, 232, 0] }, b: { rgb: [0, 120, 191] }, ratio: 0.5, evenness
+  });
+  printLayer(job, 1, C);
+  return compositeJob(job, C);
+}
+// 第 2 層非重疊區裡（排除飛白點），色相（綠 − 藍）的標準差
+function greenSpread(px) {
+  const vals = [];
+  for (let y = 370; y < 390; y++) for (let x = 410; x < 430; x++) {
+    const i = (y * S * PW + x * S) * 4;
+    if (px[i] + px[i + 1] + px[i + 2] > 600) continue;
+    vals.push(px[i + 1] - px[i + 2]);
+  }
+  const m = vals.reduce((s, v) => s + v, 0) / vals.length;
+  return Math.sqrt(vals.reduce((s, v) => s + (v - m) ** 2, 0) / vals.length);
+}
+
+test('調墨：沒攪勻的墨留下色紋，攪勻的沒有', () => {
+  setRandom(seeded(14)); const uneven = greenSpread(mixedJob(0.2));
+  setRandom(seeded(14)); const even = greenSpread(mixedJob(1));
+  assert.ok(uneven > even * 2 && uneven > 8, `沒攪勻 ${uneven.toFixed(1)}，攪勻 ${even.toFixed(1)}`);
+});
+
+test('調墨：一般墨水不受影響，成品與之前完全相同', () => {
+  setRandom(seeded(15)); const a = compositeJob(twoLayerJob(0), C);
+  setRandom(seeded(15));
+  const job = twoLayerJob(0);
+  assert.equal(job.layers[1].inkMap, null);
+  assert.deepEqual(compositeJob(job, C), a);
 });
 
 /* ───────── 執行 ───────── */

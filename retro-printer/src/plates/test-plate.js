@@ -1,10 +1,7 @@
 import { plateFromDraw } from './registration.js';
 
-// 測試用的兩色版：粉紅圓、藍色星。之後由製版站產出的版取代。
-export const TEST_INKS = [
-  { name: '粉紅', rgb: [255, 72, 176] },
-  { name: '藍', rgb: [50, 85, 164] }
-];
+// 測試用的兩色版：第 1 層圓、第 2 層星。之後由製版站產出的版取代。
+// 墨色由選墨水站決定（預設見 src/inks.js）。
 
 export function testPlates() {
   const circle = plateFromDraw(ctx => {

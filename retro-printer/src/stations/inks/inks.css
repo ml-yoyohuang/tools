@@ -1,0 +1,51 @@
+.inks-panel { gap: 32px; }
+
+.layers { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.layer-row {
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px;
+  margin: 0 -12px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom-color: var(--line);
+  text-align: left;
+  color: var(--ink);
+  font-size: 15px;
+  transition: border-color .2s;
+}
+.layer-row:hover { border-color: var(--faint); }
+.layer-row[aria-checked="true"] { border-color: var(--ink); }
+.layer-row .sw { width: 20px; height: 20px; }
+.layer-row .lv { font-size: 12px; color: var(--mute); letter-spacing: .04em; }
+
+.palette .sub { margin: 20px 0 10px; font-size: 11px; color: var(--mute); letter-spacing: .1em; }
+.chips { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.chip {
+  aspect-ratio: 1 / 1;
+  border: 0;
+  padding: 0;
+  outline-offset: 2px;
+  transition: transform .15s;
+}
+.chip:hover { transform: scale(1.08); }
+.chip.on { outline: 1px solid var(--ink); outline-offset: 3px; }
+
+.inks-panel .act { gap: 16px; }
+.inks-panel .act .text { align-self: flex-start; }
+.inks-panel .hint { min-height: 0; }
+
+.ratio .row, .even .row { display: flex; justify-content: space-between; font-size: 12px; color: var(--mute); letter-spacing: .06em; }
+.ratio .row span:last-child, .even .row span:last-child { font-variant-numeric: tabular-nums; color: var(--ink); }
+.ratio input { width: 100%; margin: 12px 0 0; accent-color: var(--ink); }
+.even .bar { height: 1px; background: var(--line); margin-top: 10px; }
+.even .bar span { display: block; height: 100%; background: var(--ink); width: 0; }
+
+.sheet .slab {
+  image-rendering: auto;
+  cursor: grab;
+  touch-action: none;
+}
+.sheet .slab:active { cursor: grabbing; }
