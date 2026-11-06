@@ -15,6 +15,10 @@ import { PALETTE } from '../src/inks.js';
 import { fitRect, panBy, shuffle } from '../src/plates/fit.js';
 import { addWork, wallItems } from '../src/works.js';
 import { paletteByHue } from '../src/inks.js';
+import { pickInks } from '../src/gallery/pick.js';
+import { makeLibrary } from '../src/gallery/library.js';
+import { GENERATORS, generatorById } from '../src/gallery/registry.js';
+import { labOf, deltaE } from '../src/engine/color.js';
 import { CONFIG as C } from '../src/config.js';
 
 /* ───────── 測試用的版與刮印 ───────── */
@@ -418,6 +422,35 @@ test('墨水牆：有彩度的墨依色相排列，大地色與灰黑排在最�
   assert.ok(names.indexOf('朱紅') < names.indexOf('金黃') && names.indexOf('金黃') < names.indexOf('草綠') &&
     names.indexOf('草綠') < names.indexOf('群青') && names.indexOf('群青') < names.indexOf('紫'), names.join(' '));
   assert.deepEqual(names.slice(-5), ['淺灰', '灰', '棕', '深青', '墨黑']);
+});
+
+/* ───────── 圖庫產生器 ───────── */
+test('配色：挑出的墨彼此分得開、最深的一支夠深、由淺到深', () => {
+  const rnd = seeded(21);
+  for (let k = 0; k < 200; k++) {
+    const n = 2 + (k % 2);
+    const inks = pickInks(PALETTE, n, rnd);
+    assert.equal(inks.length, n);
+    assert.equal(new Set(inks.map(i => i.id)).size, n);
+    const labs = inks.map(i => labOf(i.rgb));
+    for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) assert.ok(deltaE(labs[a], labs[b]) >= 30);
+    assert.ok(labs[n - 1][0] <= 58, `最深一支 L=${labs[n - 1][0].toFixed(0)}`);
+    for (let a = 1; a < n; a++) assert.ok(labs[a - 1][0] >= labs[a][0]);
+  }
+});
+
+test('圖庫：★ 主題出現比例較高，每件作品的組合合法', () => {
+  const rnd = seeded(22), items = makeLibrary(3000, rnd);
+  const starShare = items.filter(i => generatorById(i.genId).star).length / items.length;
+  const starGens = GENERATORS.filter(g => g.star).length / GENERATORS.length;
+  assert.ok(starShare > starGens * 1.4, `★ 占比 ${starShare.toFixed(2)}，產生器占比 ${starGens.toFixed(2)}`);
+  for (const it of items.slice(0, 300)) {
+    const g = generatorById(it.genId);
+    assert.ok(g.layouts.includes(it.layout) && g.colors.includes(it.n) && it.inks.length === it.n);
+    assert.deepEqual(it.offsets[0], [0, 0]);
+    assert.ok(it.offsets.slice(1).every(([x, y]) => Math.hypot(x, y) <= 3.01));
+  }
+  assert.equal(items.filter(i => i.badge).length, 2);
 });
 
 /* ───────── 執行 ───────── */

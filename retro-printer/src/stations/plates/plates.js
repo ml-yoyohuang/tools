@@ -32,7 +32,17 @@ export function mountPlates(root, { image, state, onDone, onBack }) {
   const preps = new Map();
   let prep, masks, inks, raf = 0, alive = true;
 
+  // 圖庫作品本來就是一層一層畫的：直接用它的各層與墨，不用分色
+  const fixed = !!image.layers;
+
   function analyse() {
+    if (fixed) {
+      masks = image.layers;
+      inks = image.inks;
+      state.active = Math.min(state.active || 0, masks.length - 1);
+      paint();
+      return;
+    }
     if (!preps.has(state.n)) preps.set(state.n, prepare(image, state.n));
     prep = preps.get(state.n);
     const k = prep.centers.length;
@@ -44,7 +54,7 @@ export function mountPlates(root, { image, state, onDone, onBack }) {
     separateNow();
   }
   function separateNow() {
-    masks = computeLayers(prep, state);
+    if (!fixed) masks = computeLayers(prep, state);
     paint();
   }
   function paint() {
@@ -66,7 +76,7 @@ export function mountPlates(root, { image, state, onDone, onBack }) {
     sheet.classList.remove('bare');
     panel.innerHTML = `
       <h1>製版</h1>
-      <div class="field">
+      <div class="field count-field">
         <span class="label">色數</span>
         <div class="seg" role="radiogroup" aria-label="色數"></div>
       </div>
@@ -106,7 +116,9 @@ export function mountPlates(root, { image, state, onDone, onBack }) {
     seg(panel.querySelector('.seg.view'), [['stack', '疊色'], ['single', '單版']], state.view, v => {
       state.view = v; paint(); renderSeparate();
     });
-    panel.querySelector('.dots-field').hidden = !state.modes.includes('dots');
+    // 圖庫作品：層數與印法已經決定好，只保留檢視切換
+    panel.querySelector('.count-field').hidden = fixed;
+    panel.querySelector('.dots-field').hidden = fixed || !state.modes.includes('dots');
     seg(panel.querySelector('.seg.dots'), [['coarse', '粗'], ['medium', '中'], ['fine', '細']], state.dot, v => {
       state.dot = v; separateNow(); renderSeparate();
     });
@@ -114,7 +126,7 @@ export function mountPlates(root, { image, state, onDone, onBack }) {
     const layersEl = panel.querySelector('.sep-layers');
     inks.forEach((ink, i) => {
       const row = document.createElement('div');
-      const dots = state.modes[i] === 'dots';
+      const dots = !fixed && state.modes[i] === 'dots';
       row.className = 'sep-row' + (i === state.active ? ' on' : '');
       row.innerHTML = `
         <div class="sep-top">
@@ -127,6 +139,18 @@ export function mountPlates(root, { image, state, onDone, onBack }) {
         <div class="scale"><span>${dots ? '淺' : '少'}</span><span>${dots ? '深' : '多'}</span></div>`;
       row.querySelector('.sw').style.background = css(ink.rgb);
       row.querySelector('.ink').textContent = ink.name;
+      if (fixed) {
+        row.querySelector('.seg.mini').remove();
+        row.querySelector('input').remove();
+        row.querySelector('.scale').remove();
+        row.querySelector('.sep-head').addEventListener('click', () => {
+          state.active = i;
+          if (state.view === 'single') paint();
+          renderSeparate();
+        });
+        layersEl.appendChild(row);
+        return;
+      }
       seg(row.querySelector('.seg.mini'), [['solid', '實色'], ['dots', '網點']], state.modes[i], v => {
         if (state.modes[i] === v) return;
         state.modes[i] = v; state.active = i;

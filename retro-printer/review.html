@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>審圖</title>
+<link rel="stylesheet" href="src/ui/tokens.css">
+<style>
+  body { padding: 40px 48px 80px; }
+  header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 40px; }
+  h1 { margin: 0; font-size: 12px; font-weight: 500; letter-spacing: .14em; color: var(--mute); }
+  .hint { font-size: 12px; color: var(--mute); }
+  section { margin-bottom: 56px; }
+  h2 { margin: 0 0 16px; padding-bottom: 10px; border-bottom: 1px solid var(--line); font-size: 15px; font-weight: 400; }
+  h2 small { margin-left: 10px; font-size: 11px; color: var(--mute); letter-spacing: .06em; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 18px; }
+  figure { margin: 0; }
+  canvas { width: 100%; aspect-ratio: 1 / 1; display: block; box-shadow: 0 1px 1px rgba(20, 18, 14, .06); }
+  figcaption { margin-top: 6px; font-size: 10px; color: var(--mute); letter-spacing: .04em; }
+</style>
+</head>
+<body>
+<header><h1>審圖（開發用，網站不會連到這一頁）</h1><span class="hint">重新整理就重新隨機。網址加上 #葉 只看那一個圖案。</span></header>
+<main id="review"></main>
+<script type="module" src="src/gallery/review.js"></script>
+</body>
+</html>

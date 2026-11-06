@@ -8,6 +8,8 @@ import { mountFinish } from './stations/finish/finish.js';
 import { mountEntrance } from './stations/entrance/entrance.js';
 import { MEDIA } from './state.js';
 import { addWork } from './works.js';
+import { makeLibrary } from './gallery/library.js';
+import { itemImage } from './gallery/render.js';
 
 // 各站依 brief.md 的流程串接：
 //   入口 → 提供圖片 → 製版 → 欣賞版子 → 選墨水 → 選媒材 → 工作桌 → 完成
@@ -33,7 +35,7 @@ export function go(name, data) {
 
 // 在各站之間保留的選擇
 const session = {
-  source: { kind: 'library', id: 'flower', bitmap: null, mode: 'contain', pan: [0, 0] },
+  source: { kind: 'library', id: null, bitmap: null, mode: 'contain', pan: [0, 0] },
   image: null,
   plateStates: new WeakMap(),   // 每張圖各自的製版設定；換圖就回到那張圖的預設
   plates: null,
@@ -41,20 +43,31 @@ const session = {
   inks: null,
   customInks: [],
   medium: 'paper',
-  works: []                     // 這次瀏覽留下的作品（之後入口的作品牆也讀這份）
+  works: [],                    // 這次瀏覽留下的作品（入口的作品牆也讀這份）
+  library: []                   // 這次進入口時隨機生成的圖庫作品
 };
+const LIBRARY_SIZE = 24;
 
 function toEntrance() {
+  // 每次進入口，圖庫都重新隨機生成；選圖片站用同一批
+  session.library = makeLibrary(LIBRARY_SIZE, Math.random);
   go('entrance', {
     works: session.works,
+    library: session.library,
     onStart: toSource,
     onOpenWork: work => toFinish(work),
-    onPickImage: id => { Object.assign(session.source, { kind: 'library', id }); toSource(); }
+    // 點圖庫作品：直接帶著它的各層進製版；回上一站時，選圖片站已選好這件
+    onPickItem: item => {
+      Object.assign(session.source, { kind: 'library', id: item.id });
+      session.image = itemImage(item);
+      toPlates();
+    }
   });
 }
 function toSource() {
   go('source', {
     source: session.source,
+    library: session.library,
     onNext: image => { session.image = image; toPlates(); },
     onBack: toEntrance
   });

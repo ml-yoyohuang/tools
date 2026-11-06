@@ -1,15 +1,17 @@
 import { S, PW } from '../../engine/geometry.js';
 import { DESIGN, DESIGN_PX, drawRegistration } from '../../plates/registration.js';
-import { LIBRARY, libraryImage, thumbOf, GROUND } from '../../plates/library.js';
-import { fitRect, panBy, shuffle } from '../../plates/fit.js';
+import { itemImage, itemThumb } from '../../gallery/render.js';
+import { fitRect, panBy } from '../../plates/fit.js';
 
 // 提供圖片：從圖庫挑，或上傳自己的圖（只在瀏覽器裡處理，不會送出）。
 //   source：在各站之間保留的選擇 { kind: 'library' | 'upload', id, bitmap, mode, pan }
-//   onNext(image)：交給製版站的圖 { id, name, colors, canvas, data, w, h }
+//   library：這次隨機生成的圖庫作品（與入口作品牆相同，見 src/gallery/library.js）
+//   onNext(image)：交給製版站的圖 { id, name, colors, canvas, data, w, h, layers?, inks? }
 const PAPER = [245, 240, 230];
+const GROUND = '#F5F0E6';
 const THUMB = 112;
 
-export function mountSource(root, { source, onNext, onBack }) {
+export function mountSource(root, { source, library, onNext, onBack }) {
   const stage = document.createElement('section');
   stage.className = 'stage';
   stage.innerHTML = `<div class="sheet source-sheet"><canvas class="paper" width="${PW}" height="${PW}"></canvas></div>`;
@@ -83,7 +85,8 @@ export function mountSource(root, { source, onNext, onBack }) {
 
   /* ───────── 選取與預覽 ───────── */
   function select() {
-    image = source.kind === 'upload' && source.bitmap ? uploadImage() : libraryImage(source.id);
+    if (source.kind !== 'upload' && !library.some(i => i.id === source.id)) source.id = library[0].id;
+    image = source.kind === 'upload' && source.bitmap ? uploadImage() : itemImage(library.find(i => i.id === source.id));
     paint();
     renderTiles();
     renderFit();
@@ -101,7 +104,6 @@ export function mountSource(root, { source, onNext, onBack }) {
     sheet.classList.toggle('pannable', source.kind === 'upload' && source.mode === 'cover');
   }
 
-  const order = shuffle(LIBRARY);   // 每次進來都重新排列
   const thumbs = new Map();
   function tile(id, label, canvas) {
     const b = document.createElement('button');
@@ -128,8 +130,8 @@ export function mountSource(root, { source, onNext, onBack }) {
       t.getContext('2d').drawImage(source.bitmap, r.sx, r.sy, r.sw, r.sh, 0, 0, THUMB, THUMB);
       lib.appendChild(tile('upload', '上傳的圖', t));
     }
-    for (const item of order) {
-      if (!thumbs.has(item.id)) thumbs.set(item.id, thumbOf(item, THUMB));
+    for (const item of library) {
+      if (!thumbs.has(item.id)) thumbs.set(item.id, itemThumb(item, THUMB));
       const t = document.createElement('canvas');
       t.width = t.height = THUMB;
       t.getContext('2d').drawImage(thumbs.get(item.id), 0, 0);
