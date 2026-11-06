@@ -1,9 +1,32 @@
 import { createRecord } from './engine/record.js';
 
-// 媒材。目前只有米白紙；absorb 放大溢墨，texture 為織紋強度（尚未使用）。
+// 媒材
+//   paper    底色
+//   absorb   吸墨程度，放大溢墨距離（紙 = 1）
+//   density  墨色濃度，布料吃色較淡
+//   texture  織紋（engine/texture.js）；ground 為底色明暗、ink 為墨量受織紋影響的程度
 export const MEDIA = {
-  paper: { id: 'paper', name: '米白紙', paper: [245, 240, 230], absorb: 1, texture: 0 }
+  paper: {
+    id: 'paper', name: '紙卡', note: '米白紙卡・邊緣最俐落',
+    paper: [245, 240, 230], absorb: 1, density: 1, texture: null
+  },
+  tote: {
+    id: 'tote', name: '帆布袋', note: '棉帆布・織紋明顯、吸墨較多',
+    paper: [232, 223, 204], absorb: 1.35, density: 0.94,
+    texture: { type: 'weave', period: 7, slub: 0.25, seed: 11, ground: 0.07, ink: 0.24 }
+  },
+  tee: {
+    id: 'tee', name: 'T 恤', note: '棉針織・微微吸墨',
+    paper: [246, 245, 241], absorb: 1.25, density: 0.95,
+    texture: { type: 'knit', period: 5, rowPeriod: 6, slub: 0.15, seed: 23, ground: 0.05, ink: 0.18 }
+  },
+  hanky: {
+    id: 'hanky', name: '手帕', note: '薄棉布・最容易暈開',
+    paper: [244, 242, 236], absorb: 1.6, density: 0.88,
+    texture: { type: 'weave', period: 3.6, slub: 0.15, seed: 37, ground: 0.04, ink: 0.14 }
+  }
 };
+export const MEDIA_LIST = [MEDIA.paper, MEDIA.tote, MEDIA.tee, MEDIA.hanky];
 
 // 一份作品：媒材，加上每層的版、墨、對位與刮印結果。
 //   plates  每層的版（engine/mask.js 的 buildPlate 結果）

@@ -6,7 +6,9 @@ import { setRandom, seeded } from '../src/engine/random.js';
 import { buildPlate } from '../src/engine/mask.js';
 import { createRecord, startStroke, moveStroke } from '../src/engine/record.js';
 import { renderLayer } from '../src/engine/render.js';
-import { printLayer, compositeJob } from '../src/engine/print.js';
+import { printLayer, compositeJob, surfaceOf } from '../src/engine/print.js';
+import { textureField } from '../src/engine/texture.js';
+import { MEDIA } from '../src/state.js';
 import { CONFIG as C } from '../src/config.js';
 
 /* ───────── 測試用的版與刮印 ───────── */
@@ -179,6 +181,39 @@ test('固定種子可重現；不同種子每次不同', () => {
   setRandom(seeded(11)); const c = render(rec);
   assert.deepEqual(a, b);
   assert.notDeepEqual(a, c);
+});
+
+test('媒材：紙卡沒有表面效果，輸出不變', () => {
+  assert.equal(surfaceOf(MEDIA.paper), null);
+});
+
+test('媒材：布料織紋固定、淡淡的，且讓成品不同於紙', () => {
+  for (const m of [MEDIA.tote, MEDIA.tee, MEDIA.hanky]) {
+    const s = surfaceOf(m);
+    assert.equal(textureField(m.id, m.texture), s.tex, `${m.name} 織紋應快取並固定`);
+    let sum = 0, min = 1, max = 0;
+    for (let i = 0; i < s.tex.length; i += 7) { const v = s.tex[i]; sum += v; if (v < min) min = v; if (v > max) max = v; }
+    const mean = sum / Math.ceil(s.tex.length / 7);
+    assert.ok(min < 0.2 && max > 0.8 && mean > 0.3 && mean < 0.9, `${m.name} 織紋範圍 ${min.toFixed(2)}–${max.toFixed(2)}，平均 ${mean.toFixed(2)}`);
+  }
+  setRandom(seeded(12));
+  const job = twoLayerJob(0);
+  const plain = compositeJob(job, C);
+  job.medium = MEDIA.tote;
+  const a = compositeJob(job, C), b = compositeJob(job, C);
+  assert.deepEqual(a, b);
+  let diff = 0;
+  for (let i = 0; i < a.length; i += 4) diff += Math.abs(a[i] - plain[i]);
+  assert.ok(diff / (PW * PW) > 2, `帆布與紙的平均差 ${(diff / (PW * PW)).toFixed(2)}`);
+});
+
+test('媒材：吸墨較多的布，溢墨範圍較大', () => {
+  const rec = createRecord(); fullScrape(rec, 0.06);
+  setRandom(seeded(13));
+  const paper = bleedFraction(renderLayer({ plate: CIRCLE, rec, offset: [0, 0], absorb: 1 }, C).alpha);
+  setRandom(seeded(13));
+  const hanky = bleedFraction(renderLayer({ plate: CIRCLE, rec, offset: [0, 0], absorb: MEDIA.hanky.absorb }, C).alpha);
+  assert.ok(hanky > paper + 0.1, `紙 ${paper.toFixed(3)}，手帕 ${hanky.toFixed(3)}`);
 });
 
 /* ───────── 執行 ───────── */

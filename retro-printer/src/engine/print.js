@@ -2,6 +2,7 @@ import { renderLayer } from './render.js';
 import { smearLayer } from './wet.js';
 import { coarseCover } from './mask.js';
 import { composite } from './composite.js';
+import { textureField } from './texture.js';
 
 // 掀框：算出第 L 層的成品，並處理它對下層未乾墨的影響。
 // 直接更新 job.layers 裡的資料（見 state.js）。
@@ -25,6 +26,16 @@ export function printLayer(job, L, C) {
 export function compositeJob(job, C) {
   return composite(
     job.layers.map(l => ({ alpha: l.alpha, rgb: l.ink.rgb, stains: l.stains })),
-    job.medium.paper, C
+    job.medium.paper, C, surfaceOf(job.medium)
   );
+}
+
+// 媒材的表面效果；紙卡沒有織紋、濃度為 1，回傳 null 讓輸出與原本完全相同
+export function surfaceOf(medium) {
+  const t = medium.texture, density = medium.density ?? 1;
+  if (!t && density === 1) return null;
+  return {
+    tex: t ? textureField(medium.id, t) : null,
+    ground: t ? t.ground : 0, ink: t ? t.ink : 0, density
+  };
 }

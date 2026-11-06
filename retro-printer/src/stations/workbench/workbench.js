@@ -16,7 +16,7 @@ const COUNT = ['零', '一', '兩', '三', '四', '五', '六', '七', '八', '�
 const VMAX = 2.6;       // 速度條最大值 px/ms
 const LIFT_MS = 700;
 
-export function mountWorkbench(root, { plates, inks, medium }) {
+export function mountWorkbench(root, { plates, inks, medium, onBack }) {
   const stage = document.createElement('section');
   stage.className = 'stage';
   stage.innerHTML = `<div class="sheet">
@@ -28,7 +28,8 @@ export function mountWorkbench(root, { plates, inks, medium }) {
   const pctx = paper.getContext('2d'), octx = overlay.getContext('2d');
   stage.querySelector('.sheet').style.background = `rgb(${medium.paper.join(',')})`;
 
-  const panel = createPanel(root, { title: '工作桌' });
+  const panel = createPanel(root, { title: '工作桌', back: onBack ? '換媒材' : null });
+  if (onBack) panel.onBack(onBack);
   panel.setMeterZone(C.speedSlow / VMAX, C.speedFastStart / VMAX);
 
   const frames = plates.map((p, i) => buildFrame(p, inks[i].rgb));
@@ -48,8 +49,7 @@ export function mountWorkbench(root, { plates, inks, medium }) {
       pressing: false, lastMoveT: 0, vShow: 0,
       hover: null, drag: null, dryer: false, liftStart: 0, busy: false
     };
-    pctx.fillStyle = `rgb(${medium.paper.join(',')})`;
-    pctx.fillRect(0, 0, PW, PW);
+    paintPrint(); // 還沒印時，畫出媒材本身（含織紋）
     meshInk.markDirty();
     ui();
   }

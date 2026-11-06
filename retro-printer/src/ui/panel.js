@@ -1,6 +1,7 @@
 // 側欄：層數、步驟、提示、工具（速度條 / 等乾）、主要按鈕、重來與下載。
 // 只負責畫面，不含流程邏輯。
-export function createPanel(root, { title }) {
+// back：回上一站的文字（沒有上一站時省略）
+export function createPanel(root, { title, back }) {
   const el = document.createElement('aside');
   el.className = 'panel';
   el.innerHTML = `
@@ -26,6 +27,7 @@ export function createPanel(root, { title }) {
       <button class="primary" data-ref="primary" type="button"></button>
     </div>
     <div class="foot">
+      <button class="text" data-ref="back" type="button" hidden></button>
       <button class="text" data-ref="reset" type="button">重來</button>
       <button class="text" data-ref="download" type="button">下載 PNG</button>
     </div>`;
@@ -35,7 +37,8 @@ export function createPanel(root, { title }) {
   const $ = name => el.querySelector(`[data-ref="${name}"]`);
   const r = {};
   for (const n of ['num', 'total', 'swatch', 'inkName', 'steps', 'hint', 'meter', 'zone', 'mark',
-    'dry', 'dryPct', 'dryFill', 'dryer', 'primary', 'reset', 'download']) r[n] = $(n);
+    'dry', 'dryPct', 'dryFill', 'dryer', 'primary', 'back', 'reset', 'download']) r[n] = $(n);
+  if (back) { r.back.textContent = back; r.back.hidden = false; }
 
   // 吹風機：按住才有作用
   let onDryer = () => {};
@@ -93,6 +96,7 @@ export function createPanel(root, { title }) {
     setDownload(enabled) { r.download.disabled = !enabled; },
     onPrimary(fn) { r.primary.addEventListener('click', fn); },
     onReset(fn) { r.reset.addEventListener('click', fn); },
+    onBack(fn) { r.back.addEventListener('click', fn); },
     onDownload(fn) { r.download.addEventListener('click', fn); },
     onDryer(fn) { onDryer = fn; }
   };
