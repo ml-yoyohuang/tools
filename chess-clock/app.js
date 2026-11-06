@@ -20,10 +20,10 @@ createApp({
       { value: 'shogi', label: '日本將棋｜先手・後手', labels: ['先手', '後手'] },
       { value: 'go', label: '圍棋｜黑方・白方', labels: ['BLACK', 'WHITE'] },
       { value: 'othello', label: '黑白棋｜黑方・白方', labels: ['BLACK', 'WHITE'] },
-      { value: 'random', label: '隨機可愛隊名', labels: [] },
+      { value: 'random', label: '隨機隊名', labels: [] },
     ];
-    const cuteTeams = [
-      ['貓派', '狗派'], ['奶茶派', '咖啡派'], ['早起鳥', '夜貓子'], ['草莓隊', '芒果隊'],
+    const randomTeams = [
+      ['貓派', '狗派'], ['奶茶派', '咖啡派'], ['早鳥族', '夜貓族'], ['香菇隊', '竹筍隊'],
       ['恐龍隊', '獨角獸隊'], ['海豹隊', '企鵝隊'], ['珍珠派', '椰果派'], ['太陽隊', '月亮隊'],
     ];
     const initialTeamLabels = teamOptions.find((option) => option.value === teamPreset.value)?.labels || ['BLACK', 'WHITE'];
@@ -148,7 +148,7 @@ createApp({
     function openSettings() { pauseGame(); isShowPopup.value = true; }
     function applyTeamPreset() {
       if (teamPreset.value === 'random') {
-        const pair = cuteTeams[Math.floor(Math.random() * cuteTeams.length)];
+        const pair = randomTeams[Math.floor(Math.random() * randomTeams.length)];
         players.value[0].label = pair[0];
         players.value[1].label = pair[1];
       } else {
