@@ -1,0 +1,9 @@
+{
+  "name": "retro-printer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "serve": "python -m http.server 8000",
+    "test": "node tests/engine.test.mjs"
+  }
+}

@@ -1,0 +1,1017 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>工作桌</title>
+<style>
+  :root {
+    --bg: #ECEBE7;
+    --paper: #F5F0E6;
+    --ink: #151514;
+    --mute: #8B8984;
+    --faint: #C4C2BC;
+    --line: #D8D6D0;
+  }
+  [hidden] { display: none !important; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Helvetica Neue", Helvetica, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  .app {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 272px;
+    gap: 96px;
+    max-width: 1168px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 64px 56px;
+    align-items: center;
+  }
+  .sheet {
+    position: relative;
+    width: min(600px, 100%);
+    aspect-ratio: 1 / 1;
+    margin-left: auto;
+    background: var(--paper);
+    box-shadow: 0 1px 1px rgba(20, 18, 14, .05), 0 30px 60px -32px rgba(20, 18, 14, .28);
+  }
+  .sheet canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  #overlay { touch-action: none; }
+
+  .panel { display: flex; flex-direction: column; gap: 44px; }
+  h1 {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: .14em;
+    color: var(--mute);
+  }
+  .layer { display: flex; align-items: flex-end; justify-content: space-between; }
+  .layer-num {
+    font-size: 72px;
+    font-weight: 200;
+    line-height: .8;
+    letter-spacing: -.04em;
+    font-variant-numeric: tabular-nums;
+  }
+  .layer-num small {
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: 0;
+    color: var(--faint);
+    margin-left: 6px;
+  }
+  .ink-tag { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--mute); }
+  .swatch { width: 14px; height: 14px; }
+
+  .steps { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--line); }
+  .steps li {
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    align-items: baseline;
+    padding: 12px 0;
+    border-top: 1px solid var(--line);
+    font-size: 15px;
+    color: var(--faint);
+    transition: color .3s;
+  }
+  .steps li .n { font-size: 11px; font-variant-numeric: tabular-nums; letter-spacing: .06em; }
+  .steps li.done { color: var(--mute); }
+  .steps li.now { color: var(--ink); }
+
+  .act { display: flex; flex-direction: column; gap: 24px; }
+  .hint { margin: 0; font-size: 14px; line-height: 1.75; color: var(--mute); min-height: 3.5em; }
+  .tool { min-height: 92px; display: flex; flex-direction: column; justify-content: flex-end; }
+
+  .meter .track { position: relative; height: 1px; background: var(--line); }
+  .meter .zone { position: absolute; top: -1px; height: 3px; background: var(--faint); }
+  .meter .mark {
+    position: absolute; top: -6px; width: 1px; height: 13px; background: var(--ink);
+    transform: translateX(-.5px); transition: left .06s linear;
+  }
+  .scale { display: flex; justify-content: space-between; margin-top: 10px; font-size: 11px; color: var(--mute); letter-spacing: .06em; }
+
+  .dry .row { display: flex; justify-content: space-between; font-size: 12px; color: var(--mute); letter-spacing: .06em; }
+  .dry .row span:last-child { font-variant-numeric: tabular-nums; color: var(--ink); }
+  .dry .bar { height: 1px; background: var(--line); margin: 10px 0 16px; }
+  .dry .bar span { display: block; height: 100%; background: var(--ink); width: 0; }
+
+  button { font: inherit; cursor: pointer; }
+  .primary {
+    height: 52px; border: 0; background: var(--ink); color: #F5F3EE;
+    font-size: 14px; letter-spacing: .12em;
+    transition: opacity .25s, background .2s;
+  }
+  .primary:hover:not(:disabled) { background: #000; }
+  .primary:disabled { opacity: .16; cursor: default; }
+  .ghost {
+    width: 100%; height: 44px; background: transparent; color: var(--ink);
+    border: 1px solid var(--ink); font-size: 13px; letter-spacing: .12em;
+    user-select: none; -webkit-user-select: none; touch-action: none;
+    transition: background .15s, color .15s;
+  }
+  .ghost.on { background: var(--ink); color: #F5F3EE; }
+
+  .foot { display: flex; gap: 28px; }
+  .text {
+    background: none; border: 0; padding: 0; font-size: 13px; color: var(--mute);
+    letter-spacing: .06em; transition: color .2s;
+  }
+  .text:hover:not(:disabled) { color: var(--ink); }
+  .text:disabled { color: var(--faint); cursor: default; }
+  button:focus-visible { outline: 1px solid var(--ink); outline-offset: 4px; }
+
+  @media (max-width: 900px) {
+    .app { grid-template-columns: 1fr; gap: 40px; padding: 24px 16px 48px; align-items: start; }
+    .sheet { margin: 0 auto; }
+    .panel { gap: 32px; }
+    .layer-num { font-size: 56px; }
+  }
+</style>
+</head>
+<body>
+<main class="app">
+  <section class="stage">
+    <div class="sheet">
+      <canvas id="paper" width="1200" height="1200"></canvas>
+      <canvas id="overlay" width="1200" height="1200"></canvas>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <h1>工作桌</h1>
+
+    <div class="layer">
+      <div class="layer-num"><span id="layerNum">01</span><small>/ 02</small></div>
+      <div class="ink-tag"><span class="swatch" id="swatch"></span><span id="inkName"></span></div>
+    </div>
+
+    <ol class="steps" id="steps"></ol>
+
+    <div class="act">
+      <p class="hint" id="hint"></p>
+
+      <div class="tool">
+      <div class="meter" id="meter" hidden>
+        <div class="track"><span class="zone" id="zone"></span><span class="mark" id="mark"></span></div>
+        <div class="scale"><span>慢</span><span>快</span></div>
+      </div>
+
+      <div class="dry" id="dry" hidden>
+        <div class="row"><span>墨乾</span><span id="dryPct">0%</span></div>
+        <div class="bar"><span id="dryFill"></span></div>
+        <button class="ghost" id="dryer" type="button">按住吹風機</button>
+      </div>
+      </div>
+
+      <button class="primary" id="primary" type="button"></button>
+    </div>
+
+    <div class="foot">
+      <button class="text" id="reset" type="button">重來</button>
+      <button class="text" id="download" type="button">下載 PNG</button>
+    </div>
+  </aside>
+</main>
+
+<script>
+'use strict';
+
+/* ───────── 手感參數 ───────── */
+const CONFIG = {
+  dryTime: 15,            // 自然乾燥秒數
+  dryerBoost: 5,          // 吹風機倍速
+  bladeLength: 330,       // 刮板長度（紙張座標，網框內寬 460）
+  speedSlow: 0.12,        // px/ms，低於此視為太慢
+  speedFastStart: 0.9,    // px/ms，高於此開始飛白
+  speedFastFull: 2.2,     // px/ms，達此為最嚴重飛白
+  fastInkMin: 0.6,        // 最快時單次出墨量
+  slowExcess: 1.0,        // 太慢一次累積的溢墨量
+  repeatExcess: 0.35,     // 超過免費次數後，每多刮一次累積的溢墨量
+  freePasses: 2,          // 不會溢墨的刮印次數
+  dwellExcessPerSec: 1.2, // 刮板停住時每秒累積的溢墨量
+  excessFull: 1.6,        // 溢墨量達此值時溢出最大
+  bleedPx: 4.5,           // 溢墨最大外擴距離 px
+  speedWindow: 50,        // 計算刮印速度的時間窗 ms
+  jitter: 1.5,            // 邊緣抖動 px
+  speckle: 0.05,          // 基礎飛白面積比例
+  fastVoid: 0.4,          // 刮太快時額外飛白比例
+  scratchChance: 0.55,    // 每層出現刮痕的機率
+  inkMissing: 0.15,       // 出墨量低於此完全缺墨
+  inkFull: 0.75,          // 出墨量高於此完整
+  smear: 10,              // 未乾時拖曳糊開距離 px（濕度 1 時）
+  stain: 0.35,            // 未乾時第 2 層沾染第 1 層顏色的比例
+  pickCarry: 0.94,        // 刮板把沾上的粉紅往前帶的程度（每 2px 保留比例，越大拖越遠）
+  pickShow: 0.75,         // 網上的墨混入粉紅的最大比例（只影響刮印時的畫面）
+  clogGrace: 10,          // 倒墨後閒置幾秒開始塞網
+  clogTime: 30,           // 塞網從 0 到最嚴重所需秒數
+  clogMax: 0.55,          // 最嚴重時印不出來的面積比例
+  clogThin: 0.15,         // 細線條比大色塊更容易塞住的程度
+  wetFrameAlpha: 0.6      // 第 2 層網框不透明度
+};
+
+/* ───────── 基本常數 ───────── */
+const W = 600, S = 2, PW = W * S, CELL = 4, GN = W / CELL;
+const FRAME = { x: 50, y: 50, w: 500, h: 500 };
+const MESH = { x: 70, y: 70, w: 460, h: 460 };
+const PAPER = [245, 240, 230];
+const INKS = [
+  { name: '粉紅', rgb: [255, 72, 176] },
+  { name: '藍', rgb: [50, 85, 164] }
+];
+const CROSSES = [[100, 100], [500, 100], [100, 500], [500, 500]];
+const STEP_NAMES = [['放下網框', '倒墨', '刮印', '掀框', '等乾'], ['放下網框', '倒墨', '刮印', '掀框', '完成']];
+const PHASE_STEP = { place: 0, ink: 1, squeegee: 2, lift: 3, dry: 4, done: 4 };
+
+const $ = id => document.getElementById(id);
+const paper = $('paper'), overlay = $('overlay');
+const pctx = paper.getContext('2d'), octx = overlay.getContext('2d');
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+
+/* ───────── 測試圖 ───────── */
+function drawDesign(ctx, layer) {
+  ctx.beginPath();
+  if (layer === 0) {
+    ctx.arc(265, 275, 135, 0, Math.PI * 2);
+  } else {
+    const cx = 335, cy = 330, R = 150, r = 64;
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r : R;
+      ctx[i ? 'lineTo' : 'moveTo'](cx + Math.cos(a) * rr, cy + Math.sin(a) * rr);
+    }
+    ctx.closePath();
+  }
+  ctx.fill();
+  for (const [x, y] of CROSSES) {
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(x - 16, y); ctx.lineTo(x + 16, y);
+    ctx.moveTo(x, y - 16); ctx.lineTo(x, y + 16);
+    ctx.stroke();
+    ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.stroke();
+  }
+}
+
+function makeCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h || w; return c; }
+
+function boxBlur(src, r, passes) {
+  let a = Float32Array.from(src), t = new Float32Array(src.length);
+  const k = 1 / (2 * r + 1);
+  for (let p = 0; p < passes; p++) {
+    for (let dir = 0; dir < 2; dir++) {
+      const step = dir ? PW : 1;
+      for (let j = 0; j < PW; j++) {
+        const base = dir ? j : j * PW;
+        let s = 0;
+        for (let i = 0; i <= r; i++) s += a[base + i * step];
+        for (let i = 0; i < PW; i++) {
+          t[base + i * step] = s * k;
+          const add = i + r + 1, rem = i - r;
+          if (add < PW) s += a[base + add * step];
+          if (rem >= 0) s -= a[base + rem * step];
+        }
+      }
+      const sw = a; a = t; t = sw;
+    }
+  }
+  return a;
+}
+
+function buildMask(layer) {
+  const c = makeCanvas(PW), x = c.getContext('2d');
+  x.setTransform(S, 0, 0, S, 0, 0);
+  x.fillStyle = x.strokeStyle = '#000';
+  drawDesign(x, layer);
+  const d = x.getImageData(0, 0, PW, PW).data;
+  const m = new Float32Array(PW * PW);
+  for (let i = 0; i < m.length; i++) m[i] = d[i * 4 + 3] / 255;
+  return { m, b: boxBlur(m, 4, 3), dist: distanceField(m) };
+}
+
+// 圖案外每個像素到圖案邊緣的距離（倒角近似），用於溢墨
+function distanceField(m) {
+  const n = PW, D = new Float32Array(n * n), INF = 1e6, R2 = Math.SQRT2;
+  for (let i = 0; i < D.length; i++) D[i] = m[i] >= 0.5 ? 0 : INF;
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+    const i = y * n + x; let v = D[i];
+    if (v === 0) continue;
+    if (x > 0) v = Math.min(v, D[i - 1] + 1);
+    if (y > 0) {
+      v = Math.min(v, D[i - n] + 1);
+      if (x > 0) v = Math.min(v, D[i - n - 1] + R2);
+      if (x < n - 1) v = Math.min(v, D[i - n + 1] + R2);
+    }
+    D[i] = v;
+  }
+  for (let y = n - 1; y >= 0; y--) for (let x = n - 1; x >= 0; x--) {
+    const i = y * n + x; let v = D[i];
+    if (v === 0) continue;
+    if (x < n - 1) v = Math.min(v, D[i + 1] + 1);
+    if (y < n - 1) {
+      v = Math.min(v, D[i + n] + 1);
+      if (x < n - 1) v = Math.min(v, D[i + n + 1] + R2);
+      if (x > 0) v = Math.min(v, D[i + n - 1] + R2);
+    }
+    D[i] = v;
+  }
+  return D;
+}
+
+function buildFrame(layer) {
+  const c = makeCanvas(FRAME.w * S), x = c.getContext('2d');
+  x.setTransform(S, 0, 0, S, -FRAME.x * S, -FRAME.y * S);
+  x.fillStyle = '#262523';
+  x.fillRect(FRAME.x, FRAME.y, FRAME.w, FRAME.h);
+  x.clearRect(MESH.x, MESH.y, MESH.w, MESH.h);
+  x.fillStyle = 'rgba(30, 32, 36, 0.2)';
+  x.fillRect(MESH.x, MESH.y, MESH.w, MESH.h);
+  x.globalCompositeOperation = 'destination-out';
+  x.fillStyle = x.strokeStyle = '#000';
+  drawDesign(x, layer);
+  x.globalCompositeOperation = 'source-over';
+  const [r, g, b] = INKS[layer].rgb;
+  x.fillStyle = x.strokeStyle = `rgba(${r},${g},${b},0.34)`;
+  drawDesign(x, layer);
+  return c;
+}
+
+// 對位用：網框上的十字標記，清楚不透明
+function buildMarks(layer) {
+  const c = makeCanvas(FRAME.w * S), x = c.getContext('2d');
+  x.setTransform(S, 0, 0, S, -FRAME.x * S, -FRAME.y * S);
+  x.strokeStyle = `rgb(${INKS[layer].rgb.join(',')})`;
+  for (const [cx, cy] of CROSSES) {
+    x.lineWidth = 0.8;
+    x.beginPath();
+    x.moveTo(cx - 22, cy); x.lineTo(cx + 22, cy);
+    x.moveTo(cx, cy - 22); x.lineTo(cx, cy + 22);
+    x.stroke();
+    x.beginPath(); x.arc(cx, cy, 7, 0, Math.PI * 2); x.stroke();
+  }
+  return c;
+}
+
+const masks = [buildMask(0), buildMask(1)];
+const frames = [buildFrame(0), buildFrame(1)];
+const marks = buildMarks(1);
+
+/* ───────── 噪聲 ───────── */
+function makeNoise(cx, cy) {
+  const gw = Math.ceil(PW / cx) + 2, gh = Math.ceil(PW / cy) + 2;
+  const g = new Float32Array(gw * gh);
+  for (let i = 0; i < g.length; i++) g[i] = Math.random();
+  const icx = 1 / cx, icy = 1 / cy;
+  return (x, y) => {
+    let fx = x * icx, fy = y * icy;
+    if (fx < 0) fx = 0; if (fy < 0) fy = 0;
+    let ix = fx | 0, iy = fy | 0;
+    if (ix > gw - 2) ix = gw - 2; if (iy > gh - 2) iy = gh - 2;
+    let tx = fx - ix, ty = fy - iy;
+    tx = tx * tx * (3 - 2 * tx); ty = ty * ty * (3 - 2 * ty);
+    const k = iy * gw + ix, a = g[k], b = g[k + 1], c = g[k + gw], d = g[k + gw + 1];
+    return a + (b - a) * tx + (c - a + (d - c - (b - a)) * tx) * ty;
+  };
+}
+function quantiles(fn) {
+  const n = 5000, a = new Float32Array(n);
+  for (let i = 0; i < n; i++) a[i] = fn(Math.random() * PW, Math.random() * PW);
+  a.sort();
+  return p => a[clamp((p * n) | 0, 0, n - 1)];
+}
+
+/* ───────── 狀態 ───────── */
+function makeGrid() {
+  const n = GN * GN;
+  return {
+    ink: new Float32Array(n), fast: new Float32Array(n), excess: new Float32Array(n),
+    passes: new Uint16Array(n), stamp: new Int32Array(n),
+    pick: new Float32Array(n)   // 網上的墨沾到下層未乾粉紅的程度（0–1）
+  };
+}
+function newState() {
+  return {
+    layer: 0, phase: 'place',
+    offs: [[0, 0], [0, 0]],
+    grids: [makeGrid(), makeGrid()],
+    dirSum: [[0, 0], [0, 0]], dirAbs: [[0, 0], [0, 0]],
+    A: [null, null], A1raw: null,
+    inkPlaced: false, strokes: 0, strokeId: 0,
+    pressing: false, last: null, trail: [], v: 0, vShow: 0, lastMoveT: 0,
+    wet: 0, dryer: false, wetAtPrint: 0,
+    idle: 0, clog: 0,
+    hover: null, drag: null, liftStart: 0, busy: false
+  };
+}
+let st = newState();
+
+/* ───────── 刮印紀錄 ───────── */
+function bladePos(p) {
+  const [ox, oy] = st.offs[st.layer], h = CONFIG.bladeLength / 2;
+  return {
+    x: clamp(p.x, MESH.x + ox + h, MESH.x + ox + MESH.w - h),
+    y: clamp(p.y, MESH.y + oy + 6, MESH.y + oy + MESH.h - 6)
+  };
+}
+function fastness(v) { return clamp((v - CONFIG.speedFastStart) / (CONFIG.speedFastFull - CONFIG.speedFastStart), 0, 1); }
+function slowness(v) { return clamp((CONFIG.speedSlow - v) / CONFIG.speedSlow, 0, 1); }
+
+function touch(g, k, d, f, slow) {
+  if (g.stamp[k] === st.strokeId) return;
+  g.stamp[k] = st.strokeId;
+  g.passes[k]++;
+  g.ink[k] += d;
+  g.fast[k] = f > 0.05 ? Math.max(g.fast[k], f) : g.fast[k] * 0.4;
+  g.excess[k] += slow * CONFIG.slowExcess;
+  if (g.passes[k] > CONFIG.freePasses) g.excess[k] += CONFIG.repeatExcess;
+}
+
+function sweep(a, b, v) {
+  const g = st.grids[st.layer], h = CONFIG.bladeLength / 2;
+  const f = fastness(v), slow = slowness(v), d = 1 - (1 - CONFIG.fastInkMin) * f;
+  const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 2));
+  for (let i = 1; i <= n; i++) {
+    const x = a.x + (b.x - a.x) * i / n, y = a.y + (b.y - a.y) * i / n;
+    const row = clamp(Math.floor(y / CELL), 0, GN - 1);
+    const c0 = clamp(Math.floor((x - h) / CELL), 0, GN - 1), c1 = clamp(Math.floor((x + h) / CELL), 0, GN - 1);
+    for (let c = c0; c <= c1; c++) touch(g, row * GN + c, d, f, slow);
+    // 未乾時，刮板把下層的粉紅帶上網，並沿刮的方向拖一小段
+    if (st.layer === 1 && st.wet > 0 && st.cover1) {
+      for (let c = c0; c <= c1; c++) {
+        const kk = row * GN + c;
+        st.carry[c] = st.carry[c] * CONFIG.pickCarry + st.wet * st.cover1[kk] * (1 - CONFIG.pickCarry);
+        if (st.carry[c] > g.pick[kk]) g.pick[kk] = st.carry[c];
+      }
+    }
+  }
+  previewDirty = true;
+}
+
+function dwell(dt) {
+  const g = st.grids[st.layer], b = st.last, h = CONFIG.bladeLength / 2;
+  const row = clamp(Math.floor(b.y / CELL), 0, GN - 1);
+  const c0 = clamp(Math.floor((b.x - h) / CELL), 0, GN - 1), c1 = clamp(Math.floor((b.x + h) / CELL), 0, GN - 1);
+  const add = CONFIG.dwellExcessPerSec * dt;
+  for (let r = Math.max(0, row - 1); r <= Math.min(GN - 1, row + 1); r++)
+    for (let c = c0; c <= c1; c++) { const k = r * GN + c; if (st.grids[st.layer].passes[k]) g.excess[k] += add; }
+}
+
+function startStroke(p, t) {
+  st.pressing = true;
+  st.strokeId++;
+  st.strokes++;
+  st.inkPlaced = false;
+  const b = bladePos(p);
+  st.last = { x: b.x, y: b.y, t };
+  st.trail = [{ t, s: 0 }];
+  st.carry = new Float32Array(GN);
+  st.lastMoveT = t;
+  if (st.layer === 1) st.wetAtPrint = Math.max(st.wetAtPrint, st.wet);
+  ui();
+}
+function moveStroke(p, t) {
+  const b = bladePos(p), a = st.last;
+  const dx = b.x - a.x, dy = b.y - a.y, dist = Math.hypot(dx, dy);
+  if (dist < 0.5) return;
+  // 速度以最近約 50ms 的移動距離計算，避免滑鼠事件時間戳抖動造成尖峰
+  const tr = st.trail, s = tr[tr.length - 1].s + dist;
+  tr.push({ t, s });
+  while (tr.length > 2 && tr[1].t < t - CONFIG.speedWindow) tr.shift();
+  const a0 = tr[0];
+  st.v = (s - a0.s) / Math.max(t - a0.t, 1);
+  st.vShow = st.v;
+  sweep(a, b, st.v);
+  const L = st.layer;
+  st.dirSum[L][0] += dx; st.dirSum[L][1] += dy;
+  st.dirAbs[L][0] += Math.abs(dx); st.dirAbs[L][1] += Math.abs(dy);
+  st.last = { x: b.x, y: b.y, t };
+  st.lastMoveT = t;
+}
+
+/* ───────── 成品計算 ───────── */
+function sampleBil(arr, x, y) {
+  if (x < 0 || y < 0 || x >= PW - 1 || y >= PW - 1) return 0;
+  const ix = x | 0, iy = y | 0, tx = x - ix, ty = y - iy, k = iy * PW + ix;
+  const a = arr[k], b = arr[k + 1], c = arr[k + PW], d = arr[k + PW + 1];
+  return a + (b - a) * tx + (c - a + (d - c - (b - a)) * tx) * ty;
+}
+function sampleNear(arr, x, y) {
+  const ix = Math.round(x), iy = Math.round(y);
+  if (ix < 0 || iy < 0 || ix >= PW || iy >= PW) return 0;
+  return arr[iy * PW + ix];
+}
+
+function makeScratches() {
+  const out = [];
+  if (Math.random() < CONFIG.scratchChance) {
+    const n = Math.random() < 0.6 ? 1 : 2;
+    for (let i = 0; i < n; i++) {
+      const x0 = 90 + Math.random() * 280, len = 80 + Math.random() * 200;
+      out.push({ y: 120 + Math.random() * 360, x0, x1: Math.min(520, x0 + len),
+        w: 0.35 + Math.random() * 0.3, depth: 0.35 + Math.random() * 0.3, ph: Math.random() * 6 });
+    }
+  }
+  return out;
+}
+
+function renderLayer(L) {
+  const g = st.grids[L], mk = masks[L];
+  const oxp = st.offs[L][0] * S, oyp = st.offs[L][1] * S;
+  const vertical = st.dirAbs[L][1] >= st.dirAbs[L][0];
+  const nJx = makeNoise(46, 46), nJy = makeNoise(46, 46), nJx2 = makeNoise(5, 5), nJy2 = makeNoise(5, 5);
+  const nBleed = makeNoise(9, 9),nMottle = makeNoise(18, 18), nDen = makeNoise(140, 140);
+  const f1 = makeNoise(2.3, 2.3), f2 = makeNoise(5.1, 5.1), f3 = makeNoise(13, 13);
+  const nFine = (x, y) => 0.42 * f1(x, y) + 0.33 * f2(x, y) + 0.25 * f3(x, y);
+  const nStreak = vertical ? makeNoise(2.4, 70) : makeNoise(70, 2.4);
+  // 塞網：大片低頻斑塊，加上細節處優先塞住
+  const clog = st.clog, c1 = makeNoise(64, 64), c2 = makeNoise(16, 16);
+  const nClog = (x, y) => 0.65 * c1(x, y) + 0.35 * c2(x, y);
+  const qClog = quantiles(nClog);
+  const clogTh = clog > 0 ? qClog(clog * CONFIG.clogMax) : -1;
+  const qFine = quantiles(nFine), qStreak = quantiles(nStreak);
+  const scr = makeScratches();
+  const J = CONFIG.jitter * S, J2 = 0.5 * S;
+  const A = new Float32Array(PW * PW);
+  const gs = 1 / (S * CELL);
+  const reachLimit = (CONFIG.bleedPx * 1.3 + CONFIG.jitter + 1.5) * S;
+  const oxi = Math.round(oxp), oyi = Math.round(oyp);
+
+  for (let Y = 0; Y < PW; Y++) {
+    const ly = Y / S;
+    for (let X = 0; X < PW; X++) {
+      const i = Y * PW + X;
+      const ux = X - oxi, uy = Y - oyi;
+      if (ux < 0 || uy < 0 || ux >= PW || uy >= PW || mk.dist[uy * PW + ux] > reachLimit) continue;
+
+      // 刮印紀錄（雙線性）
+      let gx = X * gs - 0.5, gy = Y * gs - 0.5;
+      gx = clamp(gx, 0, GN - 1.001); gy = clamp(gy, 0, GN - 1.001);
+      const ix = gx | 0, iy = gy | 0, tx = gx - ix, ty = gy - iy, k = iy * GN + ix;
+      const w00 = (1 - tx) * (1 - ty), w10 = tx * (1 - ty), w01 = (1 - tx) * ty, w11 = tx * ty;
+      const ink = g.ink[k] * w00 + g.ink[k + 1] * w10 + g.ink[k + GN] * w01 + g.ink[k + GN + 1] * w11;
+      if (ink < 0.02) continue;
+      const fast = g.fast[k] * w00 + g.fast[k + 1] * w10 + g.fast[k + GN] * w01 + g.fast[k + GN + 1] * w11;
+      const excess = g.excess[k] * w00 + g.excess[k + 1] * w10 + g.excess[k + GN] * w01 + g.excess[k + GN + 1] * w11;
+
+      // 邊緣抖動
+      const sx = X - oxp + (nJx(X, Y) - 0.5) * 2 * J + (nJx2(X, Y) - 0.5) * 2 * J2;
+      const sy = Y - oyp + (nJy(X, Y) - 0.5) * 2 * J + (nJy2(X, Y) - 0.5) * 2 * J2;
+      const m = sampleBil(mk.m, sx, sy);
+
+      // 溢墨
+      let shape = m;
+      const bleed = clamp(excess / CONFIG.excessFull, 0, 1);
+      if (bleed > 0.01) {
+        const d = sampleBil(mk.dist, sx, sy);
+        const reach = bleed * CONFIG.bleedPx * S * (0.7 + 0.6 * nBleed(X, Y));
+        shape = Math.max(m, smooth(reach + 0.8, reach - 0.8, d));
+      }
+      if (shape <= 0.002) continue;
+
+      // 缺墨
+      const cov = smooth(CONFIG.inkMissing, CONFIG.inkFull, ink + (nMottle(X, Y) - 0.5) * 0.45);
+      if (cov <= 0.002) continue;
+
+      // 飛白
+      const fT = clamp(fast, 0, 1);
+      const pv = CONFIG.speckle + fT * CONFIG.fastVoid;
+      let gN, th;
+      if (fT > 0.01) {
+        gN = nFine(X, Y) * (1 - fT) + nStreak(X, Y) * fT;
+        th = qFine(pv) * (1 - fT) + qStreak(pv) * fT;
+      } else {
+        gN = nFine(X, Y);
+        th = qFine(pv);
+      }
+      const vf = smooth(th - 0.03, th + 0.03, gN);
+
+      let a = shape * cov * vf * (0.9 + 0.1 * nDen(X, Y));
+
+      // 塞網
+      if (clogTh > 0) {
+        const thin = 1 - sampleNear(mk.b, X - oxp, Y - oyp);
+        const score = nClog(X, Y) - CONFIG.clogThin * thin * clog;
+        a *= smooth(clogTh - 0.015, clogTh + 0.015, score);
+      }
+
+      // 刮痕
+      for (let s = 0; s < scr.length; s++) {
+        const c = scr[s], lx = X / S;
+        if (lx <= c.x0 || lx >= c.x1) continue;
+        const d = Math.abs(ly - (c.y + Math.sin(lx * 0.013 + c.ph) * 0.8));
+        if (d < c.w) a *= 1 - c.depth * (1 - d / c.w) * Math.min(1, (lx - c.x0) / 20, (c.x1 - lx) / 20);
+      }
+      A[i] = a;
+    }
+  }
+
+  if (L === 1) smearUnder(vertical);
+  st.A[L] = A;
+  if (L === 0) st.cover1 = coarseCover(A);
+}
+
+// 第 1 層成品在每個刮印格裡的平均墨量
+function coarseCover(A) {
+  const out = new Float32Array(GN * GN), px = CELL * S, inv = 1 / (px * px);
+  for (let Y = 0; Y < PW; Y++) {
+    const row = ((Y / px) | 0) * GN;
+    for (let X = 0; X < PW; X++) out[row + ((X / px) | 0)] += A[Y * PW + X];
+  }
+  for (let k = 0; k < out.length; k++) out[k] *= inv;
+  return out;
+}
+
+// 第 1 層未乾時，被第 2 層刮過的地方糊開
+function smearUnder(vertical) {
+  const w = st.wetAtPrint, src = st.A[0];
+  st.A1raw = src;
+  if (!src || w < 0.01) return;
+  const out = Float32Array.from(src), g = st.grids[1];
+  let [dx, dy] = st.dirSum[1];
+  const len = Math.hypot(dx, dy);
+  if (len < 1) { dx = vertical ? 0 : 1; dy = vertical ? 1 : 0; } else { dx /= len; dy /= len; }
+  const reach = CONFIG.smear * w * S, px = -dy, py = dx, side = 2 * w * S;
+  const nS = vertical ? makeNoise(3, 60) : makeNoise(60, 3);
+  const strength = Math.min(1, w * 1.1);
+  const gs = 1 / (S * CELL);
+  for (let Y = 0; Y < PW; Y++) {
+    for (let X = 0; X < PW; X++) {
+      const k = ((Y * gs) | 0) * GN + ((X * gs) | 0);
+      if (g.passes[k] === 0) continue;
+      const i = Y * PW + X;
+      let acc = src[i];
+      for (let s = 1; s <= 5; s++) acc += sampleNear(src, X - dx * reach * s / 5, Y - dy * reach * s / 5);
+      acc += sampleNear(src, X + px * side, Y + py * side) + sampleNear(src, X - px * side, Y - py * side);
+      if (acc === 0) continue;
+      const avg = acc / 8;
+      out[i] = src[i] + (avg - src[i]) * strength * (0.55 + 0.45 * nS(X, Y));
+    }
+  }
+  st.A[0] = out;
+}
+
+function composite() {
+  const img = pctx.createImageData(PW, PW), d = img.data;
+  const A1 = st.A[0], A2 = st.A[1], raw = st.A1raw || A1;
+  const c1 = INKS[0].rgb.map(v => v / 255), c2 = INKS[1].rgb.map(v => v / 255);
+  const stain = CONFIG.stain * st.wetAtPrint, pk = st.grids[1].pick, gs = 1 / (S * CELL);
+  for (let i = 0; i < PW * PW; i++) {
+    let r = PAPER[0], gg = PAPER[1], b = PAPER[2];
+    if (A1) {
+      const a = A1[i];
+      if (a > 0) { r *= 1 - a + a * c1[0]; gg *= 1 - a + a * c1[1]; b *= 1 - a + a * c1[2]; }
+    }
+    if (A2) {
+      const a = A2[i];
+      if (a > 0) {
+        // 沾染：下層的粉紅，加上刮板沿途帶過來的粉紅（與刮印時網上看到的一致）
+        let s = raw ? stain * raw[i] : 0;
+        const X = i % PW, Y = (i / PW) | 0;
+        let gx = clamp(X * gs - 0.5, 0, GN - 1.001), gy = clamp(Y * gs - 0.5, 0, GN - 1.001);
+        const ix = gx | 0, iy = gy | 0, tx = gx - ix, ty = gy - iy, k = iy * GN + ix;
+        const pick = (pk[k] * (1 - tx) + pk[k + 1] * tx) * (1 - ty) + (pk[k + GN] * (1 - tx) + pk[k + GN + 1] * tx) * ty;
+        s = Math.max(s, CONFIG.stain * Math.min(1, pick));
+        const cr = c2[0] + (c1[0] - c2[0]) * s, cg = c2[1] + (c1[1] - c2[1]) * s, cb = c2[2] + (c1[2] - c2[2]) * s;
+        r *= 1 - a + a * cr; gg *= 1 - a + a * cg; b *= 1 - a + a * cb;
+      }
+    }
+    const j = i * 4;
+    d[j] = r; d[j + 1] = gg; d[j + 2] = b; d[j + 3] = 255;
+  }
+  pctx.putImageData(img, 0, 0);
+}
+
+function clearPaper() {
+  pctx.fillStyle = `rgb(${PAPER.join(',')})`;
+  pctx.fillRect(0, 0, PW, PW);
+}
+
+/* ───────── 網框上的墨（刮印時的回饋） ───────── */
+const pv = makeCanvas(GN), pvx = pv.getContext('2d'), pvImg = pvx.createImageData(GN, GN);
+let previewDirty = true;
+// 塞網時，網上的墨變得暗沉
+function inkOnMesh() {
+  const k = st.clog * 0.5;
+  return INKS[st.layer].rgb.map(v => Math.round(v + (92 - v) * k));
+}
+function updatePreview() {
+  const g = st.grids[st.layer], c = inkOnMesh(), d = pvImg.data, pk = INKS[0].rgb;
+  for (let k = 0; k < GN * GN; k++) {
+    const j = k * 4;
+    const p = Math.min(1, g.pick[k]) * CONFIG.pickShow;
+    d[j] = c[0] + (pk[0] - c[0]) * p; d[j + 1] = c[1] + (pk[1] - c[1]) * p; d[j + 2] = c[2] + (pk[2] - c[2]) * p;
+    d[j + 3] = Math.min(1, g.ink[k]) * (120 + 80 * p);
+  }
+  pvx.putImageData(pvImg, 0, 0);
+  previewDirty = false;
+}
+
+/* ───────── 流程 ───────── */
+function primaryAction() {
+  if (st.busy) return;
+  const ph = st.phase;
+  if (ph === 'place') st.phase = 'ink';
+  else if (ph === 'ink') pourInk();
+  else if (ph === 'squeegee' && st.strokes > 0) lift();
+  else if (ph === 'dry') nextLayer();
+  ui();
+}
+function pourInk() {
+  st.inkPlaced = true;
+  st.phase = 'squeegee';
+  previewDirty = true;
+  ui();
+}
+function lift() {
+  st.phase = 'lift';
+  st.pressing = false;
+  st.busy = true;
+  ui();
+  requestAnimationFrame(() => setTimeout(() => {
+    renderLayer(st.layer);
+    composite();
+    st.liftStart = performance.now();
+  }, 30));
+}
+function finishLift() {
+  st.liftStart = 0;
+  st.busy = false;
+  if (st.layer === 0) { st.phase = 'dry'; st.wet = 1; }
+  else st.phase = 'done';
+  ui();
+}
+function nextLayer() {
+  st.layer = 1;
+  st.phase = 'place';
+  const ang = Math.random() * Math.PI * 2, r = 20 + Math.random() * 15;
+  st.offs[1] = [Math.round(Math.cos(ang) * r), Math.round(Math.sin(ang) * r)];
+  st.strokes = 0;
+  st.inkPlaced = false;
+  st.idle = 0;
+  st.clog = 0;
+  previewDirty = true;
+}
+function reset() {
+  st = newState();
+  clearPaper();
+  previewDirty = true;
+  ui();
+}
+
+/* ───────── 介面 ───────── */
+const stepsEl = $('steps');
+function ui() {
+  const L = st.layer, ph = st.phase, cur = PHASE_STEP[ph];
+  $('layerNum').textContent = '0' + (L + 1);
+  $('inkName').textContent = INKS[L].name;
+  $('swatch').style.background = `rgb(${INKS[L].rgb.join(',')})`;
+
+  stepsEl.innerHTML = STEP_NAMES[L].map((name, i) => {
+    let cls = i < cur ? 'done' : i === cur ? 'now' : '';
+    if (ph === 'done') cls = i < 4 ? 'done' : 'now';
+    return `<li class="${cls}"><span class="n">0${i + 1}</span><span>${name}</span></li>`;
+  }).join('');
+
+  let hint = '', label = '', enabled = true, showPrimary = true;
+  switch (ph) {
+    case 'place':
+      hint = L === 0 ? '網框位置已固定。' : '拖動網框或用方向鍵，對齊十字標記。';
+      label = '放下網框';
+      break;
+    case 'ink':
+      hint = '點一下網框，在上緣倒一條墨。';
+      label = '倒墨';
+      break;
+    case 'squeegee':
+      hint = '按住刮板，拖過整個圖案。';
+      label = '掀框';
+      enabled = st.strokes > 0 && !st.pressing;
+      break;
+    case 'lift':
+      label = '掀框'; enabled = false;
+      break;
+    case 'dry':
+      hint = st.wet > 0 ? '等墨乾，或按住吹風機。' : '墨已乾。';
+      label = '下一層';
+      break;
+    case 'done':
+      hint = '兩層完成。';
+      showPrimary = false;
+      break;
+  }
+  $('hint').textContent = hint;
+  const pb = $('primary');
+  pb.textContent = label;
+  pb.disabled = !enabled;
+  pb.style.visibility = showPrimary ? 'visible' : 'hidden';
+
+  $('meter').hidden = ph !== 'squeegee';
+  $('dry').hidden = !(st.wet > 0 && (ph === 'dry' || (L === 1 && (ph === 'place' || ph === 'ink' || (ph === 'squeegee' && st.strokes === 0)))));
+  if (ph === 'dry' && st.wet <= 0) $('dry').hidden = false;
+  $('download').disabled = !st.A[0];
+
+  overlay.style.cursor =
+    ph === 'place' && L === 1 ? (st.drag ? 'grabbing' : 'grab') :
+    ph === 'ink' ? 'pointer' :
+    ph === 'squeegee' ? 'none' : 'default';
+}
+
+const zoneEl = $('zone'), markEl = $('mark'), VMAX = 2.6;
+zoneEl.style.left = (CONFIG.speedSlow / VMAX * 100) + '%';
+zoneEl.style.width = ((CONFIG.speedFastStart - CONFIG.speedSlow) / VMAX * 100) + '%';
+
+/* ───────── 繪製網框層 ───────── */
+function drawOverlay(now) {
+  octx.clearRect(0, 0, PW, PW);
+  const L = st.layer, ph = st.phase;
+  if (ph === 'dry' || ph === 'done') return;
+  const [ox, oy] = st.offs[L];
+  let alpha = L === 0 ? 1 : CONFIG.wetFrameAlpha, lift = 0;
+  if (ph === 'lift' && st.liftStart) {
+    const p = clamp((now - st.liftStart) / 700, 0, 1);
+    lift = 1 - Math.pow(1 - p, 3);
+    alpha *= 1 - p;
+    if (p >= 1) { finishLift(); return; }
+  }
+  const shift = -lift * 48;
+
+  octx.globalAlpha = alpha;
+  octx.drawImage(frames[L], (FRAME.x + ox) * S, (FRAME.y + oy + shift) * S);
+  if (L === 1 && ph === 'place') {
+    octx.globalAlpha = 1;
+    octx.drawImage(marks, (FRAME.x + ox) * S, (FRAME.y + oy) * S);
+    octx.globalAlpha = alpha;
+  }
+
+  if (ph === 'squeegee' || ph === 'lift') {
+    if (previewDirty) updatePreview();
+    octx.save();
+    octx.beginPath();
+    octx.rect((MESH.x + ox) * S, (MESH.y + oy + shift) * S, MESH.w * S, MESH.h * S);
+    octx.clip();
+    octx.imageSmoothingEnabled = true;
+    octx.drawImage(pv, 0, shift * S, PW, PW);
+    octx.restore();
+  }
+  octx.globalAlpha = 1;
+
+  const [r, g, b] = INKS[L].rgb;
+  const barX = (MESH.x + ox + 40) * S, barW = (MESH.w - 80) * S, barY = (MESH.y + oy + 14) * S;
+  if (ph === 'ink' && st.hover) {
+    octx.fillStyle = `rgba(${r},${g},${b},0.35)`;
+    octx.fillRect(barX, barY, barW, 8 * S);
+  }
+  if (ph === 'squeegee' && st.inkPlaced) {
+    octx.fillStyle = `rgb(${inkOnMesh().join(',')})`;
+    octx.fillRect(barX, barY, barW, 8 * S);
+  }
+
+  if (ph === 'squeegee' && (st.hover || st.pressing)) {
+    const bp = st.pressing ? st.last : bladePos(st.hover), h = CONFIG.bladeLength / 2;
+    octx.fillStyle = st.pressing ? '#151514' : 'rgba(21,21,20,0.72)';
+    octx.fillRect((bp.x - h) * S, (bp.y - 4) * S, CONFIG.bladeLength * S, 8 * S);
+  }
+}
+
+/* ───────── 主迴圈 ───────── */
+let prevT = performance.now();
+function frame(now) {
+  const dt = Math.min(0.1, (now - prevT) / 1000);
+  prevT = now;
+
+  if (st.wet > 0 && st.phase !== 'lift') {
+    st.wet = Math.max(0, st.wet - dt / CONFIG.dryTime * (st.dryer ? CONFIG.dryerBoost : 1));
+    if (st.wet === 0) ui();
+  }
+  if (!$('dry').hidden) {
+    const pct = Math.round((1 - st.wet) * 100);
+    $('dryPct').textContent = pct + '%';
+    $('dryFill').style.width = pct + '%';
+  }
+
+  // 墨在網上閒置太久會塞網；刮印時重新計時，但已塞住的不會恢復
+  if (st.phase === 'squeegee') {
+    if (st.pressing) st.idle = 0;
+    else {
+      st.idle += dt;
+      if (st.idle > CONFIG.clogGrace) {
+        const before = st.clog;
+        st.clog = Math.min(1, st.clog + dt / CONFIG.clogTime);
+        if (Math.floor(before * 20) !== Math.floor(st.clog * 20)) previewDirty = true;
+      }
+    }
+  }
+
+  if (st.pressing && now - st.lastMoveT > 120) {
+    dwell(dt);
+    st.vShow *= 0.85;
+  } else if (!st.pressing) {
+    st.vShow *= 0.9;
+  }
+  if (st.phase === 'squeegee') markEl.style.left = (clamp(st.vShow / VMAX, 0, 1) * 100) + '%';
+
+  drawOverlay(now);
+  requestAnimationFrame(frame);
+}
+
+/* ───────── 輸入 ───────── */
+function toL(e) {
+  const r = overlay.getBoundingClientRect();
+  return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * W };
+}
+function inFrame(p) {
+  const [ox, oy] = st.offs[st.layer];
+  return p.x >= FRAME.x + ox && p.x <= FRAME.x + ox + FRAME.w && p.y >= FRAME.y + oy && p.y <= FRAME.y + oy + FRAME.h;
+}
+const OFF_MAX = 45;
+
+overlay.addEventListener('pointerdown', e => {
+  if (st.busy) return;
+  const p = toL(e);
+  st.hover = p;
+  if (st.phase === 'place' && st.layer === 1 && inFrame(p)) {
+    st.drag = { p, o: st.offs[1].slice() };
+    overlay.setPointerCapture(e.pointerId);
+    ui();
+  } else if (st.phase === 'ink') {
+    pourInk();
+  } else if (st.phase === 'squeegee') {
+    overlay.setPointerCapture(e.pointerId);
+    startStroke(p, e.timeStamp);
+  }
+});
+overlay.addEventListener('pointermove', e => {
+  const p = toL(e);
+  st.hover = p;
+  if (st.drag) {
+    st.offs[1][0] = clamp(st.drag.o[0] + p.x - st.drag.p.x, -OFF_MAX, OFF_MAX);
+    st.offs[1][1] = clamp(st.drag.o[1] + p.y - st.drag.p.y, -OFF_MAX, OFF_MAX);
+  } else if (st.pressing) {
+    const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+    if (evs.length) for (const ce of evs) moveStroke(toL(ce), ce.timeStamp);
+    else moveStroke(p, e.timeStamp);
+  }
+});
+function endPointer() {
+  if (st.drag) { st.drag = null; ui(); }
+  if (st.pressing) { st.pressing = false; ui(); }
+}
+overlay.addEventListener('pointerup', endPointer);
+overlay.addEventListener('pointercancel', endPointer);
+overlay.addEventListener('pointerleave', () => { if (!st.pressing && !st.drag) st.hover = null; });
+
+window.addEventListener('keydown', e => {
+  if (st.phase !== 'place' || st.layer !== 1) return;
+  const step = e.shiftKey ? 10 : 1, o = st.offs[1];
+  if (e.key === 'ArrowLeft') o[0] -= step;
+  else if (e.key === 'ArrowRight') o[0] += step;
+  else if (e.key === 'ArrowUp') o[1] -= step;
+  else if (e.key === 'ArrowDown') o[1] += step;
+  else return;
+  e.preventDefault();
+  o[0] = clamp(o[0], -OFF_MAX, OFF_MAX);
+  o[1] = clamp(o[1], -OFF_MAX, OFF_MAX);
+});
+
+const dryer = $('dryer');
+function dryerOn(e) { st.dryer = true; dryer.classList.add('on'); if (e.pointerId !== undefined) dryer.setPointerCapture(e.pointerId); }
+function dryerOff() { st.dryer = false; dryer.classList.remove('on'); }
+dryer.addEventListener('pointerdown', dryerOn);
+dryer.addEventListener('pointerup', dryerOff);
+dryer.addEventListener('pointercancel', dryerOff);
+dryer.addEventListener('lostpointercapture', dryerOff);
+dryer.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); dryerOn(e); } });
+dryer.addEventListener('keyup', dryerOff);
+dryer.addEventListener('blur', dryerOff);
+
+$('primary').addEventListener('click', primaryAction);
+$('reset').addEventListener('click', reset);
+$('download').addEventListener('click', () => {
+  paper.toBlob(blob => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'print.png';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }, 'image/png');
+});
+
+clearPaper();
+ui();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

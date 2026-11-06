@@ -1,0 +1,65 @@
+.panel { display: flex; flex-direction: column; gap: 44px; }
+.panel h1 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .14em;
+  color: var(--mute);
+}
+
+.layer { display: flex; align-items: flex-end; justify-content: space-between; }
+.layer-num {
+  font-size: 72px;
+  font-weight: 200;
+  line-height: .8;
+  letter-spacing: -.04em;
+  font-variant-numeric: tabular-nums;
+}
+.layer-num small {
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--faint);
+  margin-left: 6px;
+}
+.ink-tag { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--mute); }
+.swatch { width: 14px; height: 14px; }
+
+.steps { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--line); }
+.steps li {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  align-items: baseline;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  font-size: 15px;
+  color: var(--faint);
+  transition: color .3s;
+}
+.steps li .n { font-size: 11px; font-variant-numeric: tabular-nums; letter-spacing: .06em; }
+.steps li.done { color: var(--mute); }
+.steps li.now { color: var(--ink); }
+
+.act { display: flex; flex-direction: column; gap: 24px; }
+.hint { margin: 0; font-size: 14px; line-height: 1.75; color: var(--mute); min-height: 3.5em; }
+.tool { min-height: 92px; display: flex; flex-direction: column; justify-content: flex-end; }
+
+.meter .track { position: relative; height: 1px; background: var(--line); }
+.meter .zone { position: absolute; top: -1px; height: 3px; background: var(--faint); }
+.meter .mark {
+  position: absolute; top: -6px; width: 1px; height: 13px; background: var(--ink);
+  transform: translateX(-.5px); transition: left .06s linear;
+}
+.scale { display: flex; justify-content: space-between; margin-top: 10px; font-size: 11px; color: var(--mute); letter-spacing: .06em; }
+
+.dry .row { display: flex; justify-content: space-between; font-size: 12px; color: var(--mute); letter-spacing: .06em; }
+.dry .row span:last-child { font-variant-numeric: tabular-nums; color: var(--ink); }
+.dry .bar { height: 1px; background: var(--line); margin: 10px 0 16px; }
+.dry .bar span { display: block; height: 100%; background: var(--ink); width: 0; }
+
+.foot { display: flex; gap: 28px; }
+
+@media (max-width: 900px) {
+  .panel { gap: 32px; }
+  .layer-num { font-size: 56px; }
+}
