@@ -52,7 +52,7 @@
             <button v-if="isGameStarted && !isGameOver" class="secondary-button" type="button" @click="surrender" aria-label="投降"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M7 20V4m.5 1c3.8-2.6 7.2 2.5 11 0v8.5c-3.8 2.5-7.2-2.5-11 0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"/></svg></button>
             <button v-if="isGameOver" class="primary-button" type="button" @click="reset" aria-label="開始新棋局"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 8.5A8 8 0 1 1 4.2 14M5 4.5v4h4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"/></svg><span>NEW GAME</span></button>
           </div>
-          <div class="status-line" :class="{ 'upside-down-ui': activeIndex === 0 }"><span class="status-dot" :class="{ active: isGameStarted && !isPaused && !isGameOver }"></span>{{ statusText }}</div>
+          <div class="status-line" :class="{ 'upside-down-ui': activeIndex === 0 }"><span class="status-dot" :class="{ active: isGameStarted && !isPaused && !isGameOver }"></span><span class="status-copy">{{ statusText }}</span></div>
         </div>
 
         <button class="player-card player-bottom" :class="playerClass(1)" type="button" @click="switchTurn(1, 0)" :disabled="!canTap(1)">
