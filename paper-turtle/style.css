@@ -129,12 +129,11 @@ body[data-step="finale"] .steps li { background: var(--gold); }
 .add:hover::before,
 .add:hover::after { transform: rotate(90deg); }
 .add:active { background: radial-gradient(circle, rgba(200, 163, 95, 0.12) 20.5px, rgba(200, 163, 95, 0.8) 21px, transparent 21.5px); }
-.add:disabled { opacity: 0.25 !important; cursor: default; }
+body[data-step="intro"] .add:disabled { opacity: 0.25; cursor: default; }
 .add:disabled::before,
 .add:disabled::after { transform: none; }
 
-body[data-step="intro"] .add,
-body[data-step="burn"]:not(.done) .add {
+body[data-step="intro"] .add {
   opacity: 1;
   visibility: visible;
   transition: opacity 1.2s var(--ease) 0.25s, visibility 0s;
@@ -411,6 +410,122 @@ body.revealed .seal { animation: stamp 0.55s cubic-bezier(0.5, 0, 0.75, 0) forwa
 .f-actions button:disabled { opacity: 0.4; cursor: progress; }
 .f-actions [hidden] { display: none; }
 
+/* Lifetime tally: a quiet footnote under the actions, and the way into the gallery */
+.f-tally {
+  display: block;
+  min-height: 44px;
+  margin: 4px auto 0;
+  padding: 0 0 0 0.4em;
+  border: 0;
+  background: none;
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: 0.4em;
+  color: var(--mute);
+  opacity: 0.7;
+  cursor: pointer;
+  transition: opacity 0.4s var(--ease), color 0.4s var(--ease);
+}
+
+.f-tally i {
+  display: inline-block;
+  margin-left: -0.1em;
+  font-style: normal;
+  opacity: 0;
+  transform: translateX(-3px);
+  transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
+}
+
+.f-tally:hover,
+.f-tally:focus-visible { opacity: 1; color: var(--gold); }
+.f-tally:hover i,
+.f-tally:focus-visible i { opacity: 1; transform: none; }
+
+@media (hover: none) {
+  .f-tally i { opacity: 0.6; transform: none; }
+}
+
+.f-tally[hidden] { display: none; }
+
+/* ---------- Gallery ---------- */
+
+.gallery-ui {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.6s var(--ease), visibility 0s linear 0.6s;
+}
+
+body[data-step="gallery"] .gallery-ui {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 1.2s var(--ease) 0.3s, visibility 0s;
+}
+
+.steps { transition: opacity 0.6s var(--ease); }
+body[data-step="gallery"] .steps { opacity: 0; }
+
+body[data-step="gallery"] #gl { cursor: grab; }
+body[data-step="gallery"].over-turtle #gl { cursor: pointer; }
+body[data-step="gallery"].dragging #gl { cursor: grabbing; }
+
+.g-back {
+  position: fixed;
+  top: calc(var(--edge-y) - 15px);
+  right: calc(var(--edge-x) - 12px);
+  height: 44px;
+  padding: 0 12px 0 calc(12px + 0.4em);
+  border: 0;
+  background: none;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.4em;
+  color: var(--mute);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: color 0.4s var(--ease);
+}
+
+.g-back::before { content: "‹"; margin-right: 0.5em; }
+.g-back:hover { color: var(--ivory); }
+
+.g-foot {
+  position: fixed;
+  left: var(--edge-x);
+  right: var(--edge-x);
+  bottom: calc(env(safe-area-inset-bottom) + var(--edge-y));
+  text-align: center;
+}
+
+.g-wish {
+  max-width: 26em;
+  min-height: 1.5em;
+  margin: 0 auto 14px;
+  padding-left: 0.3em;
+  font-size: clamp(18px, 2vw, 23px);
+  line-height: 1.5;
+  letter-spacing: 0.3em;
+  color: var(--gold-hi);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+}
+
+.g-wish.on { opacity: 1; transform: none; }
+.g-wish.hint { font-size: 12px; line-height: 2.6; letter-spacing: 0.4em; padding-left: 0.4em; color: var(--mute); }
+
+.g-count {
+  margin: 0;
+  padding-left: 0.4em;
+  font-size: 11px;
+  letter-spacing: 0.4em;
+  color: var(--mute);
+  opacity: 0.7;
+}
+
 /* Fallback keepsake viewer (in-app browsers without a share sheet) */
 
 .viewer {
@@ -513,6 +628,7 @@ body.revealed .seal { animation: stamp 0.55s cubic-bezier(0.5, 0, 0.75, 0) forwa
 }
 
 body:not(.loading) .veil { opacity: 0; }
+body.fading .veil { opacity: 1; transition-duration: 0.5s; }
 
 /* ---------- Phone ---------- */
 
