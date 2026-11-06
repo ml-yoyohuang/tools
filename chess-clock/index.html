@@ -29,7 +29,7 @@
       <div class="ambient ambient-right"></div>
 
       <header class="topbar">
-        <div class="brand"><span class="brand-mark"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M6 21h13M8 21l1.5-3h7L18 21M9.5 18c-.8-2.7-.2-4.8 2.1-6.4l-2.5-2.1a1.8 1.8 0 0 1-.2-2.6l1.4-1.5 2.2 2.1 1.6-2.1 2.3 1.7a3.7 3.7 0 0 1 1.1 4.8l-1.1 1.8c1.8 1 2.8 2.5 2.9 4.3M5 4v3m-1.5-1.5h3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.65"/></svg></span><span>棋鐘 <small>CHESS CLOCK</small></span></div>
+        <div class="brand" :class="{ 'upside-down-ui': activeIndex === 0 }"><span class="brand-mark"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M6 21h13M8 21l1.5-3h7L18 21M9.5 18c-.8-2.7-.2-4.8 2.1-6.4l-2.5-2.1a1.8 1.8 0 0 1-.2-2.6l1.4-1.5 2.2 2.1 1.6-2.1 2.3 1.7a3.7 3.7 0 0 1 1.1 4.8l-1.1 1.8c1.8 1 2.8 2.5 2.9 4.3M5 4v3m-1.5-1.5h3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.65"/></svg></span><span>棋鐘 <small>CHESS CLOCK</small></span></div>
         <div class="top-actions">
           <button class="icon-button" type="button" @click="toggleTheme" :aria-label="darkMode ? '切換明亮模式' : '切換深色模式'"><svg v-if="darkMode" class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/></svg><svg v-else class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5 8.5 8.5 0 1 0 20.5 14.5Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.8"/></svg></button>
           <button class="icon-button" type="button" @click="openSettings" aria-label="開啟設定"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M10 3.7a2 2 0 0 1 4 0l.2 1a7.7 7.7 0 0 1 1.8.8l.9-.5a2 2 0 0 1 2.8 2.8l-.5.9a7.7 7.7 0 0 1 .8 1.8l1 .2a2 2 0 0 1 0 4l-1 .2a7.7 7.7 0 0 1-.8 1.8l.5.9a2 2 0 0 1-2.8 2.8l-.9-.5a7.7 7.7 0 0 1-1.8.8l-.2 1a2 2 0 0 1-4 0l-.2-1a7.7 7.7 0 0 1-1.8-.8l-.9.5a2 2 0 0 1-2.8-2.8l.5-.9a7.7 7.7 0 0 1-.8-1.8l-1-.2a2 2 0 0 1 0-4l1-.2a7.7 7.7 0 0 1 .8-1.8l-.5-.9a2 2 0 0 1 2.8-2.8l.9.5a7.7 7.7 0 0 1 1.8-.8l.2-1Z" transform="translate(-1 -1)" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/><circle cx="11" cy="11" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
@@ -45,14 +45,14 @@
         </button>
 
         <div class="control-rail">
-          <div class="match-time">{{ formatLongTime(gameElapsed) }}</div>
+          <div class="match-time" :class="{ 'upside-down-ui': activeIndex === 0 }">{{ formatLongTime(gameElapsed) }}</div>
           <div class="control-buttons">
             <button v-if="!isGameStarted" class="primary-button" type="button" @click="startGame" aria-label="開始遊戲"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 6.5v11l9-5.5-9-5.5Z" fill="currentColor"/></svg><span>START</span></button>
             <button v-else-if="!isGameOver" class="primary-button" :class="{ paused: isPaused }" type="button" @click="togglePause" :aria-label="isPaused ? '繼續遊戲' : '暫停遊戲'"><svg v-if="isPaused" class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 6.5v11l9-5.5-9-5.5Z" fill="currentColor"/></svg><svg v-else class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="6.5" y="5.5" width="4" height="13" rx="1" fill="currentColor"/><rect x="13.5" y="5.5" width="4" height="13" rx="1" fill="currentColor"/></svg><span>{{ isPaused ? 'RESUME' : 'PAUSE' }}</span></button>
             <button v-if="isGameStarted && !isGameOver" class="secondary-button" type="button" @click="surrender" aria-label="投降"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M7 20V4m.5 1c3.8-2.6 7.2 2.5 11 0v8.5c-3.8 2.5-7.2-2.5-11 0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"/></svg></button>
             <button v-if="isGameOver" class="primary-button" type="button" @click="reset" aria-label="開始新棋局"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 8.5A8 8 0 1 1 4.2 14M5 4.5v4h4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"/></svg><span>NEW GAME</span></button>
           </div>
-          <div class="status-line"><span class="status-dot" :class="{ active: isGameStarted && !isPaused && !isGameOver }"></span>{{ statusText }}</div>
+          <div class="status-line" :class="{ 'upside-down-ui': activeIndex === 0 }"><span class="status-dot" :class="{ active: isGameStarted && !isPaused && !isGameOver }"></span>{{ statusText }}</div>
         </div>
 
         <button class="player-card player-bottom" :class="playerClass(1)" type="button" @click="switchTurn(1, 0)" :disabled="!canTap(1)">
@@ -63,7 +63,7 @@
         </button>
       </section>
 
-      <footer class="helpbar"><span>Tap your clock to pass the turn</span><span><kbd>SPACE</kbd> switch <kbd>R</kbd> reset</span></footer>
+      <footer class="helpbar"><span :class="{ 'upside-down-ui': activeIndex === 0 }">Tap your clock to pass the turn</span><span :class="{ 'upside-down-ui': activeIndex === 0 }"><kbd>SPACE</kbd> switch <kbd>R</kbd> reset</span></footer>
 
       <div class="modal-backdrop" v-if="isShowPopup" @click.self="isShowPopup = false">
         <section class="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
