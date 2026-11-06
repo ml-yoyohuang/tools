@@ -101,6 +101,8 @@ createApp({
       syncClock(timestamp);
       if (isGameOver.value) return;
       activeIndex.value = to;
+      // Each turn gets a fresh personal thinking-time allowance.
+      players.value[to].time = safeSeconds() * 1000;
       players.value[to].turnCount += 1;
       turnTimeAtStart = players.value[to].time;
       turnStartedAt = timestamp;
