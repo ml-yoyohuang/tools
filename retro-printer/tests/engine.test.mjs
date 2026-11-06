@@ -13,6 +13,7 @@ import { mixRGB, makeMixedInk } from '../src/engine/ink.js';
 import { prepare, computeMasks, suggestInks, computeTones, computeLayers, defaultModes, halftone } from '../src/engine/separate.js';
 import { PALETTE } from '../src/inks.js';
 import { fitRect, panBy, shuffle } from '../src/plates/fit.js';
+import { addWork } from '../src/works.js';
 import { CONFIG as C } from '../src/config.js';
 
 /* ───────── 測試用的版與刮印 ───────── */
@@ -376,6 +377,25 @@ test('圖庫打亂：張數不變、沒有重複', () => {
   assert.deepEqual([...a].sort(), [...ids].sort());
   assert.notDeepEqual(a, b);
   assert.deepEqual(ids[0], 'img-0', '原陣列不應被改動');
+});
+
+/* ───────── 完成 ───────── */
+test('作品說明：編號、色數、媒材、日期', () => {
+  const works = [];
+  const ink = (name, rgb) => ({ name, rgb });
+  const a = addWork(works, {
+    blob: null, url: 'a', imageName: '山', mediumName: '帆布袋', mediumPaper: [232, 223, 204],
+    inks: [ink('水藍', [94, 200, 229]), ink('橘', [255, 128, 30]), ink('海軍藍', [38, 52, 98])],
+    date: new Date(2026, 10, 6)
+  });
+  const b = addWork(works, {
+    blob: null, url: 'b', imageName: '花', mediumName: '紙卡', mediumPaper: [245, 240, 230],
+    inks: [ink('螢光粉', [255, 72, 176])], date: new Date(2026, 0, 9)
+  });
+  assert.equal(works.length, 2);
+  assert.deepEqual([a.label.no, a.label.line, a.label.date, a.label.file], ['No. 01', '絹印・帆布袋・三色', '2026.11.06', 'print-01.png']);
+  assert.deepEqual([b.label.no, b.label.line, b.label.date], ['No. 02', '絹印・紙卡・單色', '2026.01.09']);
+  assert.deepEqual(a.label.inks.map(i => i.name), ['水藍', '橘', '海軍藍']);
 });
 
 /* ───────── 執行 ───────── */

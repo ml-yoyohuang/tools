@@ -4,10 +4,14 @@ import { mountGallery } from './stations/plates/gallery.js';
 import { mountInks } from './stations/inks/inks.js';
 import { mountMedia } from './stations/media/media.js';
 import { mountWorkbench } from './stations/workbench/workbench.js';
+import { mountFinish } from './stations/finish/finish.js';
+import { MEDIA } from './state.js';
+import { addWork } from './works.js';
 
 // 各站依 brief.md 的流程串接：
-//   提供圖片 → 製版 → 欣賞版子 → 選墨水 → 選媒材 → 工作桌
+//   提供圖片 → 製版 → 欣賞版子 → 選墨水 → 選媒材 → 工作桌 → 完成
 const stations = {
+  finish: mountFinish,
   source: mountSource,
   plates: mountPlates,
   gallery: mountGallery,
@@ -34,7 +38,8 @@ const session = {
   suggested: null,
   inks: null,
   customInks: [],
-  medium: 'paper'
+  medium: 'paper',
+  works: []                     // 這次瀏覽留下的作品（之後入口的作品牆也讀這份）
 };
 
 function toSource() {
@@ -75,7 +80,25 @@ function toMedia() {
   });
 }
 function toWorkbench(medium) {
-  go('workbench', { plates: session.plates, inks: session.inks, medium, onBack: toMedia });
+  go('workbench', {
+    plates: session.plates, inks: session.inks, medium,
+    onBack: toMedia,
+    onFinish: paper => paper.toBlob(blob => {
+      const work = addWork(session.works, {
+        blob, url: URL.createObjectURL(blob),
+        imageName: session.image.name, mediumName: medium.name, mediumPaper: medium.paper,
+        inks: session.inks
+      });
+      toFinish(work);
+    }, 'image/png')
+  });
+}
+function toFinish(work) {
+  go('finish', {
+    works: session.works, current: work,
+    onAgain: () => toWorkbench(MEDIA[session.medium]),
+    onNewImage: toSource
+  });
 }
 
 toSource();

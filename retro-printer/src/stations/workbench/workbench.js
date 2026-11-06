@@ -12,11 +12,11 @@ import { FRAME, MESH, buildFrame, buildMarks, createMeshInk } from './overlay.js
 const STEPS = ['放下網框', '倒墨', '刮印', '掀框', '等乾'];
 const STEPS_LAST = ['放下網框', '倒墨', '刮印', '掀框', '完成'];
 const PHASE_STEP = { place: 0, ink: 1, squeegee: 2, lift: 3, dry: 4, done: 4 };
-const COUNT = ['零', '一', '兩', '三', '四', '五', '六', '七', '八', '九'];
 const VMAX = 2.6;       // 速度條最大值 px/ms
 const LIFT_MS = 700;
 
-export function mountWorkbench(root, { plates, inks, medium, onBack }) {
+// onFinish(paperCanvas)：最後一層掀框後按「完成」
+export function mountWorkbench(root, { plates, inks, medium, onBack, onFinish }) {
   const stage = document.createElement('section');
   stage.className = 'stage';
   stage.innerHTML = `<div class="sheet">
@@ -61,6 +61,7 @@ export function mountWorkbench(root, { plates, inks, medium, onBack }) {
     else if (ph === 'ink') pourInk();
     else if (ph === 'squeegee' && layer().rec.strokes > 0) lift();
     else if (ph === 'dry') nextLayer();
+    else if (ph === 'done' && onFinish) { onFinish(paper); return; }
     ui();
   }
 
@@ -164,8 +165,9 @@ export function mountWorkbench(root, { plates, inks, medium, onBack }) {
         label = '下一層';
         break;
       case 'done':
-        hint = `${COUNT[n] || n}層完成。`;
-        visible = false;
+        hint = '掀開了。看看成品。';
+        label = '完成';
+        visible = !!onFinish;
         break;
     }
     panel.setHint(hint);
@@ -175,7 +177,6 @@ export function mountWorkbench(root, { plates, inks, medium, onBack }) {
     const wet = maxWet() > 0;
     const beforePrint = st.L > 0 && (ph === 'place' || ph === 'ink' || (ph === 'squeegee' && l.rec.strokes === 0));
     panel.showDry((wet && (ph === 'dry' || beforePrint)) || (ph === 'dry' && !wet));
-    panel.setDownload(!!job.layers[0].alpha);
 
     overlay.style.cursor =
       ph === 'place' && st.L > 0 ? (st.drag ? 'grabbing' : 'grab') :
@@ -350,15 +351,6 @@ export function mountWorkbench(root, { plates, inks, medium, onBack }) {
   panel.onDryer(on => { st.dryer = on; });
   panel.onPrimary(primaryAction);
   panel.onReset(reset);
-  panel.onDownload(() => {
-    paper.toBlob(blob => {
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'print.png';
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    }, 'image/png');
-  });
 
   reset();
   raf = requestAnimationFrame(frame);
