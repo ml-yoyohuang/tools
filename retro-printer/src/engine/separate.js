@@ -98,6 +98,109 @@ export function computeMasks(prep, coverages) {
   return masks.map(m => despeckle(m, w, h));
 }
 
+/* ───────── 網點 ───────── */
+
+// 每一層的濃度（0..1）：像素先歸到最接近的色群（不含紙），
+// 再看它從紙色往這個色群走了多遠。漸層因此得到連續的深淺。
+// 以這個色群裡最深的一批像素為 1，平塗的色塊幾乎整片都是 1。
+export function computeTones(prep) {
+  if (prep.tones) return prep.tones;
+  const { w, h, lab, paper, centers } = prep, N = w * h, k = centers.length;
+  const tones = centers.map(() => new Float32Array(N));
+  const dirs = centers.map(c => [c[0] - paper[0], c[1] - paper[1], c[2] - paper[2]]);
+  const len2 = dirs.map(v => v[0] * v[0] + v[1] * v[1] + v[2] * v[2] || 1);
+  const owner = new Int8Array(N);
+  for (let i = 0; i < N; i++) {
+    const L = lab[i * 3], A = lab[i * 3 + 1], B = lab[i * 3 + 2];
+    let best = 0, bd = Infinity;
+    for (let c = 0; c < k; c++) {
+      const q = centers[c], dd = (L - q[0]) ** 2 + (A - q[1]) ** 2 + (B - q[2]) ** 2;
+      if (dd < bd) { bd = dd; best = c; }
+    }
+    owner[i] = best;
+    const v = dirs[best];
+    tones[best][i] = Math.max(0, ((L - paper[0]) * v[0] + (A - paper[1]) * v[1] + (B - paper[2]) * v[2]) / len2[best]);
+  }
+  // 以第 98 百分位為滿版
+  tones.forEach((t, c) => {
+    const vals = [];
+    for (let i = 0; i < N; i += 7) if (owner[i] === c && t[i] > 0.05) vals.push(t[i]);
+    vals.sort((a, b) => a - b);
+    const top = vals.length ? vals[Math.floor(vals.length * 0.98)] : 1;
+    for (let i = 0; i < N; i++) {
+      const v = t[i] / top;
+      t[i] = v < 0.04 ? 0 : v > 1 ? 1 : v;
+    }
+  });
+  prep.tones = tones;
+  return tones;
+}
+
+// 這一層是不是漸層：有墨的地方，中間調占多少
+export function midtoneShare(tone) {
+  let ink = 0, mid = 0;
+  for (let i = 0; i < tone.length; i += 3) {
+    const t = tone[i];
+    if (t > 0.04) { ink++; if (t > 0.15 && t < 0.85) mid++; }
+  }
+  return ink ? mid / ink : 0;
+}
+
+// 濃度 → 網點（歐幾里得網點：亮處是小黑點，暗處是小白點，50% 時成棋盤）。
+//   angle  網線角度（度），各層錯開以避免疊紋
+//   cell   網點間距（圖片像素）
+//   density 0..1，0.5 為原濃度，往右整體變深
+const spot = (px, py) => (px + py > 1 ? (px - 1) ** 2 + (py - 1) ** 2 - 1 : 1 - (px * px + py * py));
+
+// 網點函式值的分布：查表把「濃度」換成「門檻」，讓網點面積正好等於濃度
+const SPOT_LUT = (() => {
+  const n = 96, vals = new Float32Array(n * n);
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+    vals[j * n + i] = spot(Math.abs(((i + 0.5) / n - 0.5) * 2), Math.abs(((j + 0.5) / n - 0.5) * 2));
+  }
+  return vals.sort();
+})();
+const thresholdFor = t => SPOT_LUT[Math.min(SPOT_LUT.length - 1, Math.max(0, Math.round((1 - t) * (SPOT_LUT.length - 1))))];
+
+export function halftone(tone, w, h, { angle = 45, cell = 13, density = 0.5 } = {}) {
+  const out = new Float32Array(w * h);
+  const a = angle * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a);
+  const gamma = 2 ** ((0.5 - density) * 2.4);
+  const soft = 2.4 / cell;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x;
+    const t = tone[i];
+    if (t <= 0) continue;
+    const tt = t ** gamma;
+    const u = (x * ca + y * sa) / cell, v = (-x * sa + y * ca) / cell;
+    const px = Math.abs((u - Math.floor(u) - 0.5) * 2), py = Math.abs((v - Math.floor(v) - 0.5) * 2);
+    const s = spot(px, py);
+    const th = tt >= 1 ? -2 : thresholdFor(tt);
+    const k = Math.min(1, Math.max(0, (s - th + soft) / (2 * soft)));
+    out[i] = k * k * (3 - 2 * k);
+  }
+  return out;
+}
+
+export const DOT_CELLS = { coarse: 18, medium: 13, fine: 9 };
+export const DOT_ANGLES = [15, 75, 0, 45];
+
+// 依各層設定產生遮罩：實色用門檻，網點用濃度
+//   settings：{ cov: [...], modes: ['solid' | 'dots', ...], dot: 'coarse' | 'medium' | 'fine' }
+export function computeLayers(prep, { cov, modes = [], dot = 'medium' }) {
+  const solid = computeMasks(prep, cov);
+  if (!modes.includes('dots')) return solid;
+  const tones = computeTones(prep);
+  return solid.map((m, c) => (modes[c] === 'dots'
+    ? halftone(tones[c], prep.w, prep.h, { angle: DOT_ANGLES[c % DOT_ANGLES.length], cell: DOT_CELLS[dot], density: cov[c] ?? 0.5 })
+    : m));
+}
+
+// 預設：有明顯漸層的層用網點
+export function defaultModes(prep) {
+  return computeTones(prep).map(t => (midtoneShare(t) > 0.25 ? 'dots' : 'solid'));
+}
+
 // 去掉零星的小雜點：3×3 平均兩次，再收回清楚的邊
 function despeckle(m, w, h) {
   let a = m, b = new Float32Array(m.length);

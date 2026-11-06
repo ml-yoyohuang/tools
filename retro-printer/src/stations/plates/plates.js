@@ -1,5 +1,5 @@
 import { S, PW } from '../../engine/geometry.js';
-import { prepare, computeMasks, suggestInks } from '../../engine/separate.js';
+import { prepare, computeLayers, defaultModes, suggestInks } from '../../engine/separate.js';
 import { flatComposite } from '../../engine/flat.js';
 import { PALETTE } from '../../inks.js';
 import { designToSheet, sheetMaskWithMarks, plateFromDesignMask } from '../../plates/registration.js';
@@ -7,7 +7,8 @@ import { screenCanvas, maskCanvas, drawScreen, MESH } from './screen.js';
 
 // 製版：選色數、自動分色、調各層門檻；然後曬版、沖水。
 //   image：提供圖片站傳來的圖 { id, name, colors, canvas, data, w, h }
-//   state：這張圖的製版設定，在各站之間保留 { n, cov, view, active }
+//   state：這張圖的製版設定，在各站之間保留 { n, cov, modes, dot, view, active }
+//     modes 各層「實色 / 網點」；dot 網點大小；cov 實色時為門檻，網點時為濃淡
 //   onDone({ plates, inks })：做好的版與建議墨色
 //   onBack：回到提供圖片
 const PAPER = [245, 240, 230];
@@ -36,12 +37,14 @@ export function mountPlates(root, { image, state, onDone, onBack }) {
     prep = preps.get(state.n);
     const k = prep.centers.length;
     if (!state.cov || state.cov.length !== k) state.cov = new Array(k).fill(0.5);
+    if (!state.modes || state.modes.length !== k) state.modes = defaultModes(prep);   // 有漸層的層預設用網點
+    state.dot = state.dot || 'medium';
     state.active = Math.min(state.active || 0, k - 1);
     inks = suggestInks(prep, PALETTE);
     separateNow();
   }
   function separateNow() {
-    masks = computeMasks(prep, state.cov);
+    masks = computeLayers(prep, state);
     paint();
   }
   function paint() {
@@ -71,6 +74,10 @@ export function mountPlates(root, { image, state, onDone, onBack }) {
         <span class="label">檢視</span>
         <div class="seg view" role="radiogroup" aria-label="檢視"></div>
       </div>
+      <div class="field dots-field" hidden>
+        <span class="label">網點</span>
+        <div class="seg dots" role="radiogroup" aria-label="網點大小"></div>
+      </div>
       <div class="sep-layers"></div>
       <button class="primary" type="button">曬版</button>
       <div class="foot"><button class="text back" type="button" hidden>換圖片</button></div>`;
@@ -91,27 +98,40 @@ export function mountPlates(root, { image, state, onDone, onBack }) {
         el.appendChild(b);
       }
     };
-    seg(panel.querySelector('.seg:not(.view)'), [[1, '1'], [2, '2'], [3, '3'], [4, '4']], state.n, v => {
+    seg(panel.querySelector('.seg:not(.view):not(.dots)'), [[1, '1'], [2, '2'], [3, '3'], [4, '4']], state.n, v => {
       if (v === state.n) return;
-      state.n = v; state.cov = null; state.active = 0;
+      state.n = v; state.cov = null; state.modes = null; state.active = 0;
       analyse(); renderSeparate();
     });
     seg(panel.querySelector('.seg.view'), [['stack', '疊色'], ['single', '單版']], state.view, v => {
       state.view = v; paint(); renderSeparate();
     });
+    panel.querySelector('.dots-field').hidden = !state.modes.includes('dots');
+    seg(panel.querySelector('.seg.dots'), [['coarse', '粗'], ['medium', '中'], ['fine', '細']], state.dot, v => {
+      state.dot = v; separateNow(); renderSeparate();
+    });
 
     const layersEl = panel.querySelector('.sep-layers');
     inks.forEach((ink, i) => {
       const row = document.createElement('div');
+      const dots = state.modes[i] === 'dots';
       row.className = 'sep-row' + (i === state.active ? ' on' : '');
       row.innerHTML = `
-        <button class="sep-head" type="button">
-          <span class="sw"></span><span class="nm">第 ${i + 1} 層</span><span class="ink"></span>
-        </button>
-        <input type="range" min="0" max="100" step="1" aria-label="第 ${i + 1} 層門檻">
-        <div class="scale"><span>少</span><span>多</span></div>`;
+        <div class="sep-top">
+          <button class="sep-head" type="button">
+            <span class="sw"></span><span class="nm">第 ${i + 1} 層</span><span class="ink"></span>
+          </button>
+          <div class="seg mini" role="radiogroup" aria-label="第 ${i + 1} 層印法"></div>
+        </div>
+        <input type="range" min="0" max="100" step="1" aria-label="第 ${i + 1} 層${dots ? '濃淡' : '門檻'}">
+        <div class="scale"><span>${dots ? '淺' : '少'}</span><span>${dots ? '深' : '多'}</span></div>`;
       row.querySelector('.sw').style.background = css(ink.rgb);
       row.querySelector('.ink').textContent = ink.name;
+      seg(row.querySelector('.seg.mini'), [['solid', '實色'], ['dots', '網點']], state.modes[i], v => {
+        if (state.modes[i] === v) return;
+        state.modes[i] = v; state.active = i;
+        separateNow(); renderSeparate();
+      });
       row.querySelector('.sep-head').addEventListener('click', () => {
         state.active = i;
         if (state.view === 'single') paint();

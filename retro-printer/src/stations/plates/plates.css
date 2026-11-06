@@ -14,8 +14,11 @@
 
 .sep-layers { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
 .sep-row { padding: 12px 0 14px; border-bottom: 1px solid var(--line); }
+.sep-top { display: flex; align-items: center; gap: 12px; }
+.seg.mini button { min-width: 0; height: 24px; padding: 0 8px; font-size: 11px; letter-spacing: .04em; }
 .sep-head {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   display: grid; grid-template-columns: 20px 1fr auto; gap: 14px; align-items: center;
   padding: 0; background: none; border: 0; text-align: left;
   font-size: 15px; color: var(--mute);

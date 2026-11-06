@@ -10,7 +10,7 @@ import { printLayer, compositeJob, surfaceOf } from '../src/engine/print.js';
 import { textureField } from '../src/engine/texture.js';
 import { MEDIA } from '../src/state.js';
 import { mixRGB, makeMixedInk } from '../src/engine/ink.js';
-import { prepare, computeMasks, suggestInks } from '../src/engine/separate.js';
+import { prepare, computeMasks, suggestInks, computeTones, computeLayers, defaultModes, halftone } from '../src/engine/separate.js';
 import { PALETTE } from '../src/inks.js';
 import { fitRect, panBy, shuffle } from '../src/plates/fit.js';
 import { CONFIG as C } from '../src/config.js';
@@ -310,6 +310,45 @@ test('分色：同一張圖每次結果相同；建議墨色是最接近的色�
   assert.deepEqual(a.centers, b.centers);
   const names = suggestInks(a, PALETTE).map(i => i.id);
   assert.deepEqual(names, ['gold', 'teal', 'navy']);
+});
+
+/* ───────── 網點 ───────── */
+test('網點：覆蓋面積接近濃度', () => {
+  const w = 240, h = 240;
+  for (const t of [0.15, 0.5, 0.85]) {
+    const tone = new Float32Array(w * h).fill(t);
+    const cov = coverage(halftone(tone, w, h, { angle: 15, cell: 13 }));
+    assert.ok(Math.abs(cov - t) < 0.08, `濃度 ${t} 覆蓋 ${cov.toFixed(3)}`);
+  }
+});
+
+// 由左到右：深藍漸變到紙色
+function gradientImage() {
+  const w = 160, h = 80, data = new Uint8ClampedArray(w * h * 4);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const k = x / (w - 1), i = (y * w + x) * 4;
+    data[i] = 40 + (245 - 40) * k; data[i + 1] = 60 + (240 - 60) * k; data[i + 2] = 110 + (230 - 110) * k; data[i + 3] = 255;
+  }
+  return { data, w, h };
+}
+
+test('網點：漸層得到連續的濃度，預設用網點；平塗的維持實色', () => {
+  const prep = prepare(gradientImage(), 1);
+  const t = computeTones(prep)[0];
+  const at = x => t[40 * 160 + x];
+  assert.ok(at(5) > 0.9 && at(80) > 0.3 && at(80) < 0.7 && at(155) < 0.05, `濃度 ${at(5).toFixed(2)} ${at(80).toFixed(2)} ${at(155).toFixed(2)}`);
+  for (let x = 10; x < 150; x += 10) assert.ok(at(x) >= at(x + 10) - 0.02, '濃度應由左往右遞減');
+  assert.deepEqual(defaultModes(prep), ['dots']);
+  assert.deepEqual(defaultModes(prepare(syntheticImage().image, 3)), ['solid', 'solid', 'solid']);
+});
+
+test('網點：網點遮罩隨漸層由密到疏，濃淡滑桿往右整體變深', () => {
+  const prep = prepare(gradientImage(), 1);
+  const [m] = computeLayers(prep, { cov: [0.5], modes: ['dots'], dot: 'medium' });
+  const band = (x0, x1) => { let s = 0, n = 0; for (let y = 0; y < 80; y++) for (let x = x0; x < x1; x++) { s += m[y * 160 + x]; n++; } return s / n; };
+  assert.ok(band(0, 40) > band(60, 100) && band(60, 100) > band(120, 160), `${band(0, 40).toFixed(2)} ${band(60, 100).toFixed(2)} ${band(120, 160).toFixed(2)}`);
+  const [dark] = computeLayers(prep, { cov: [0.85], modes: ['dots'], dot: 'medium' });
+  assert.ok(coverage(dark) > coverage(m) + 0.05);
 });
 
 /* ───────── 提供圖片 ───────── */
