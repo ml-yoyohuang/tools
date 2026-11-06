@@ -66,7 +66,7 @@
           <div class="modal-heading"><div><span class="eyebrow">GAME SETUP</span><h2 id="settings-title">設定棋局</h2></div><button class="close-button" type="button" @click="isShowPopup = false">×</button></div>
           <label>先手 / BLACK<input v-model.trim="players[0].name" maxlength="16" /></label>
           <label>後手 / WHITE<input v-model.trim="players[1].name" maxlength="16" /></label>
-          <label>每方秒數<input v-model.number="countDownPerSec" type="number" min="10" max="86400" step="10" /></label>
+          <label>每方秒數<input v-model.number="countDownPerSec" type="number" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off" min="10" max="86400" step="10" /></label>
           <div class="preset-row"><button v-for="preset in presets" :key="preset.value" type="button" @click="countDownPerSec = preset.value" :class="{ selected: countDownPerSec === preset.value }">{{ preset.label }}</button></div>
           <button class="save-button" type="button" @click="reset">套用並重新開始 <span>→</span></button>
         </section>
