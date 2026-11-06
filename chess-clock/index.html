@@ -9,18 +9,18 @@
     <meta property="og:title" content="棋鐘 Chess Clock" />
     <meta property="og:description" content="面對面雙人下棋用的簡潔棋鐘。" />
     <meta property="og:url" content="https://ml-yoyohuang.github.io/tools/chess-clock/" />
-    <meta property="og:image" content="https://ml-yoyohuang.github.io/tools/chess-clock/og-image.png" />
+    <meta property="og:image" content="https://ml-yoyohuang.github.io/tools/chess-clock/og-image.png?v=dd65798840a7" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="棋鐘 Chess Clock" />
     <meta name="twitter:description" content="面對面雙人下棋用的簡潔棋鐘。" />
-    <meta name="twitter:image" content="https://ml-yoyohuang.github.io/tools/chess-clock/og-image.png" />
-    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="favicon.svg" />
-    <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="stylesheet" href="styles.css" />
+    <meta name="twitter:image" content="https://ml-yoyohuang.github.io/tools/chess-clock/og-image.png?v=dd65798840a7" />
+    <link rel="icon" href="favicon.svg?v=6dcb783d91b2" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="favicon.svg?v=6dcb783d91b2" />
+    <link rel="manifest" href="manifest.webmanifest?v=86f39818bd58" />
+    <link rel="stylesheet" href="styles.css?v=f168720780a4" />
     <title>棋鐘 Chess Clock</title>
   </head>
   <body>
@@ -71,14 +71,14 @@
           <label>隊伍 1 顯示名稱（{{ players[0].label }}）<input v-model.trim="players[0].name" maxlength="16" /></label>
           <label>隊伍 2 顯示名稱（{{ players[1].label }}）<input v-model.trim="players[1].name" maxlength="16" /></label>
           <label>棋種／隊伍稱呼<select v-model="teamPreset" @change="applyTeamPreset"><option v-for="option in teamOptions" :key="option.value" :value="option.value">{{ option.label }}</option></select></label>
-          <button v-if="teamPreset === 'random'" class="reroll-button" type="button" @click="applyTeamPreset">再抽一組可愛隊名</button>
+          <button v-if="teamPreset === 'random'" class="reroll-button" type="button" @click="applyTeamPreset">再抽一組隊名</button>
           <label>每方秒數<input v-model.number="countDownPerSec" type="number" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off" min="10" max="86400" step="10" /></label>
           <div class="preset-row"><button v-for="preset in presets" :key="preset.value" type="button" @click="countDownPerSec = preset.value" :class="{ selected: countDownPerSec === preset.value }">{{ preset.label }}</button></div>
           <button class="save-button" type="button" @click="reset">套用並重新開始 <svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"/></svg></button>
         </section>
       </div>
     </main>
-    <script src="vue.global.prod.js"></script>
-    <script src="app.js"></script>
+    <script src="vue.global.prod.js?v=c459ba7cc8db"></script>
+    <script src="app.js?v=584242f22d8e"></script>
   </body>
 </html>
