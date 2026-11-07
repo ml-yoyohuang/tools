@@ -24,7 +24,7 @@ createApp({
     ];
     const randomTeams = [
       ['貓派', '狗派'], ['奶茶派', '咖啡派'], ['早鳥族', '夜貓族'], ['香菇隊', '竹筍隊'],
-      ['恐龍隊', '獨角獸隊'], ['海豹隊', '企鵝隊'], ['珍珠派', '椰果派'], ['太陽隊', '月亮隊'],
+      ['恐龍隊', '獨角獸隊'], ['海豹隊', '企鵝隊'], ['珍珠派', '椰果派'], ['太陽隊', '月亮隊'], ['鑽石隊', '珍珠隊'],
     ];
     const initialTeamLabels = teamOptions.find((option) => option.value === teamPreset.value)?.labels || ['BLACK', 'WHITE'];
     const players = ref([
