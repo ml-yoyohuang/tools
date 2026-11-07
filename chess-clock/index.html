@@ -20,7 +20,7 @@
     <link rel="icon" href="favicon.svg?v=6dcb783d91b2" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="favicon.svg?v=6dcb783d91b2" />
     <link rel="manifest" href="manifest.webmanifest?v=86f39818bd58" />
-    <link rel="stylesheet" href="styles.css?v=f168720780a4" />
+    <link rel="stylesheet" href="styles.css?v=99447850ad1d" />
     <title>棋鐘 Chess Clock</title>
   </head>
   <body>
@@ -45,14 +45,14 @@
         </button>
 
         <div class="control-rail">
-          <div class="match-time" :class="{ 'upside-down-ui': activeIndex === 0 }">{{ formatLongTime(gameElapsed) }}</div>
+          <div class="match-time"><span class="rotating-label" :class="{ 'upside-down-ui': activeIndex === 0 }">{{ formatLongTime(gameElapsed) }}</span></div>
           <div class="control-buttons">
             <button v-if="!isGameStarted" class="primary-button" type="button" @click="startGame" aria-label="開始遊戲"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 6.5v11l9-5.5-9-5.5Z" fill="currentColor"/></svg><span>START</span></button>
             <button v-else-if="!isGameOver" class="primary-button" :class="{ paused: isPaused }" type="button" @click="togglePause" :aria-label="isPaused ? '繼續遊戲' : '暫停遊戲'"><svg v-if="isPaused" class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 6.5v11l9-5.5-9-5.5Z" fill="currentColor"/></svg><svg v-else class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="6.5" y="5.5" width="4" height="13" rx="1" fill="currentColor"/><rect x="13.5" y="5.5" width="4" height="13" rx="1" fill="currentColor"/></svg><span>{{ isPaused ? 'RESUME' : 'PAUSE' }}</span></button>
             <button v-if="isGameStarted && !isGameOver" class="secondary-button" type="button" @click="surrender" aria-label="投降"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M7 20V4m.5 1c3.8-2.6 7.2 2.5 11 0v8.5c-3.8 2.5-7.2-2.5-11 0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"/></svg></button>
             <button v-if="isGameOver" class="primary-button" type="button" @click="reset" aria-label="開始新棋局"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 8.5A8 8 0 1 1 4.2 14M5 4.5v4h4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"/></svg><span>NEW GAME</span></button>
           </div>
-          <div class="status-line" :class="{ 'upside-down-ui': activeIndex === 0 }"><span class="status-dot" :class="{ active: isGameStarted && !isPaused && !isGameOver }"></span><span class="status-copy">{{ statusText }}</span></div>
+          <div class="status-line"><span class="status-dot" :class="{ active: isGameStarted && !isPaused && !isGameOver }"></span><span class="status-copy rotating-label" :class="{ 'upside-down-ui': activeIndex === 0 }">{{ statusText }}</span></div>
         </div>
 
         <button class="player-card player-bottom" :class="playerClass(1)" type="button" @click="switchTurn(1, 0)" :disabled="!canTap(1)">
