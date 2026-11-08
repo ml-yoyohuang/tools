@@ -140,6 +140,9 @@ const HEAVEN = { id: 'heaven', ...SPECIAL.heaven, rare: true };
 const HEAVEN_CHANCE = 0.03;
 // ?paper=<id> lays every turtle on that paper, for looking at them one by one
 const FORCED = [...PAPERS, HEAVEN].find((p) => p.id === new URLSearchParams(location.search).get('paper'));
+// 發爐: now and then the flame in your hand roars up. ?fire=big forces it.
+const BLAZE_CHANCE = 0.12;
+const FORCE_BLAZE = new URLSearchParams(location.search).get('fire') === 'big';
 const textureCache = new Map();
 
 function texturesFor(paper) {
@@ -406,7 +409,7 @@ function placeCamera(cam, v, w, h) {
 
 /* ---------- State ---------- */
 
-const state = { step: 'intro', done: false, doneAt: 0, prewarmed: false };
+const state = { step: 'intro', done: false, doneAt: 0, prewarmed: false, blaze: false, blazeBurst: false };
 const form = $('#wish-form');
 const placeEl = $('#place');
 const wishEl = $('#wish');
@@ -497,6 +500,9 @@ form.addEventListener('submit', (e) => {
   $('#burn-wish').textContent = wishEl.value.trim();
   hint.classList.remove('gone');
   setMeter(0);
+  state.blaze = FORCE_BLAZE || Math.random() < BLAZE_CHANCE;
+  state.blazeBurst = false;
+  body.classList.toggle('blaze', state.blaze);
   setStep('burn');
 });
 
@@ -584,11 +590,12 @@ function updateBurn(dt, time) {
       const steps = last ? Math.min(12, Math.ceil(Math.hypot(uv.x - last.x, uv.y - last.y) / 0.008)) : 1;
       for (let s = 1; s <= steps; s++) {
         const f = s / steps;
-        turtle.sim.ignite(last ? last.x + (uv.x - last.x) * f : uv.x, last ? last.y + (uv.y - last.y) * f : uv.y, 0.022);
+        turtle.sim.ignite(last ? last.x + (uv.x - last.x) * f : uv.x, last ? last.y + (uv.y - last.y) * f : uv.y, state.blaze ? 0.045 : 0.022);
       }
       pointer.last = { turtle, uv: uv.clone() };
       torch.position.copy(hit.point).add(tmp.set(0, 0.18, 0));
-      torch.intensity = 1.6;
+      torch.intensity = state.blaze ? 4.5 : 1.6;
+      if (state.blaze) blazeAt(hit.point, turtle.paperKind.fire || 0, dt);
       if (turtle.sim.lit) hint.classList.add('gone');
     } else pointer.last = null;
   }
@@ -648,6 +655,32 @@ function updateBurn(dt, time) {
   if (!state.done) {
     setMeter(progress / turtles.length);
     if (allDone) finish(time);
+  }
+}
+
+/** The roaring hand flame: a fireball on first touch, then a column of fire off the fingertip. */
+function blazeAt(p, fire, dt) {
+  if (!state.blazeBurst) {
+    state.blazeBurst = true;
+    torch.intensity = 14;
+    for (let n = 0; n < (reduced ? 40 : 150); n++) {
+      const a = Math.random() * Math.PI * 2;
+      const out = Math.random() * 0.9;
+      flames.spawn(p.x, p.y + 0.05, p.z, Math.cos(a) * out, 0.6 + Math.random() * 1.6, Math.sin(a) * out, 0.6 + Math.random() * 0.7, 0.16 + Math.random() * 0.22, fire);
+    }
+    for (let n = 0; n < (reduced ? 20 : 70); n++) {
+      const a = Math.random() * Math.PI * 2;
+      const out = 0.4 + Math.random() * 1.2;
+      embers.spawn(p.x, p.y + 0.1, p.z, Math.cos(a) * out, 0.8 + Math.random() * 1.8, Math.sin(a) * out, 1.2 + Math.random() * 1.8, 0.016 + Math.random() * 0.02, fire);
+    }
+    return;
+  }
+  const n = Math.round(dt * 60 * 5);
+  for (let k = 0; k < n; k++) {
+    flames.spawn(p.x + (Math.random() - 0.5) * 0.18, p.y + 0.04, p.z + (Math.random() - 0.5) * 0.18, (Math.random() - 0.5) * 0.16, 0.5 + Math.random() * 0.7, (Math.random() - 0.5) * 0.16, 0.45 + Math.random() * 0.45, 0.13 + Math.random() * 0.14, fire);
+  }
+  if (Math.random() < dt * 20) {
+    embers.spawn(p.x, p.y + 0.15, p.z, (Math.random() - 0.5) * 0.8, 0.8 + Math.random() * 1.2, (Math.random() - 0.5) * 0.8, 1.2 + Math.random() * 1.6, 0.014 + Math.random() * 0.016, fire);
   }
 }
 
