@@ -141,6 +141,12 @@ body[data-step="intro"] .add {
 
 body.loading .add { opacity: 0 !important; }
 
+/* Its pair, one place to the left: a single drawn stroke */
+.remove { right: calc(var(--edge-x) + 42px); }
+.remove::after { display: none; }
+.remove:hover::before { transform: scaleX(0.6); }
+.remove:disabled::before { transform: none; }
+
 /* ---------- Panels ---------- */
 
 .panel {

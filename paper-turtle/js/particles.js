@@ -52,6 +52,7 @@ export class Pool {
     this.life = new Float32Array(max).fill(1);
     this.sz = new Float32Array(max);
     this.seed = new Float32Array(max).map(() => Math.random());
+    this.pal = new Uint8Array(max); // fire palette per particle (see KINDS)
     this.cursor = 0;
     const g = new THREE.BufferGeometry();
     this.aPos = new THREE.BufferAttribute(new Float32Array(max * 3), 3).setUsage(THREE.DynamicDrawUsage);
@@ -75,7 +76,7 @@ export class Pool {
     this.col = [0, 0, 0, 0];
   }
 
-  spawn(x, y, z, vx, vy, vz, life, size) {
+  spawn(x, y, z, vx, vy, vz, life, size, pal = 0) {
     const i = this.cursor;
     this.cursor = (i + 1) % this.max;
     this.p.set([x, y, z], i * 3);
@@ -84,6 +85,7 @@ export class Pool {
     this.life[i] = life;
     this.sz[i] = size;
     this.seed[i] = Math.random();
+    this.pal[i] = pal;
   }
 
   clear() {
@@ -92,7 +94,7 @@ export class Pool {
   }
 
   update(dt, time) {
-    const { p, v, age, life, sz, seed, kind, col } = this;
+    const { p, v, age, life, sz, seed, pal, kind, col } = this;
     const pos = this.aPos.array;
     const size = this.aSize.array;
     const color = this.aColor.array;
@@ -118,7 +120,7 @@ export class Pool {
       pos[i3] = p[i3];
       pos[i3 + 1] = p[i3 + 1];
       pos[i3 + 2] = p[i3 + 2];
-      kind.color(t, s, col, time);
+      kind.color(t, s, col, time, pal[i]);
       color.set(col, i * 4);
       size[i] = sz[i] * kind.size(t, s, time);
     }
@@ -139,11 +141,26 @@ export const KINDS = {
     turb: 1.2,
     swirl: 6,
     size: (t) => (1 - t) * (0.6 + 0.4 * Math.sin(t * Math.PI)),
-    color(t, s, out) {
+    // palettes: 0 ordinary, 1 vermilion, 2 star-blue (about half the tongues), 3 gold
+    color(t, s, out, time, pal) {
       const hot = clamp01(1 - t * 3);
-      out[0] = 1.0;
-      out[1] = mix(0.18, 0.78, hot) + s * 0.06;
-      out[2] = mix(0.02, 0.38, hot * hot);
+      if (pal === 1) {
+        out[0] = 1.0;
+        out[1] = mix(0.07, 0.5, hot) + s * 0.04;
+        out[2] = mix(0.02, 0.24, hot * hot);
+      } else if (pal === 2 && s > 0.45) {
+        out[0] = mix(0.3, 0.88, hot);
+        out[1] = mix(0.45, 0.93, hot);
+        out[2] = 1.0;
+      } else if (pal === 3) {
+        out[0] = 1.0;
+        out[1] = mix(0.4, 0.9, hot) + s * 0.04;
+        out[2] = mix(0.06, 0.52, hot * hot);
+      } else {
+        out[0] = 1.0;
+        out[1] = mix(0.18, 0.78, hot) + s * 0.06;
+        out[2] = mix(0.02, 0.38, hot * hot);
+      }
       out[3] = (1 - t) * (1 - t) * 0.55;
     },
   },
@@ -154,11 +171,25 @@ export const KINDS = {
     turb: 2.4,
     swirl: 2.2,
     size: (t, s, time) => (1 - t * 0.6) * (0.7 + 0.3 * Math.sin(time * 20 + s * 90)),
-    color(t, s, out, time) {
+    color(t, s, out, time, pal) {
       const f = 0.7 + 0.3 * Math.sin(time * 17 + s * 70);
-      out[0] = 1.0;
-      out[1] = mix(0.55, 0.22, t);
-      out[2] = mix(0.18, 0.03, t);
+      if (pal === 1) {
+        out[0] = 1.0;
+        out[1] = mix(0.32, 0.08, t);
+        out[2] = mix(0.12, 0.03, t);
+      } else if (pal === 2) {
+        out[0] = mix(0.78, 0.4, t);
+        out[1] = mix(0.9, 0.62, t);
+        out[2] = 1.0;
+      } else if (pal === 3) {
+        out[0] = 1.0;
+        out[1] = mix(0.88, 0.52, t);
+        out[2] = mix(0.55, 0.14, t);
+      } else {
+        out[0] = 1.0;
+        out[1] = mix(0.55, 0.22, t);
+        out[2] = mix(0.18, 0.03, t);
+      }
       out[3] = (1 - t) * f;
     },
   },
