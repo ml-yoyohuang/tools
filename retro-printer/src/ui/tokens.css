@@ -47,8 +47,17 @@ button:focus-visible { outline: 1px solid var(--ink); outline-offset: 4px; }
 .text:hover:not(:disabled) { color: var(--ink); }
 .text:disabled { color: var(--faint); cursor: default; }
 
-/* 聲音開關：固定在右上角，不佔版面 */
+/* 聲音開關：固定在右上角，浮在內容上；米白底讓它在任何顏色上都看得清楚 */
 .sound-toggle {
-  position: fixed; top: 20px; right: 24px; z-index: 20;
+  position: fixed; top: 16px; right: 20px; z-index: 20;
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 32px; padding: 0 12px 0 10px;
+  border: 0; border-radius: 0;
+  background: rgba(245, 243, 238, .92); color: var(--ink);
+  box-shadow: 0 1px 1px rgba(20, 18, 14, .06), 0 8px 18px -10px rgba(20, 18, 14, .35);
   font-size: 12px; letter-spacing: .08em;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  transition: color .2s;
 }
+.sound-toggle.off { color: var(--mute); }
+.sound-toggle svg { flex: none; display: block; }

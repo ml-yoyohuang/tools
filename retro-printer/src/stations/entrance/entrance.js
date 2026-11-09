@@ -2,7 +2,8 @@ import { PALETTE, paletteByHue } from '../../inks.js';
 import { wallItems } from '../../works.js';
 import { drawWallPrint } from '../../gallery/render.js';
 
-// 入口：一面墨水卡片牆、一面作品牆。
+// 入口：滿版的兩面牆，左半邊是作品、右半邊是色票，「開始製作」浮在正中間。
+// 畫面不捲動；卡片不夠填滿時重複排列，邊緣的卡片直接被切掉，像一整面牆。
 //   works          這次瀏覽的作品
 //   library        這次進入口隨機生成的圖庫作品（見 src/gallery/library.js）
 //   onStart        開始製作
@@ -15,33 +16,24 @@ const TINTS = [1, 0.6, 0.3];
 const THUMB = 360;
 
 export function mountEntrance(root, { works, library, onStart, onOpenWork, onPickItem }) {
-  root.classList.add('wide');
+  root.classList.add('full');
   const page = document.createElement('div');
   page.className = 'entrance';
   page.innerHTML = `
-    <header class="ent-head">
-      <h1>絹印</h1>
-      <button class="primary start" type="button">開始製作</button>
-    </header>
-    <section class="wall">
-      <h2>墨水 <span class="count"></span></h2>
-      <div class="ink-wall"></div>
-    </section>
-    <section class="wall">
-      <h2>作品 <span class="count"></span></h2>
-      <div class="work-wall"></div>
-    </section>`;
+    <section class="half ent-works" aria-label="作品"><div class="work-wall"></div></section>
+    <section class="half ent-inks" aria-label="墨水"><div class="ink-wall"></div></section>
+    <button class="primary start" type="button">開始製作</button>`;
   root.appendChild(page);
   page.querySelector('.start').addEventListener('click', onStart);
 
   /* ───────── 墨水牆 ───────── */
   const inks = paletteByHue(PALETTE);
   const inkNo = new Map(inks.map((ink, i) => [ink.id, `No. ${two(i + 1)}`]));
-  page.querySelectorAll('.count')[0].textContent = inks.length;
   const inkWall = page.querySelector('.ink-wall');
-  inks.forEach(ink => {
+  const inkCard = (ink, copy) => {
     const card = document.createElement('figure');
     card.className = 'ink-card';
+    if (copy) card.setAttribute('aria-hidden', 'true');
     const tints = TINTS.map(t => css(PAPER.map((p, k) => Math.round(p * (1 - t + t * ink.rgb[k] / 255)))));
     card.innerHTML = `
       <div class="block"></div>
@@ -49,22 +41,25 @@ export function mountEntrance(root, { works, library, onStart, onOpenWork, onPic
       <figcaption><span class="no">${inkNo.get(ink.id)}</span><span class="nm"></span></figcaption>`;
     card.querySelector('.block').style.background = css(ink.rgb);
     card.querySelector('.nm').textContent = ink.name;
-    inkWall.appendChild(card);
-  });
+    return card;
+  };
 
   /* ───────── 作品牆 ───────── */
   const items = wallItems(works, library);
-  page.querySelectorAll('.count')[1].textContent = items.length;
   const workWall = page.querySelector('.work-wall');
   const pending = [];
+  const copies = new Map();   // 圖庫作品 → 重複出現的畫布，畫好後直接複製
+  const drawn = new Map();    // 圖庫作品 → 已經畫好的畫布
   // 卡片隨機帶一點旋轉，像隨手釘在牆上
   const tilt = () => `${((Math.random() - 0.5) * 3).toFixed(2)}deg`;
 
-  for (const it of items) {
+  const workCard = (it, copy) => {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'wall-item';
     b.style.setProperty('--tilt', tilt());
+    // 重複的卡片只是用來填滿畫面，鍵盤與螢幕閱讀器略過
+    if (copy) { b.tabIndex = -1; b.setAttribute('aria-hidden', 'true'); }
     b.innerHTML = `
       <div class="frame"></div>
       <span class="cap"><span class="title"></span><span class="spec"></span></span>`;
@@ -98,18 +93,49 @@ export function mountEntrance(root, { works, library, onStart, onOpenWork, onPic
       if (item.badge) tag(item.badge);
       b.setAttribute('aria-label', `${item.name}，${item.inks.map(i => i.name).join('、')}，${item.medium.name}`);
       b.addEventListener('click', () => onPickItem(item));
-      pending.push({ item, canvas: cv });
+      if (copy) {
+        const list = copies.get(item) || [];
+        list.push(cv);
+        copies.set(item, list);
+        if (drawn.has(item)) copyInto(drawn.get(item), cv);
+      } else pending.push({ item, canvas: cv });
     }
-    workWall.appendChild(b);
-  }
+    return b;
+  };
+  const copyInto = (src, cv) => { cv.getContext('2d').drawImage(src, 0, 0); cv.classList.add('ready'); };
 
-  // 圖庫作品在背景一張一張畫
+  /* ───────── 填滿畫面 ───────── */
+  // 依目前的格線欄數與列高，算出需要幾張卡片才能鋪滿，不夠就從頭重複
+  const fills = [
+    { wall: page.querySelector('.work-wall'), list: items, make: workCard, n: 0 },
+    { wall: inkWall, list: inks, make: inkCard, n: 0 }
+  ];
+  function fill() {
+    for (const F of fills) {
+      if (!F.n) { F.list.forEach(x => F.wall.appendChild(F.make(x, false))); F.n = F.list.length; }
+      const cols = getComputedStyle(F.wall).gridTemplateColumns.split(' ').length;
+      const first = F.wall.firstElementChild;
+      if (!first) continue;
+      const gap = parseFloat(getComputedStyle(F.wall).rowGap) || 0;
+      const rowH = first.getBoundingClientRect().height + gap;
+      const need = cols * (Math.ceil(F.wall.parentElement.clientHeight / rowH) + 1);
+      while (F.n < need) { F.wall.appendChild(F.make(F.list[F.n % F.list.length], true)); F.n++; }
+    }
+  }
+  fill();
+  let resizeT = 0;
+  const onResize = () => { clearTimeout(resizeT); resizeT = setTimeout(fill, 120); };
+  window.addEventListener('resize', onResize);
+
+  // 圖庫作品在背景一張一張畫；重複的卡片直接複製畫好的那張
   let timer = 0;
   const next = () => {
     const job = pending.shift();
     if (!job) return;
     drawWallPrint(job.item, job.canvas);
     job.canvas.classList.add('ready');
+    drawn.set(job.item, job.canvas);
+    for (const cv of copies.get(job.item) || []) copyInto(job.canvas, cv);
     timer = setTimeout(next, 16);
   };
   timer = setTimeout(next, 60);
@@ -117,7 +143,9 @@ export function mountEntrance(root, { works, library, onStart, onOpenWork, onPic
   return {
     destroy() {
       clearTimeout(timer);
-      root.classList.remove('wide');
+      clearTimeout(resizeT);
+      window.removeEventListener('resize', onResize);
+      root.classList.remove('full');
       root.innerHTML = '';
     }
   };
