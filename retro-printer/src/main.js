@@ -10,6 +10,7 @@ import { MEDIA } from './state.js';
 import { addWork } from './works.js';
 import { makeLibrary } from './gallery/library.js';
 import { itemImage } from './gallery/render.js';
+import { mountSoundToggle } from './ui/sound-toggle.js';
 
 // 各站依 brief.md 的流程串接：
 //   入口 → 提供圖片 → 製版 → 欣賞版子 → 選墨水 → 選媒材 → 工作桌 → 完成
@@ -129,4 +130,5 @@ function toFinish(work) {
   });
 }
 
+mountSoundToggle();
 toEntrance();

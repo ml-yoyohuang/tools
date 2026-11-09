@@ -7,6 +7,7 @@ import { createJob } from '../../state.js';
 import { createPanel } from '../../ui/panel.js';
 import { FRAME, MESH, buildFrame, buildMarks, createMeshInk } from './overlay.js';
 import { DESIGN } from '../../plates/registration.js';
+import * as sfx from '../../audio/sound.js';
 
 // 工作桌：一層一層 放下網框 → 倒墨 → 刮印 → 掀框 → 等乾。
 // 每層都經過同樣的五步，最後一層的第五步為「完成」。
@@ -86,6 +87,7 @@ export function mountWorkbench(root, { plates, inks, medium, onBack, onFinish })
     st.drag = null;
     st.phase = 'ink';
     st.drop = performance.now();
+    sfx.drop();
     ui();
   }
 
@@ -104,7 +106,7 @@ export function mountWorkbench(root, { plates, inks, medium, onBack, onFinish })
 
   function pourTo(x) {
     const P = st.pour;
-    if (P.a < 0) P.a = P.b = x;
+    if (P.a < 0) { P.a = P.b = x; sfx.pour(0.65); }
     else { P.a = Math.min(P.a, x); P.b = Math.max(P.b, x); }
     if (poured() >= 0.8) autoPour(x);
   }
@@ -112,7 +114,7 @@ export function mountWorkbench(root, { plates, inks, medium, onBack, onFinish })
   function autoPour(x) {
     const P = st.pour;
     if (P.auto) return;
-    if (P.a < 0) P.a = P.b = x;
+    if (P.a < 0) { P.a = P.b = x; sfx.pour(0.65); }
     P.auto = true;
     P.drag = false;
     ui();
@@ -139,6 +141,7 @@ export function mountWorkbench(root, { plates, inks, medium, onBack, onFinish })
   function lift() {
     st.phase = 'lift';
     st.pressing = false;
+    sfx.peel();
     st.busy = true;
     ui();
     requestAnimationFrame(() => setTimeout(() => {
@@ -431,6 +434,8 @@ export function mountWorkbench(root, { plates, inks, medium, onBack, onFinish })
     if (panel.isDryShown()) panel.setDry(1 - maxWet());
     st.dryVis += ((st.dryer && maxWet() > 0 ? 1 : 0) - st.dryVis) * Math.min(1, dt * 8);
     if (st.phase === 'ink') updatePour(dt);
+    sfx.scrape(st.phase === 'squeegee' && st.pressing, st.vShow);
+    sfx.dryer(st.dryVis, Math.sin(now / 1000 * Math.PI * 2 / 1.2));
 
     // 墨在網上閒置太久會塞網；刮印時重新計時，但已塞住的不會恢復
     if (st.phase === 'squeegee') {
@@ -534,6 +539,8 @@ export function mountWorkbench(root, { plates, inks, medium, onBack, onFinish })
   return {
     destroy() {
       cancelAnimationFrame(raf);
+      sfx.scrape(false, 0);
+      sfx.dryer(0);
       window.removeEventListener('keydown', onKey);
       root.innerHTML = '';
     }

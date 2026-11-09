@@ -1,4 +1,4 @@
-import { S, PW, GN } from '../../engine/geometry.js';
+import { W, S, PW, GN, CELL } from '../../engine/geometry.js';
 import { CROSSES } from '../../plates/registration.js';
 
 // 工作桌的器材位置（紙張座標）
@@ -51,9 +51,17 @@ export function buildMarks(rgb) {
   return c;
 }
 
-// 刮印時網上的墨：哪裡刮過、沾到多少下層未乾的墨、塞網時變暗
+// 刮印時網上的墨：哪裡刮過、沾到多少下層未乾的墨、塞網時變暗。
+// 刮印紀錄只有 GN × GN 格，直接放大會糊；這裡在每個邏輯像素重新取樣，
+// 用門檻切出俐落的邊，邊緣內側再壓一道細細的深色。
+const MESH_RES = W;              // 網上墨的解析度：每個邏輯像素一點
+const INK_EDGE = [0.06, 0.16];   // 墨量在這個區間內由無到有（決定邊緣位置與銳利度）
+const RIM = 0.45;                // 邊緣內側壓暗的程度
+
 export function createMeshInk() {
-  const c = canvas(GN), x = c.getContext('2d'), img = x.createImageData(GN, GN);
+  const c = canvas(MESH_RES), x = c.getContext('2d'), img = x.createImageData(MESH_RES, MESH_RES);
+  const n = GN * GN, cr = new Float32Array(n), cg = new Float32Array(n), cb = new Float32Array(n);
+  const ca = new Float32Array(n), ci = new Float32Array(n);
   let dirty = true;
   return {
     canvas: c,
@@ -61,29 +69,46 @@ export function createMeshInk() {
     // base：這層墨色（已含塞網變暗），picks：[{ rgb, pick }] 各下層的沾染
     update(grid, base, picks, C) {
       if (!dirty) return;
-      const d = img.data;
-      for (let k = 0; k < GN * GN; k++) {
-        const j = k * 4;
+      // 先算每一格的顏色與不透明度
+      for (let k = 0; k < n; k++) {
         let r = base[0], g = base[1], b = base[2], pMax = 0;
         for (const s of picks) {
           const p = Math.min(1, s.pick[k]) * C.pickShow;
           if (p > pMax) pMax = p;
           r = r + (s.rgb[0] - r) * p; g = g + (s.rgb[1] - g) * p; b = b + (s.rgb[2] - b) * p;
         }
-        // 刮過範圍的內緣稍微壓暗，淺色墨在灰色網面上也看得出刮到哪裡
-        const gi = Math.min(1, grid.ink[k]), x0 = k % GN, y0 = (k / GN) | 0;
-        const nb = (dx, dy) => {
-          const xx = x0 + dx, yy = y0 + dy;
-          return xx < 0 || yy < 0 || xx >= GN || yy >= GN ? gi : Math.min(1, grid.ink[yy * GN + xx]);
-        };
-        const edge = Math.min(1, Math.max(0, gi - (nb(-1, 0) + nb(1, 0) + nb(0, -1) + nb(0, 1)) / 4) * 3);
-        const dk = 0.4 * edge;
-        r += (21 - r) * dk; g += (21 - g) * dk; b += (20 - b) * dk;
-        d[j] = r; d[j + 1] = g; d[j + 2] = b;
-        d[j + 3] = gi * (120 + 80 * pMax + 55 * edge);
+        cr[k] = r; cg[k] = g; cb[k] = b; ca[k] = (120 + 80 * pMax) / 255;
+        ci[k] = Math.min(1, grid.ink[k]);
       }
-      x.putImageData(img, 0, 0);
+      // 再在網面範圍內逐點雙線性取樣
+      const d = img.data, k0 = MESH_RES / W / CELL;
+      for (let Y = MESH.y; Y < MESH.y + MESH.h; Y++) {
+        let gy = (Y + 0.5) * k0 - 0.5;
+        gy = gy < 0 ? 0 : gy > GN - 1.001 ? GN - 1.001 : gy;
+        const iy = gy | 0, ty = gy - iy;
+        for (let X = MESH.x; X < MESH.x + MESH.w; X++) {
+          let gx = (X + 0.5) * k0 - 0.5;
+          gx = gx < 0 ? 0 : gx > GN - 1.001 ? GN - 1.001 : gx;
+          const ix = gx | 0, tx = gx - ix, k = iy * GN + ix;
+          const j = (Y * MESH_RES + X) * 4;
+          const i00 = ci[k], i10 = ci[k + 1], i01 = ci[k + GN], i11 = ci[k + GN + 1];
+          if (i00 < INK_EDGE[0] && i10 < INK_EDGE[0] && i01 < INK_EDGE[0] && i11 < INK_EDGE[0]) { d[j + 3] = 0; continue; }
+          const w00 = (1 - tx) * (1 - ty), w10 = tx * (1 - ty), w01 = (1 - tx) * ty, w11 = tx * ty;
+          const ink = i00 * w00 + i10 * w10 + i01 * w01 + i11 * w11;
+          const cov = smooth(INK_EDGE[0], INK_EDGE[1], ink);
+          if (cov <= 0) { d[j + 3] = 0; continue; }
+          // 剛過門檻的地方就是邊緣：壓暗一點，淺色墨也看得出刮到哪裡
+          const dk = RIM * (1 - smooth(INK_EDGE[1], INK_EDGE[1] + 0.22, ink)), lt = 1 - dk;
+          const k1 = k + 1, k2 = k + GN, k3 = k2 + 1;
+          d[j] = (cr[k] * w00 + cr[k1] * w10 + cr[k2] * w01 + cr[k3] * w11) * lt + 21 * dk;
+          d[j + 1] = (cg[k] * w00 + cg[k1] * w10 + cg[k2] * w01 + cg[k3] * w11) * lt + 21 * dk;
+          d[j + 2] = (cb[k] * w00 + cb[k1] * w10 + cb[k2] * w01 + cb[k3] * w11) * lt + 20 * dk;
+          d[j + 3] = 255 * (ca[k] * w00 + ca[k1] * w10 + ca[k2] * w01 + ca[k3] * w11) * cov * (0.55 + 0.45 * Math.min(1, ink)) + 60 * dk;
+        }
+      }
+      x.putImageData(img, 0, 0, MESH.x, MESH.y, MESH.w, MESH.h);
       dirty = false;
     }
   };
 }
+const smooth = (a, b, v) => { const t = Math.min(1, Math.max(0, (v - a) / (b - a))); return t * t * (3 - 2 * t); };

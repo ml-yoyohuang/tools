@@ -46,3 +46,9 @@ button:focus-visible { outline: 1px solid var(--ink); outline-offset: 4px; }
 }
 .text:hover:not(:disabled) { color: var(--ink); }
 .text:disabled { color: var(--faint); cursor: default; }
+
+/* 聲音開關：固定在右上角，不佔版面 */
+.sound-toggle {
+  position: fixed; top: 20px; right: 24px; z-index: 20;
+  font-size: 12px; letter-spacing: .08em;
+}

@@ -4,11 +4,13 @@ import { makeMixedInk } from '../../engine/ink.js';
 import { flatComposite } from '../../engine/flat.js';
 import { PALETTE, inkById } from '../../inks.js';
 import { createMixer } from './mixer.js';
+import * as sfx from '../../audio/sound.js';
 
 // 選墨水：左邊是試配色（版直接以墨色相乘，不算瑕疵），右邊是各層的墨與色卡。
 // 切到調墨台時，左邊換成調墨台，可以混出自己的墨。
 const PREVIEW_PAPER = [245, 240, 230];
 const SLAB = [226, 224, 219];   // 調墨台台面
+const SLAB_RES = 480;           // 調墨台畫面解析度（墨的比例只有 96 格，畫的時候逐點取樣，邊緣才俐落）
 const two = n => String(n).padStart(2, '0');
 const css = rgb => `rgb(${rgb.join(',')})`;
 
@@ -22,7 +24,7 @@ export function mountInks(root, { plates, session, onNext, onBack }) {
   stage.className = 'stage';
   stage.innerHTML = `<div class="sheet">
       <canvas class="paper" width="${PW}" height="${PW}"></canvas>
-      <canvas class="slab" width="96" height="96" hidden></canvas>
+      <canvas class="slab" width="${SLAB_RES}" height="${SLAB_RES}" hidden></canvas>
     </div>`;
   root.appendChild(stage);
   const preview = stage.querySelector('.paper'), slab = stage.querySelector('.slab');
@@ -126,7 +128,7 @@ export function mountInks(root, { plates, session, onNext, onBack }) {
 
   /* ───────── 調墨台 ───────── */
   const mixer = createMixer({ diffuse: C.mixDiffuse, radius: C.mixRadius });
-  const slabImg = sctx.createImageData(mixer.size, mixer.size);
+  const slabImg = sctx.createImageData(SLAB_RES, SLAB_RES);
   const mix = { a: inkById('lemon'), b: inkById('ultra'), ratio: 0.5, slot: 0 };
   let evenEl = null, evenFill = null;
 
@@ -178,6 +180,7 @@ export function mountInks(root, { plates, session, onNext, onBack }) {
       mix.slot = mix.slot ? 0 : 1;
       renderMix();
       repour();
+      sfx.pour(0.35);
     };
     panel.querySelector('.palette').appendChild(
       chipGrid(PALETTE, pickForMix, ink => ({ selected: mix[mix.slot ? 'b' : 'a'].id === ink.id })));
@@ -213,12 +216,15 @@ export function mountInks(root, { plates, session, onNext, onBack }) {
     const r = slab.getBoundingClientRect();
     return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height];
   };
-  slab.addEventListener('pointerdown', e => { last = toUnit(e); slab.setPointerCapture(e.pointerId); });
+  let lastT = 0;
+  slab.addEventListener('pointerdown', e => { last = toUnit(e); lastT = e.timeStamp; slab.setPointerCapture(e.pointerId); });
   slab.addEventListener('pointermove', e => {
     if (!last) return;
     const p = toUnit(e);
     mixer.stir(last[0], last[1], p[0], p[1]);
-    last = p;
+    const dt = Math.max(1, e.timeStamp - lastT);
+    sfx.stir(Math.hypot(p[0] - last[0], p[1] - last[1]) / dt * 1000);
+    last = p; lastT = e.timeStamp;
     drawSlab();
   });
   const up = () => { last = null; };

@@ -4,6 +4,7 @@ import { flatComposite } from '../../engine/flat.js';
 import { PALETTE } from '../../inks.js';
 import { designToSheet, sheetMaskWithMarks, plateFromDesignMask } from '../../plates/registration.js';
 import { screenCanvas, maskCanvas, drawScreen, MESH } from './screen.js';
+import * as sfx from '../../audio/sound.js';
 
 // 製版：選色數、自動分色、調各層門檻；然後曬版、沖水。
 //   image：提供圖片站傳來的圖 { id, name, colors, canvas, data, w, h }
@@ -194,6 +195,24 @@ export function mountPlates(root, { image, state, onDone, onBack }) {
     sheet.classList.add('bare');
     renderBurn();
     drawBurn(0);
+    later(runStep, 600);
+  }
+
+  // 曬版自動進行：曝光 → 沖水 → 下一層，不需要再按按鈕
+  const later = (fn, ms) => setTimeout(() => { if (alive && burn) fn(); }, ms);
+  function runStep() {
+    burn.anim = { step: burn.step, t0: performance.now() };
+    if (burn.step === 'expose') sfx.expose(EXPOSE_MS / 1000); else sfx.wash(WASH_MS / 1000);
+    tick();
+  }
+  // 整個曬版的進度：每一層有曝光、沖水兩步
+  function setProgress(p) {
+    const total = burn.plates.length * 2, done = burn.i * 2 + (burn.step === 'wash' ? 1 : 0);
+    const v = Math.min(1, (done + p) / total);
+    const fill = panel.querySelector('.burn-progress .bar span'), pct = panel.querySelector('.burn-progress .pct');
+    if (fill) fill.style.width = `${v * 100}%`;
+    if (pct) pct.textContent = `${Math.round(v * 100)}%`;
+    panel.querySelector('.burn-progress')?.setAttribute('aria-valuenow', String(Math.round(v * 100)));
   }
 
   function renderBurn() {
@@ -209,18 +228,15 @@ export function mountPlates(root, { image, state, onDone, onBack }) {
       </ol>
       <div class="act">
         <p class="hint"></p>
-        <button class="primary" type="button"></button>
+        <div class="dry burn-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+          <div class="row"><span class="what"></span><span class="pct">0%</span></div>
+          <div class="bar"><span></span></div>
+        </div>
       </div>`;
-    const hint = panel.querySelector('.hint'), pb = panel.querySelector('.primary');
-    hint.textContent = burn.step === 'expose' ? '底片蓋在塗好感光乳劑的網框上。' : '光照不到的地方還沒硬化，用水沖掉。';
-    pb.textContent = burn.step === 'expose' ? '曝光' : '沖水';
-    pb.disabled = !!burn.anim;
-    pb.addEventListener('click', () => {
-      if (burn.anim) return;
-      burn.anim = { step: burn.step, t0: performance.now() };
-      pb.disabled = true;
-      tick();
-    });
+    panel.querySelector('.hint').textContent =
+      burn.step === 'expose' ? '底片蓋在塗好感光乳劑的網框上。' : '光照不到的地方還沒硬化，用水沖掉。';
+    panel.querySelector('.burn-progress .what').textContent = burn.step === 'expose' ? '曝光' : '沖水';
+    setProgress(0);
   }
 
   function tick() {
@@ -228,12 +244,12 @@ export function mountPlates(root, { image, state, onDone, onBack }) {
     const { step, t0 } = burn.anim;
     const p = Math.min(1, (performance.now() - t0) / (step === 'expose' ? EXPOSE_MS : WASH_MS));
     drawBurn(p);
+    setProgress(p);
     if (p < 1) { requestAnimationFrame(tick); return; }
     burn.anim = null;
-    if (step === 'expose') { burn.step = 'wash'; drawBurn(0); renderBurn(); return; }
+    if (step === 'expose') { burn.step = 'wash'; drawBurn(0); renderBurn(); later(runStep, 350); return; }
     if (burn.i < burn.plates.length - 1) {
-      burn.i++; burn.step = 'expose';
-      setTimeout(() => { if (!alive) return; drawBurn(0); renderBurn(); }, 450);
+      later(() => { burn.i++; burn.step = 'expose'; drawBurn(0); renderBurn(); later(runStep, 400); }, 450);
       return;
     }
     setTimeout(() => { if (alive) onDone({ plates: burn.plates, inks: inks.slice() }); }, 650);
