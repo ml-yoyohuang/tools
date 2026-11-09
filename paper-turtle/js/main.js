@@ -13,7 +13,6 @@ const coarse = matchMedia('(pointer: coarse)').matches;
 const phone = () => innerWidth <= 860;
 const damp = (x, goal, k, dt) => x + (goal - x) * (1 - Math.exp(-k * dt));
 
-const DEFAULT_PLACE = '大安森林公園';
 // Always tomorrow, in the visitor's local time zone
 function tomorrow() {
   const d = new Date();
@@ -447,7 +446,6 @@ removeBtn.addEventListener('click', () => {
 
 /* ---------- Step 1 ---------- */
 
-placeEl.value = DEFAULT_PLACE;
 dateEl.value = tomorrow();
 
 function syncDate() {
@@ -473,6 +471,23 @@ function grow() {
   wishEl.style.height = 'auto';
   wishEl.style.height = `${wishEl.scrollHeight}px`;
 }
+
+// The × beside each text field shows only while it holds text
+function syncClear() {
+  for (const el of [placeEl, wishEl]) el.parentElement.classList.toggle('filled', el.value.length > 0);
+}
+
+for (const btn of form.querySelectorAll('.clear')) {
+  const field = document.getElementById(btn.dataset.for);
+  btn.addEventListener('pointerdown', (e) => e.preventDefault()); // keep the keyboard up on phones
+  btn.addEventListener('click', (e) => {
+    e.preventDefault(); // inside a <label>: don't let the click fall through to the field
+    field.value = '';
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+    field.focus();
+  });
+}
+form.addEventListener('input', syncClear);
 
 placeEl.addEventListener('input', validate);
 placeEl.addEventListener('keydown', (e) => {
@@ -727,14 +742,14 @@ function recordBurn(wish, n) {
   return total;
 }
 
-const tallyText = (total) => `累計焚化 ${cnCount(total)}隻`;
+const tallyText = (total) => `累計燒化 ${cnCount(total)}隻`;
 
 function tallyBurned(n) {
   const total = recordBurn(wishEl.value.trim(), n);
   tallyBtn.hidden = !total; // storage blocked: leave the finale as it is
   if (!total) return;
   tallyBtn.querySelector('span').textContent = tallyText(total);
-  tallyBtn.setAttribute('aria-label', `${tallyText(total)}，觀看已焚化的紙龜`);
+  tallyBtn.setAttribute('aria-label', `${tallyText(total)}，觀看已燒化的紙龜`);
 }
 
 function finish(time) {
@@ -928,6 +943,7 @@ $('#again').addEventListener('click', () => {
   resetTurtles(turtles.length);
   grow();
   validate();
+  syncClear();
   setStep('intro');
 });
 
@@ -1260,6 +1276,7 @@ resize();
 Object.assign(view, goal);
 grow();
 validate();
+syncClear();
 requestAnimationFrame(tick);
 if (location.hash === '#gallery' && !openGallery(true)) clearHash();
 document.fonts.ready.then(() => requestAnimationFrame(() => body.classList.remove('loading')));

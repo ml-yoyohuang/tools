@@ -235,6 +235,51 @@ body.loading .panel { opacity: 0 !important; }
 
 .field textarea { overflow: hidden; min-height: 32px; }
 
+/* Clear: a hairline cross on the first line, only while there is text */
+
+.control { position: relative; }
+.control input,
+.control textarea { padding-right: 36px; }
+
+.clear {
+  position: absolute;
+  top: 0;
+  right: -8px;
+  width: 40px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s var(--ease), visibility 0s linear 0.4s;
+}
+
+.clear::before,
+.clear::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 13px;
+  height: 1px;
+  margin-left: -6.5px;
+  background: var(--mute);
+  transition: background 0.3s var(--ease);
+}
+
+.clear::before { transform: rotate(45deg); }
+.clear::after { transform: rotate(-45deg); }
+.clear:hover::before,
+.clear:hover::after { background: var(--ivory); }
+
+.control.filled .clear {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.4s var(--ease), visibility 0s;
+}
+
 .date { position: relative; }
 
 .date input {
@@ -659,6 +704,7 @@ body.fading .veil { opacity: 1; transition-duration: 0.5s; }
   .field { padding: 14px 0 9px; }
   .field > span { margin-bottom: 6px; }
   .field input, .field textarea, .date output { font-size: 18px; }
+  .clear { height: 29px; }
   .ignite { margin-top: 28px; height: 52px; }
 
   .f-wish { font-size: clamp(22px, 6.4vw, 30px); }
