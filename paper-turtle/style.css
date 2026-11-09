@@ -141,6 +141,12 @@ body[data-step="intro"] .add {
 
 body.loading .add { opacity: 0 !important; }
 
+/* Its pair, one place to the left: a single drawn stroke */
+.remove { right: calc(var(--edge-x) + 42px); }
+.remove::after { display: none; }
+.remove:hover::before { transform: scaleX(0.6); }
+.remove:disabled::before { transform: none; }
+
 /* ---------- Panels ---------- */
 
 .panel {
@@ -603,6 +609,13 @@ body[data-step="gallery"].dragging #gl { cursor: grabbing; }
 }
 
 .flame.lit::before { transform: scale(1.35); }
+
+/* 發爐: the flame in your hand roars up */
+body.blaze .flame { width: 34px; height: 64px; margin: -60px 0 0 -17px; }
+body.blaze .flame::after {
+  inset: -80px;
+  background: radial-gradient(circle 78px at 50% 54%, rgba(255, 150, 60, 0.42), rgba(255, 120, 40, 0));
+}
 
 @keyframes flicker {
   from { transform: scale(1, 1) skewX(-2deg); }

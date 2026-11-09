@@ -395,6 +395,9 @@ export function colorPaperTextures(size, hex) {
 
 const NOISE = /* glsl */ `
 uniform sampler2D uBurn;
+uniform sampler2D uGlowMap;
+uniform float uGlow;
+uniform vec3 uGlowColor, uEdgeLo, uEdgeHi;
 uniform float uTime;
 uniform float uReveal;
 float tHash(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
@@ -415,11 +418,29 @@ const BURN_CORE = /* glsl */ `
   if (tB > 0.8) discard;
 `;
 
-export function createPaperMaterial(textures, burnTex) {
+const NO_GLOW = (() => {
+  const t = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
+  t.needsUpdate = true;
+  return t;
+})();
+const EDGE_LO = [1.0, 0.22, 0.03];
+const EDGE_HI = [1.0, 0.72, 0.32];
+
+/**
+ * look: { edge: [[lo], [hi]] colour of the burn front, glowColor } for the magic papers.
+ * textures.glow, when present, is a mask that shines with uGlow (driven per frame).
+ */
+export function createPaperMaterial(textures, burnTex, look = {}) {
+  const edge = look.edge || [EDGE_LO, EDGE_HI];
   const uniforms = {
     uBurn: { value: burnTex },
     uTime: { value: 0 },
     uReveal: { value: 0 },
+    uGlowMap: { value: textures.glow || NO_GLOW },
+    uGlow: { value: 0 },
+    uGlowColor: { value: new THREE.Color(...(look.glowColor || [0, 0, 0])) },
+    uEdgeLo: { value: new THREE.Color(...edge[0]) },
+    uEdgeHi: { value: new THREE.Color(...edge[1]) },
   };
   const mat = new THREE.MeshStandardMaterial({
     map: textures.map,
@@ -453,9 +474,11 @@ ${BURN_CORE}
   float tFl = 0.7 + 0.3 * sin(uTime * 14.0 + tN * 31.0);
   float tGlow = smoothstep(0.52, 0.72, tB) * (1.0 - smoothstep(0.77, 0.8, tB));
   float tHot = smoothstep(0.68, 0.79, tB);
-  totalEmissiveRadiance += mix(vec3(1.0, 0.22, 0.03), vec3(1.0, 0.72, 0.32), tHot) * tGlow * (2.0 + 3.5 * tHot) * tFl;
+  totalEmissiveRadiance += mix(uEdgeLo, uEdgeHi, tHot) * tGlow * (2.0 + 3.5 * tHot) * tFl;
   float tEmb = pow(tFbm(vMapUv * 120.0 + vec2(uTime * 0.25, -uTime * 0.18)), 5.0);
-  totalEmissiveRadiance += vec3(1.0, 0.3, 0.05) * tChar * (1.0 - tGlow) * tEmb * 9.0 * step(tRaw, 0.985);
+  totalEmissiveRadiance += mix(uEdgeLo, uEdgeHi, 0.12) * tChar * (1.0 - tGlow) * tEmb * 9.0 * step(tRaw, 0.985);
+  // Magic papers: strokes, stars or creases light up, and go out as the paper chars
+  totalEmissiveRadiance += uGlowColor * texture2D(uGlowMap, vMapUv).r * uGlow * (1.0 - tScorch) * uReveal;
   float tEdge = 1.0 - smoothstep(0.0, 0.05, uReveal * 1.25 - 0.05 - tR);
   totalEmissiveRadiance += vec3(1.0, 0.74, 0.36) * tEdge * 2.4 * step(uReveal, 0.999);`
       );
