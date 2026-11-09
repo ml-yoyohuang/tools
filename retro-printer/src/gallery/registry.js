@@ -4,6 +4,7 @@ import { CHARACTERS_A } from './generators/characters.js';
 import { CHARACTERS_B } from './generators/characters2.js';
 import { SKY_A } from './generators/sky.js';
 import { SKY_B } from './generators/sky2.js';
+import { MUSIC_A } from './generators/music.js';
 
 export const THEMES = {
   geometric: '幾何',
@@ -19,7 +20,8 @@ export const GENERATORS = [
   ...CHARACTERS_A,   // 第 1 批：★ 可愛角色（上）
   ...CHARACTERS_B,   // 第 2 批：★ 可愛角色（下）
   ...SKY_A,          // 第 3 批：★ 天空與宇宙（上）
-  ...SKY_B           // 第 4 批：★ 天空與宇宙（下）
+  ...SKY_B,          // 第 4 批：★ 天空與宇宙（下）
+  ...MUSIC_A         // 第 5 批：★ 音樂與娛樂（上）
 ];
 
 export const generatorById = id => GENERATORS.find(g => g.id === id);
