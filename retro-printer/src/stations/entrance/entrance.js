@@ -17,6 +17,7 @@ const THUMB = 360;
 
 export function mountEntrance(root, { works, library, onStart, onOpenWork, onPickItem }) {
   root.classList.add('full');
+  document.documentElement.classList.add('no-scroll');
   const page = document.createElement('div');
   page.className = 'entrance';
   page.innerHTML = `
@@ -234,6 +235,7 @@ export function mountEntrance(root, { works, library, onStart, onOpenWork, onPic
       window.removeEventListener('mouseout', onOut);
       cancelAnimationFrame(raf);
       root.classList.remove('full');
+      document.documentElement.classList.remove('no-scroll');
       root.innerHTML = '';
     }
   };

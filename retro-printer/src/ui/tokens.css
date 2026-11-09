@@ -18,7 +18,9 @@ body {
   color: var(--ink);
   font-family: var(--font);
   -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
+  min-height: 100vh; min-height: 100dvh;   /* 手機：100vh 含網址列，會多出一段空白 */
+  /* 操作時不會不小心圈選到文字；輸入框照常可選 */
+  -webkit-user-select: none; user-select: none;
 }
 
 button { font: inherit; cursor: pointer; }
@@ -44,7 +46,17 @@ button:focus-visible { outline: 1px solid var(--ink); outline-offset: 4px; }
   background: none; border: 0; padding: 0; font-size: 13px; color: var(--mute);
   letter-spacing: .06em; transition: color .2s;
 }
-.text:hover:not(:disabled) { color: var(--ink); }
+.text:hover:not(:disabled) { color: var(--ink); text-decoration-color: currentColor; }
+/* 次要按鈕：一條細細的底線，看得出可以點，但不搶主要按鈕 */
+.text {
+  text-decoration: underline; text-decoration-thickness: 1px;
+  text-decoration-color: var(--faint); text-underline-offset: 5px;
+  transition: color .2s, text-decoration-color .2s;
+}
+.text:disabled { text-decoration-color: transparent; }
+input, textarea { -webkit-user-select: text; user-select: text; }
+/* 入口固定一屏：頁面本身不捲動 */
+html.no-scroll, html.no-scroll body { height: 100%; overflow: hidden; }
 .text:disabled { color: var(--faint); cursor: default; }
 
 /* 聲音開關：固定在右上角，浮在內容上；米白底讓它在任何顏色上都看得清楚 */
