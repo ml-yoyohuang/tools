@@ -2,7 +2,7 @@ import { PALETTE, paletteByHue, START_COLORS, inkById } from '../../inks.js';
 import { wallItems } from '../../works.js';
 import { drawWallPrint } from '../../gallery/render.js';
 
-// 入口：滿版的兩面牆，左半邊是作品、右半邊是色票；標準字與「開始製作」浮在正中間。
+// 入口：滿版的一面牆，左半邊是作品、右半邊是色票；標準字與「開始製作」浮在正中間。
 // 畫面不捲動；卡片不夠填滿時重複排列，邊緣的卡片直接被切掉，像一整面牆。
 //   works          這次瀏覽的作品
 //   library        這次進入口隨機生成的圖庫作品（見 src/gallery/library.js）
@@ -20,8 +20,10 @@ export function mountEntrance(root, { works, library, onStart, onOpenWork, onPic
   const page = document.createElement('div');
   page.className = 'entrance';
   page.innerHTML = `
-    <section class="half ent-works" aria-label="作品"><div class="work-wall"></div></section>
-    <section class="half ent-inks" aria-label="墨水"><div class="ink-wall"></div></section>
+    <div class="ent-wall">
+      <section class="half ent-works" aria-label="作品"><div class="work-wall"></div></section>
+      <section class="half ent-inks" aria-label="墨水"><div class="ink-wall"></div></section>
+    </div>
     <div class="ent-center">
       <h1 class="ent-logo" aria-label="INK INK｜印印">
         <img class="paper" src="assets/logo-paper.png" alt="">
@@ -140,6 +142,33 @@ export function mountEntrance(root, { works, library, onStart, onOpenWork, onPic
   const onResize = () => { clearTimeout(resizeT); resizeT = setTimeout(fill, 120); };
   window.addEventListener('resize', onResize);
 
+  /* ───────── 視差 ───────── */
+  // 桌機上滑鼠移動時，整面牆往反方向微微滑動，露出藏在螢幕外的那一圈卡片；標準字與按鈕不動。
+  const DEPTH = 24;                       // 最大位移 px，需小於 --bleed
+  const wall = page.querySelector('.ent-wall');
+  const fine = matchMedia('(hover: hover) and (pointer: fine)');
+  const still = matchMedia('(prefers-reduced-motion: reduce)');
+  let tx = 0, ty = 0, cx = 0, cy = 0, raf = 0;
+  const place = () => {
+    wall.style.transform = cx || cy ? `translate3d(${(-cx * DEPTH).toFixed(2)}px, ${(-cy * DEPTH).toFixed(2)}px, 0)` : '';
+  };
+  const tick = () => {
+    cx += (tx - cx) * 0.08; cy += (ty - cy) * 0.08;
+    if (Math.abs(tx - cx) < 0.002 && Math.abs(ty - cy) < 0.002) { cx = tx; cy = ty; raf = 0; }
+    else raf = requestAnimationFrame(tick);
+    place();
+  };
+  const follow = () => { if (!raf) raf = requestAnimationFrame(tick); };
+  const onMove = e => {
+    if (!fine.matches || still.matches || e.pointerType !== 'mouse') return;
+    tx = e.clientX / innerWidth * 2 - 1;
+    ty = e.clientY / innerHeight * 2 - 1;
+    follow();
+  };
+  const onOut = e => { if (!e.relatedTarget) { tx = ty = 0; follow(); } };   // 滑鼠離開視窗：慢慢回到中間
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('mouseout', onOut);
+
   // 圖庫作品在背景一張一張畫；重複的卡片直接複製畫好的那張
   let timer = 0;
   const next = () => {
@@ -158,6 +187,9 @@ export function mountEntrance(root, { works, library, onStart, onOpenWork, onPic
       clearTimeout(timer);
       clearTimeout(resizeT);
       window.removeEventListener('resize', onResize);
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('mouseout', onOut);
+      cancelAnimationFrame(raf);
       root.classList.remove('full');
       root.innerHTML = '';
     }

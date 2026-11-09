@@ -1,13 +1,21 @@
 /* 入口：滿版、不捲動。左半邊作品、右半邊色票，「開始製作」浮在正中間 */
 .app.full { display: block; max-width: none; min-height: 0; margin: 0; padding: 0; }
 
+/* 作品與色票是同一面牆：整面一起移動，中間只是一般的間距，不裁切任何卡片。
+   整面牆固定斜 3 度，像隨手貼上的樣張；牆的外緣比畫面多鋪一圈（--bleed），
+   旋轉後角落才不會露空，桌機上隨滑鼠微微移動時也才有東西可以露出來 */
 .entrance {
-  display: grid; grid-template-columns: 1fr 1fr;
-  height: 100vh; height: 100dvh; overflow: hidden;
+  --bleed: 110px;
+  position: relative; height: 100vh; height: 100dvh; overflow: hidden;
 }
-.entrance .half { position: relative; overflow: hidden; min-width: 0; }
-.entrance .ent-works { padding: 36px 32px 0; }
-.entrance .ent-inks { padding: 28px 24px 0; }
+.entrance .ent-wall {
+  position: absolute; inset: calc(-1 * var(--bleed));
+  display: grid; grid-template-columns: 1fr 1fr; column-gap: 28px;
+  rotate: -3deg;
+}
+.entrance .half { position: relative; min-width: 0; }
+.entrance .ent-works > div { padding: 0; }
+.entrance .ent-inks > div { padding: 0; }
 
 .entrance .ent-center {
   position: fixed; left: 50%; top: 50%; z-index: 15;
@@ -91,12 +99,16 @@
 .wall-item .cap .spec { font-size: 11px; color: var(--mute); letter-spacing: .04em; font-variant-numeric: tabular-nums; }
 
 @media (max-width: 900px) {
-  .entrance { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+  .entrance .ent-wall { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; column-gap: 0; }
+  .entrance .half { overflow: hidden; }
   .entrance .start { height: 52px; padding: 0 40px; font-size: 14px; letter-spacing: .12em; }
   .entrance .ent-center { gap: 16px; }
   .entrance .ent-logo { width: 270px; }
-  .entrance .ent-works { padding: 20px 16px 0; }
-  .entrance .ent-inks { padding: 16px 16px 0; }
+  .entrance { --bleed: 48px; }
+  /* 手機上牆只是氣氛：拿掉作品標題與色名（按鈕的無障礙標籤仍有完整名稱） */
+  .wall-item .cap, .ink-card figcaption { display: none; }
+  .entrance .ent-works > div { padding: 0; }
+  .entrance .ent-inks > div { padding: 0; }
   .ink-wall { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 14px 10px; }
   .work-wall { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 24px 14px; }
 }
