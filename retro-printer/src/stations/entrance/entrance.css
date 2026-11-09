@@ -49,17 +49,29 @@
   .entrance .ent-logo img { animation: none; }
 }
 .entrance .start {
+  position: relative; isolation: isolate; overflow: hidden;
   height: 68px; padding: 0 64px; font-size: 16px; letter-spacing: .18em;
   box-shadow: 0 1px 1px rgba(20, 18, 14, .08), 0 18px 40px -18px rgba(20, 18, 14, .55);
-  transition: transform .25s, box-shadow .25s, background .2s, color .2s;
+  transition: transform .25s, box-shadow .25s, color .2s .08s;
+}
+/* 滑過時的底色像刮板走過一樣，由上往下刷下來；離開時往下收走 */
+.entrance .start::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: var(--hover-bg, #000);
+  transform: scaleY(0); transform-origin: 50% 100%;
+  transition: transform .38s cubic-bezier(.4, 0, .2, 1);
 }
 /* 跟作品、色票一樣：滑過時微微浮起；配色每次進入口隨機（見 START_COLORS） */
 @media (hover: hover) {
   .entrance .start:hover {
     transform: translateY(-3px);
-    background: var(--hover-bg, #000); color: var(--hover-fg, var(--ink-on));
+    background: var(--ink); color: var(--hover-fg, var(--ink-on));
     box-shadow: 0 1px 1px rgba(20, 18, 14, .08), 0 26px 48px -18px rgba(20, 18, 14, .6);
   }
+  .entrance .start:hover::before { transform: scaleY(1); transform-origin: 50% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .entrance .start::before { transition: none; }
 }
 .entrance .start:active { transform: none; }
 
