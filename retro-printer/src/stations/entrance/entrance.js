@@ -1,8 +1,8 @@
-import { PALETTE, paletteByHue } from '../../inks.js';
+import { PALETTE, paletteByHue, START_COLORS, inkById } from '../../inks.js';
 import { wallItems } from '../../works.js';
 import { drawWallPrint } from '../../gallery/render.js';
 
-// 入口：滿版的兩面牆，左半邊是作品、右半邊是色票，「開始製作」浮在正中間。
+// 入口：滿版的兩面牆，左半邊是作品、右半邊是色票；標準字與「開始製作」浮在正中間。
 // 畫面不捲動；卡片不夠填滿時重複排列，邊緣的卡片直接被切掉，像一整面牆。
 //   works          這次瀏覽的作品
 //   library        這次進入口隨機生成的圖庫作品（見 src/gallery/library.js）
@@ -22,9 +22,22 @@ export function mountEntrance(root, { works, library, onStart, onOpenWork, onPic
   page.innerHTML = `
     <section class="half ent-works" aria-label="作品"><div class="work-wall"></div></section>
     <section class="half ent-inks" aria-label="墨水"><div class="ink-wall"></div></section>
-    <button class="primary start" type="button">開始製作</button>`;
+    <div class="ent-center">
+      <h1 class="ent-logo" aria-label="INK INK｜印印">
+        <img class="paper" src="assets/logo-paper.png" alt="">
+        <img class="ink" src="assets/logo-gold.png" alt="">
+        <img class="ink" src="assets/logo-pink.png" alt="">
+        <img class="ink" src="assets/logo-ultra.png" alt="">
+      </h1>
+      <button class="primary start" type="button">開始製作</button>
+    </div>`;
   root.appendChild(page);
-  page.querySelector('.start').addEventListener('click', onStart);
+  const start = page.querySelector('.start');
+  start.addEventListener('click', onStart);
+  // 滑過時的配色：每次進入口從色票組成的模板裡隨機抽一組
+  const [bg, fg] = START_COLORS[Math.floor(Math.random() * START_COLORS.length)];
+  start.style.setProperty('--hover-bg', css(inkById(bg).rgb));
+  start.style.setProperty('--hover-fg', css(inkById(fg).rgb));
 
   /* ───────── 墨水牆 ───────── */
   const inks = paletteByHue(PALETTE);

@@ -9,21 +9,51 @@
 .entrance .ent-works { padding: 36px 32px 0; }
 .entrance .ent-inks { padding: 28px 24px 0; }
 
-.entrance .start {
+.entrance .ent-center {
   position: fixed; left: 50%; top: 50%; z-index: 15;
   transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 24px;
+}
+/* 標準字：先放下一張斬型紙（字的外框形狀），再一色一色印上去；金黃那一色帶著十字標記，直接印在牆上。
+   每一色是一張去背圖，以相乘疊在紙上；出現時由上往下刮過，像刮板走過一次 */
+.entrance .ent-logo {
+  position: relative; margin: 0; width: 425px; aspect-ratio: 1052 / 616;
+  isolation: isolate;
+}
+.entrance .ent-logo img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.entrance .ent-logo .paper {
+  filter: drop-shadow(0 1px 1px rgba(20, 18, 14, .08)) drop-shadow(0 16px 18px rgba(20, 18, 14, .22));
+  animation: logo-paper .55s cubic-bezier(.2, .7, .3, 1) .15s both;
+}
+.entrance .ent-logo .ink { mix-blend-mode: multiply; animation: logo-pull .5s cubic-bezier(.4, 0, .2, 1) both; }
+.entrance .ent-logo .ink:nth-of-type(2) { animation-delay: .85s; }
+.entrance .ent-logo .ink:nth-of-type(3) { animation-delay: 1.4s; }
+.entrance .ent-logo .ink:nth-of-type(4) { animation-delay: 1.95s; }
+@keyframes logo-paper {
+  from { opacity: 0; transform: translateY(-14px) scale(1.03); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes logo-pull {
+  from { clip-path: inset(0 0 100% 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .entrance .ent-logo img { animation: none; }
+}
+.entrance .start {
   height: 68px; padding: 0 64px; font-size: 16px; letter-spacing: .18em;
   box-shadow: 0 1px 1px rgba(20, 18, 14, .08), 0 18px 40px -18px rgba(20, 18, 14, .55);
-  transition: transform .25s, box-shadow .25s, background .2s;
+  transition: transform .25s, box-shadow .25s, background .2s, color .2s;
 }
-/* 跟作品、色票一樣：滑過時微微浮起 */
+/* 跟作品、色票一樣：滑過時微微浮起；配色每次進入口隨機（見 START_COLORS） */
 @media (hover: hover) {
   .entrance .start:hover {
-    transform: translate(-50%, calc(-50% - 3px));
+    transform: translateY(-3px);
+    background: var(--hover-bg, #000); color: var(--hover-fg, var(--ink-on));
     box-shadow: 0 1px 1px rgba(20, 18, 14, .08), 0 26px 48px -18px rgba(20, 18, 14, .6);
   }
 }
-.entrance .start:active { transform: translate(-50%, -50%); }
+.entrance .start:active { transform: none; }
 
 /* 墨水牆：像色票本 */
 .ink-wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 20px 14px; }
@@ -63,6 +93,8 @@
 @media (max-width: 900px) {
   .entrance { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
   .entrance .start { height: 52px; padding: 0 40px; font-size: 14px; letter-spacing: .12em; }
+  .entrance .ent-center { gap: 16px; }
+  .entrance .ent-logo { width: 270px; }
   .entrance .ent-works { padding: 20px 16px 0; }
   .entrance .ent-inks { padding: 16px 16px 0; }
   .ink-wall { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 14px 10px; }

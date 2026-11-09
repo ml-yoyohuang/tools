@@ -11,7 +11,7 @@ import { textureField } from '../src/engine/texture.js';
 import { MEDIA } from '../src/state.js';
 import { mixRGB, makeMixedInk } from '../src/engine/ink.js';
 import { prepare, computeMasks, suggestInks, computeTones, computeLayers, defaultModes, halftone } from '../src/engine/separate.js';
-import { PALETTE } from '../src/inks.js';
+import { PALETTE, START_COLORS, inkById } from '../src/inks.js';
 import { fitRect, panBy, shuffle } from '../src/plates/fit.js';
 import { addWork, wallItems } from '../src/works.js';
 import { paletteByHue } from '../src/inks.js';
@@ -453,6 +453,16 @@ test('圖庫：★ 主題出現比例較高，每件作品的組合合法', () =
     assert.ok(it.offsets.slice(1).every(([x, y]) => Math.hypot(x, y) <= 3.01));
   }
   assert.equal(items.filter(i => i.badge).length, 2);
+});
+
+test('入口按鈕配色：每一組都取自色票，文字對比至少 4.5', () => {
+  const lum = c => { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); };
+  for (const [bg, fg] of START_COLORS) {
+    const a = inkById(bg), b = inkById(fg);
+    assert.ok(a && b, `${bg} / ${fg} 不在色票裡`);
+    const x = lum(a.rgb), y = lum(b.rgb), r = (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+    assert.ok(r >= 4.5, `${a.name} 底 ${b.name} 字 對比 ${r.toFixed(2)}`);
+  }
 });
 
 /* ───────── 執行 ───────── */

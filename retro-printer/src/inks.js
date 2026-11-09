@@ -57,3 +57,11 @@ export function paletteByHue(list = PALETTE) {
 }
 
 export const DEFAULT_INKS = [inkById('pink'), inkById('blue')];
+
+// 入口「開始製作」滑過時的配色：[底色, 字色]，都取自色票，文字對比至少 4.5（WCAG AA）。
+// 每次進入口隨機抽一組。
+export const START_COLORS = [
+  ['lemon', 'navy'], ['gold', 'navy'], ['mint', 'deepteal'], ['deepteal', 'mint'],
+  ['navy', 'lemon'], ['aqua', 'navy'], ['black', 'gold'], ['grass', 'black'],
+  ['mint', 'wine'], ['orange', 'navy'], ['pink', 'black']
+];
