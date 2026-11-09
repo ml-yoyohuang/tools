@@ -7,6 +7,7 @@ import { SKY_B } from './generators/sky2.js';
 import { MUSIC_A } from './generators/music.js';
 import { MUSIC_B } from './generators/music2.js';
 import { PATTERNS } from './generators/patterns.js';
+import { NATURE } from './generators/nature.js';
 
 export const THEMES = {
   geometric: '幾何',
@@ -16,7 +17,8 @@ export const THEMES = {
   characters: '可愛角色',
   music: '音樂與娛樂',
   abstract: '抽象與有機',
-  symbols: '符號與圖示'
+  symbols: '符號與圖示',
+  ocean: '海洋'
 };
 
 export const GENERATORS = [
@@ -27,7 +29,8 @@ export const GENERATORS = [
   ...SKY_B,          // 第 4 批：★ 天空與宇宙（下）
   ...MUSIC_A,        // 第 5 批：★ 音樂與娛樂（上）
   ...MUSIC_B,        // 第 6 批：★ 音樂與娛樂（下）
-  ...PATTERNS        // 第 7 批：幾何、抽象與有機、符號與圖示
+  ...PATTERNS,       // 第 7 批：幾何、抽象與有機、符號與圖示
+  ...NATURE          // 第 8 批：植物與自然、食物與甜點、海洋
 ];
 
 export const generatorById = id => GENERATORS.find(g => g.id === id);
