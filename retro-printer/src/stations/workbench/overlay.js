@@ -70,8 +70,17 @@ export function createMeshInk() {
           if (p > pMax) pMax = p;
           r = r + (s.rgb[0] - r) * p; g = g + (s.rgb[1] - g) * p; b = b + (s.rgb[2] - b) * p;
         }
+        // 刮過範圍的內緣稍微壓暗，淺色墨在灰色網面上也看得出刮到哪裡
+        const gi = Math.min(1, grid.ink[k]), x0 = k % GN, y0 = (k / GN) | 0;
+        const nb = (dx, dy) => {
+          const xx = x0 + dx, yy = y0 + dy;
+          return xx < 0 || yy < 0 || xx >= GN || yy >= GN ? gi : Math.min(1, grid.ink[yy * GN + xx]);
+        };
+        const edge = Math.min(1, Math.max(0, gi - (nb(-1, 0) + nb(1, 0) + nb(0, -1) + nb(0, 1)) / 4) * 3);
+        const dk = 0.4 * edge;
+        r += (21 - r) * dk; g += (21 - g) * dk; b += (20 - b) * dk;
         d[j] = r; d[j + 1] = g; d[j + 2] = b;
-        d[j + 3] = Math.min(1, grid.ink[k]) * (120 + 80 * pMax);
+        d[j + 3] = gi * (120 + 80 * pMax + 55 * edge);
       }
       x.putImageData(img, 0, 0);
       dirty = false;
