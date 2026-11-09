@@ -224,11 +224,23 @@ export const starjar = {
     d.quadraticCurveTo(18, 94, 30, 94); d.lineTo(70, 94); d.quadraticCurveTo(82, 94, 82, 84); d.lineTo(82, 52);
     d.quadraticCurveTo(82, 38, 70, 32); d.lineTo(70, 26); d.stroke();
     roundRect(o.n > 2 ? L(1) : d, 26, 14, 48, 12, 3);                   // 蓋子
-    // 罐裡的星星
-    for (let i = 0; i < 26; i++) {
-      const x = range(r, 26, 74), y = range(r, 50, 88);
-      const layer = L(Math.floor(r() * Math.max(1, o.n - (o.n > 2 ? 1 : 0))));
-      star5(layer, x, y, range(r, 3, 5), undefined, r() * TAU);
+    // 罐裡的金平糖：數量少、顆粒大，圓胖的六角星（尖角用粗圓角收圓）
+    const konpeito = (x, cx, cy, R, rot) => {
+      x.beginPath();
+      for (let k = 0; k < 12; k++) {
+        const a = rot + k * Math.PI / 6, d = k % 2 ? R * 0.58 : R * 0.86;
+        x[k ? 'lineTo' : 'moveTo'](cx + Math.cos(a) * d, cy + Math.sin(a) * d);
+      }
+      x.closePath();
+      x.save(); x.lineJoin = 'round'; x.lineWidth = R * 0.34; x.stroke(); x.restore();
+      x.fill();
+    };
+    const kinds = Math.max(1, o.n - (o.n > 2 ? 1 : 0)), placed = [];
+    for (let tries = 0; placed.length < 9 && tries < 200; tries++) {
+      const R = range(r, 6.2, 8), x = range(r, 24 + R, 76 - R), y = range(r, 48 + R, 90 - R);
+      if (placed.some(p => Math.hypot(p.x - x, p.y - y) < p.R + R + 1.5)) continue;
+      placed.push({ x, y, R });
+      konpeito(L(placed.length % kinds), x, y, R, r() * TAU);   // 輪流用各色，每一層都有糖
     }
     // 標籤上的小星星與反光
     if (o.n > 1) { d.lineWidth = 1.6; d.beginPath(); d.moveTo(25, 46); d.lineTo(25, 64); d.stroke(); }

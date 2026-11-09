@@ -24,19 +24,85 @@
 <meta name="twitter:description" content="挑墨水、製版，親手刮印，掀開網框看見自己的絹印作品。">
 <meta name="twitter:image" content="https://ml-yoyohuang.github.io/tools/retro-printer/assets/og.png?v=74967fdb59bb">
 <meta name="twitter:image:alt" content="INK INK｜印印：米白紙上以金黃、螢光粉、群青三色疊印的圓與方塊，重疊處相乘變深，帶有飛白與錯位，四角有十字對位標記">
-<link rel="stylesheet" href="src/ui/tokens.css">
-<link rel="stylesheet" href="src/ui/layout.css">
-<link rel="stylesheet" href="src/ui/panel.css">
-<link rel="stylesheet" href="src/stations/entrance/entrance.css">
-<link rel="stylesheet" href="src/stations/source/source.css">
-<link rel="stylesheet" href="src/stations/plates/plates.css">
-<link rel="stylesheet" href="src/stations/inks/inks.css">
-<link rel="stylesheet" href="src/stations/media/media.css">
-<link rel="stylesheet" href="src/stations/workbench/workbench.css">
-<link rel="stylesheet" href="src/stations/finish/finish.css">
+<!-- stamp -->
+<!-- stamp：由 scripts/stamp.mjs 產生，請勿手改 -->
+<link rel="stylesheet" href="src/ui/tokens.css?v=79cfed3190">
+<link rel="stylesheet" href="src/ui/layout.css?v=dfec6231c8">
+<link rel="stylesheet" href="src/ui/panel.css?v=1d259753b5">
+<link rel="stylesheet" href="src/stations/entrance/entrance.css?v=8c113a51d0">
+<link rel="stylesheet" href="src/stations/source/source.css?v=769a40fdfe">
+<link rel="stylesheet" href="src/stations/plates/plates.css?v=4d05d3e329">
+<link rel="stylesheet" href="src/stations/inks/inks.css?v=2a07942ac0">
+<link rel="stylesheet" href="src/stations/media/media.css?v=beb78edcb3">
+<link rel="stylesheet" href="src/stations/workbench/workbench.css?v=090ccf6974">
+<link rel="stylesheet" href="src/stations/finish/finish.css?v=6fe126dbfe">
+<script type="importmap">{
+ "imports": {
+  "./src/audio/sound.js": "./src/audio/sound.js?v=003fb4616c",
+  "./src/config.js": "./src/config.js?v=6358b47f52",
+  "./src/dev/tune.js": "./src/dev/tune.js?v=60d1c34cfd",
+  "./src/engine/color.js": "./src/engine/color.js?v=888633c74e",
+  "./src/engine/composite.js": "./src/engine/composite.js?v=a8d31512ad",
+  "./src/engine/flat.js": "./src/engine/flat.js?v=2bb2816a1c",
+  "./src/engine/geometry.js": "./src/engine/geometry.js?v=0d663c2885",
+  "./src/engine/ink.js": "./src/engine/ink.js?v=915b359ae7",
+  "./src/engine/mask.js": "./src/engine/mask.js?v=05bac744c3",
+  "./src/engine/noise.js": "./src/engine/noise.js?v=0d9f42541e",
+  "./src/engine/print.js": "./src/engine/print.js?v=9d1d35cb43",
+  "./src/engine/random.js": "./src/engine/random.js?v=bce4a00ea7",
+  "./src/engine/record.js": "./src/engine/record.js?v=efd9539d92",
+  "./src/engine/render.js": "./src/engine/render.js?v=3ae79ed371",
+  "./src/engine/separate.js": "./src/engine/separate.js?v=ebc7d42a31",
+  "./src/engine/texture.js": "./src/engine/texture.js?v=3791c1b272",
+  "./src/engine/util.js": "./src/engine/util.js?v=08f1d992cf",
+  "./src/engine/wet.js": "./src/engine/wet.js?v=41342933f2",
+  "./src/gallery/compose.js": "./src/gallery/compose.js?v=5cc09206bf",
+  "./src/gallery/generators/characters.js": "./src/gallery/generators/characters.js?v=afb76293db",
+  "./src/gallery/generators/characters2.js": "./src/gallery/generators/characters2.js?v=f34d7df60a",
+  "./src/gallery/generators/classic.js": "./src/gallery/generators/classic.js?v=eabf71bf68",
+  "./src/gallery/generators/misc.js": "./src/gallery/generators/misc.js?v=513f2e8a7c",
+  "./src/gallery/generators/music.js": "./src/gallery/generators/music.js?v=bcce60c2c6",
+  "./src/gallery/generators/music2.js": "./src/gallery/generators/music2.js?v=acdf983bd6",
+  "./src/gallery/generators/nature.js": "./src/gallery/generators/nature.js?v=554c66850f",
+  "./src/gallery/generators/parts.js": "./src/gallery/generators/parts.js?v=3d7110e10e",
+  "./src/gallery/generators/patterns.js": "./src/gallery/generators/patterns.js?v=040ad89db4",
+  "./src/gallery/generators/sky.js": "./src/gallery/generators/sky.js?v=f2fc77c6ee",
+  "./src/gallery/generators/sky2.js": "./src/gallery/generators/sky2.js?v=f096c2ba51",
+  "./src/gallery/library.js": "./src/gallery/library.js?v=6c6df978ec",
+  "./src/gallery/pick.js": "./src/gallery/pick.js?v=cd2848cbd9",
+  "./src/gallery/registry.js": "./src/gallery/registry.js?v=93b4b73e9f",
+  "./src/gallery/render.js": "./src/gallery/render.js?v=69ea756dff",
+  "./src/gallery/review.js": "./src/gallery/review.js?v=68c66e6553",
+  "./src/inks.js": "./src/inks.js?v=0ebc8a1180",
+  "./src/main.js": "./src/main.js?v=9c44d270d2",
+  "./src/plates/fit.js": "./src/plates/fit.js?v=00cf8ca57e",
+  "./src/plates/library.js": "./src/plates/library.js?v=65355c93c2",
+  "./src/plates/registration.js": "./src/plates/registration.js?v=88097b593a",
+  "./src/plates/samples.js": "./src/plates/samples.js?v=7fd52def4b",
+  "./src/plates/test-plate.js": "./src/plates/test-plate.js?v=b99f5605cf",
+  "./src/state.js": "./src/state.js?v=ee7b3585fc",
+  "./src/stations/entrance/entrance.js": "./src/stations/entrance/entrance.js?v=66ac59ce0a",
+  "./src/stations/finish/finish.js": "./src/stations/finish/finish.js?v=47ffbfb11e",
+  "./src/stations/inks/inks.js": "./src/stations/inks/inks.js?v=8573d69251",
+  "./src/stations/inks/mixer.js": "./src/stations/inks/mixer.js?v=3317fcd054",
+  "./src/stations/media/media.js": "./src/stations/media/media.js?v=fc132ddb48",
+  "./src/stations/media/sample.js": "./src/stations/media/sample.js?v=a18c561815",
+  "./src/stations/plates/gallery.js": "./src/stations/plates/gallery.js?v=c715d28295",
+  "./src/stations/plates/plates.js": "./src/stations/plates/plates.js?v=9a34008c51",
+  "./src/stations/plates/screen.js": "./src/stations/plates/screen.js?v=5bdc063362",
+  "./src/stations/source/source.js": "./src/stations/source/source.js?v=372ad16f03",
+  "./src/stations/workbench/overlay.js": "./src/stations/workbench/overlay.js?v=18fbf5b76e",
+  "./src/stations/workbench/workbench.js": "./src/stations/workbench/workbench.js?v=3c1ca44338",
+  "./src/ui/display.js": "./src/ui/display.js?v=3bb60bb0b9",
+  "./src/ui/panel.js": "./src/ui/panel.js?v=ee72e85cc0",
+  "./src/ui/sound-toggle.js": "./src/ui/sound-toggle.js?v=2a4fa120ff",
+  "./src/works.js": "./src/works.js?v=3697beed8c"
+ }
+}</script>
+<script type="module" src="src/main.js?v=9c44d270d2"></script>
+<!-- /stamp -->
 </head>
 <body>
 <main class="app" id="app"></main>
-<script type="module" src="src/main.js"></script>
 </body>
 </html>
