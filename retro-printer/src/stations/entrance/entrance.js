@@ -94,6 +94,12 @@ export function mountEntrance(root, { works, library, onStart, onOpenWork, onPic
       title.textContent = `${w.label.no}　${w.label.title}`;
       spec.textContent = w.label.line.replace(/^絹印・/, '');
       tag('你的作品');
+      if (!copy) {
+        b.dataset.own = '1';
+        // 剛完成、第一次回到入口的作品：等標準字印完後，像剛印好的紙一樣落到牆上
+        if (!w.onWall) b.classList.add('fresh');
+        w.onWall = true;
+      }
       b.setAttribute('aria-label', `你的作品 ${w.label.no} ${w.label.title}`);
       b.addEventListener('click', () => onOpenWork(w));
     } else {
@@ -121,9 +127,11 @@ export function mountEntrance(root, { works, library, onStart, onOpenWork, onPic
 
   /* ───────── 填滿畫面 ───────── */
   // 依目前的格線欄數與列高，算出需要幾張卡片才能鋪滿，不夠就從頭重複
+  // 作品牆重複時只用圖庫作品，自己的作品只出現一次
+  const libOnly = items.filter(it => it.kind === 'library');
   const fills = [
-    { wall: page.querySelector('.work-wall'), list: items, make: workCard, n: 0 },
-    { wall: inkWall, list: inks, make: inkCard, n: 0 }
+    { wall: page.querySelector('.work-wall'), list: items, repeat: libOnly.length ? libOnly : items, make: workCard, n: 0 },
+    { wall: inkWall, list: inks, repeat: inks, make: inkCard, n: 0 }
   ];
   function fill() {
     for (const F of fills) {
@@ -134,7 +142,7 @@ export function mountEntrance(root, { works, library, onStart, onOpenWork, onPic
       const gap = parseFloat(getComputedStyle(F.wall).rowGap) || 0;
       const rowH = first.getBoundingClientRect().height + gap;
       const need = cols * (Math.ceil(F.wall.parentElement.clientHeight / rowH) + 1);
-      while (F.n < need) { F.wall.appendChild(F.make(F.list[F.n % F.list.length], true)); F.n++; }
+      while (F.n < need) { F.wall.appendChild(F.make(F.repeat[(F.n - F.list.length) % F.repeat.length], true)); F.n++; }
     }
   }
   fill();
@@ -168,6 +176,41 @@ export function mountEntrance(root, { works, library, onStart, onOpenWork, onPic
   const onOut = e => { if (!e.relatedTarget) { tx = ty = 0; follow(); } };   // 滑鼠離開視窗：慢慢回到中間
   window.addEventListener('pointermove', onMove);
   window.addEventListener('mouseout', onOut);
+
+  /* ───────── 自己的作品放在看得到的地方 ───────── */
+  // 牆是斜的、又會跟著滑鼠移動，固定第幾格常會被切到。這裡找出完整落在畫面內
+  // （預留視差的位移）、又不會被標準字與按鈕擋到的位置，最新的作品放在離畫面中心最近的那一格。
+  function placeOwn() {
+    const workWall = fills[0].wall, own = [...workWall.querySelectorAll('[data-own]')];
+    if (!own.length) return;
+    const vw = innerWidth, vh = innerHeight, M = fine.matches ? DEPTH + 12 : 8, pad = 24;
+    const c = page.querySelector('.ent-center').getBoundingClientRect();
+    const arr = [...workWall.children];
+    // 看得到的比例：卡片落在「畫面內縮 M」範圍裡的面積比例
+    // 手機上作品牆只佔上半部、會裁掉超出的部分，可見範圍要再跟它取交集
+    const half = workWall.parentElement;
+    const clip = getComputedStyle(half).overflow === 'hidden' ? half.getBoundingClientRect() : { left: -1e9, top: -1e9, right: 1e9, bottom: 1e9 };
+    const L = Math.max(M, clip.left), T = Math.max(M, clip.top), R = Math.min(vw - M, clip.right), B = Math.min(vh - M, clip.bottom);
+    const shown = r => {
+      const w = Math.max(0, Math.min(r.right, R) - Math.max(r.left, L));
+      const h = Math.max(0, Math.min(r.bottom, B) - Math.max(r.top, T));
+      return (w * h) / ((r.right - r.left) * (r.bottom - r.top));
+    };
+    // 完整看得到的位置優先，依離畫面中心的距離排；不夠時再用看得到最多的位置
+    const slots = arr.map((el, i) => ({ i, r: el.getBoundingClientRect() }))
+      .filter(({ r }) => r.right < c.left - pad || r.left > c.right + pad || r.bottom < c.top - pad || r.top > c.bottom + pad)
+      .map(s => ({ ...s, v: shown(s.r), d: Math.hypot((s.r.left + s.r.right) / 2 - vw / 2, (s.r.top + s.r.bottom) / 2 - vh / 2) }))
+      .filter(s => s.v > 0.5)
+      .sort((a, b) => (b.v > 0.99) - (a.v > 0.99) || (a.v > 0.99 ? a.d - b.d : b.v - a.v || a.d - b.d));
+    own.forEach((el, k) => {
+      const s = slots[k];
+      if (!s) return;
+      const from = arr.indexOf(el);
+      [arr[s.i], arr[from]] = [arr[from], arr[s.i]];
+    });
+    arr.forEach(el => workWall.appendChild(el));
+  }
+  placeOwn();
 
   // 圖庫作品在背景一張一張畫；重複的卡片直接複製畫好的那張
   let timer = 0;

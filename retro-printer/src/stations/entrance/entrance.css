@@ -75,6 +75,20 @@
 }
 .entrance .start:active { transform: none; }
 
+/* 剛完成的作品：標準字印完後，像剛印好的紙一樣輕輕落到牆上 */
+.wall-item.fresh { animation: fresh-drop .7s cubic-bezier(.2, .7, .3, 1) 2.5s both; }
+.wall-item.fresh .frame { animation: fresh-shadow .7s cubic-bezier(.2, .7, .3, 1) 2.5s both; }
+@keyframes fresh-drop {
+  from { opacity: 0; translate: 0 -26px; scale: 1.06; }
+  to { opacity: 1; translate: 0 0; scale: 1; }
+}
+@keyframes fresh-shadow {
+  from { box-shadow: 0 1px 1px rgba(20, 18, 14, .05), 0 40px 60px -26px rgba(20, 18, 14, .45); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wall-item.fresh, .wall-item.fresh .frame { animation: none; }
+}
+
 /* 墨水牆：像色票本 */
 .ink-wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 20px 14px; }
 .ink-card { margin: 0; background: #FBF9F4; box-shadow: 0 1px 1px rgba(20, 18, 14, .05); transition: transform .25s, box-shadow .25s; }
