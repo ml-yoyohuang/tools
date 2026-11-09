@@ -2,6 +2,7 @@ import { PW } from '../../engine/geometry.js';
 import { textureField } from '../../engine/texture.js';
 import { MEDIA_LIST } from '../../state.js';
 import { samplePrint } from './sample.js';
+import { showCanvas } from '../../ui/display.js';
 
 // 選媒材：左邊是選取媒材的試印，右邊是媒材卡片。
 const THUMB = 112;
@@ -12,7 +13,10 @@ export function mountMedia(root, { plates, inks, selected = 'paper', onPick, onB
   stage.innerHTML = `<div class="sheet"><canvas class="paper" width="${PW}" height="${PW}"></canvas></div>`;
   root.appendChild(stage);
   const sheet = stage.querySelector('.sheet'), paper = stage.querySelector('.paper');
-  const pctx = paper.getContext('2d');
+  // 全尺寸畫在 full 上，再依顯示大小縮好畫到畫面（細織紋才不會出現疊紋）
+  const full = document.createElement('canvas');
+  full.width = full.height = PW;
+  const pctx = full.getContext('2d');
 
   const panel = document.createElement('aside');
   panel.className = 'panel';
@@ -59,6 +63,7 @@ export function mountMedia(root, { plates, inks, selected = 'paper', onPick, onB
     const img = pctx.createImageData(PW, PW);
     img.data.set(printOf(current));
     pctx.putImageData(img, 0, 0);
+    showCanvas(full, paper);
   }
 
   panel.querySelector('.primary').addEventListener('click', () => onPick(current));

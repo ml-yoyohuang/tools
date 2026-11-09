@@ -61,3 +61,19 @@ button:focus-visible { outline: 1px solid var(--ink); outline-offset: 4px; }
 }
 .sound-toggle.off { color: var(--mute); }
 .sound-toggle svg { flex: none; display: block; }
+
+/* 手機：點按時不出現瀏覽器預設的閃爍；工作桌上拖動時不觸發下拉重新整理 */
+* { -webkit-tap-highlight-color: transparent; }
+html.no-overscroll, html.no-overscroll body { overscroll-behavior: none; }
+.ghost { -webkit-touch-callout: none; }
+
+@media (max-width: 900px) {
+  /* 聲音開關只留圖示，避開瀏海 */
+  .sound-toggle {
+    top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right));
+    width: 36px; height: 36px; padding: 0; justify-content: center;
+  }
+  .sound-toggle span {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+}

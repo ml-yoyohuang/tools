@@ -63,3 +63,32 @@
   .panel { gap: 32px; }
   .layer-num { font-size: 56px; }
 }
+.steps li .of { display: none; }
+
+/* 手機：工作桌塞進一個螢幕高。網框在上，下面是精簡的側欄，主要按鈕固定在最下方 */
+@media (max-width: 900px) {
+  .app.bench {
+    height: 100vh; height: 100dvh; min-height: 0;
+    grid-template-rows: auto minmax(0, 1fr); gap: 16px;
+    padding: 60px 16px 16px; padding-bottom: max(16px, env(safe-area-inset-bottom));
+    overflow: hidden; align-items: stretch;
+  }
+  .app.bench .sheet { align-self: start; }
+  .app.bench .sheet { width: min(100%, calc(100vh - 400px)); width: min(100%, calc(100dvh - 400px)); }
+  .app.bench .panel { gap: 12px; min-height: 0; }
+  .app.bench .panel h1 { display: none; }
+  .app.bench .layer { align-items: center; }
+  .app.bench .layer-num { font-size: 30px; line-height: 1; }
+  .app.bench .layer-num small { font-size: 12px; }
+  /* 五個步驟收成一行，只留目前這一步 */
+  .app.bench .steps { border: 0; }
+  .app.bench .steps li { display: none; padding: 0; border: 0; font-size: 15px; }
+  .app.bench .steps li.now { display: grid; grid-template-columns: 64px 1fr; }
+  .app.bench .steps li .of { display: inline; color: var(--faint); }
+  .app.bench .act { gap: 12px; margin-top: auto; }
+  .app.bench .hint { font-size: 13px; line-height: 1.6; min-height: 3.2em; }
+  .app.bench .tool { min-height: 54px; }
+  .app.bench .dry .bar { margin: 8px 0 10px; }
+  .app.bench .dry .ghost { height: 40px; }
+  .app.bench .foot { justify-content: space-between; }
+}

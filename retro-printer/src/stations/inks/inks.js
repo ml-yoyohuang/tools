@@ -217,7 +217,7 @@ export function mountInks(root, { plates, session, onNext, onBack }) {
     return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height];
   };
   let lastT = 0;
-  slab.addEventListener('pointerdown', e => { last = toUnit(e); lastT = e.timeStamp; slab.setPointerCapture(e.pointerId); });
+  slab.addEventListener('pointerdown', e => { last = toUnit(e); lastT = e.timeStamp; try { slab.setPointerCapture(e.pointerId); } catch {} });
   slab.addEventListener('pointermove', e => {
     if (!last) return;
     const p = toUnit(e);

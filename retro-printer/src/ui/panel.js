@@ -44,13 +44,14 @@ export function createPanel(root, { title, back }) {
   const dryOn = e => {
     onDryer(true);
     r.dryer.classList.add('on');
-    if (e.pointerId !== undefined) r.dryer.setPointerCapture(e.pointerId);
+    if (e.pointerId !== undefined) try { r.dryer.setPointerCapture(e.pointerId); } catch {}
   };
   const dryOff = () => { onDryer(false); r.dryer.classList.remove('on'); };
   r.dryer.addEventListener('pointerdown', dryOn);
   r.dryer.addEventListener('pointerup', dryOff);
   r.dryer.addEventListener('pointercancel', dryOff);
   r.dryer.addEventListener('lostpointercapture', dryOff);
+  r.dryer.addEventListener('contextmenu', e => e.preventDefault());   // 手機長按不跳出選單
   r.dryer.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); dryOn(e); } });
   r.dryer.addEventListener('keyup', dryOff);
   r.dryer.addEventListener('blur', dryOff);
@@ -70,7 +71,8 @@ export function createPanel(root, { title, back }) {
     setSteps(names, current) {
       r.steps.innerHTML = names.map((name, i) => {
         const cls = i < current ? 'done' : i === current ? 'now' : '';
-        return `<li class="${cls}"><span class="n">${two(i + 1)}</span><span>${name}</span></li>`;
+        // of：「/ 05」只在手機版的精簡步驟列顯示
+        return `<li class="${cls}"><span class="n">${two(i + 1)}<span class="of"> / ${two(names.length)}</span></span><span>${name}</span></li>`;
       }).join('');
     },
     setHint(text) { r.hint.textContent = text; },

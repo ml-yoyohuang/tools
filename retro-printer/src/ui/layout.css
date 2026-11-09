@@ -25,6 +25,6 @@
 }
 
 @media (max-width: 900px) {
-  .app { grid-template-columns: 1fr; gap: 40px; padding: 24px 16px 48px; align-items: start; }
+  .app { grid-template-columns: 1fr; gap: 40px; padding: 60px 16px 48px; align-items: start; }
   .sheet { margin: 0 auto; }
 }

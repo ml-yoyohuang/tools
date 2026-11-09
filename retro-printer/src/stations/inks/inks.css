@@ -16,7 +16,7 @@
   font-size: 15px;
   transition: border-color .2s;
 }
-.layer-row:hover { border-color: var(--faint); }
+@media (hover: hover) { .layer-row:hover { border-color: var(--faint); } }
 .layer-row[aria-checked="true"] { border-color: var(--ink); }
 .layer-row .sw { width: 20px; height: 20px; }
 .layer-row .lv { font-size: 12px; color: var(--mute); letter-spacing: .04em; }
@@ -30,7 +30,7 @@
   outline-offset: 2px;
   transition: transform .15s;
 }
-.chip:hover { transform: scale(1.08); }
+@media (hover: hover) { .chip:hover { transform: scale(1.08); } }
 .chip.on { outline: 1px solid var(--ink); outline-offset: 3px; }
 
 .inks-panel .act { gap: 16px; }
@@ -49,3 +49,5 @@
   touch-action: none;
 }
 .sheet .slab:active { cursor: grabbing; }
+
+@media (max-width: 900px) { .layer-row { margin: 0 -8px; } }

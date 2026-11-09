@@ -8,6 +8,7 @@ import { createPanel } from '../../ui/panel.js';
 import { FRAME, MESH, buildFrame, buildMarks, createMeshInk } from './overlay.js';
 import { DESIGN } from '../../plates/registration.js';
 import * as sfx from '../../audio/sound.js';
+import { showCanvas } from '../../ui/display.js';
 
 // 工作桌：一層一層 放下網框 → 倒墨 → 刮印 → 掀框 → 等乾。
 // 每層都經過同樣的五步，最後一層的第五步為「完成」。
@@ -34,8 +35,14 @@ export function mountWorkbench(root, { plates, inks, medium, onBack, onFinish })
       <canvas class="overlay" width="${PW}" height="${PW}"></canvas>
     </div>`;
   root.appendChild(stage);
+  // 成品畫在全尺寸的 full 上（完成時交出這張）；畫面上的 paper 依顯示大小縮好再畫
   const paper = stage.querySelector('.paper'), overlay = stage.querySelector('.overlay');
-  const pctx = paper.getContext('2d'), octx = overlay.getContext('2d');
+  const full = document.createElement('canvas');
+  full.width = full.height = PW;
+  const pctx = full.getContext('2d'), octx = overlay.getContext('2d');
+  // 手機上工作桌塞進一個螢幕高，操作時不用捲動，也不會觸發下拉重新整理
+  root.classList.add('bench');
+  document.documentElement.classList.add('no-overscroll');
   stage.querySelector('.sheet').style.background = `rgb(${medium.paper.join(',')})`;
 
   const panel = createPanel(root, { title: '工作桌', back: onBack ? '換媒材' : null });
@@ -73,7 +80,7 @@ export function mountWorkbench(root, { plates, inks, medium, onBack, onFinish })
     else if (ph === 'ink') autoPour(bar().w / 2);
     else if (ph === 'squeegee' && layer().rec.strokes > 0) lift();
     else if (ph === 'dry') nextLayer();
-    else if (ph === 'done' && onFinish) { onFinish(paper); return; }
+    else if (ph === 'done' && onFinish) { onFinish(full); return; }
     ui();
   }
 
@@ -172,6 +179,7 @@ export function mountWorkbench(root, { plates, inks, medium, onBack, onFinish })
     const img = pctx.createImageData(PW, PW);
     img.data.set(compositeJob(job, C));
     pctx.putImageData(img, 0, 0);
+    showCanvas(full, paper);
   }
 
   /* ───────── 刮印 ───────── */
@@ -182,13 +190,16 @@ export function mountWorkbench(root, { plates, inks, medium, onBack, onFinish })
       y: clamp(p.y, MESH.y + oy + 6, MESH.y + oy + MESH.h - 6)
     };
   }
+  // 刮印速度以螢幕上的實際移動來算：紙張顯示得比 600px 小時（例如手機），
+  // 同樣的手指速度換算到紙張座標會變快，所以把時間依比例拉長，桌機和手機的手感才一致
+  const strokeTime = t => t * W / Math.max(1, overlay.getBoundingClientRect().width);
   const underLayers = () => job.layers.slice(0, st.L).map(l => ({ wet: l.wet, cover: l.cover }));
 
   function beginStroke(p, t) {
     const l = layer();
     st.pressing = true;
     st.inkPlaced = false;
-    startStroke(l.rec, bladePos(p), t);
+    startStroke(l.rec, bladePos(p), strokeTime(t));
     st.lastMoveT = t;
     for (let j = 0; j < st.L; j++) l.wetAt[j] = Math.max(l.wetAt[j], job.layers[j].wet);
     ui();
@@ -196,7 +207,7 @@ export function mountWorkbench(root, { plates, inks, medium, onBack, onFinish })
 
   function continueStroke(p, t) {
     const l = layer();
-    if (moveStroke(l.rec, bladePos(p), t, underLayers(), C)) {
+    if (moveStroke(l.rec, bladePos(p), strokeTime(t), underLayers(), C)) {
       st.vShow = l.rec.v;
       st.lastMoveT = t;
       meshInk.markDirty();
@@ -475,20 +486,21 @@ export function mountWorkbench(root, { plates, inks, medium, onBack, onFinish })
     layer().offset = [clamp(x, -C.maxOffset, C.maxOffset), clamp(y, -C.maxOffset, C.maxOffset)];
   };
 
+  const capture = e => { try { overlay.setPointerCapture(e.pointerId); } catch {} };
   overlay.addEventListener('pointerdown', e => {
     if (st.busy) return;
     const p = toL(e);
     st.hover = p;
     if (st.phase === 'place' && inFrame(p)) {
-      st.drag = { p, o: layer().offset.slice(), moved: false };
-      overlay.setPointerCapture(e.pointerId);
+      st.drag = { p, o: layer().offset.slice(), moved: false, slop: e.pointerType === 'mouse' ? 3 : 9 };
+      capture(e);
       ui();
     } else if (st.phase === 'ink' && inFrame(p) && !st.pour.auto) {
-      overlay.setPointerCapture(e.pointerId);
+      capture(e);
       st.pour.drag = true;
       pourTo(along(p.x));
     } else if (st.phase === 'squeegee') {
-      overlay.setPointerCapture(e.pointerId);
+      capture(e);
       beginStroke(p, e.timeStamp);
     }
   });
@@ -496,7 +508,7 @@ export function mountWorkbench(root, { plates, inks, medium, onBack, onFinish })
     const p = toL(e);
     st.hover = p;
     if (st.drag) {
-      if (Math.hypot(p.x - st.drag.p.x, p.y - st.drag.p.y) > 3) st.drag.moved = true;
+      if (Math.hypot(p.x - st.drag.p.x, p.y - st.drag.p.y) > st.drag.slop) st.drag.moved = true;
       if (st.drag.moved) setOffset(st.drag.o[0] + p.x - st.drag.p.x, st.drag.o[1] + p.y - st.drag.p.y);
     } else if (st.pour.drag) {
       pourTo(along(p.x));
@@ -528,6 +540,9 @@ export function mountWorkbench(root, { plates, inks, medium, onBack, onFinish })
     e.preventDefault();
   };
   window.addEventListener('keydown', onKey);
+  let resizeT = 0;
+  const onResize = () => { clearTimeout(resizeT); resizeT = setTimeout(() => showCanvas(full, paper), 120); };
+  window.addEventListener('resize', onResize);
 
   panel.onDryer(on => { st.dryer = on; });
   panel.onPrimary(primaryAction);
@@ -542,6 +557,10 @@ export function mountWorkbench(root, { plates, inks, medium, onBack, onFinish })
       sfx.scrape(false, 0);
       sfx.dryer(0);
       window.removeEventListener('keydown', onKey);
+      window.removeEventListener('resize', onResize);
+      clearTimeout(resizeT);
+      root.classList.remove('bench');
+      document.documentElement.classList.remove('no-overscroll');
       root.innerHTML = '';
     }
   };
