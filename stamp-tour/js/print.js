@@ -86,7 +86,9 @@ export function effectsOf(L) {
   const excess = L.taps > I.GOOD_MAX ? Math.min(1, (L.taps - I.GOOD_MAX) / I.EXCESS_RANGE) : 0;
   const short = L.hold < P.SHORT_S ? clamp((P.SHORT_S - L.hold) / (P.SHORT_S - P.DECIDE_MS / 1000), 0, 1) : 0;
   const long = L.hold > P.LONG_S ? Math.min(1, (L.hold - P.LONG_S) / P.LONG_RANGE_S) : 0;
-  return { starve, excess, short, long, spread: Math.min(1.4, excess * 1.1 + long * .9) };
+  // 壓力圈還沒滿：從剛蓋下（1）一路退到滿圈（0），飛白跟著變少
+  const under = clamp((P.LONG_S - L.hold) / (P.LONG_S - P.DECIDE_MS / 1000), 0, 1) ** P.UNDER_CURVE;
+  return { starve, excess, short, long, under, spread: Math.min(1.4, excess * 1.1 + long * .9) };
 }
 
 export function genMask(L) {
@@ -106,7 +108,8 @@ export function genMask(L) {
 
   const T = CONFIG.TEXTURE;
   const fx = effectsOf(L); L.fx = fx;
-  const { starve, excess, short, long, spread } = fx;
+  const { starve, excess, short, long, under, spread } = fx;
+  const underVoid = under * CONFIG.PRESS.UNDER_SPECKLE;
   const r = Math.round(PR * (1.6 + excess * 7 + long * 5));
   const v = boxBlur(cov, PW, PH, r), wv = boxBlur(wt, PW, PH, Math.max(1, r >> 1));
 
@@ -135,9 +138,9 @@ export function genMask(L) {
       const g0 = ((ux - CARD.FX - L.x) * dx + (uy - CARD.FY - L.y) * dy) / 150;
       const pressure = 1 - short * (.12 + .88 * smooth(-.7, .9, g0));
       const n3 = vnoise(ux / 1.1, uy / 1.1, seed + 3) * .55 + vnoise(ux / 3.5, uy / 3.5, seed + 4) * .45;
-      const voidThr = T.SPECKLE + starve * .42 + (1 - pressure) * .9 + (1 - w) * .35 - excess * .04;
+      const voidThr = T.SPECKLE + underVoid + starve * .42 + (1 - pressure) * .95 + (1 - w) * .35 - excess * .04;
       if (voidThr > 0) a *= smooth(voidThr - .06, voidThr + .06, n3);
-      const dens = T.DENSITY * (1 - starve * .42) * (.88 + .12 * pressure) * (.94 + .06 * Math.min(1, excess + long)) * (1 + spread * .1 * (n2 - .4));
+      const dens = T.DENSITY * (1 - starve * .42) * (1 - under * .12) * (.88 + .12 * pressure) * (.94 + .06 * Math.min(1, excess + long)) * (1 + spread * .1 * (n2 - .4));
       const grain = 1 - T.GRAIN * vnoise(ux / .65, uy / .65, seed + 5);
       mask[i] = clamp(a * dens * grain * w, 0, 1);
     }
