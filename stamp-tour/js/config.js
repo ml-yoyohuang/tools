@@ -63,6 +63,9 @@ export const CONFIG = {
     TAKE_SWIPE: 60,                // 往上滑多少 px 算收下
     TAKE_HOLD_MS: 550,             // 長按多久算收下
     NAME_MAX: 10,                  // 名字最多幾個字
+    SIGN_ZOOM_MAX: 4,              // 簽名時卡片最多放大幾倍
+    SIGN_AT: 0.36,                 // 放大後簽名欄的中心在畫面高度的哪裡（避開手機鍵盤）
+    PEN_MIN: 0.9, PEN_MAX: 2.6,    // 筆跡粗細（卡片單位）：寫得越快越細
   },
   DATE_INK: '#E8453A',             // 日期章的墨色
 

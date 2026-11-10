@@ -1,14 +1,21 @@
-/* 第 0 幕：抵達會場 → 站務員出場 → 親手收下集章卡 → 寫名字（可略過）→ 蓋日期章 → 說明玩法
+/* 第 0 幕：抵達會場 → 站務員出場 → 親手收下集章卡 → 簽名或打字（可略過）→ 蓋日期章 → 說明玩法
    每一步都是「醞釀、動作、揭曉」。說明交給站務員，介面上沒有按鈕。 */
 import { CONFIG } from './config.js';
 import { COPY } from './copy.js';
 import { CARD, printCv } from './print.js';
-import { drawCardExtras, NAME, NAME_FONT, DATE } from './cardface.js';
+import { drawCardExtras, drawStroke, drawTail, NAME, NAME_FONT, DATE, SIGN, PEN_INK } from './cardface.js';
 import { attendantSVG, registerHost, say, setMood } from './attendant.js';
 import { store } from './storage.js';
-import { $, wait, clamp } from './util.js';
+import { $, wait, clamp, lerp } from './util.js';
 
 const INK = ['#FFE800', '#0078BF', '#FF48B0', '#F7F4EE'];
+const ICON = {   // Material Design Icons
+  pen: 'M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z',
+  keyboard: 'M4 5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H4m0 2h16v10H4V7m1 1v2h2V8H5m3 0v2h2V8H8m3 0v2h2V8h-2m3 0v2h2V8h-2m3 0v2h2V8h-2M5 11v2h2v-2H5m3 0v2h2v-2H8m3 0v2h2v-2h-2m3 0v2h2v-2h-2m3 0v2h2v-2h-2M8 14v2h8v-2H8Z',
+  eraser: 'M16.24 3.56l4.95 4.94c.78.79.78 2.05 0 2.84L12 20.53a4.008 4.008 0 0 1-5.66 0L2.81 17c-.78-.79-.78-2.05 0-2.84L13.41 3.56c.79-.78 2.05-.78 2.83 0M4.22 15.58l3.54 3.53c.78.79 2.04.79 2.83 0l3.53-3.53-4.95-4.95-4.95 4.95Z',
+  check: 'M21 7 9 19l-5.5-5.5 1.41-1.41L9 16.17 19.59 5.59 21 7Z',
+};
+const icon = d => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg>`;
 
 export async function runOpening({ short = false, station = 0, cardRect }) {
   const sp = short ? CONFIG.OPENING.SHORT_SPEED : CONFIG.OPENING.SPEED;
@@ -20,8 +27,20 @@ export async function runOpening({ short = false, station = 0, cardRect }) {
     <svg id="bunting" aria-hidden="true"></svg>
     <div id="banner"><i></i><span>歡迎光臨</span><i></i></div>
     <div id="booth"><div id="clerk">${attendantSVG('full')}</div><div id="counter"><b></b></div></div>
-    <canvas id="newcard"></canvas>
-    <input id="nameInput" maxlength="${CONFIG.OPENING.NAME_MAX}" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done" aria-label="name">
+    <div id="cardwrap">
+      <canvas id="newcard"></canvas>
+      <canvas id="sigink"></canvas>
+      <input id="nameInput" maxlength="${CONFIG.OPENING.NAME_MAX}" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done" aria-label="name">
+    </div>
+    <div id="sigcatch"></div>
+    <div id="signbar">
+      <div class="seg">
+        <button data-mode="pen" aria-label="pen">${icon(ICON.pen)}</button>
+        <button data-mode="type" aria-label="keyboard">${icon(ICON.keyboard)}</button>
+      </div>
+      <button data-act="clear" aria-label="clear">${icon(ICON.eraser)}</button>
+      <button data-act="done" class="done" aria-label="done">${icon(ICON.check)}</button>
+    </div>
     <div id="dater" aria-hidden="true">${daterSVG()}</div>`;
   const clerk = $('#clerk');
   registerHost(clerk);
@@ -63,38 +82,18 @@ export async function runOpening({ short = false, station = 0, cardRect }) {
   body.classList.add('host-on');
   await wait(380);
 
-  // ---------- 5. 寫名字（可略過）＋日期章 ----------
-  const input = $('#nameInput'), dater = $('#dater');
-  let name = '', glow = true, glowT = performance.now();
-  placeInput(input, R);
-  input.addEventListener('input', () => { name = input.value.trim(); paint({ hideName: true, nameGlow: 0 }); });
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') input.blur(); });
-  let saidName = '';
-  input.addEventListener('blur', () => {
-    name = input.value.trim();
-    if (name && name !== saidName) { saidName = name; say(COPY.open.named(name)); }
-  });
-  const glowLoop = () => {
-    if (!glow) return;
-    const t = (performance.now() - glowT) / 1000;
-    paint({ hideName: true, nameGlow: name ? 0 : .5 + .5 * Math.sin(t * 3.2) });
-    requestAnimationFrame(glowLoop);
-  };
-  requestAnimationFrame(glowLoop);
-  placeDater(dater, R);
-  root.classList.add('dater-in');
-  say(COPY.open.name);
-
-  await new Promise(res => dater.addEventListener('pointerdown', e => { e.preventDefault(); res(); }, { once: true }));
-  input.blur(); name = input.value.trim(); glow = false;
-  input.disabled = true;
+  // ---------- 5. 簽名（或切換成打字；什麼都不寫也可以）----------
+  const { name, signature } = await signStep(root, cardEl, R, paint);
+  say(signature ? COPY.open.signed : name ? COPY.open.named(name) : COPY.open.skipped);
 
   // ---------- 6. 蓋日期章 ----------
+  const dater = $('#dater');
+  placeDater(dater, R);
+  root.classList.add('dater-in');
+  await new Promise(res => dater.addEventListener('pointerdown', e => { e.preventDefault(); res(); }, { once: true }));
   const issuedAt = new Date().toISOString();
-  await stampDate(dater, cardEl, R, alpha => paint({ hideName: true, dateISO: issuedAt, dateAlpha: alpha, name: '' }));
-  input.style.visibility = 'hidden';
-  paint({ name, dateISO: issuedAt });
-  await store.issueCard({ name, issuedAt });
+  await stampDate(dater, cardEl, R, alpha => paint({ name, signature, dateISO: issuedAt, dateAlpha: alpha }));
+  await store.issueCard({ name, signature, issuedAt });
   setMood('happy');
   await say(COPY.open.dated);
   setMood('');
@@ -110,17 +109,22 @@ export async function runOpening({ short = false, station = 0, cardRect }) {
 /* ---------------- 卡片 ---------------- */
 function setupCard(el, R) {
   const dpr = Math.min(devicePixelRatio || 1, 2.5);
-  el.width = Math.round(R.w * dpr); el.height = Math.round(R.h * dpr);
+  let scale = dpr;
+  const size = () => { el.width = Math.round(R.w * scale); el.height = Math.round(R.h * scale); };
+  size();
   Object.assign(el.style, { left: R.x + 'px', top: R.y + 'px', width: R.w + 'px', height: R.h + 'px' });
   el.classList.add('ready');
   const c = el.getContext('2d');
-  return (opts = {}) => {
-    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const paint = (opts = {}) => {
+    c.setTransform(scale, 0, 0, scale, 0, 0);
     c.clearRect(0, 0, R.w, R.h);
     c.save(); roundRect(c, 0, 0, R.w, R.h, 7 * R.k); c.clip();
     c.drawImage(printCv, 0, 0, R.w, R.h); c.restore();
     drawCardExtras(c, 0, 0, R.k, { route: [], ...opts });
   };
+  /* 放大簽名時提高解析度，字和底線才不會糊（限制總像素，避免手機記憶體不足） */
+  paint.setZoom = z => { scale = Math.min(dpr * z, Math.sqrt(9e6 / (R.w * R.h))); size(); };
+  return paint;
 }
 function roundRect(c, x, y, w, h, r) {
   c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
@@ -172,6 +176,88 @@ function waitTake(el, R, offer) {
     };
     el.addEventListener('pointerdown', down); el.addEventListener('pointermove', move);
     el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  });
+}
+
+/* ---------------- 簽名欄：卡片放大到簽名欄，用手指（或滑鼠）簽名；也能切換成打字 ---------------- */
+function signStep(root, cardEl, R, paint) {
+  const O = CONFIG.OPENING;
+  const wrap = $('#cardwrap'), ink = $('#sigink'), catcher = $('#sigcatch'), bar = $('#signbar'), input = $('#nameInput');
+  const k = R.k;
+  const Z = clamp(Math.min(innerWidth * .92 / (SIGN.w * k), innerHeight * .3 / (SIGN.h * k)), 1.4, O.SIGN_ZOOM_MAX);
+  const cx = R.x + (SIGN.x + SIGN.w / 2) * k, cy = R.y + (SIGN.y + SIGN.h / 2) * k;
+  const tx = innerWidth / 2 - Z * cx, ty = innerHeight * O.SIGN_AT - Z * cy;
+  paint.setZoom(Z); paint({ hideName: true });
+
+  // 筆跡畫布：只蓋在簽名欄上，即時只畫新的一小段
+  const dpr = Math.min(devicePixelRatio || 1, 2.5), res = Math.min(dpr * Z, 8);
+  Object.assign(ink.style, { left: R.x + SIGN.x * k + 'px', top: R.y + SIGN.y * k + 'px', width: SIGN.w * k + 'px', height: SIGN.h * k + 'px' });
+  ink.width = Math.round(SIGN.w * k * res); ink.height = Math.round(SIGN.h * k * res);
+  const ic = ink.getContext('2d');
+  ic.setTransform(res, 0, 0, res, 0, 0);
+  ic.strokeStyle = ic.fillStyle = PEN_INK; ic.lineCap = 'round'; ic.lineJoin = 'round';
+  const ox = -SIGN.x * k, oy = -SIGN.y * k;      // 卡片單位 → 筆跡畫布座標
+
+  placeInput(input, R);
+  wrap.style.transform = `translate(${tx}px,${ty}px) scale(${Z})`;
+  bar.style.top = innerHeight * O.SIGN_AT + SIGN.h * k * Z / 2 + 18 + 'px';
+  root.classList.add('signing');
+
+  let mode = 'pen';
+  const strokes = [];
+  const setMode = m => {
+    mode = m; root.dataset.sign = m;
+    bar.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === m));
+    if (m === 'type') input.focus(); else input.blur();
+  };
+  setMode('pen');
+  say(COPY.open.name);
+
+  // 簽名：寫得越快，線越細
+  let cur = null, last = null, pid = null;
+  const toCard = e => { const r = cardEl.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * CARD.W, (e.clientY - r.top) / r.height * CARD.H]; };
+  catcher.addEventListener('pointerdown', e => {
+    e.preventDefault(); if (mode !== 'pen' || pid !== null) return;
+    pid = e.pointerId; try { catcher.setPointerCapture(pid); } catch (_) {}
+    const [u, v] = toCard(e);
+    cur = [[+u.toFixed(1), +v.toFixed(1), +(O.PEN_MAX * .8).toFixed(2)]]; strokes.push(cur);
+    last = { u, v, t: performance.now(), w: O.PEN_MAX * .8 };
+    drawStroke(ic, ox, oy, k, cur);
+  });
+  catcher.addEventListener('pointermove', e => {
+    if (e.pointerId !== pid) return;
+    const [u, v] = toCard(e), now = performance.now(), d = Math.hypot(u - last.u, v - last.v);
+    if (d < .35) return;
+    const speed = d / Math.max(1, now - last.t);
+    const w = lerp(last.w, clamp(O.PEN_MAX - speed * 2.2, O.PEN_MIN, O.PEN_MAX), .4);
+    cur.push([+u.toFixed(1), +v.toFixed(1), +w.toFixed(2)]);
+    last = { u, v, t: now, w };
+    drawStroke(ic, ox, oy, k, cur, cur.length - 1);
+  });
+  const end = e => { if (e.pointerId !== pid) return; pid = null; if (cur) drawTail(ic, ox, oy, k, cur); cur = null; };
+  catcher.addEventListener('pointerup', end); catcher.addEventListener('pointercancel', end);
+
+  return new Promise(res => {
+    let finished = false;
+    const finish = async () => {
+      if (finished) return; finished = true;
+      input.blur();
+      const sig = strokes.filter(s => s.length);
+      const result = mode === 'pen' ? { name: '', signature: sig.length ? sig : null } : { name: input.value.trim(), signature: null };
+      paint({ name: result.name, signature: result.signature });    // 先在卡片上畫好，再縮回去
+      root.classList.remove('signing');
+      wrap.style.transform = '';
+      await wait(720);
+      paint.setZoom(1); paint({ name: result.name, signature: result.signature });
+      res(result);
+    };
+    bar.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.mode) setMode(b.dataset.mode);
+      else if (b.dataset.act === 'clear') { strokes.length = 0; ic.clearRect(0, 0, ink.width, ink.height); input.value = ''; if (mode === 'type') input.focus(); }
+      else if (b.dataset.act === 'done') finish();
+    });
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); finish(); } });
   });
 }
 

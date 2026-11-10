@@ -19,7 +19,7 @@ let adapter = localAdapter;
 export function useAdapter(a) { adapter = a; }
 
 /* 存檔格式（版本 1）
-   card: { name, issuedAt }                              領卡資料（名字可為空字串）
+   card: { name, signature, issuedAt }                   領卡資料：打字的名字或手寫簽名（筆畫陣列），都可為空
    impressions: [ { station, x, y, a, taps, hold, smear, press, seed, retouch, e, comment, at } ]
                                                          依實際蓋印順序；同一站可能有多次（第一次＋補蓋）
    路線 = impressions 依序取不重複的站號 */
@@ -39,8 +39,8 @@ export const store = {
   route() { return [...new Set(this.data.impressions.map(i => i.station))]; },
   stationsLeft() { return 3 - this.route().length; },
 
-  async issueCard({ name = '', issuedAt = new Date().toISOString() } = {}) {
-    this.data = { v: 1, card: { name, issuedAt }, impressions: [] };
+  async issueCard({ name = '', signature = null, issuedAt = new Date().toISOString() } = {}) {
+    this.data = { v: 1, card: { name, signature, issuedAt }, impressions: [] };
     await adapter.save(this.data);
   },
   async addImpression(imp) {

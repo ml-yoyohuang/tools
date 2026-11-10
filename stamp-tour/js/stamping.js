@@ -401,7 +401,7 @@ function drawCard() {
   }
   ctx.restore();
   const c = store.card || {};
-  drawCardExtras(ctx, x, y, k, { name: c.name, dateISO: c.issuedAt, route: [...new Set(app.layers.map(l => l.station))] });
+  drawCardExtras(ctx, x, y, k, { name: c.name, signature: c.signature, dateISO: c.issuedAt, route: [...new Set(app.layers.map(l => l.station))] });
 }
 
 function drawPad(now) {

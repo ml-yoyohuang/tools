@@ -6,6 +6,36 @@ import { TAU, makeCanvas, hash2, vnoise } from './util.js';
 /* 名字欄（卡片單位） */
 export const NAME = { x: 38, y: 372, w: 150, base: 398, size: 21 };
 export const NAME_FONT = '"Kaiti TC","BiauKai","DFKai-SB","STKaiti","Klee",serif';
+/* 簽名可以寫的範圍（卡片單位）；筆跡存成 [[x, y, 粗細], ...] 的筆畫陣列 */
+export const SIGN = { x: 26, y: 338, w: 196, h: 76 };
+export const PEN_INK = '#2b2824';
+
+export function drawSignature(ctx, x, y, k, strokes) {
+  if (!strokes || !strokes.length) return;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x + SIGN.x * k, y + SIGN.y * k, SIGN.w * k, SIGN.h * k); ctx.clip();
+  ctx.strokeStyle = ctx.fillStyle = PEN_INK; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  for (const s of strokes) { drawStroke(ctx, x, y, k, s, 1); drawTail(ctx, x, y, k, s); }
+  ctx.restore();
+}
+/* 一筆的最後半段（筆畫結束時補上） */
+export function drawTail(ctx, x, y, k, s) {
+  if (s.length < 2) return;
+  const n = s.length, ax = x + s[n - 2][0] * k, ay = y + s[n - 2][1] * k, bx = x + s[n - 1][0] * k, by = y + s[n - 1][1] * k;
+  ctx.lineWidth = s[n - 1][2] * k;
+  ctx.beginPath(); ctx.moveTo((ax + bx) / 2, (ay + by) / 2); ctx.lineTo(bx, by); ctx.stroke();
+}
+/* 畫一筆中的第 from 段之後（即時簽名時只畫新的部分） */
+export function drawStroke(ctx, x, y, k, s, from = 1) {
+  const P = i => [x + s[i][0] * k, y + s[i][1] * k];
+  if (s.length === 1) { const [px, py] = P(0); ctx.beginPath(); ctx.arc(px, py, s[0][2] * k / 2, 0, TAU); ctx.fill(); return; }
+  for (let i = Math.max(1, from); i < s.length; i++) {
+    const [ax, ay] = P(i - 1), [bx, by] = P(i);
+    const [px, py] = i > 1 ? P(i - 2) : [ax, ay];
+    ctx.lineWidth = (s[i - 1][2] + s[i][2]) / 2 * k;
+    ctx.beginPath(); ctx.moveTo((px + ax) / 2, (py + ay) / 2); ctx.quadraticCurveTo(ax, ay, (ax + bx) / 2, (ay + by) / 2); ctx.stroke();
+  }
+}
 /* 日期章（卡片單位） */
 export const DATE = { x: 398, y: 386, r: 31, tilt: -9 };
 
@@ -47,7 +77,7 @@ export function dateStampImage(iso, px) {
 }
 
 /* 在 ctx 上畫卡面印刷之外的東西（x, y = 卡片左上角，k = 卡片單位 → px）
-   opts: { name, dateISO, dateAlpha, route: [station...], hideName, nameGlow } */
+   opts: { name, signature, dateISO, dateAlpha, route: [station...], hideName, nameGlow } */
 export function drawCardExtras(ctx, x, y, k, opts = {}) {
   ctx.save();
   // 名字欄
@@ -60,7 +90,8 @@ export function drawCardExtras(ctx, x, y, k, opts = {}) {
   ctx.beginPath(); ctx.moveTo(x + NAME.x * k, y + (NAME.base + 4) * k); ctx.lineTo(x + (NAME.x + NAME.w) * k, y + (NAME.base + 4) * k);
   ctx.strokeStyle = opts.nameGlow ? `rgba(36,34,31,${.35 + .35 * opts.nameGlow})` : 'rgba(60,52,40,.3)';
   ctx.lineWidth = opts.nameGlow ? 1.4 : 1; ctx.stroke();
-  if (opts.name && !opts.hideName) {
+  if (opts.signature && opts.signature.length && !opts.hideName) drawSignature(ctx, x, y, k, opts.signature);
+  else if (opts.name && !opts.hideName) {
     ctx.fillStyle = '#2b2824';
     ctx.font = `${NAME.size * k}px ${NAME_FONT}`;
     ctx.fillText(opts.name, x + (NAME.x + 2) * k, y + NAME.base * k, NAME.w * k);
