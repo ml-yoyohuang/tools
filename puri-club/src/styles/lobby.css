@@ -326,11 +326,12 @@ body[data-stage="lobby"] main {
   --button-tilt: -2deg;
   border: 3px solid #fff;
   border-radius: 9px 18px 7px 15px;
-  outline: 2px solid #29143b;
   background: linear-gradient(135deg, #f7ff99, #dbff49 55%, #ffe467);
   color: #28143b;
   text-shadow: none;
+  /* The dark rim is a shadow ring, not an outline, so the focus ring can still show. */
   box-shadow:
+    0 0 0 2px #29143b,
     5px 6px 0 #f43baf,
     9px 10px 0 #2a1539,
     0 14px 20px #2b163a66;
@@ -658,7 +659,15 @@ body[data-stage="lobby"] main {
   }
   .machine:hover .choose:not(:active),
   .machine:focus-within .choose:not(:active) {
-    transform: translate(-50%, -3px) rotate(var(--button-tilt, 0deg));
+    transform: translate(-50%, -3px) rotate(var(--button-tilt, 0deg)) scale(1.05);
+  }
+  /* The booth under the pointer or keyboard stays bright; the other two step back. */
+  .machine {
+    transition: filter 0.25s ease;
+  }
+  .machines:has(.machine:hover) .machine:not(:hover),
+  .machines:not(:has(.machine:hover)):has(.machine:focus-within) .machine:not(:focus-within) {
+    filter: brightness(0.72) saturate(0.8);
   }
 }
 @media (max-width: 760px) {

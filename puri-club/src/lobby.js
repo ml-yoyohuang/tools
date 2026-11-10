@@ -160,6 +160,17 @@ export function initLobby() {
   $("prevMachine").onclick = () => showMachine(visibleMachine - 1);
   $("nextMachine").onclick = () => showMachine(visibleMachine + 1);
   document.querySelectorAll("[data-machine]").forEach((b) => (b.onclick = () => enterMachine(b.dataset.machine)));
+  // Desktop: left/right arrows walk the keyboard focus across the three booths; Enter goes in.
+  window.addEventListener("keydown", (e) => {
+    if (state.stage !== "lobby" || !["ArrowLeft", "ArrowRight"].includes(e.key) || !matchMedia("(min-width:761px)").matches)
+      return;
+    const buttons = machineCards.map((card) => card.querySelector(".choose")),
+      at = buttons.indexOf(document.activeElement),
+      step = e.key === "ArrowRight" ? 1 : -1,
+      next = at < 0 ? (step > 0 ? 0 : buttons.length - 1) : (at + step + buttons.length) % buttons.length;
+    e.preventDefault();
+    buttons[next].focus({ focusVisible: true });
+  });
   machineCards.forEach((card) =>
     card.addEventListener("click", (e) => {
       if (state.stage !== "lobby" || !matchMedia("(min-width:761px)").matches || e.target.closest(".choose")) return;

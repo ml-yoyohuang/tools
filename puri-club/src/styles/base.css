@@ -37,8 +37,8 @@ button:disabled {
 button:focus-visible,
 input:focus-visible,
 select:focus-visible {
-  outline: 4px solid #467cff;
-  outline-offset: 4px;
+  outline: 3px solid #467cff;
+  outline-offset: 1px;
 }
 button {
   border: 2px solid var(--line);
