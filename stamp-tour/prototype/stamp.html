@@ -136,7 +136,8 @@ const CONFIG = {
 
   TEXTURE: {                       // 基礎質感（Risograph 輕微手感）
     JITTER: 0.22,                  // 邊緣微抖
-    SPECKLE: 0.05,                 // 零星飛白
+    SPECKLE: 0.19,                 // 零星飛白（0.19 + DENSITY 0.86 = 舊版「沾墨 2 下」的質感）
+    DENSITY: 0.86,                 // 基礎墨色濃度（1 = 完全飽滿）
     GRAIN: 0.08,                   // 墨色顆粒
   },
 
@@ -458,7 +459,7 @@ function genMask(L) {
       const n3 = vnoise(ux / 1.1, uy / 1.1, seed + 3) * .55 + vnoise(ux / 3.5, uy / 3.5, seed + 4) * .45;
       const voidThr = T.SPECKLE + starve * .42 + (1 - pressure) * .9 + (1 - w) * .35 - excess * .04;
       if (voidThr > 0) a *= smooth(voidThr - .06, voidThr + .06, n3);
-      const dens = (1 - starve * .42) * (.88 + .12 * pressure) * (.94 + .06 * Math.min(1, excess + long)) * (1 + spread * .1 * (n2 - .4));
+      const dens = T.DENSITY * (1 - starve * .42) * (.88 + .12 * pressure) * (.94 + .06 * Math.min(1, excess + long)) * (1 + spread * .1 * (n2 - .4));
       const grain = 1 - T.GRAIN * vnoise(ux / .65, uy / .65, seed + 5);
       mask[i] = clamp(a * dens * grain * w, 0, 1);
     }
