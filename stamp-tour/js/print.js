@@ -1,7 +1,7 @@
 /* 卡面印刷引擎：空白卡底稿、每一次蓋印的墨量遮罩、疊色合成
    每一種瑕疵都來自操作（沾墨、施力、滑動、位置、角度），另加輕微的 Risograph 基礎質感 */
 import { CONFIG } from './config.js';
-import { SHAPES, drawGuides } from './art.js';
+import { shapeOf, drawGuides } from './art.js';
 import { TAU, D2R, clamp, lerp, smooth, hex, makeCanvas, hash2, vnoise } from './util.js';
 
 export const CARD = { W: 440, H: 420, FX: 220, FY: 215, BLOCK: 344 };   // 卡片單位；印面 = 300
@@ -95,7 +95,7 @@ export function genMask(L) {
     sctx.setTransform(1, 0, 0, 1, 0, 0); sctx.clearRect(0, 0, PW, PH);
     sctx.setTransform(PR, 0, 0, PR, (CARD.FX + L.x + sm.x) * PR, (CARD.FY + L.y + sm.y) * PR);
     sctx.rotate(L.a * D2R); sctx.fillStyle = '#fff';
-    SHAPES[L.station](sctx);
+    shapeOf(L.station)(sctx);
     const d = sctx.getImageData(0, 0, PW, PH).data;
     for (let i = 0; i < N; i++) {
       const a = d[i * 4 + 3]; if (!a) continue;

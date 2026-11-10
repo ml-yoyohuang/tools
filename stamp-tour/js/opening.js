@@ -6,6 +6,7 @@ import { CARD, printCv } from './print.js';
 import { drawCardExtras, drawStroke, drawTail, NAME, NAME_FONT, DATE, SIGN, PEN_INK } from './cardface.js';
 import { attendantSVG, registerHost, say, setMood } from './attendant.js';
 import { store } from './storage.js';
+import { artId } from './art.js';
 import { $, wait, clamp, lerp } from './util.js';
 
 const INK = ['#FFE800', '#0078BF', '#FF48B0', '#F7F4EE'];
@@ -94,7 +95,7 @@ export async function runOpening({ short = false, station = 0, cardRect }) {
   await new Promise(res => dater.addEventListener('pointerdown', e => { e.preventDefault(); res(); }, { once: true }));
   const issuedAt = new Date().toISOString();
   await stampDate(dater, cardEl, R, alpha => paint({ name, signature, dateISO: issuedAt, dateAlpha: alpha }));
-  await store.issueCard({ name, signature, issuedAt });
+  await store.issueCard({ name, signature, issuedAt, art: artId() });
   setMood('happy');
   await say(COPY.open.dated);
   setMood('');

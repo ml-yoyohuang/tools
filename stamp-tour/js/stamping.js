@@ -2,7 +2,7 @@
    station = 1..3 在某一站；station = 0 是「卡片首頁」（還沒到任何一站） */
 import { CONFIG, ROT } from './config.js';
 import { COPY } from './copy.js';
-import { SHAPES, drawGuides } from './art.js';
+import { ART_SETS, artId, shapeOf, stationName, drawGuides } from './art.js';
 import { CARD, printCv, inkCv, genMask, composite, simplifyPath } from './print.js';
 import { drawCardExtras } from './cardface.js';
 import { say } from './attendant.js';
@@ -14,7 +14,7 @@ let stage, ctx, loupe, lctx, topEl, stackEl, devEl;
 let W = 0, H = 0, DPR = 1, k = 1;
 let card = {}, pad = {}, rest = {}, fc = {};
 const faceCache = {};
-let hooks = { onReset: () => {}, onStationChange: () => {} };
+let hooks = { onReset: () => {}, onStationChange: () => {}, onArtToggle: () => {} };
 
 const app = {
   active: false,
@@ -72,7 +72,7 @@ export function enterStation(n, lines) {
   setUrlStation(n);
   updateDev();
   hooks.onStationChange(n);
-  const name = CONFIG.INKS[n].name;
+  const name = stationName(n);
   say(lines || (done ? COPY.stamped : COPY.enter(n, name)));
 }
 
@@ -116,13 +116,13 @@ function layout() {
 }
 
 function faceImage(kind) {   // kind: rubber | ink | white
-  const key = kind + app.station;
+  const key = kind + app.station + artId();
   if (faceCache[key]) return faceCache[key];
   const B = CARD.BLOCK * k, px = Math.ceil(B * DPR);
   const cv = makeCanvas(px, px), c = cv.getContext('2d');
   c.setTransform(px / CARD.BLOCK, 0, 0, px / CARD.BLOCK, px / 2, px / 2);
   c.fillStyle = kind === 'rubber' ? RUBBER : kind === 'white' ? '#fff' : CONFIG.INKS[app.station].ink;
-  SHAPES[app.station](c);
+  shapeOf(app.station)(c);
   return faceCache[key] = cv;
 }
 
@@ -172,6 +172,15 @@ function updateDev() {
     updateDev();
   });
   devEl.appendChild(hb);
+  // 圖案組切換：換一組就換一張新卡（舊卡上的章是用舊圖案蓋的）
+  const ab = document.createElement('button');
+  ab.textContent = ART_SETS[artId()].label; ab.style.width = 'auto'; ab.style.padding = '0 8px';
+  ab.addEventListener('click', () => {
+    if (!app.active || ['pressing', 'lifting', 'out'].includes(app.phase)) return;
+    const ids = Object.keys(ART_SETS); hooks.onArtToggle(ids[(ids.indexOf(artId()) + 1) % ids.length]);
+    app.phase = 'out'; app.outT = performance.now(); ptrs.clear(); g.mode = null;
+  });
+  devEl.appendChild(ab);
 }
 
 /* 重來：卡片堆點兩下 → 舊卡滑走 → 重新領卡 */

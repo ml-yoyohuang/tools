@@ -50,11 +50,14 @@ export const CONFIG = {
   GO_HINT: 'arrow',                // 「拿起印章去蓋吧」的提示：'arrow' / 'hop' / 'both' / 'none'
   GO_HINT_MS: 2100,
 
-  INKS: {                          // 三站 / 三層
-    1: { name: '日', ink: '#FFE800', line: '#B39600', deep: '#E07A00' },
-    2: { name: '海', ink: '#0078BF', line: '#0078BF', deep: '#2A2F9E' },
-    3: { name: '鳥', ink: '#FF48B0', line: '#DB3594', deep: '#B5124F' },
+  INKS: {                          // 三站 / 三層的墨色（站名在 art.js 的圖案組裡）
+    1: { ink: '#FFE800', line: '#B39600', deep: '#E07A00' },
+    2: { ink: '#0078BF', line: '#0078BF', deep: '#2A2F9E' },
+    3: { ink: '#FF48B0', line: '#DB3594', deep: '#B5124F' },
   },
+
+  ART_SET: 'classic',              // 新卡預設的圖案組：'classic'（日、海、鳥）/ 'elephant'（天空、山、大象）
+                                   // 網址加 ?art=elephant 也能指定；每張卡會記住自己的圖案組
 
   /* 第 0 幕：入口與領卡 */
   OPENING: {

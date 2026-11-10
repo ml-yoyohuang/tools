@@ -5,6 +5,7 @@ import { CONFIG } from './config.js';
 import { COPY } from './copy.js';
 import { buildBase, composite } from './print.js';
 import { attendantSVG, initSpeech, registerHost } from './attendant.js';
+import { ART_SETS, setArt, stationName } from './art.js';
 import { store } from './storage.js';
 import { initStamping, loadImpressions, getCardRect, show, hide, enterStation, enterHub } from './stamping.js';
 import { runOpening } from './opening.js';
@@ -18,12 +19,22 @@ document.addEventListener('touchstart', e => { if (e.touches.length > 1) e.preve
 
 const stationParam = () => { const q = +new URLSearchParams(location.search).get('station'); return [1, 2, 3].includes(q) ? q : 0; };
 
+/* 新卡要用哪一組圖案：網址 ?art= ＞ 開發切換器記住的選擇 ＞ CONFIG.ART_SET */
+const ART_PREF = 'stamp-tour:art';
+function preferredArt() {
+  const q = new URLSearchParams(location.search).get('art');
+  if (q && ART_SETS[q]) return q;
+  try { const p = localStorage.getItem(ART_PREF); if (p && ART_SETS[p]) return p; } catch (_) {}
+  return CONFIG.ART_SET;
+}
+
 async function opening(station, short) {
   hide();
+  setArt(preferredArt());
   composite([]);
   const close = await runOpening({ short, station, cardRect: getCardRect() });
   show();
-  if (station) enterStation(station, COPY.welcome(station, CONFIG.INKS[station].name));
+  if (station) enterStation(station, COPY.welcome(station, stationName(station)));
   else enterHub();
   requestAnimationFrame(() => requestAnimationFrame(close));   // 蓋章畫面畫好之後才收掉開場的卡，避免閃爍
 }
@@ -34,6 +45,7 @@ async function boot() {
   registerHost($('#host'));
   initStamping({
     onReset: async () => { await store.reset(); opening(stationParam(), true); },
+    onArtToggle: id => { try { localStorage.setItem(ART_PREF, id); } catch (_) {} },
   });
   await store.init();
   buildBase();
@@ -41,6 +53,7 @@ async function boot() {
   const station = stationParam();
   if (!store.hasCard()) { opening(station, station > 0); return; }
 
+  setArt(store.card.art || 'classic');            // 舊卡沒有記錄時，就是當時唯一的「日、海、鳥」
   loadImpressions(store.impressions);
   show();
   if (station) enterStation(station);
