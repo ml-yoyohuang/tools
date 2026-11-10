@@ -189,6 +189,12 @@ body.scene-open #dev { visibility:hidden; }
 #opening.signing #sigink { visibility:visible; }
 #opening.signing[data-sign="type"] #sigink { opacity:0; }
 #sigcatch { position:absolute; inset:0; z-index:3; display:none; touch-action:none; cursor:crosshair; }
+/* 簽名範圍的虛線框：線寬與虛線長度不隨放大而變粗 */
+#signframe { position:absolute; overflow:visible; pointer-events:none; opacity:0; transition:opacity .4s; }
+#signframe rect { fill:none; stroke:rgba(36,34,31,.55); }
+#opening.signing[data-sign="pen"] #signframe { opacity:.55; transition-delay:.5s; }
+#opening.signing[data-sign="pen"] #signframe.idle { animation:frameBreathe 1.8s ease-in-out .5s infinite; }
+@keyframes frameBreathe { 0%,100% { opacity:.35; } 50% { opacity:1; } }
 #opening.signing[data-sign="pen"] #sigcatch { display:block; }
 #signbar {
   position:absolute; z-index:4; left:50%; transform:translate(-50%, 10px);
@@ -215,11 +221,15 @@ body.scene-open #dev { visibility:hidden; }
   position:absolute; z-index:4; cursor:pointer; opacity:0; transform:translateY(30px);
   transition:opacity .35s, transform .5s cubic-bezier(.25,1.5,.45,1);
   touch-action:none;
+  visibility:hidden; pointer-events:none;     /* 還沒出場前完全不能擋到其他東西 */
 }
 #dater svg { width:100%; height:100%; display:block; overflow:visible; }
-#opening.dater-in #dater { opacity:1; transform:none; }
+#opening.dater-in #dater { opacity:1; transform:none; visibility:visible; pointer-events:auto; }
 #opening.dater-in #dater:not(.using) svg { animation:breathe 1.8s ease-in-out infinite; }
 @keyframes breathe { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-4px); } }
 
 /* 收下卡片後：會場裝飾退場，只留卡片與日期章 */
 #opening.booth-out #banner, #opening.booth-out #bunting { opacity:0; transition:opacity .5s; }
+/* 退場後的裝飾不再接收觸控 */
+#opening.booth-out #banner, #opening.booth-out #bunting, #opening.booth-out #booth { pointer-events:none; }
+#bunting, #banner { pointer-events:none; }

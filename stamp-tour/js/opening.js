@@ -30,6 +30,7 @@ export async function runOpening({ short = false, station = 0, cardRect }) {
     <div id="cardwrap">
       <canvas id="newcard"></canvas>
       <canvas id="sigink"></canvas>
+      <svg id="signframe" aria-hidden="true"><rect x="0" y="0" width="100%" height="100%" rx="4" ry="4" vector-effect="non-scaling-stroke" stroke-width="1" stroke-dasharray="5 4"/></svg>
       <input id="nameInput" maxlength="${CONFIG.OPENING.NAME_MAX}" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done" aria-label="name">
     </div>
     <div id="sigcatch"></div>
@@ -191,7 +192,12 @@ function signStep(root, cardEl, R, paint) {
 
   // 筆跡畫布：只蓋在簽名欄上，即時只畫新的一小段
   const dpr = Math.min(devicePixelRatio || 1, 2.5), res = Math.min(dpr * Z, 8);
-  Object.assign(ink.style, { left: R.x + SIGN.x * k + 'px', top: R.y + SIGN.y * k + 'px', width: SIGN.w * k + 'px', height: SIGN.h * k + 'px' });
+  const box = { left: R.x + SIGN.x * k + 'px', top: R.y + SIGN.y * k + 'px', width: SIGN.w * k + 'px', height: SIGN.h * k + 'px' };
+  Object.assign(ink.style, box);
+  // 虛線框：標出可以簽名的範圍；還沒下筆時輕輕呼吸，下筆後安靜下來
+  const frame = $('#signframe');
+  Object.assign(frame.style, box);
+  frame.classList.add('idle');
   ink.width = Math.round(SIGN.w * k * res); ink.height = Math.round(SIGN.h * k * res);
   const ic = ink.getContext('2d');
   ic.setTransform(res, 0, 0, res, 0, 0);
@@ -221,6 +227,7 @@ function signStep(root, cardEl, R, paint) {
     pid = e.pointerId; try { catcher.setPointerCapture(pid); } catch (_) {}
     const [u, v] = toCard(e);
     cur = [[+u.toFixed(1), +v.toFixed(1), +(O.PEN_MAX * .8).toFixed(2)]]; strokes.push(cur);
+    frame.classList.remove('idle');
     last = { u, v, t: performance.now(), w: O.PEN_MAX * .8 };
     drawStroke(ic, ox, oy, k, cur);
   });
@@ -234,7 +241,15 @@ function signStep(root, cardEl, R, paint) {
     last = { u, v, t: now, w };
     drawStroke(ic, ox, oy, k, cur, cur.length - 1);
   });
-  const end = e => { if (e.pointerId !== pid) return; pid = null; if (cur) drawTail(ic, ox, oy, k, cur); cur = null; };
+  const end = e => {
+    if (e.pointerId !== pid) return; pid = null;
+    if (cur) {
+      const [u, v] = toCard(e);                    // 放開的位置也算進筆畫（快速一劃時不會少一截）
+      if (Math.hypot(u - last.u, v - last.v) >= .35) { cur.push([+u.toFixed(1), +v.toFixed(1), +last.w.toFixed(2)]); drawStroke(ic, ox, oy, k, cur, cur.length - 1); }
+      drawTail(ic, ox, oy, k, cur);
+    }
+    cur = null;
+  };
   catcher.addEventListener('pointerup', end); catcher.addEventListener('pointercancel', end);
 
   return new Promise(res => {
@@ -254,7 +269,7 @@ function signStep(root, cardEl, R, paint) {
     bar.addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b) return;
       if (b.dataset.mode) setMode(b.dataset.mode);
-      else if (b.dataset.act === 'clear') { strokes.length = 0; ic.clearRect(0, 0, ink.width, ink.height); input.value = ''; if (mode === 'type') input.focus(); }
+      else if (b.dataset.act === 'clear') { strokes.length = 0; ic.clearRect(0, 0, ink.width, ink.height); input.value = ''; frame.classList.add('idle'); if (mode === 'type') input.focus(); }
       else if (b.dataset.act === 'done') finish();
     });
     input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); finish(); } });
