@@ -73,6 +73,9 @@ export const CONFIG = {
     PEN_MIN: 0.9, PEN_MAX: 2.6,    // 筆跡粗細（卡片單位）：寫得越快越細
   },
   DATE_INK: '#E8453A',             // 日期章的墨色
+  DATE_SHAPE_BY_DAY: [             // 日期章形狀，依領卡那天是星期幾（日、一、二、三、四、五、六）
+    'square', 'circle', 'oval', 'circle', 'oval', 'circle', 'square',
+  ],                               // 一三五圓形、二四橢圓形；週末義工放假，只剩方形的備用章
 
   DEV_SWITCHER: true,              // 開發測試用的站點切換器（上線前關掉）
   STORAGE_KEY: 'stamp-tour:v1',

@@ -1,7 +1,7 @@
 /* 卡面上的其他印刷：名字欄、日期章、路線小圓點 */
 import { CONFIG } from './config.js';
 import { CARD } from './print.js';
-import { TAU, makeCanvas, hash2, vnoise } from './util.js';
+import { TAU, makeCanvas, rr, hash2, vnoise } from './util.js';
 
 /* 名字欄（卡片單位） */
 export const NAME = { x: 38, y: 372, w: 150, base: 398, size: 21 };
@@ -44,24 +44,47 @@ export function dateParts(iso) {
   return { y: String(d.getFullYear()), md: `${d.getMonth() + 1}.${String(d.getDate()).padStart(2, '0')}` };
 }
 
-/* 日期章圖像：雙圈＋年份＋月日＋小星，帶飛白 */
+/* 日期章的形狀：依領卡那天是星期幾（像車站義工每天來換章，週末放假只剩備用章）
+   每種形狀的外框、內框和字的位置（日期章單位：圓形的外框半徑 = 37）
+   span = 圖像涵蓋的寬度；圓形維持原本的 80，舊卡的飛白紋路才不會變 */
+export const DATE_SHAPES = {
+  circle: {
+    span: 80, ty: -15, my: 3, ly: 13, lw: 18, sy: 21, sr: 4.6,
+    outer: c => { c.beginPath(); c.arc(0, 0, 37, 0, TAU); }, inner: c => { c.beginPath(); c.arc(0, 0, 31.5, 0, TAU); },
+  },
+  oval: {   // 小判型：橫向拉長，面積和圓形差不多
+    span: 100, ty: -12, my: 2, ly: 10, lw: 20, sy: 17.5, sr: 4,
+    outer: c => { c.beginPath(); c.ellipse(0, 0, 43, 31, 0, 0, TAU); }, inner: c => { c.beginPath(); c.ellipse(0, 0, 37.5, 25.5, 0, 0, TAU); },
+  },
+  square: {   // 圓角方形：比圓形略小，看起來才一樣大
+    span: 100, ty: -14, my: 3, ly: 12, lw: 17, sy: 19.5, sr: 4.3,
+    outer: c => rr(c, -32, -32, 64, 64, 9), inner: c => rr(c, -26.5, -26.5, 53, 53, 5),
+  },
+};
+export function dateShapeFor(date = new Date()) {
+  const s = CONFIG.DATE_SHAPE_BY_DAY[date.getDay()];
+  return DATE_SHAPES[s] ? s : 'circle';
+}
+
+/* 日期章圖像：雙框＋年份＋月日＋小星，帶飛白 */
 const dateCache = new Map();
-export function dateStampImage(iso, px) {
-  const key = iso + '|' + px;
+export function dateStampImage(iso, px, shape = 'circle') {
+  const key = iso + '|' + px + '|' + shape;
   if (dateCache.has(key)) return dateCache.get(key);
-  const cv = makeCanvas(px, px), c = cv.getContext('2d'), s = px / 80;
+  const S = DATE_SHAPES[shape] || DATE_SHAPES.circle;
+  const cv = makeCanvas(px, px), c = cv.getContext('2d'), s = px / S.span;
   const { y, md } = dateParts(iso);
   c.setTransform(s, 0, 0, s, px / 2, px / 2);
   c.strokeStyle = c.fillStyle = CONFIG.DATE_INK;
-  c.lineWidth = 3.2; c.beginPath(); c.arc(0, 0, 37, 0, TAU); c.stroke();
-  c.lineWidth = 1.2; c.beginPath(); c.arc(0, 0, 31.5, 0, TAU); c.stroke();
+  c.lineWidth = 3.2; S.outer(c); c.stroke();
+  c.lineWidth = 1.2; S.inner(c); c.stroke();
   c.textAlign = 'center'; c.textBaseline = 'middle';
-  c.font = '700 9px ui-monospace,"SF Mono",Consolas,monospace'; c.fillText(y, 0, -15);
-  c.font = '700 17px ui-monospace,"SF Mono",Consolas,monospace'; c.fillText(md, 0, 3);
-  c.beginPath(); c.moveTo(-18, 13); c.lineTo(18, 13); c.lineWidth = 1; c.stroke();
+  c.font = '700 9px ui-monospace,"SF Mono",Consolas,monospace'; c.fillText(y, 0, S.ty);
+  c.font = '700 17px ui-monospace,"SF Mono",Consolas,monospace'; c.fillText(md, 0, S.my);
+  c.beginPath(); c.moveTo(-S.lw, S.ly); c.lineTo(S.lw, S.ly); c.lineWidth = 1; c.stroke();
   // 小星
   c.beginPath();
-  for (let i = 0; i < 10; i++) { const r = i % 2 ? 2 : 4.6, a = -Math.PI / 2 + i * Math.PI / 5; c.lineTo(Math.cos(a) * r, 21 + Math.sin(a) * r); }
+  for (let i = 0; i < 10; i++) { const r = i % 2 ? S.sr * .435 : S.sr, a = -Math.PI / 2 + i * Math.PI / 5; c.lineTo(Math.cos(a) * r, S.sy + Math.sin(a) * r); }
   c.closePath(); c.fill();
   // 飛白
   const img = c.getImageData(0, 0, px, px), d = img.data, seed = (Date.parse(iso) / 1000) | 0;
@@ -77,7 +100,7 @@ export function dateStampImage(iso, px) {
 }
 
 /* 在 ctx 上畫卡面印刷之外的東西（x, y = 卡片左上角，k = 卡片單位 → px）
-   opts: { name, signature, dateISO, dateAlpha, route: [station...], hideName, nameGlow } */
+   opts: { name, signature, dateISO, dateShape, dateAlpha, route: [station...], hideName, nameGlow } */
 export function drawCardExtras(ctx, x, y, k, opts = {}) {
   ctx.save();
   // 名字欄
@@ -106,7 +129,9 @@ export function drawCardExtras(ctx, x, y, k, opts = {}) {
   }
   // 日期章
   if (opts.dateISO && (opts.dateAlpha ?? 1) > 0) {
-    const size = DATE.r * 2 * k, img = dateStampImage(opts.dateISO, Math.ceil(size * (window.devicePixelRatio || 1)));
+    const shape = DATE_SHAPES[opts.dateShape] ? opts.dateShape : 'circle';
+    const size = DATE.r * 2 * k * DATE_SHAPES[shape].span / 80;
+    const img = dateStampImage(opts.dateISO, Math.ceil(size * (window.devicePixelRatio || 1)), shape);
     ctx.globalAlpha = opts.dateAlpha ?? 1;
     ctx.globalCompositeOperation = 'multiply';
     ctx.translate(x + DATE.x * k, y + DATE.y * k); ctx.rotate(DATE.tilt * Math.PI / 180);

@@ -3,7 +3,7 @@
 import { CONFIG } from './config.js';
 import { COPY } from './copy.js';
 import { CARD, printCv } from './print.js';
-import { drawCardExtras, drawStroke, drawTail, NAME, NAME_FONT, DATE, SIGN, PEN_INK } from './cardface.js';
+import { drawCardExtras, drawStroke, drawTail, dateShapeFor, NAME, NAME_FONT, DATE, SIGN, PEN_INK } from './cardface.js';
 import { attendantSVG, registerHost, say, setMood } from './attendant.js';
 import { store } from './storage.js';
 import { artId } from './art.js';
@@ -93,11 +93,11 @@ export async function runOpening({ short = false, station = 0, cardRect }) {
   placeDater(dater, R);
   root.classList.add('dater-in');
   await new Promise(res => dater.addEventListener('pointerdown', e => { e.preventDefault(); res(); }, { once: true }));
-  const issuedAt = new Date().toISOString();
-  await stampDate(dater, cardEl, R, alpha => paint({ name, signature, dateISO: issuedAt, dateAlpha: alpha }));
-  await store.issueCard({ name, signature, issuedAt, art: artId() });
+  const now = new Date(), issuedAt = now.toISOString(), dateShape = dateShapeFor(now);
+  await stampDate(dater, cardEl, R, alpha => paint({ name, signature, dateISO: issuedAt, dateShape, dateAlpha: alpha }));
+  await store.issueCard({ name, signature, issuedAt, art: artId(), dateShape });
   setMood('happy');
-  await say(COPY.open.dated);
+  await say([...COPY.open.dated, ...COPY.open.dateShape[dateShape]]);
   setMood('');
   await say([COPY.open.rules, station ? COPY.open.goStation(station) : COPY.open.goFind]);
 
