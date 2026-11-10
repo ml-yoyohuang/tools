@@ -245,3 +245,69 @@ body[data-stage="shoot"] .count-label {
     max-height: 12vh;
   }
 }
+/* Boot screen: a black console-style loader, bottom-right "Loading..." with a spinning donut stamp. */
+.boot-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #000;
+  transition: opacity 0.25s ease;
+}
+.boot-screen.is-done {
+  opacity: 0;
+  pointer-events: none;
+}
+.boot-label {
+  position: absolute;
+  right: max(28px, env(safe-area-inset-right));
+  bottom: max(26px, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  margin: 0;
+  color: #fff;
+  font:
+    700 18px/1 ui-monospace,
+    "SFMono-Regular",
+    Menlo,
+    Consolas,
+    monospace;
+  letter-spacing: 0.06em;
+}
+.boot-dots {
+  display: inline-block;
+  width: 3ch;
+  margin-right: 12px;
+}
+.boot-dots span {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  width: 0;
+  animation: bootDots 1.6s steps(1) infinite;
+}
+@keyframes bootDots {
+  25% {
+    width: 1ch;
+  }
+  50% {
+    width: 2ch;
+  }
+  75% {
+    width: 3ch;
+  }
+}
+.boot-icon {
+  width: 30px;
+  height: 30px;
+  animation: bootSpin 1.1s linear infinite;
+}
+@keyframes bootSpin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .boot-dots span {
+    width: 3ch;
+  }
+}

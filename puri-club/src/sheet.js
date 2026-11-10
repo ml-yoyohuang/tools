@@ -192,9 +192,9 @@ export function drawSticker(c, piece, img) {
 // piece a booth has turns it a quarter turn instead of cropping it. Until a file loads the paper falls back to a drawn
 // pattern (or the plain paper colour), and the layout preview redraws once it arrives.
 export const PAPER_ART = {
-    gal: { wide: "assets/109-style-leopard-paper.jpg" },
-    hara: { tall: "assets/harajuku-mix-flat-background.png" },
-    cyber: { tall: "assets/cyber-angel-flat-background.png", wide: "assets/cyber-angel-flat-background-landscape.jpg" },
+    gal: { wide: "assets/109-style-leopard-paper.webp" },
+    hara: { tall: "assets/harajuku-mix-flat-background.webp" },
+    cyber: { tall: "assets/cyber-angel-flat-background.webp", wide: "assets/cyber-angel-flat-background-landscape.webp" },
   },
   paperImages = new Map();
 

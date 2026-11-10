@@ -36,6 +36,19 @@
     <link rel="stylesheet" href="./styles/index.css" />
   </head>
   <body data-theme="gal" data-stage="lobby">
+    <!-- Boot screen: black like a home console, with a spinning stamp; lobby.js keeps it up for at least a second. -->
+    <div id="bootScreen" class="boot-screen" role="status" aria-label="Loading">
+      <p class="boot-label" aria-hidden="true">
+        Loading<span class="boot-dots"><span>...</span></span
+        ><img
+          class="boot-icon"
+          src="data:image/webp;base64,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"
+          width="96"
+          height="96"
+          alt=""
+        />
+      </p>
+    </div>
     <header class="topbar">
       <div class="brand">PURI CLUB<span>2000</span></div>
       <span class="tag">今天的可愛，永久保存。</span><span class="coin">NO COINS NEEDED</span>
@@ -53,21 +66,21 @@
           <article class="machine gal is-active" aria-labelledby="galTitle">
             <img
               class="machine-art"
-              src="assets/109-style-flat-background.png"
+              src="assets/109-style-flat-background.webp"
               width="1024"
               height="1536"
               alt=""
             /><span class="machine-glint" aria-hidden="true"></span
             ><img
               class="machine-ornament two"
-              src="assets/ornaments/109-style-red-lips.png"
-              width="1536"
-              height="1024"
+              src="assets/ornaments/109-style-red-lips.webp"
+              width="400"
+              height="267"
               alt=""
               aria-hidden="true"
             />
             <h1 class="machine-heading" id="galTitle">
-              <img src="assets/109-style-logo.png" width="1536" height="1024" alt="109 STYLE" />
+              <img src="assets/109-style-logo.webp" width="1200" height="800" alt="109 STYLE" />
             </h1>
             <p class="coin-prompt"><strong>INSERT COIN(S)</strong><small>コインを投入してください</small></p>
             <button class="choose spark" data-machine="gal" aria-label="進入 109 STYLE 機台">進入</button>
@@ -75,21 +88,21 @@
           <article class="machine hara" aria-labelledby="haraTitle">
             <img
               class="machine-art"
-              src="assets/harajuku-mix-flat-background.png"
+              src="assets/harajuku-mix-flat-background.webp"
               width="1024"
               height="1536"
               alt=""
             /><span class="machine-glint" aria-hidden="true"></span
             ><img
               class="machine-ornament one"
-              src="assets/ornaments/harajuku-mix-magenta-star.png"
-              width="1254"
-              height="1254"
+              src="assets/ornaments/harajuku-mix-magenta-star.webp"
+              width="400"
+              height="400"
               alt=""
               aria-hidden="true"
             />
             <h1 class="machine-heading" id="haraTitle">
-              <img src="assets/harajuku-mix-logo.png" width="1774" height="887" alt="HARAJUKU MIX" />
+              <img src="assets/harajuku-mix-logo.webp" width="1200" height="600" alt="HARAJUKU MIX" />
             </h1>
             <p class="coin-prompt"><strong>INSERT COIN(S)</strong><small>コインを投入してください</small></p>
             <button class="choose spark" data-machine="hara" aria-label="進入 HARAJUKU MIX 機台">進入</button>
@@ -97,28 +110,28 @@
           <article class="machine cyber" aria-labelledby="cyberTitle">
             <img
               class="machine-art"
-              src="assets/cyber-angel-flat-background-v0.png"
+              src="assets/cyber-angel-flat-background-v0.webp"
               width="1024"
               height="1536"
               alt=""
             /><span class="machine-glint" aria-hidden="true"></span
             ><img
               class="machine-ornament one"
-              src="assets/ornaments/cyber-angel-starburst-four-point-compact-v2.png"
-              width="1279"
-              height="1230"
+              src="assets/ornaments/cyber-angel-starburst-four-point-compact-v2.webp"
+              width="400"
+              height="385"
               alt=""
               aria-hidden="true"
             /><img
               class="machine-ornament two"
-              src="assets/ornaments/cyber-angel-starburst-four-point-long-v2.png"
-              width="1303"
-              height="1207"
+              src="assets/ornaments/cyber-angel-starburst-four-point-long-v2.webp"
+              width="400"
+              height="371"
               alt=""
               aria-hidden="true"
             />
             <h1 class="machine-heading" id="cyberTitle">
-              <img src="assets/cyber-angel-logo.png" width="1942" height="809" alt="CYBER ANGEL" />
+              <img src="assets/cyber-angel-logo.webp" width="1200" height="500" alt="CYBER ANGEL" />
             </h1>
             <p class="coin-prompt"><strong>INSERT COIN(S)</strong><small>コインを投入してください</small></p>
             <button class="choose spark" data-machine="cyber" aria-label="進入 CYBER ANGEL 機台">進入</button>

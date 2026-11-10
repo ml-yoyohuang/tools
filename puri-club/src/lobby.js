@@ -47,6 +47,28 @@ export function placeOrnament(img, slot) {
 
 export let lobbyOpening = true;
 
+// The black boot screen stays up until the lobby art has loaded and for at least a second, then fades and the
+// lobby opening plays.
+const BOOT_MIN_MS = 1000,
+  BOOT_FADE_MS = 250;
+function afterBoot(next) {
+  const shownAt = performance.now(),
+    finish = () =>
+      setTimeout(
+        () => {
+          const boot = $("bootScreen");
+          boot?.classList.add("is-done");
+          setTimeout(() => {
+            boot?.remove();
+            next();
+          }, BOOT_FADE_MS);
+        },
+        Math.max(0, BOOT_MIN_MS - (performance.now() - shownAt)),
+      );
+  if (document.readyState === "complete") finish();
+  else window.addEventListener("load", finish, { once: true });
+}
+
 export let visibleMachine = 0;
 
 export function showMachine(index) {
@@ -138,7 +160,7 @@ export function initLobby() {
   });
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
     machineCards.forEach((card) => card.querySelector(".opening-shade").remove());
-    lobbyOpening = false;
+    afterBoot(() => (lobbyOpening = false));
   } else {
     const openLobby = () =>
       requestAnimationFrame(() =>
@@ -153,8 +175,7 @@ export function initLobby() {
           );
         }),
       );
-    if (document.readyState === "complete") openLobby();
-    else window.addEventListener("load", openLobby, { once: true });
+    afterBoot(openLobby);
   }
   showMachine(0);
   $("prevMachine").onclick = () => showMachine(visibleMachine - 1);
@@ -162,7 +183,11 @@ export function initLobby() {
   document.querySelectorAll("[data-machine]").forEach((b) => (b.onclick = () => enterMachine(b.dataset.machine)));
   // Desktop: left/right arrows walk the keyboard focus across the three booths; Enter goes in.
   window.addEventListener("keydown", (e) => {
-    if (state.stage !== "lobby" || !["ArrowLeft", "ArrowRight"].includes(e.key) || !matchMedia("(min-width:761px)").matches)
+    if (
+      state.stage !== "lobby" ||
+      !["ArrowLeft", "ArrowRight"].includes(e.key) ||
+      !matchMedia("(min-width:761px)").matches
+    )
       return;
     const buttons = machineCards.map((card) => card.querySelector(".choose")),
       at = buttons.indexOf(document.activeElement),
