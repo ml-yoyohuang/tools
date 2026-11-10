@@ -119,6 +119,9 @@ const CONFIG = {
 
   PRESS: {                         // 施力：長按時間（從手指按下起算）
     DECIDE_MS: 150,                // 按住不動超過這個時間，才算「蓋下」；在這之前移動 = 拖動對位
+    MOVE_TOLERANCE: 12,            // 判定期間手指晃動多少 px 以內仍算「按住不動」（手指會自然抖動）
+    RING_MOUSE: 32,                // 壓力圈半徑（滑鼠）
+    RING_TOUCH: 62,                // 壓力圈半徑（手指；要比指腹大，才不會被手指擋住）
     SHORT_S: 0.35,                 // 短於這個 = 太短（不完整、飛白）
     LONG_S: 1.1,                   // 長於這個 = 太久（暈開）
     LONG_RANGE_S: 1.4,             // 超過 LONG_S 多久達到最暈
@@ -149,6 +152,7 @@ const CONFIG = {
 
   LOUPE: { SIZE: 128, ZOOM: 2.4 }, // 放大鏡
   LIFT_MS: 1100,                   // 拿起揭曉的慢動作時間
+  TALK_AUTO_MS: 2200,              // 站務員連續台詞自動跳下一句的間隔（點一下也能立刻跳）
 
   CAMERA: {                        // 螢幕太矮時：沾墨階段畫面上移，讓印台完整出現
     MARGIN: 14,                    // 印台底部與螢幕底部的距離
@@ -519,8 +523,11 @@ const stampOnPad = () => inRect(app.s.x, app.s.y, felt());
    站務員對話
    ===================================================================== */
 let queue = [];
+let talkTimer = 0;
 function say(lines) { queue = lines.slice(); showLine(queue.shift()); }
 function showLine(text) {
+  clearTimeout(talkTimer);
+  if (queue.length) talkTimer = setTimeout(() => { if (queue.length) showLine(queue.shift()); }, CONFIG.TALK_AUTO_MS);
   lineEl.textContent = text;
   bubbleEl.classList.remove('in'); void bubbleEl.offsetWidth; bubbleEl.classList.add('in');
   moreEl.hidden = queue.length === 0;
@@ -602,7 +609,7 @@ function onDown(e) {
   if (ptrs.size >= 2) return;
   const now = performance.now();
   try { stage.setPointerCapture(e.pointerId); } catch (_) {}
-  const p = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, sx: e.clientX, sy: e.clientY, t: now, lt: now };
+  const p = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, sx: e.clientX, sy: e.clientY, t: now, lt: now, touch: e.pointerType !== 'mouse' };
   ptrs.set(e.pointerId, p);
   if (ptrs.size === 1) {
     g.pid = e.pointerId;
@@ -627,7 +634,7 @@ function decide() {
   const p = ptrs.get(g.pid);
   const l = toLocal(p.x, wy(p.y));
   g.mode = 'press'; app.phase = 'pressing';
-  g.press = { t0: g.downT, x0: app.s.x, y0: app.s.y, a0: app.s.a, path: [{ x: 0, y: 0 }], local: { x: l.x / k, y: l.y / k }, px: p.x, py: p.y };
+  g.press = { t0: g.downT, x0: app.s.x, y0: app.s.y, a0: app.s.a, path: [{ x: 0, y: 0 }], local: { x: l.x / k, y: l.y / k }, px: p.x, py: p.y, touch: p.touch };
 }
 
 function onMove(e) {
@@ -639,7 +646,7 @@ function onMove(e) {
   p.lx = p.x = x; p.ly = p.y = y; p.lt = now;
   switch (g.mode) {
     case 'pending':
-      if (Math.hypot(x - p.sx, y - p.sy) > 6) { clearTimeout(g.timer); g.mode = 'drag'; markFast(); moveStamp(x - p.sx, y - p.sy, 1); }
+      if (Math.hypot(x - p.sx, y - p.sy) > (p.touch ? CONFIG.PRESS.MOVE_TOLERANCE : 6)) { clearTimeout(g.timer); g.mode = 'drag'; markFast(); moveStamp(x - p.sx, y - p.sy, 1); }
       break;
     case 'drag':
       trackSpeed(Math.hypot(dx, dy) / dt, now); moveStamp(dx, dy, gain());
@@ -914,14 +921,19 @@ function drawStamp(now) {
     ctx.beginPath(); ctx.arc(o, -o, 5.2, -Math.PI * .15, Math.PI * 1.25);
     ctx.strokeStyle = '#2a2723'; ctx.lineWidth = 1.4; ctx.lineCap = 'round'; ctx.stroke();
     const ea = -Math.PI * .15, ex = o + 5.2 * Math.cos(ea), ey = -o + 5.2 * Math.sin(ea);
-    ctx.beginPath(); ctx.moveTo(ex - 3.2, ey - 1.2); ctx.lineTo(ex, ey); ctx.lineTo(ex + 1.4, ey - 3.2); ctx.stroke();
+    const TILT = .38, AL = 3.6, SP = .98;                                     // 箭頭：順時針微調、較鈍的尖角
+    const tx = Math.sin(ea) * Math.cos(TILT) + Math.cos(ea) * Math.sin(TILT);
+    const ty = Math.sin(ea) * Math.sin(TILT) - Math.cos(ea) * Math.cos(TILT);
+    const wing = s2 => ({ x: -(tx * Math.cos(s2) - ty * Math.sin(s2)) * AL, y: -(tx * Math.sin(s2) + ty * Math.cos(s2)) * AL });
+    const w1 = wing(SP), w2 = wing(-SP);
+    ctx.beginPath(); ctx.moveTo(ex + w1.x, ey + w1.y); ctx.lineTo(ex, ey); ctx.lineTo(ex + w2.x, ey + w2.y); ctx.lineJoin = 'round'; ctx.stroke();
   }
   ctx.restore();
 }
 
 function drawPressure(now) {
   if (app.phase !== 'pressing') return;
-  const P = CONFIG.PRESS, t = (now - g.press.t0) / 1000, x = g.press.px, y = g.press.py, r = 32;
+  const P = CONFIG.PRESS, t = (now - g.press.t0) / 1000, x = g.press.px, y = g.press.py, r = g.press.touch ? P.RING_TOUCH : P.RING_MOUSE;
   const line = hex(CONFIG.INKS[app.station].line), start = -Math.PI / 2;
   ctx.save(); ctx.lineCap = 'round';
   ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.strokeStyle = 'rgba(251,250,246,.75)'; ctx.lineWidth = 5; ctx.stroke();
@@ -941,7 +953,7 @@ function drawPressure(now) {
 let loupePos = null;
 function drawLoupe() {
   const active = ptrs.size > 0 && (app.phase === 'ready' || app.phase === 'pressing')
-    && ['drag', 'rotate', 'two', 'press', 'pending'].includes(g.mode) && overCard();
+    && ['drag', 'rotate', 'two', 'pending'].includes(g.mode) && overCard();   // 施力時收起放大鏡，讓壓力圈成為主角
   if (!active) { loupe.classList.remove('on'); loupePos = null; return; }
   let fx, fy;
   if (g.mode === 'two' || g.mode === 'rotate') { fx = app.s.x; fy = app.s.y + app.cam; }
