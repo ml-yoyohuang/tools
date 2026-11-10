@@ -575,6 +575,10 @@ body[data-stage="edit"] .workspace {
   outline: 2px solid var(--line);
   outline-offset: 1px;
 }
+#editSection .stamp-button.active:focus-visible {
+  outline: 3px solid #467cff;
+  animation: none;
+}
 #editSection .brush-categories,
 #editSection .pattern-presets {
   display: grid;

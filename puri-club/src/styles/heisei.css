@@ -82,8 +82,14 @@ button.primary:not(:disabled) {
 :is(.film-choices, .layout-choices, .tool-tabs, .brush-categories, .pattern-presets, .photo-tabs, .stamps, .swatches)
   button:is(.active, [aria-pressed="true"]) {
   outline: 3px solid var(--accent);
-  outline-offset: 2px;
+  outline-offset: 1px;
   animation: pickBlink 0.9s steps(1) infinite;
+}
+/* Keyboard focus beats the selection blink, so a focused pick still shows the blue ring. */
+:is(.film-choices, .layout-choices, .tool-tabs, .brush-categories, .pattern-presets, .photo-tabs, .stamps, .swatches)
+  button:is(.active, [aria-pressed="true"]):focus-visible {
+  outline-color: #467cff;
+  animation: none;
 }
 @keyframes pickBlink {
   50% {
