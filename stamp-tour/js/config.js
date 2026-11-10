@@ -56,7 +56,7 @@ export const CONFIG = {
     3: { ink: '#FF48B0', line: '#DB3594', deep: '#B5124F' },
   },
 
-  ART_SET: 'classic',              // 新卡預設的圖案組：'classic'（日、海、鳥）/ 'elephant'（天空、山、大象）
+  ART_SET: 'classic',              // 新卡預設的圖案組：'classic'（日、海、鳥）/ 'elephant'（天空、山、大象）/ 'elephantRetro'（天山象・大正昭和外框）
                                    // 網址加 ?art=elephant 也能指定；每張卡會記住自己的圖案組
 
   /* 第 0 幕：入口與領卡 */
