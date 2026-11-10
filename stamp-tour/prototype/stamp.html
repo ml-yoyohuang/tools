@@ -124,13 +124,13 @@ const CONFIG = {
     RING_TOUCH: 62,                // 壓力圈半徑（手指；要比指腹大，才不會被手指擋住）
     SHORT_S: 0.35,                 // 短於這個 = 太短（不完整、飛白）
     LONG_S: 1.1,                   // 長於這個 = 太久（暈開）
-    LONG_RANGE_S: 1.4,             // 超過 LONG_S 多久達到最暈
+    LONG_RANGE_S: 1.1,             // 超過 LONG_S 多久達到最暈（= 壓力圈第二圈的時間）
   },
 
   SCORE: {                         // 評語判定（單位：卡片單位，印面寬 = 300）
     POS_NORM: 6,                   // 位置偏差 6 單位 ≈ 1 分
     ANGLE_NORM: 3,                 // 角度偏差 3 度 ≈ 1 分
-    MASTER: 1.0,                   // 偏差 < 這個 → 職人級對位！
+    MASTER: 0.55,                  // 偏差 < 這個 → 職人級對位！（約位置 3px、角度 1.6°）
     CRAFT: 3.2,                    // 偏差 < 這個 → 剛剛好的手作感；其餘 → 大膽的藝術錯位！
     PROXIMITY_RANGE: 7,            // 殘影從灰變亮的範圍
   },
@@ -165,12 +165,14 @@ const CONFIG = {
   },
 
   INKS: {                          // 三站 / 三層
-    1: { name: '日', ink: '#FFE800', line: '#B39600' },
-    2: { name: '海', ink: '#0078BF', line: '#0078BF' },
-    3: { name: '鳥', ink: '#FF48B0', line: '#DB3594' },
+    1: { name: '日', ink: '#FFE800', line: '#B39600', deep: '#E07A00' },   // deep：壓力圈第二圈（暈染）
+    2: { name: '海', ink: '#0078BF', line: '#0078BF', deep: '#2A2F9E' },
+    3: { name: '鳥', ink: '#FF48B0', line: '#DB3594', deep: '#B5124F' },
   },
 
   DEV_SWITCHER: true,              // 開發測試用的站點切換器
+  GO_HINT: 'arrow',                // 「拿起印章去蓋吧」的提示：'arrow' 向上箭頭 / 'hop' 印章自己跳 / 'both' / 'none'
+  GO_HINT_MS: 2100,                // 提示持續時間
 };
 
 const COPY = {
@@ -310,6 +312,7 @@ const app = {
   liftT: 0, shakeT: -1e9, dabT: -1e9, wheelT: -1e9, swapT: 0, swapMid: false, swapOff: 0,
   dabs: [], hint: {}, armedUntil: 0, visited: false,
   cam: 0, camPad: 0, camHold: false, lastFrame: 0, returnT: -1e9,
+  goT: -1e9, goEnd: -1e9, goMode: CONFIG.GO_HINT,
 };
 const wy = y => y - app.cam;                                   // 螢幕 y → 場景 y
 const impressions = st => app.layers.filter(L => L.station === st);
@@ -562,6 +565,15 @@ function updateDev() {
     b.addEventListener('click', () => { if (app.phase === 'pressing' || app.phase === 'lifting' || app.phase === 'swap') return; setStation(n); });
     devEl.appendChild(b);
   }
+  const labels = { arrow: '箭頭', hop: '跳動', both: '兩者', none: '無' }, order = ['arrow', 'hop', 'both', 'none'];
+  const hb = document.createElement('button');
+  hb.textContent = labels[app.goMode]; hb.style.width = 'auto'; hb.style.padding = '0 8px';
+  hb.addEventListener('click', () => {
+    app.goMode = order[(order.indexOf(app.goMode) + 1) % order.length];
+    app.goT = performance.now(); app.goEnd = app.goT + CONFIG.GO_HINT_MS;   // 換模式時立刻示範一次
+    updateDev();
+  });
+  devEl.appendChild(hb);
 }
 
 let armTimer = 0;
@@ -622,6 +634,7 @@ function onDown(e) {
     else if (inRect(p.x, py, pad) && stampOnPad()) g.mode = 'padtap';
     else g.mode = null;
     if (g.mode) app.camHold = false;                     // 碰了印章或印台：鏡頭可以回到印台
+    if (g.mode && g.mode !== 'padtap' && g.mode !== null) app.goEnd = Math.min(app.goEnd, now + 180);   // 拿起印章：提示立刻淡出
   } else if (['pending', 'drag', 'rotate'].includes(g.mode)) {
     clearTimeout(g.timer); g.mode = 'two'; g.two = twoState(); markFast();
   }
@@ -724,7 +737,7 @@ function dab() {
   app.ink++;
   app.dabT = performance.now();
   app.dabs.push({ x: app.s.x, y: app.s.y, a: app.s.a, t: app.dabT });
-  if (app.ink === I.GOOD_MIN) say(COPY.inkGood);
+  if (app.ink === I.GOOD_MIN) { say(COPY.inkGood); app.goT = performance.now(); app.goEnd = app.goT + CONFIG.GO_HINT_MS; }
   else if (app.ink === I.GOOD_MAX + 1) say(COPY.inkMuch);
   else if (app.ink === I.MAX) say(COPY.inkMax);
 }
@@ -847,7 +860,7 @@ function liftP(now) { return easeInOut(clamp((now - app.liftT - 160) / CONFIG.LI
 
 function drawStamp(now) {
   if (app.phase === 'done' || app.phase === 'swap') return;
-  const s = app.s, B = CARD.BLOCK * k, over = overCard(), onPad = stampOnPad();
+  const B = CARD.BLOCK * k, over = overCard(), onPad = stampOnPad();
   const lvl = Math.min(1, app.ink / CONFIG.INK_TAPS.GOOD_MIN);
   let h = over ? 1 : onPad ? .3 : .85, sc = 1, alpha = 1, mode = over ? 'ghost' : 'rubber', p = 0;
   if (app.phase === 'pressing') {
@@ -859,6 +872,8 @@ function drawStamp(now) {
   const dp = now - app.dabT; if (dp < 200) sc *= 1 - .045 * Math.sin(Math.PI * dp / 200);
   const rt = now - app.returnT, fa = rt < 500 ? easeOut(rt / 500) : 1;   // 補蓋前：印章回到印台
   if (fa < 1) { alpha *= fa; h += (1 - fa) * .8; }
+  const hop = hopOffset(now); h += hop * .045;
+  const s = { x: app.s.x, y: app.s.y - hop, a: app.s.a };                // 跳動只影響畫面，不影響位置
 
   // 影子
   const c = Math.cos(s.a * D2R), sn = Math.sin(s.a * D2R), hb = B / 2 * sc;
@@ -882,10 +897,10 @@ function drawStamp(now) {
     ctx.globalAlpha = .85 * fa; ctx.drawImage(faceImage('rubber'), -half, -half, B, B);
     if (lvl > 0) { ctx.globalAlpha = .92 * lvl * fa; ctx.drawImage(faceImage('ink'), -half, -half, B, B); }
   } else if (mode === 'ghost') {
-    if (app.ink > 0) { ctx.globalAlpha = .26 + .3 * lvl * fa; ctx.drawImage(faceImage('ink'), -half, -half, B, B); }
+    if (app.ink > 0) { ctx.globalAlpha = (.26 + .3 * lvl) * fa; ctx.drawImage(faceImage('ink'), -half, -half, B, B); }
     else { ctx.globalAlpha = .3 * fa; ctx.drawImage(faceImage('rubber'), -half, -half, B, B); }
   } else if (mode === 'pressed') {
-    ctx.globalAlpha = .55 + .2 * lvl * fa; ctx.drawImage(faceImage('ink'), -half, -half, B, B);
+    ctx.globalAlpha = (.55 + .2 * lvl) * fa; ctx.drawImage(faceImage('ink'), -half, -half, B, B);
   } else if (mode === 'lift') {
     ctx.globalAlpha = .9 * (1 - easeOut(Math.min(1, p * 1.5))); ctx.drawImage(faceImage('rubber'), -half, -half, B, B);
   }
@@ -942,10 +957,49 @@ function drawPressure(now) {
   ctx.strokeStyle = 'rgba(30,26,20,.32)'; ctx.lineWidth = 1.5; ctx.stroke();
   ctx.beginPath(); ctx.arc(x, y, r, start, start + TAU * Math.min(1, t / P.LONG_S));
   ctx.strokeStyle = rgba(line, 1); ctx.lineWidth = 3; ctx.stroke();
+  // 第二圈：暈染風。外圈同心圓，墨往外擴
   if (t > P.LONG_S) {
-    const over = Math.min(1, (t - P.LONG_S) / P.LONG_RANGE_S);
-    ctx.beginPath(); ctx.arc(x, y, r + 4 + over * 14 + Math.sin(now / 90) * 1.5, 0, TAU);
-    ctx.strokeStyle = rgba(line, .35 * (1 - over * .4)); ctx.lineWidth = 2 + over * 6; ctx.stroke();
+    const over = Math.min(1, (t - P.LONG_S) / P.LONG_RANGE_S), deep = hex(CONFIG.INKS[app.station].deep);
+    const r2 = r + 10, appear = Math.min(1, (t - P.LONG_S) / .15);
+    const pulse = over >= 1 ? .5 + .5 * Math.sin(now / 160) : 0;
+    ctx.globalAlpha = appear;
+    ctx.beginPath(); ctx.arc(x, y, r2 + 3 + over * 6 + pulse * 3, 0, TAU);        // 暈開的光暈
+    ctx.strokeStyle = rgba(deep, .1 + .1 * over + .08 * pulse); ctx.lineWidth = 6 + over * 8; ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, y, r2, 0, TAU); ctx.strokeStyle = 'rgba(251,250,246,.75)'; ctx.lineWidth = 6; ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, y, r2, 0, TAU); ctx.strokeStyle = rgba(deep, .18); ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, y, r2, start, start + TAU * over);
+    ctx.strokeStyle = rgba(deep, 1); ctx.lineWidth = 4 + pulse; ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+}
+
+/* 「拿起印章去蓋吧」的提示 */
+function goHintA(now) {          // 0..1 出現程度
+  if (now < app.goT || now > app.goEnd + 300) return 0;
+  return Math.min(1, (now - app.goT) / 200) * (1 - clamp((now - app.goEnd) / 300, 0, 1));
+}
+function hopOffset(now) {        // 印章自己往上輕跳兩下
+  if (app.goMode !== 'hop' && app.goMode !== 'both') return 0;
+  if (app.phase !== 'ready' || g.mode) return 0;
+  const t = (now - app.goT) / 1000 - .25, period = .5;
+  if (t < 0 || t > period * 2 || now > app.goEnd) return 0;
+  const ph = (t % period) / period;
+  return Math.sin(Math.PI * ph) * 16 * (t < period ? 1 : .7);
+}
+function drawGoArrow(now) {      // 印章上緣往上，三個依序亮起的箭頭
+  if (app.goMode !== 'arrow' && app.goMode !== 'both') return;
+  const A = goHintA(now); if (A <= 0 || app.phase !== 'ready') return;
+  const B = CARD.BLOCK * k, x = app.s.x, y0 = app.s.y + app.cam - B * .06;   // 疊在印章上，指向卡片
+  const t = (now - app.goT) / 1000;
+  ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  for (let i = 0; i < 3; i++) {
+    const ph = ((t * 1.45 - i * .2) % 1 + 1) % 1;
+    const a = Math.sin(Math.PI * clamp(ph * 1.6, 0, 1)) * A, y = y0 - i * 22 - ph * 6;
+    if (a <= .01) continue;
+    ctx.beginPath(); ctx.moveTo(x - 16, y); ctx.lineTo(x, y - 12); ctx.lineTo(x + 16, y);
+    ctx.strokeStyle = `rgba(251,250,246,${.9 * a})`; ctx.lineWidth = 8; ctx.stroke();
+    ctx.strokeStyle = `rgba(36,34,31,${a})`; ctx.lineWidth = 3; ctx.stroke();
   }
   ctx.restore();
 }
@@ -1030,6 +1084,7 @@ function frame(now) {
   drawStamp(now);
   ctx.restore();
   drawPressure(now);
+  drawGoArrow(now);
   drawLoupe();
   requestAnimationFrame(frame);
 }
