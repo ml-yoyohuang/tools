@@ -5,7 +5,7 @@ import { CONFIG } from './config.js';
 
 const PREF = 'stamp-tour:sound';
 let ctx = null, master = null, noiseBuf = null;
-let on = (() => { try { return localStorage.getItem(PREF) !== 'off'; } catch (_) { return true; } })();
+let on = (() => { try { return localStorage.getItem(PREF) === 'on'; } catch (_) { return false; } })();   // 預設靜音：入口讓使用者自己選
 
 export const soundOn = () => on;
 export const soundState = () => (ctx ? ctx.state : 'none');   // 開發檢查用
@@ -27,9 +27,13 @@ export function initSound() {
       const n = ctx.sampleRate * 2; noiseBuf = ctx.createBuffer(1, n, ctx.sampleRate);
       const d = noiseBuf.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
     }
-    if (ctx.state !== 'running') ctx.resume();
+    if (ctx.state !== 'running') {
+      ctx.resume();
+      try { const s = ctx.createBufferSource(); s.buffer = ctx.createBuffer(1, 1, ctx.sampleRate); s.connect(ctx.destination); s.start(); } catch (_) {}   // iPhone：在手勢裡播一下無聲，才算真的解鎖
+    }
   };
-  for (const t of ['pointerdown', 'keydown']) window.addEventListener(t, unlock, { capture: true, passive: true });
+  // 手機上「手指按下」不算數，要等「放開」或「點擊」才能出聲：全部都聽
+  for (const t of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']) window.addEventListener(t, unlock, { capture: true, passive: true });
 }
 
 /* ---------------- 合成的基本零件 ---------------- */

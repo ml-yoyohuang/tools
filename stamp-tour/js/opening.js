@@ -19,7 +19,22 @@ const ICON = {   // Material Design Icons
 };
 const icon = d => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg>`;
 
-export async function runOpening({ short = false, station = 0, cardRect }) {
+/* 入口的聲音選擇：兩顆喇叭（關／開），選了才開始布置會場 */
+async function soundGate(root, { icons, choose }) {
+  const gate = document.createElement('div');
+  gate.id = 'soundgate';
+  gate.innerHTML = `<button data-v="0" aria-label="sound off">${icon(icons.off)}</button><button data-v="1" aria-label="sound on">${icon(icons.on)}</button>`;
+  root.appendChild(gate);
+  requestAnimationFrame(() => gate.classList.add('in'));
+  const v = await new Promise(res => gate.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { b.classList.add('picked'); res(b.dataset.v === '1'); } }));
+  choose(v);
+  if (v) sfx('blip');
+  gate.classList.remove('in'); gate.classList.add('out');
+  await wait(420);
+  gate.remove();
+}
+
+export async function runOpening({ short = false, station = 0, cardRect, sound = null }) {
   const sp = short ? CONFIG.OPENING.SHORT_SPEED : CONFIG.OPENING.SPEED;
   const T = ms => ms / sp;
   const root = $('#opening'), body = document.body;
@@ -48,6 +63,7 @@ export async function runOpening({ short = false, station = 0, cardRect }) {
   const clerk = $('#clerk');
   registerHost(clerk);
   buildBunting($('#bunting'));
+  if (sound) await soundGate(root, sound);
 
   // ---------- 1. 抵達：彩旗、布條 ----------
   await wait(T(120));

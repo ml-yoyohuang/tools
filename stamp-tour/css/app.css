@@ -415,3 +415,21 @@ body.post-on #stack, body.post-on #dev { visibility:hidden; }
 #sound:hover { opacity:.8; }
 #sound.off { opacity:.28; }
 body.finale-on #sound, body.post-on #sound { opacity:.25; }
+
+/* ---------------- 入口：要不要聲音 ---------------- */
+#soundgate {
+  position:absolute; left:50%; top:46%; z-index:6; display:flex; gap:28px;
+  transform:translate(-50%, -50%) translateY(10px); opacity:0;
+  transition:opacity .4s, transform .5s cubic-bezier(.25,1.4,.45,1);
+}
+#soundgate.in { opacity:1; transform:translate(-50%, -50%); }
+#soundgate.out { opacity:0; transform:translate(-50%, -50%) scale(.94); transition:opacity .35s, transform .35s; pointer-events:none; }
+#soundgate button {
+  width:76px; height:76px; border:0; border-radius:50%; cursor:pointer; display:grid; place-items:center;
+  background:var(--paper); color:var(--ink); -webkit-appearance:none; appearance:none;
+  box-shadow:0 0 0 1px rgba(36,34,31,.06), 0 12px 26px -14px rgba(40,30,10,.45);
+  transition:transform .15s, background .2s, color .2s;
+}
+#soundgate button:active { transform:scale(.94); }
+#soundgate button.picked { background:var(--ink); color:var(--paper); }
+#soundgate svg { width:30px; height:30px; fill:currentColor; }

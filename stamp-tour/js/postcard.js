@@ -3,7 +3,7 @@
    寄到之後，卡片首頁就是這張明信片：點一下翻面。 */
 import { CONFIG } from './config.js';
 import { COPY } from './copy.js';
-import { CARD, PR, printCv } from './print.js';
+import { CARD, PR, printCv, effectsOf } from './print.js';
 import { drawCardExtras, drawStroke, drawTail, NAME_FONT, PEN_INK, POSTMARK, postmarkImage } from './cardface.js';
 import { say } from './attendant.js';
 import { drawPostage, pickStamp, faceMark } from './stamps.js';
@@ -96,15 +96,15 @@ export function renderBack(c, x, y, k, post = {}) {
     c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(st, cx, cy + u(.8));
   });
 
-  // 三站的評語（每站第一次蓋的那一句）
+  // 三站的評語：最明顯的一件事（見 stationNote）
   const N = B.NOTES;
   route.forEach((st, i) => {
-    const imp = store.impressions.find(m => m.station === st && !m.retouch) || store.impressions.find(m => m.station === st);
-    if (!imp) return;
+    const text = stationNote(st);
+    if (!text) return;
     const yy = u(N.y + i * N.gap);
     c.fillStyle = CONFIG.INKS[st].ink; c.beginPath(); c.arc(u(N.x + 3), yy - u(4), u(3.2), 0, Math.PI * 2); c.fill();
     c.fillStyle = '#3A3530'; c.font = `500 ${u(13)}px ${TYPE}`; c.textAlign = 'left'; c.textBaseline = 'alphabetic';
-    c.fillText(COPY.comments[imp.comment] || '', u(N.x + 13), yy, u(418 - N.x - 13));
+    c.fillText(text, u(N.x + 13), yy, u(418 - N.x - 13));
   });
 
   // 站務員寫的話（寄回來才有）：寫在地址線上，句尾蓋臉印署名
@@ -147,6 +147,16 @@ export function renderBack(c, x, y, k, post = {}) {
     c.restore();
   }
   c.restore();
+}
+
+/* 一站的評語：有補蓋 → 補蓋；否則第一次蓋的墨量、力道有意外 → 挑最明顯的一件；都沒有 → 對位評語 */
+function stationNote(st) {
+  const all = store.impressions.filter(m => m.station === st), first = all.find(m => !m.retouch) || all[0];
+  if (!first) return '';
+  if (all.some(m => m.retouch)) return COPY.post.notes.retouch;
+  const fx = effectsOf(first);
+  const [kind, v] = ['long', 'excess', 'starve', 'short'].map(k => [k, fx[k]]).sort((a, b) => b[1] - a[1])[0];
+  return v > 0 ? COPY.post.notes[kind] : COPY.comments[first.comment] || '';
 }
 
 /* 站務員的話：看三站（各自第一次蓋）的評語猜個性 */
