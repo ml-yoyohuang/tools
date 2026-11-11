@@ -323,6 +323,7 @@ body.scene-open #dev button:not(.art) { display:none; }   /* 入口與簽名時�
 #finale .cord { position:absolute; inset:0; width:100%; height:100%; overflow:visible; opacity:0; transition:opacity .3s; }
 #finale .cord.in { opacity:1; }
 #finale .cord.gone { opacity:0; transition:opacity .2s; }
+#finale .cord.gone .hit { pointer-events:none; }
 #finale .cord line { stroke:#F7F4EE; stroke-width:2; stroke-linecap:round; }
 #finale .cord .loop { fill:none; stroke:#F7F4EE; stroke-width:2.6; }
 #finale .cord .hit { fill:transparent; pointer-events:auto; cursor:grab; }
