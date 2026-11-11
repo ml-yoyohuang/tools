@@ -8,7 +8,7 @@ import { buildBase, composite } from './print.js';
 import { attendantSVG, initSpeech, registerHost } from './attendant.js';
 import { ART_SETS, setArt, stationGreet } from './art.js';
 import { store } from './storage.js';
-import { initStamping, loadImpressions, getCardRect, show, hide, enterStation, enterHub } from './stamping.js';
+import { initStamping, loadImpressions, getCardRect, show, hide, enterStation, enterHub, refreshDev } from './stamping.js';
 import { runOpening } from './opening.js';
 import { playArrival } from './arrival.js';
 import { $ } from './util.js';
@@ -54,6 +54,7 @@ async function arrive(n, before) {
 async function opening(station, short) {
   hide();
   setArt(preferredArt());
+  refreshDev();
   composite([]);
   const close = await runOpening({ short, station, cardRect: getCardRect() });
   if (station) { await arrive(station, close); return; }

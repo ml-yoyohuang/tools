@@ -84,7 +84,7 @@ body.scene-open #stack { visibility:hidden; }
 }
 #dev button.cur { text-decoration:underline; text-underline-offset:3px; font-weight:700; }
 #dev button i { position:absolute; bottom:3px; left:50%; width:4px; height:4px; margin-left:-2px; border-radius:50%; }
-body.scene-open #dev { visibility:hidden; }
+body.scene-open #dev button:not(.art) { display:none; }   /* 入口與簽名時只留圖案組切換 */
 
 /* =====================================================================
    第 0 幕

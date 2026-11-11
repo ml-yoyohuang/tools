@@ -67,7 +67,7 @@ export async function playArrival(n, { route = [], before, onReveal } = {}) {
   else {
     anim(sign, [{ transform: `translateY(${lift()}px)` }], { duration: 0 });
     anim(flip, [{ transform: 'rotateX(180deg)' }], { duration: 0 });
-    for (const el of [parts.num, ...parts.chars, parts.rule, ...parts.dots, parts.band]) anim(el, [{ opacity: 0 }], { duration: 0 });
+    for (const el of [parts.num, ...parts.chars, parts.rule, ...parts.dots]) anim(el, [{ opacity: 0 }], { duration: 0 });   // 站色底條一開始就在，翻下來時牌面不會一片空白
   }
 
   // 背景先蓋上來，蓋滿了才收掉後面的東西（開場、上一站）
@@ -98,7 +98,6 @@ export async function playArrival(n, { route = [], before, onReveal } = {}) {
     await step(A.FLIP_MS * .5);
 
     // ---------- 揭曉：站號、站名、路線 ----------
-    anim(parts.band, [{ opacity: 1, transform: 'scaleX(0)' }, { opacity: 1, transform: 'none' }], { duration: 520, easing: 'cubic-bezier(.3,.8,.2,1)' });
     anim(parts.num, [
       { opacity: 0, transform: 'scale(.4)' }, { opacity: 1, transform: 'scale(1.1)', offset: .6 }, { opacity: 1, transform: 'none' },
     ], { duration: 460, delay: 80, easing: 'cubic-bezier(.3,.9,.4,1)' });
