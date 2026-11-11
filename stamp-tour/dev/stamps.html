@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>郵票總覽</title>
+<style>
+  :root { --bg:#e8e4dc; --ink:#24221f; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--ink); font:14px/1.5 "PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif; padding:28px 16px 60px; }
+  main { max-width:960px; margin:0 auto; }
+  h1 { font-size:20px; font-weight:800; letter-spacing:.06em; }
+  .note { color:rgba(36,34,31,.6); margin:4px 0 28px; font-size:13px; }
+  h2 { font-size:14px; font-weight:700; margin:28px 0 12px; display:flex; gap:10px; align-items:baseline; }
+  h2 span { font-weight:500; color:rgba(36,34,31,.55); font-size:12px; font-variant-numeric:tabular-nums; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:18px 14px; }
+  figure { display:flex; flex-direction:column; align-items:center; gap:6px; }
+  canvas { width:136px; height:160px; display:block; }
+  figcaption { font:11px/1.3 ui-monospace,"SF Mono",Consolas,monospace; color:rgba(36,34,31,.6); text-align:center; word-break:break-all; }
+</style>
+</head>
+<body>
+<main>
+  <h1>郵票總覽</h1>
+  <p class="note">明信片寄出時，從下面全部的郵票裡依比例抽一張。「自己的圖」這裡用日海鳥的示範卡代替。</p>
+  <div id="groups"></div>
+</main>
+<script type="module">
+  import { stampPool, drawPostage } from '../js/stamps.js';
+  import { buildBase, genMask, composite } from '../js/print.js';
+  import { setArt } from '../js/art.js';
+
+  // 「自己的圖」：做一張示範卡（三站都正確對準）
+  buildBase(); setArt('classic');
+  const layers = [1, 2, 3].map((station, i) => {
+    const L = { station, x: 0, y: 0, a: 0, taps: 4, hold: 1.1, smear: [{ x: 0, y: 0 }], press: { x: 0, y: 0 }, seed: 101 + i };
+    L.mask = genMask(L); return L;
+  });
+  composite(layers);
+
+  const pool = stampPool(), total = pool.reduce((t, p) => t + p.w, 0);
+  const groups = new Map();
+  for (const p of pool) { if (!groups.has(p.group)) groups.set(p.group, []); groups.get(p.group).push(p); }
+  const root = document.getElementById('groups'), dpr = Math.min(devicePixelRatio || 1, 2);
+  for (const [name, items] of groups) {
+    const w = items.reduce((t, p) => t + p.w, 0);
+    root.insertAdjacentHTML('beforeend', `<h2>${name}<span>${items.length} 張・合計抽中機率 ${(w / total * 100).toFixed(1)}%</span></h2>`);
+    const grid = document.createElement('div'); grid.className = 'grid'; root.appendChild(grid);
+    for (const p of items) {
+      const fig = document.createElement('figure'), cv = document.createElement('canvas');
+      cv.width = 136 * dpr; cv.height = 160 * dpr;
+      const c = cv.getContext('2d'); c.scale(dpr, dpr);
+      drawPostage(c, 8, 8, 120, 142, p.id);
+      fig.append(cv);
+      fig.insertAdjacentHTML('beforeend', `<figcaption>${p.id}<br>${(p.w / total * 100).toFixed(1)}%</figcaption>`);
+      grid.appendChild(fig);
+    }
+  }
+</script>
+</body>
+</html>
