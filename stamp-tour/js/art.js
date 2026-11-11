@@ -22,7 +22,7 @@ function tube(c, p0, p1, p2, p3, w0, w1) {
 }
 
 /* 蓬鬆的雲：一條圓角長條＋三顆雲朵 */
-function cloud(c, cx, cy, s) {
+export function cloud(c, cx, cy, s) {   // 也給郵票的「單雲朵章」用
   rr(c, cx - 48 * s, cy - 15 * s, 96 * s, 30 * s, 15 * s); c.fill();
   for (const [x, y, r] of [[-26, -17, 20], [2, -31, 26], [28, -17, 18]]) { c.beginPath(); c.arc(cx + x * s, cy + y * s, r * s, 0, TAU); c.fill(); }
 }

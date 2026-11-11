@@ -2,13 +2,13 @@
    id 的種類：
      own                  你蓋出來的這幅（正面縮圖）
      set:<圖案組>          任一組的三色完整圖（不一定是自己玩的那一組）
-     one:<圖案組>:<站>     單站的章（放大置中）
+     solo:<主角>           單一主角的章：elephant / bird / boat / cloud（從印章圖案裡拆出來，放大置中）
      master:<造型>         站務員：face / happy / body / grid（四宮格表情）/ big（超大臉）
      geo:<花樣>            幾何花樣：venn / stripe / flags / dots / rays / check
    全部用 Canvas 畫，同步完成（存成圖片時不用等載入）。 */
 import { CONFIG } from './config.js';
 import { CARD, PR, printCv } from './print.js';
-import { ART_SETS } from './art.js';
+import { ART_SETS, cloud } from './art.js';
 import { makeCanvas, hash2 } from './util.js';
 
 const PAPER = '#FBFAF6', INK = n => CONFIG.INKS[n].ink;
@@ -16,11 +16,29 @@ const Y = () => INK(1), B = () => INK(2), P = () => INK(3);
 
 /* ---------------- 抽獎池 ---------------- */
 export const MASTER_LOOKS = ['face', 'happy', 'body', 'grid', 'big'];
-export const GEO = ['venn', 'stripe', 'flags', 'dots', 'rays', 'check'];
+export const GEO = ['venn', 'stripe', 'flags', 'dots', 'rays', 'check', 'waves', 'scales', 'drops', 'arches', 'chevron', 'bauhaus'];
+
+/* 單一主角的章：從印章圖案拆出來（座標同印面 ±150），用原本那一站的墨色 */
+const SOLO = {
+  elephant: { ink: 3, draw: c => ART_SETS.elephant.shapes[3](c) },
+  bird: { ink: 3, draw: c => {          // 日海鳥的「鳥」：身體、頭、嘴、翅膀、尾巴
+    c.beginPath(); c.ellipse(40, -58, 42, 22, -.32, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(80, -78, 16, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.moveTo(93, -85); c.lineTo(113, -78); c.lineTo(94, -70); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(16, -66); c.bezierCurveTo(28, -122, 78, -144, 120, -134);
+    c.bezierCurveTo(92, -112, 72, -80, 56, -62); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(6, -52); c.lineTo(-36, -34); c.lineTo(-28, -68); c.closePath(); c.fill();
+  } },
+  boat: { ink: 3, draw: c => {          // 日海鳥的「小船」：船身＋帆
+    c.beginPath(); c.arc(60, 72, 46, 0, Math.PI); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(52, 62); c.lineTo(52, 6); c.lineTo(96, 62); c.closePath(); c.fill();
+  } },
+  cloud: { ink: 1, draw: c => cloud(c, 0, 0, 1) },   // 天山象的「雲」
+};
 export function stampPool() {
   const pool = [{ id: 'own', w: 3, group: '自己的圖' }];
   for (const a of Object.keys(ART_SETS)) pool.push({ id: `set:${a}`, w: 2, group: '三色完整圖' });
-  for (const a of Object.keys(ART_SETS)) for (const n of [1, 2, 3]) pool.push({ id: `one:${a}:${n}`, w: 1, group: '單站章' });
+  for (const s of Object.keys(SOLO)) pool.push({ id: `solo:${s}`, w: 1, group: '單一主角' });
   for (const m of MASTER_LOOKS) pool.push({ id: `master:${m}`, w: 1, group: '站務員' });   // 比較稀有
   for (const g of GEO) pool.push({ id: `geo:${g}`, w: 1, group: '幾何花樣' });
   return pool;
@@ -52,7 +70,7 @@ export function drawPostage(c, x, y, w, h, id) {
 const cache = new Map();
 export function drawStampArt(c, x, y, s, id = 'own') {
   const [type, a, n] = String(id).split(':');
-  const ok = type === 'set' || type === 'one' ? !!ART_SETS[a] : type === 'master' ? MASTER_LOOKS.includes(a) : type === 'geo' ? GEO.includes(a) : false;
+  const ok = type === 'set' ? !!ART_SETS[a] : type === 'solo' ? !!SOLO[a] : type === 'master' ? MASTER_LOOKS.includes(a) : type === 'geo' ? GEO.includes(a) : false;
   if (!ok) {                             // own（或之後被移除的圖案）：正面縮圖
     c.drawImage(printCv, (CARD.FX - 150) * PR, (CARD.FY - 150) * PR, 300 * PR, 300 * PR, x, y, s, s);
     return;
@@ -64,7 +82,8 @@ export function drawStampArt(c, x, y, s, id = 'own') {
     const g = cv.getContext('2d');
     g.fillStyle = PAPER; g.fillRect(0, 0, px, px);
     g.scale(px / 100, px / 100);          // 圖的座標：0 ~ 100
-    if (type === 'set' || type === 'one') artStamp(g, px, a, type === 'one' ? +n : 0);
+    if (type === 'set') artStamp(g, a);
+    else if (type === 'solo') soloStamp(g, SOLO[a]);
     else if (type === 'master') masterStamp(g, a);
     else geoStamp(g, a);
     cache.set(key, cv);
@@ -80,16 +99,15 @@ function multiplyLayer(g, paint) {
 }
 
 /* ---------------- 圖案組的章 ---------------- */
-function artStamp(g, px, a, only) {
+function artStamp(g, a) {
   const shapes = ART_SETS[a].shapes;
-  let zoom = 1, ox = 0, oy = 0;
-  if (only) {                            // 單站：圖案只佔印面的一部分，放大置中
-    const b = shapeBox(shapes[only]);
-    zoom = Math.min(2.2, 300 * .8 / Math.max(b.w, b.h)); ox = -(b.x + b.w / 2); oy = -(b.y + b.h / 2);
-  }
-  for (const st of only ? [only] : [1, 2, 3]) multiplyLayer(g, l => {
-    l.translate(50, 50); l.scale(zoom / 3, zoom / 3); l.translate(ox, oy);
-    l.fillStyle = INK(st); shapes[st](l);
+  for (const st of [1, 2, 3]) multiplyLayer(g, l => { l.translate(50, 50); l.scale(1 / 3, 1 / 3); l.fillStyle = INK(st); shapes[st](l); });
+}
+function soloStamp(g, S) {               // 主角放大置中，佔郵票約八成
+  const b = shapeBox(S.draw), zoom = Math.min(2.6, 300 * .78 / Math.max(b.w, b.h));
+  multiplyLayer(g, l => {
+    l.translate(50, 50); l.scale(zoom / 3, zoom / 3); l.translate(-(b.x + b.w / 2), -(b.y + b.h / 2));
+    l.fillStyle = INK(S.ink); S.draw(l);
   });
 }
 function shapeBox(shape) {               // 圖案實際畫到的範圍（印面座標 ±150）
@@ -222,6 +240,49 @@ function geoStamp(g, kind) {
     multiplyLayer(g, l => { l.fillStyle = B(); for (let y = 0; y < 5; y++) for (let x = 0; x < 5; x++) if ((x + y) % 2 === 0) l.fillRect(x * 20, y * 20, 20, 20); });
     multiplyLayer(g, l => { l.fillStyle = Y(); for (let y = -1; y < 5; y++) for (let x = -1; x < 5; x++) if ((x + y) % 2 === 0) l.fillRect(x * 20 + 10, y * 20 + 10, 20, 20); });
     multiplyLayer(g, l => { l.fillStyle = P(); for (let i = 0; i < 4; i++) { l.beginPath(); l.arc(20 + (i % 2) * 60, 20 + Math.floor(i / 2) * 60, 4, 0, Math.PI * 2); l.fill(); } });
+  } else if (kind === 'waves') {        // 海浪：藍、粉紅兩層波浪線，錯開半個波
+    [[2, 0], [3, 6]].forEach(([st, off]) => multiplyLayer(g, l => {
+      l.strokeStyle = INK(st); l.lineWidth = 3.6; l.lineCap = 'round';
+      for (let y = 8 + off; y < 106; y += 12) { l.beginPath(); for (let x = -4; x <= 104; x += 2) l.lineTo(x, y + Math.sin((x + off * 3) / 7) * 3.2); l.stroke(); }
+    }));
+  } else if (kind === 'scales') {       // 青海波：一層層的同心半圓
+    multiplyLayer(g, l => {
+      const R = 14;
+      for (let row = -1; row < 9; row++) for (let i = -1; i < 6; i++) {
+        const cx = i * R * 2 + (row % 2) * R, cy = row * R * .62 + 8;
+        [[R, B()], [R * .72, PAPER], [R * .5, P()], [R * .28, PAPER]].forEach(([r, col]) => { l.fillStyle = col; l.beginPath(); l.arc(cx, cy, r, Math.PI, 0); l.lineTo(cx + r, cy + R); l.lineTo(cx - r, cy + R); l.fill(); });
+      }
+    });
+    multiplyLayer(g, l => { l.fillStyle = Y(); l.globalAlpha = .5; l.fillRect(0, 0, 100, 100); });
+  } else if (kind === 'drops') {        // 墨水滴紙花：慶祝時噴出來的那種
+    for (const st of [1, 2, 3]) multiplyLayer(g, l => {
+      l.fillStyle = INK(st);
+      for (let i = 0; i < 16; i++) {
+        const x = hash2(i, st, 31) * 100, y = hash2(i, st, 37) * 100, s = 3.2 + hash2(i, st, 41) * 2.6, a = hash2(i, st, 43) * Math.PI * 2;
+        l.save(); l.translate(x, y); l.rotate(a); l.beginPath(); l.moveTo(0, -s * 1.7);
+        l.bezierCurveTo(s * .55, -s * .7, s, -s * .1, s, s * .35); l.arc(0, s * .35, s, 0, Math.PI);
+        l.bezierCurveTo(-s, -s * .1, -s * .55, -s * .7, 0, -s * 1.7); l.fill(); l.restore();
+      }
+    });
+  } else if (kind === 'arches') {       // 彩虹拱：三色同心拱門，三組錯開疊印
+    [[1, 26, 0], [2, 74, 0], [3, 50, 1.5]].forEach(([st, cx, dy]) => multiplyLayer(g, l => {
+      l.strokeStyle = INK(st); l.lineWidth = 6;
+      for (const r of [10, 22, 34]) { l.beginPath(); l.arc(cx, 92 + dy, r, Math.PI, 0); l.stroke(); }
+      for (const r of [10, 22, 34]) { l.beginPath(); l.arc(cx + (st === 3 ? 0 : 0), 40 + dy, r, Math.PI, 0); l.stroke(); }
+    }));
+  } else if (kind === 'chevron') {      // 人字紋：三色鋸齒條
+    [1, 2, 3].forEach((st, i) => multiplyLayer(g, l => {
+      l.strokeStyle = INK(st); l.lineWidth = 5; l.lineJoin = 'miter';
+      for (let y = -6 + i * 7; y < 112; y += 21) { l.beginPath(); for (let x = -10, k = 0; x <= 110; x += 10, k++) l.lineTo(x, y + (k % 2 ? 7 : 0)); l.stroke(); }
+    }));
+  } else if (kind === 'bauhaus') {      // 包浩斯：四分圓磁磚，四個方向輪流
+    const T = 25, cols = [Y(), B(), P()];
+    for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) multiplyLayer(g, l => {
+      const i = x + y * 4, col = cols[(x * 2 + y) % 3], q = (x + y * 3) % 4;
+      const cx = x * T + (q === 1 || q === 2 ? T : 0), cy = y * T + (q >= 2 ? T : 0);
+      l.fillStyle = col; l.beginPath(); l.moveTo(cx, cy); l.arc(cx, cy, T * .96, q * Math.PI / 2, q * Math.PI / 2 + Math.PI / 2); l.closePath(); l.fill();
+      if (i % 5 === 2) { l.fillStyle = cols[(i + 1) % 3]; l.beginPath(); l.arc(x * T + T / 2, y * T + T / 2, 4, 0, Math.PI * 2); l.fill(); }
+    });
   }
   // 一點點紙紋，讓花樣不要太像電腦圖
   const W = g.canvas.width, img = g.getImageData(0, 0, W, W), d = img.data;
