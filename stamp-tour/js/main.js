@@ -8,15 +8,16 @@ import { buildBase, composite } from './print.js';
 import { attendantSVG, initSpeech, registerHost } from './attendant.js';
 import { ART_SETS, setArt, stationGreet } from './art.js';
 import { store } from './storage.js';
-import { initStamping, loadImpressions, getCardRect, show, hide, enterStation, enterHub, refreshDev, enterFinale, liveCardRect } from './stamping.js';
+import { initStamping, loadImpressions, getCardRect, show, hide, enterStation, enterHub, refreshDev, enterFinale, liveCardRect, setCardHidden } from './stamping.js';
 import { runOpening } from './opening.js';
 import { playArrival } from './arrival.js';
 import { runFinale } from './finale.js';
+import { runPostcard, showPostcard, hidePostcard } from './postcard.js';
 import { $, wait } from './util.js';
 
 /* 防止頁面縮放、捲動、選取、長按選單 */
 for (const t of ['gesturestart', 'gesturechange', 'gestureend', 'dblclick', 'contextmenu', 'selectstart'])
-  document.addEventListener(t, e => { if (e.target.id !== 'nameInput') e.preventDefault(); }, { passive: false });
+  document.addEventListener(t, e => { if (e.target.id !== 'nameInput' && e.target.id !== 'msgInput') e.preventDefault(); }, { passive: false });
 document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
 document.addEventListener('touchstart', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
 
@@ -46,7 +47,7 @@ async function arrive(n, before) {
   arriving = true;
   await playArrival(n, {
     route: store.route(),
-    before: () => { hide(); before?.(); },
+    before: () => { hide(); leaveCard(); before?.(); },
     onReveal: () => {
       show(); enterStation(n, arrivalLines(n));
       if (store.stationsLeft() === 0 && !store.card.seal) finale();   // 集滿但還沒慶祝（慶祝被打斷了）
@@ -64,8 +65,16 @@ async function finale() {
   enterFinale();
   await runFinale({ getCard: liveCardRect, art: store.card.art || 'classic', onSeal: seal => store.setSeal(seal) });
   enterHub();
+  await postcard();
   celebrating = false;
 }
+
+/* 明信片：蓋在卡片上的元件；寄出前跑完整儀式，寄出後就是卡片首頁 */
+async function postcard() {
+  setCardHidden(true);
+  await runPostcard(liveCardRect);
+}
+function leaveCard() { hidePostcard(); setCardHidden(false); }
 
 async function opening(station, short) {
   hide();
@@ -88,6 +97,7 @@ async function boot() {
     onArtToggle: id => { try { localStorage.setItem(ART_PREF, id); } catch (_) {} },
     onGoStation: n => arrive(n),
     onComplete: () => finale(),
+    onLeave: () => leaveCard(),
   });
   await store.init();
   buildBase();
@@ -100,6 +110,8 @@ async function boot() {
   if (station) { arrive(station); return; }
   show();
   if (store.stationsLeft() === 0 && !store.card.seal) { enterHub(); finale(); return; }   // 集滿但慶祝被打斷了：重新慶祝
+  if (store.card.seal && !(store.card.post && store.card.post.sentAt)) { enterHub(); postcard(); return; }   // 明信片還沒寄出：接著做
+  if (store.card.post && store.card.post.sentAt) { enterHub(COPY.post.back); setCardHidden(true); showPostcard(liveCardRect); return; }
   enterHub(COPY.hub.back(store.stationsLeft()));
 }
 

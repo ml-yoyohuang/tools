@@ -14,7 +14,7 @@ let stage, ctx, loupe, lctx, topEl, stackEl, devEl;
 let W = 0, H = 0, DPR = 1, k = 1;
 let card = {}, pad = {}, rest = {}, fc = {};
 const faceCache = {};
-let hooks = { onReset: () => {}, onStationChange: () => {}, onArtToggle: () => {}, onGoStation: n => enterStation(n), onComplete: () => {} };
+let hooks = { onReset: () => {}, onStationChange: () => {}, onArtToggle: () => {}, onGoStation: n => enterStation(n), onComplete: () => {}, onLeave: () => {} };
 
 const app = {
   active: false,
@@ -78,6 +78,9 @@ export function enterStation(n, lines) {
 }
 
 /* 第 3 幕：印台和印章退場，卡片移到畫面中央（慶祝由 finale.js 接手） */
+/* 明信片元件蓋在卡片上時，蓋章畫面就不畫卡片（翻面時才不會看到下面那張） */
+export function setCardHidden(on) { app.cardHidden = on; }
+
 export function enterFinale() {
   app.phase = 'finale'; app.finT = performance.now(); app.finaleArmed = false;
   ptrs.clear(); g.mode = null; clearTimeout(g.timer);
@@ -191,6 +194,7 @@ function updateDev() {
     // 入口、簽名時還沒有卡：直接換掉等一下要發的卡的圖案組（日期章蓋下、卡發出去之後就不能換）
     if (document.body.classList.contains('scene-open')) { if (store.hasCard()) return; setArt(next); hooks.onArtToggle(next); updateDev(); return; }
     if (!app.active || BUSY.includes(app.phase)) return;
+    hooks.onLeave();
     hooks.onArtToggle(next);
     app.phase = 'out'; app.outT = performance.now(); ptrs.clear(); g.mode = null;
   });
@@ -203,6 +207,7 @@ function onStack() {
   if (!app.active || BUSY.includes(app.phase)) return;
   if (performance.now() < app.armedUntil) {
     app.armedUntil = 0; stackEl.classList.remove('armed'); clearTimeout(armTimer);
+    hooks.onLeave();
     app.phase = 'out'; app.outT = performance.now();
     ptrs.clear(); g.mode = null;
     return;
@@ -429,6 +434,7 @@ function drawBackground() {
 }
 
 function drawCard() {
+  if (app.cardHidden) return;
   const x = card.x + app.outOff, y = card.y + app.hubOff, w = card.w, h = card.h;
   dropShadow(rectPts(x + 4, y + 4, w - 8, h - 8), 0, 10, 26, .2);
   ctx.save(); rr(ctx, x, y, w, h, 7 * k); ctx.clip();

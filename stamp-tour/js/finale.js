@@ -7,6 +7,7 @@ import { CONFIG } from './config.js';
 import { COPY } from './copy.js';
 import { attendantSVG, registerHost, say, setMood } from './attendant.js';
 import { SEAL_SPAN } from './cardface.js';
+import { dragStamp, handStampSVG } from './dragstamp.js';
 import { $, TAU, clamp, lerp, wait } from './util.js';
 
 const INKS = ['#FFE800', '#0078BF', '#FF48B0'], PAPER = '#F7F4EE';
@@ -23,7 +24,7 @@ export async function runFinale({ getCard, art, onSeal }) {
     <div class="popper">${popperSVG()}</div>
     <svg class="cord"><line/><g class="ring"><circle class="hit" r="26"/><circle class="loop" r="8.5"/></g></svg>
     <div class="ghost"></div>
-    <div class="sealer">${sealerSVG(F.SEAL_INK)}</div>`;
+    <div class="sealer">${handStampSVG(F.SEAL_INK, '#FFE800')}</div>`;
   root.hidden = false;
   body.classList.add('finale-on');
   const dim = $('#finale .dim'), cv = $('#finale .confetti'), clerk = $('#finale .clerk'), popper = $('#finale .popper');
@@ -97,13 +98,11 @@ export async function runFinale({ getCard, art, onSeal }) {
   const R0 = getCard(), sw = SEAL_SPAN * .76 * R0.k * 80 / 54, sh = sw * 112 / 80;   // 章底寬 ≈ 完成章圖案寬
   Object.assign(sealer.style, { width: sw + 'px', height: sh + 'px' });
   const home = { x: clerkX - cw * .62, y: H - clerkB - ch * .18 };       // 章底中心的位置
-  const put = (x, y, s = 1) => { sealer.style.transform = `translate(${x - sw / 2}px, ${y - sh * .82}px) scale(${s})`; };
-  put(home.x, home.y);
   sealer.classList.add('in');
   const gs = 64 * R0.k;
   Object.assign(ghost.style, { width: gs + 'px', height: gs + 'px', marginLeft: -gs / 2 + 'px', marginTop: -gs / 2 + 'px' });
   say(COPY.finale.seal);
-  const seal = await sealStep();
+  const { px, py, ...seal } = await dragStamp({ el: sealer, home, getCard, ghost, goodS: F.SEAL_GOOD_S });
   onSeal({ art, ...seal });
   vibe(16);
   ghost.classList.remove('on');
@@ -162,59 +161,6 @@ export async function runFinale({ getCard, art, onSeal }) {
         if (!nagged) { nagged = true; say(COPY.finale.pullMore); }
       };
       ring.addEventListener('pointerup', up); ring.addEventListener('pointercancel', up);
-    });
-  }
-
-  /* ---------------- 完成章 ---------------- */
-  function sealStep() {
-    return new Promise(res => {
-      let id = null, off = { x: 0, y: 0 }, pos = { ...home }, still = 0, vx = 0, lastP = null, raf = 0;
-      const over = () => { const R = getCard(); return pos.x > R.x && pos.x < R.x + R.w && pos.y > R.y && pos.y < R.y + R.h; };
-      const tick = now => {            // 停在卡片上不動 → 慢慢壓下去
-        raf = requestAnimationFrame(tick);
-        if (id === null) return;
-        const p = over() ? clamp((now - still) / (F.SEAL_GOOD_S * 1000), 0, 1) : 0;
-        put(pos.x, pos.y, 1 - .06 * p);
-        ghost.style.opacity = over() ? (.35 + .5 * p).toFixed(2) : '0';
-        sealer.classList.toggle('press', p > 0);
-      };
-      raf = requestAnimationFrame(tick);
-      sealer.addEventListener('pointerdown', e => {
-        e.preventDefault(); if (id !== null) return;
-        id = e.pointerId; try { sealer.setPointerCapture(id); } catch (_) {}
-        // 手指會擋住章底：觸控時章底在手指上方
-        off = e.pointerType === 'mouse' ? { x: pos.x - e.clientX, y: pos.y - e.clientY } : { x: 0, y: -Math.max(58, sh * .55) };
-        pos = { x: e.clientX + off.x, y: e.clientY + off.y };
-        still = performance.now(); lastP = { x: e.clientX, t: still };
-        sealer.classList.add('held'); ghost.classList.add('on');
-      });
-      sealer.addEventListener('pointermove', e => {
-        if (e.pointerId !== id) return;
-        const np = { x: e.clientX + off.x, y: e.clientY + off.y }, now = performance.now();
-        if (Math.hypot(np.x - pos.x, np.y - pos.y) > 2.5) still = now;
-        vx = lerp(vx, (e.clientX - lastP.x) / Math.max(8, now - lastP.t) * 1000, .3); lastP = { x: e.clientX, t: now };
-        pos = np;
-        ghost.style.left = pos.x + 'px'; ghost.style.top = pos.y + 'px';
-      });
-      const up = e => {
-        if (e.pointerId !== id) return;
-        id = null; sealer.classList.remove('held', 'press');
-        if (!over()) {                  // 沒放在卡片上：回到站務員旁邊
-          ghost.style.opacity = '0';
-          sealer.animate([{ transform: sealer.style.transform }, { transform: `translate(${home.x - sw / 2}px, ${home.y - sh * .82}px)` }], { duration: 360, easing: 'cubic-bezier(.3,.9,.3,1)' });
-          pos = { ...home }; put(home.x, home.y);
-          return;
-        }
-        cancelAnimationFrame(raf);
-        const R = getCard(), hold = (performance.now() - still) / 1000;
-        res({
-          x: +((pos.x - R.x) / R.k).toFixed(1), y: +((pos.y - R.y) / R.k).toFixed(1),
-          a: +clamp(vx * .006 + (Math.random() - .5) * 8, -12, 12).toFixed(1),
-          hold: +hold.toFixed(2), seed: (Date.now() ^ (Math.random() * 1e9)) | 0, at: new Date().toISOString(),
-        });
-      };
-      sealer.addEventListener('pointerup', up); sealer.addEventListener('pointercancel', up);
-      ghost.style.left = pos.x + 'px'; ghost.style.top = pos.y + 'px';
     });
   }
 }
@@ -286,15 +232,5 @@ function popperSVG() {          // 拉炮：三色斜紋圓錐，開口朝上；
     <ellipse cx="20" cy="7" rx="17" ry="3.6" fill="#24221F"/>
     <path d="M8 6 L10 1 L13 6 M16 5 L19 0 L22 5 M25 6 L29 1 L31 6" fill="#F7F4EE" stroke="#24221F" stroke-width=".8" stroke-linejoin="round"/>
     <ellipse cx="20" cy="57" rx="7.5" ry="6.5" fill="#F3E3CF" stroke="#24221F" stroke-width="1.1"/>
-  </svg>`;
-}
-function sealerSVG(ink) {       // 完成章：跟日期章同一型，章底換成完成章的朱紅，帽帶換黃色
-  return `<svg viewBox="0 0 80 112" aria-hidden="true">
-    <ellipse class="shadow" cx="40" cy="106" rx="24" ry="4" fill="rgba(45,35,20,.2)"/>
-    <circle cx="40" cy="20" r="15" fill="#B8865B"/><circle cx="35" cy="15" r="5" fill="#fff" opacity=".22"/>
-    <rect x="34" y="31" width="12" height="20" rx="3" fill="#9C6F49"/>
-    <rect x="16" y="50" width="48" height="36" rx="8" fill="#24221F"/>
-    <rect x="22" y="56" width="36" height="5" rx="2.5" fill="#FFE800"/>
-    <rect x="13" y="86" width="54" height="12" rx="4" fill="${ink}"/>
   </svg>`;
 }

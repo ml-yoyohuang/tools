@@ -95,6 +95,14 @@ export const CONFIG = {
     SEAL_BLEED_RANGE_S: 1.6,       // 再多久達到最暈
   },
 
+  /* 第 3 幕後半：明信片背面、郵戳、郵筒 */
+  POST: {
+    MSG_MAX: 40,                   // 打字留言的字數上限
+    MARK_INK: '#33333B',           // 郵戳墨色（按穩的時間沿用 FINALE 的 SEAL_* 設定）
+    SLOT_SNAP: 90,                 // 明信片放開時離投信口多近（px）就會被郵筒收進去
+    EXPORT_SCALE: 2.5,             // 存成圖片時的解析度（px / 卡片單位）
+  },
+
   DATE_INK: '#E8453A',             // 日期章的墨色
   DATE_SHAPE_BY_DAY: [             // 日期章形狀，依領卡那天是星期幾（日、一、二、三、四、五、六）
     'square', 'circle', 'oval', 'circle', 'oval', 'circle', 'square',

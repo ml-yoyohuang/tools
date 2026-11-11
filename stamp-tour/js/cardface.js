@@ -108,8 +108,7 @@ export function sealImage(art, px, hold, seed) {
   const key = [art, px, hold, seed].join('|');
   if (sealCache.has(key)) return sealCache.get(key);
   const F = CONFIG.FINALE, set = ART_SETS[art] || ART_SETS.classic;
-  const under = clamp((F.SEAL_GOOD_S - hold) / (F.SEAL_GOOD_S - .05), 0, 1);
-  const over = clamp((hold - F.SEAL_BLEED_S) / F.SEAL_BLEED_RANGE_S, 0, 1);
+  const { under, over } = pressAmount(hold, F);
   const cv = makeCanvas(px, px), c = cv.getContext('2d', { willReadFrequently: true }), s = px / SEAL_SPAN;
   c.setTransform(s, 0, 0, s, px / 2, px / 2);
   c.fillStyle = c.strokeStyle = F.SEAL_INK; c.lineJoin = 'round';
@@ -118,21 +117,61 @@ export function sealImage(art, px, hold, seed) {
   c.font = SEAL_FONT; c.textAlign = 'center'; c.textBaseline = 'middle';
   c.fillText(SEAL_CHAR, 0, 1.5);
   if (over > 0) { c.lineWidth = over * 1.3; c.strokeText(SEAL_CHAR, 0, 1.5); }
-  // 飛白與施力
-  const img = c.getImageData(0, 0, px, px), d = img.data;
-  const ang = hash2(seed, 5, 3) * TAU, dx = Math.cos(ang), dy = Math.sin(ang);
+  pressTexture(c, px, px, s, under, over, seed);
+  sealCache.set(key, cv);
+  return cv;
+}
+
+/* 手章的飛白與施力：under = 按得不夠穩（0~1），over = 按太久（0~1）
+   飛白隨機分布；按不穩時，離按壓點越遠的一側越淡 */
+function pressTexture(c, w, h, s, under, over, seed) {
+  const img = c.getImageData(0, 0, w, h), d = img.data;
+  const ang = hash2(seed, 5, 3) * TAU, dx = Math.cos(ang), dy = Math.sin(ang), m = Math.max(w, h);
   const thr = .24 + under * .3 - over * .14;
-  for (let yy = 0; yy < px; yy++) for (let xx = 0; xx < px; xx++) {
-    const i = (yy * px + xx) * 4; if (!d[i + 3]) continue;
+  for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) {
+    const i = (yy * w + xx) * 4; if (!d[i + 3]) continue;
     const n = vnoise(xx / (1.5 * s), yy / (1.5 * s), seed) * .6 + vnoise(xx / (5 * s), yy / (5 * s), seed + 1) * .4;
     let a = smooth(thr - .05, thr + .05, n);
-    const g = ((xx / px - .5) * dx + (yy / px - .5) * dy);       // -.5 ~ .5：離按壓點越遠越淡
+    const g = ((xx - w / 2) * dx + (yy - h / 2) * dy) / m;      // -.5 ~ .5
     a *= 1 - under * .85 * smooth(-.25, .5, g);
     a *= (.84 + .1 * over) + .16 * hash2(xx, yy, seed);
     d[i + 3] *= clamp(a, 0, 1);
   }
   c.putImageData(img, 0, 0);
-  sealCache.set(key, cv);
+}
+const pressAmount = (hold, F) => ({
+  under: clamp((F.SEAL_GOOD_S - hold) / (F.SEAL_GOOD_S - .05), 0, 1),
+  over: clamp((hold - F.SEAL_BLEED_S) / F.SEAL_BLEED_RANGE_S, 0, 1),
+});
+
+/* 郵戳：雙圈日期＋左邊四條波浪線（郵戳單位：圖寬 150、高 72，圓心在 (112, 36)） */
+export const POSTMARK = { W: 150, H: 72, CX: 112, CY: 36 };
+const pmCache = new Map();
+export function postmarkImage(iso, pxW, hold, seed) {
+  const key = [iso, pxW, hold, seed].join('|');
+  if (pmCache.has(key)) return pmCache.get(key);
+  const P = POSTMARK, s = pxW / P.W, pxH = Math.ceil(P.H * s);
+  const { under, over } = pressAmount(hold, CONFIG.FINALE);
+  const cv = makeCanvas(pxW, pxH), c = cv.getContext('2d', { willReadFrequently: true });
+  c.setTransform(s, 0, 0, s, 0, 0);
+  c.fillStyle = c.strokeStyle = CONFIG.POST.MARK_INK; c.lineCap = 'round';
+  if (over > 0) { c.shadowColor = CONFIG.POST.MARK_INK; c.shadowBlur = over * 2.2 * s; }
+  c.lineWidth = 2.6; c.beginPath(); c.arc(P.CX, P.CY, 31, 0, TAU); c.stroke();
+  c.lineWidth = 1; c.beginPath(); c.arc(P.CX, P.CY, 26.5, 0, TAU); c.stroke();
+  const { y, md } = dateParts(iso);
+  c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.font = '700 8.5px ui-monospace,"SF Mono",Consolas,monospace'; c.fillText(y, P.CX, P.CY - 13);
+  c.font = '700 15px ui-monospace,"SF Mono",Consolas,monospace'; c.fillText(md, P.CX, P.CY + 2);
+  c.lineWidth = 1; c.beginPath(); c.moveTo(P.CX - 15, P.CY + 12); c.lineTo(P.CX + 15, P.CY + 12); c.stroke();
+  c.beginPath(); c.arc(P.CX, P.CY + 18.5, 2.2, 0, TAU); c.fill();
+  c.lineWidth = 2.2;
+  for (let i = 0; i < 4; i++) {                 // 波浪線
+    const yy = 15 + i * 14; c.beginPath();
+    for (let x = 4; x <= 78; x += 2) c.lineTo(x, yy + Math.sin((x + i * 9) / 8) * 3.2);
+    c.stroke();
+  }
+  pressTexture(c, pxW, pxH, s, under, over, seed);
+  pmCache.set(key, cv);
   return cv;
 }
 

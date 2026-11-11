@@ -204,17 +204,17 @@ body.scene-open #dev button:not(.art) { display:none; }   /* 入口與簽名時�
   opacity:0; pointer-events:none; transition:opacity .3s, transform .45s cubic-bezier(.25,1.4,.45,1);
 }
 #opening.signing #signbar { opacity:1; transform:translate(-50%, 0); pointer-events:auto; transition-delay:.35s; }
-#signbar button {
+#signbar button, .pbar button {
   -webkit-appearance:none; appearance:none; border:0; background:none; cursor:pointer;
   width:40px; height:40px; border-radius:50%; display:grid; place-items:center; color:rgba(36,34,31,.55);
   transition:background .2s, color .2s, transform .15s;
 }
-#signbar button:active { transform:scale(.94); }
-#signbar svg { width:20px; height:20px; fill:currentColor; }
-#signbar .seg { display:flex; gap:2px; padding:2px; border-radius:22px; background:rgba(36,34,31,.06); }
-#signbar .seg button { width:38px; height:36px; }
-#signbar .seg button.on { background:var(--ink); color:var(--paper); }
-#signbar .done { background:var(--ink); color:var(--paper); }
+#signbar button:active, .pbar button:active { transform:scale(.94); }
+#signbar svg, .pbar svg { width:20px; height:20px; fill:currentColor; }
+#signbar .seg, .pbar .seg { display:flex; gap:2px; padding:2px; border-radius:22px; background:rgba(36,34,31,.06); }
+#signbar .seg button, .pbar .seg button { width:38px; height:36px; }
+#signbar .seg button.on, .pbar .seg button.on { background:var(--ink); color:var(--paper); }
+#signbar .done, .pbar .done { background:var(--ink); color:var(--paper); }
 
 /* 日期章 */
 #dater {
@@ -342,3 +342,64 @@ body.scene-open #dev button:not(.art) { display:none; }   /* 入口與簽名時�
 body.finale-on #host { opacity:0; transform:scale(.6); }
 body.finale-on #bubble::before { display:none; }
 body.finale-on #stack, body.finale-on #dev { visibility:hidden; }
+
+/* =====================================================================
+   明信片
+   ===================================================================== */
+#postcard { position:absolute; inset:0; z-index:4; pointer-events:none; touch-action:none; }
+#postcard[hidden] { display:none; }
+#postcard .pc { position:absolute; perspective:1400px; pointer-events:auto; touch-action:none; transform-origin:50% 50%; z-index:2; }
+#postcard.keeping .pc { cursor:pointer; }
+#postcard .pc.invite { cursor:pointer; animation:invite 1.6s ease-in-out .4s infinite; }
+#postcard .pc.posting { cursor:grab; }
+#postcard .pc.held { cursor:grabbing; filter:drop-shadow(0 16px 18px rgba(40,30,10,.3)); }
+#postcard .flip { position:absolute; inset:0; transform-style:preserve-3d; transition:transform .8s cubic-bezier(.45,.05,.25,1); }
+#postcard .flip.over { transform:rotateY(180deg); }
+#postcard .face {
+  position:absolute; inset:0; width:100%; height:100%; border-radius:7px;
+  backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  box-shadow:0 18px 34px -18px rgba(40,30,10,.45), 0 2px 6px rgba(40,30,10,.08);
+}
+#postcard .back { transform:rotateY(180deg); }
+/* 留言 */
+#postcard .msgframe { position:absolute; overflow:visible; opacity:0; transition:opacity .4s; z-index:3; }
+#postcard .msgframe rect { fill:none; stroke:rgba(36,34,31,.55); }
+#postcard.writing[data-write="pen"] .msgframe { opacity:.55; transition-delay:.3s; }
+#postcard.writing[data-write="pen"] .msgframe.idle { animation:frameBreathe 1.8s ease-in-out .3s infinite; }
+#postcard .msgcatch { position:absolute; z-index:4; display:none; touch-action:none; cursor:crosshair; pointer-events:auto; }
+#postcard.writing[data-write="pen"] .msgcatch { display:block; }
+#msgInput {
+  position:absolute; z-index:4; border:0; outline:0; background:transparent; padding:0 3px; resize:none; overflow:hidden;
+  color:#2b2824; caret-color:var(--pink); -webkit-user-select:text; user-select:text;
+  opacity:0; pointer-events:none; transition:opacity .3s;
+}
+#postcard.writing[data-write="type"] #msgInput { opacity:1; pointer-events:auto; }
+.pbar {
+  position:absolute; z-index:5; left:50%; transform:translate(-50%, 10px);
+  display:flex; align-items:center; gap:8px; padding:5px;
+  background:var(--paper); border-radius:26px;
+  box-shadow:0 0 0 1px rgba(36,34,31,.06), 0 10px 26px -14px rgba(40,30,10,.4);
+  opacity:0; pointer-events:none; transition:opacity .3s, transform .45s cubic-bezier(.25,1.4,.45,1);
+}
+#postcard.writing .pbar.write, #postcard.keeping .pbar.keep { opacity:1; transform:translate(-50%, 0); pointer-events:auto; transition-delay:.35s; }
+/* 郵戳 */
+#postcard .marker { position:absolute; left:0; top:0; z-index:5; opacity:0; pointer-events:none; transform-origin:50% 82%; transition:opacity .35s; touch-action:none; }
+#postcard .marker.in { opacity:1; pointer-events:auto; cursor:grab; }
+#postcard .marker.held { cursor:grabbing; }
+#postcard .marker.in:not(.held) svg { animation:breathe 1.8s ease-in-out infinite; }
+#postcard .marker svg { width:100%; height:100%; display:block; overflow:visible; }
+#postcard .ghost { position:absolute; z-index:4; border-radius:50%; border:1.5px dashed rgba(51,51,59,.7); opacity:0; display:none; }
+#postcard .ghost.on { display:block; }
+/* 郵筒：back 在明信片後面，front 擋住滑進投信口的明信片 */
+#postcard .mailbox { position:absolute; z-index:1; translate:100vw 0; transition:translate .7s cubic-bezier(.25,1.2,.4,1); }
+#postcard .mailbox.front { z-index:3; }
+#postcard .mailbox.in { translate:0 0; }
+#postcard .mailbox.leave { translate:100vw 0; transition:translate .5s cubic-bezier(.5,0,.8,.4); }
+#postcard .mailbox svg { width:100%; height:100%; display:block; overflow:visible; }
+#postcard .mailbox.posted svg { animation:gulp .5s cubic-bezier(.3,1.6,.5,1); }
+@keyframes gulp { 0%,100% { transform:none; } 30% { transform:scale(1.04,.95); } 60% { transform:scale(.98,1.03); } }
+#postcard .mailbox .flag { transform-box:fill-box; transform-origin:8% 96%; transform:rotate(90deg); transition:transform .5s cubic-bezier(.3,1.6,.5,1) .2s; }
+#postcard .mailbox.posted .flag { transform:none; }
+#postcard .mailbox.near svg { filter:brightness(1.08); }
+/* 明信片儀式進行中：卡片堆和開發列先收起來 */
+body.post-on #stack, body.post-on #dev { visibility:hidden; }
