@@ -35,13 +35,16 @@ const SOLO = {
   } },
   cloud: { ink: 1, draw: c => cloud(c, 0, 0, 1) },   // 天山象的「雲」
 };
+/* 抽中機率（%）：先分三大類，類別內再依權重分（w 加總 = 100） */
+const SHARE = { art: 30, master: 35, geo: 35 };
 export function stampPool() {
-  const pool = [{ id: 'own', w: 3, group: '自己的圖' }];
-  for (const a of Object.keys(ART_SETS)) pool.push({ id: `set:${a}`, w: 2, group: '三色完整圖' });
-  for (const s of Object.keys(SOLO)) pool.push({ id: `solo:${s}`, w: 1, group: '單一主角' });
-  for (const m of MASTER_LOOKS) pool.push({ id: `master:${m}`, w: 1, group: '站務員' });   // 比較稀有
-  for (const g of GEO) pool.push({ id: `geo:${g}`, w: 1, group: '幾何花樣' });
-  return pool;
+  const art = [{ id: 'own', w: 3, group: '自己的圖' }];   // 印章圖案類：自己的圖 3、完整圖 2、單一主角 1
+  for (const a of Object.keys(ART_SETS)) art.push({ id: `set:${a}`, w: 2, group: '三色完整圖' });
+  for (const s of Object.keys(SOLO)) art.push({ id: `solo:${s}`, w: 1, group: '單一主角' });
+  const master = MASTER_LOOKS.map(m => ({ id: `master:${m}`, w: 1, group: '站務員' }));
+  const geo = GEO.map(g => ({ id: `geo:${g}`, w: 1, group: '幾何花樣' }));
+  const scale = (list, share) => { const t = list.reduce((s, p) => s + p.w, 0); return list.map(p => ({ ...p, w: p.w / t * share })); };
+  return [...scale(art, SHARE.art), ...scale(master, SHARE.master), ...scale(geo, SHARE.geo)];
 }
 export function pickStamp() {
   const pool = stampPool(), total = pool.reduce((t, p) => t + p.w, 0);
