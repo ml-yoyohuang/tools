@@ -72,6 +72,17 @@ export const CONFIG = {
     SIGN_AT: 0.36,                 // 放大後簽名欄的中心在畫面高度的哪裡（避開手機鍵盤）
     PEN_MIN: 0.9, PEN_MAX: 2.6,    // 筆跡粗細（卡片單位）：寫得越快越細
   },
+  /* 第 1 幕：抵達某一站（站牌垂降 → 翻牌 → 站名浮現 → 收起） */
+  ARRIVAL: {
+    DROP_MS: 820,                  // 站牌垂降
+    PAUSE_MS: 220,                 // 垂降停住到翻牌之間的停頓（醞釀）
+    FLIP_MS: 1100,                 // 牌面翻下來＋晃動停住
+    CHAR_MS: 90,                   // 站名每個字浮現的間隔
+    HOLD_MS: 900,                  // 全部出現後停留多久再收起
+    EXIT_MS: 460,                  // 收起站牌、露出印章台
+    HURRY: 2.6,                    // 點一下畫面，剩下的動畫加速幾倍
+  },
+
   DATE_INK: '#E8453A',             // 日期章的墨色
   DATE_SHAPE_BY_DAY: [             // 日期章形狀，依領卡那天是星期幾（日、一、二、三、四、五、六）
     'square', 'circle', 'oval', 'circle', 'oval', 'circle', 'square',

@@ -14,7 +14,7 @@ let stage, ctx, loupe, lctx, topEl, stackEl, devEl;
 let W = 0, H = 0, DPR = 1, k = 1;
 let card = {}, pad = {}, rest = {}, fc = {};
 const faceCache = {};
-let hooks = { onReset: () => {}, onStationChange: () => {}, onArtToggle: () => {} };
+let hooks = { onReset: () => {}, onStationChange: () => {}, onArtToggle: () => {}, onGoStation: n => enterStation(n) };
 
 const app = {
   active: false,
@@ -160,7 +160,7 @@ function updateDev() {
     const b = document.createElement('button');
     b.textContent = n; b.className = n === app.station ? 'cur' : '';
     if (app.layers.some(L => L.station === n)) { const i = document.createElement('i'); i.style.background = CONFIG.INKS[n].ink; b.appendChild(i); }
-    b.addEventListener('click', () => { if (!app.active || ['pressing', 'lifting', 'out'].includes(app.phase)) return; enterStation(n); });
+    b.addEventListener('click', () => { if (!app.active || ['pressing', 'lifting', 'out'].includes(app.phase)) return; hooks.onGoStation(n); });
     devEl.appendChild(b);
   }
   const labels = { arrow: '箭頭', hop: '跳動', both: '兩者', none: '無' }, order = ['arrow', 'hop', 'both', 'none'];

@@ -109,6 +109,7 @@ export const ART_SETS = {
   classic: {
     label: '日海鳥',
     names: { 1: '日', 2: '海', 3: '鳥' },
+    greet: { 1: '這一站負責太陽！暖呼呼的～', 2: '這一站負責大海，嘩啦嘩啦～', 3: '這一站有鳥！牠要帶著小船去旅行喔～' },
     shapes: {
       1(c) {   // 日：日輪＋地平帶
         c.beginPath(); c.arc(-34, -38, 80, 0, TAU); c.fill();
@@ -142,6 +143,7 @@ export const ART_SETS = {
   elephant: {
     label: '天山象',
     names: { 1: '天空', 2: '山', 3: '大象' },
+    greet: { 1: '這一站負責天空，雲朵軟綿綿～', 2: '這一站負責山！爬起來不會累的那種～', 3: '這一站有大象！體重是祕密喔～' },
     shapes: {
       1(c) { skyClouds(c, 0); },
       2(c) { mountain(c); },
@@ -155,6 +157,7 @@ export const ART_SETS = {
   elephantRetro: {
     label: '天山象・昭和',
     names: { 1: '天空', 2: '山', 3: '大象' },
+    greet: { 1: '這一站負責天空，雲朵軟綿綿～', 2: '這一站負責山！爬起來不會累的那種～', 3: '這一站有大象！牠剛洗完澡，小心水花～' },
     shapes: {
       1(c) {   // 天空：左邊大雲往下移，避開題帶；三條霞；四角梅鉢
         inFrame(c, () => {
@@ -191,6 +194,7 @@ export const artId = () => current;
 export function setArt(id) { current = ART_SETS[id] ? id : 'classic'; }
 export const shapeOf = station => ART_SETS[current].shapes[station];
 export const stationName = station => ART_SETS[current].names[station];
+export const stationGreet = station => ART_SETS[current].greet?.[station] || '';
 
 /* 對位標記：四角＋十字＋三角形 */
 function guidesPath(c) {
