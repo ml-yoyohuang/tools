@@ -1,6 +1,6 @@
 /* 蓋章場景：沾墨 → 對位 → 施力蓋下 → 拿起揭曉 → 評語
    station = 1..3 在某一站；station = 0 是「卡片首頁」（還沒到任何一站） */
-import { CONFIG, ROT } from './config.js';
+import { CONFIG, ROT, DEV } from './config.js';
 import { COPY } from './copy.js';
 import { ART_SETS, artId, setArt, shapeOf, stationName, drawGuides } from './art.js';
 import { CARD, printCv, inkCv, genMask, composite, simplifyPath } from './print.js';
@@ -101,7 +101,8 @@ export function enterHub(lines) {
   if (lines) say(lines);
 }
 
-function setUrlStation(n) {
+function setUrlStation(n) {           // 只有開發版會把站號寫進網址（正式版的網址是各站的亂數頁面）
+  if (!DEV) return;
   try { const u = new URL(location.href); if (n) u.searchParams.set('station', n); else u.searchParams.delete('station'); history.replaceState(null, '', u); } catch (e) {}
 }
 

@@ -2,7 +2,7 @@
    - 還沒領卡 → 第 0 幕（直接掃站點進來時跑「簡短版」）→ 到那一站，或卡片首頁
    - 已領卡   → 直接到那一站，或卡片首頁（不重播開場）
    - 每次到站都先播第 1 幕的站牌，站牌收起後才是印章台 */
-import { CONFIG } from './config.js';
+import { CONFIG, DEV } from './config.js';
 import { COPY } from './copy.js';
 import { buildBase, composite } from './print.js';
 import { attendantSVG, initSpeech, registerHost } from './attendant.js';
@@ -34,11 +34,16 @@ for (const t of ['gesturestart', 'gesturechange', 'gestureend', 'dblclick', 'con
 document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
 document.addEventListener('touchstart', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
 
-const stationParam = () => { const q = +new URLSearchParams(location.search).get('station'); return [1, 2, 3].includes(q) ? q : 0; };
+/* 這一頁是哪一站：正式版由各站的頁面設定 window.STAMP_STATION（index.html 只有入口、領卡）；開發版用網址 ?station= */
+const stationParam = () => {
+  const q = DEV ? +new URLSearchParams(location.search).get('station') : +window.STAMP_STATION;
+  return [1, 2, 3].includes(q) ? q : 0;
+};
 
 /* 新卡要用哪一組圖案：網址 ?art= ＞ 開發切換器記住的選擇 ＞ CONFIG.ART_SET */
 const ART_PREF = 'stamp-tour:art';
 function preferredArt() {
+  if (!DEV) return CONFIG.ART_SET;
   const q = new URLSearchParams(location.search).get('art');
   if (q && ART_SETS[q]) return q;
   try { const p = localStorage.getItem(ART_PREF); if (p && ART_SETS[p]) return p; } catch (_) {}

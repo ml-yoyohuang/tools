@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#e8e4dc">
+<meta name="robots" content="noindex">
+<title>集章站｜STAMP STATION</title>
+<meta name="description" content="三個車站、三色印章，疊蓋成一張屬於你的畫。">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:title" content="集章站｜STAMP STATION">
+<meta property="og:description" content="三個車站、三色印章，疊蓋成一張屬於你的畫。">
+<meta property="og:url" content="https://ml-yoyohuang.github.io/tools/stamp-tour/">
+<meta property="og:image" content="https://ml-yoyohuang.github.io/tools/stamp-tour/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:alt" content="集章站 STAMP STATION：米色紙上的三色疊印郵票，天空、山與大象。">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="集章站｜STAMP STATION">
+<meta name="twitter:description" content="三個車站、三色印章，疊蓋成一張屬於你的畫。">
+<meta name="twitter:image" content="https://ml-yoyohuang.github.io/tools/stamp-tour/og.png">
+<meta name="twitter:image:alt" content="集章站 STAMP STATION：米色紙上的三色疊印郵票，天空、山與大象。">
+<script>
+  /* 版本號：每次推版都要改，讓手機一定讀到新檔案（GitHub Pages 會讓瀏覽器快取 10 分鐘）
+     CSS 與所有 JS 模組都會加上 ?v=版本號；index.html、dev.html、三站的頁面都要一起改 */
+  window.STAMP_V = '29';
+  window.STAMP_STATION = 3;   // 第 3 站的頁面（網址是亂數，不讓人猜到）
+  (function () {
+    var V = window.STAMP_V, base = new URL('js/', location.href).href, map = { imports: {} };
+    ['main', 'config', 'copy', 'util', 'art', 'print', 'cardface', 'storage', 'attendant', 'stamping', 'opening', 'arrival', 'finale', 'dragstamp', 'postcard', 'stamps', 'sound', 'chatter']
+      .forEach(function (m) { map.imports[base + m + '.js'] = base + m + '.js?v=' + V; });
+    var s = document.createElement('script'); s.type = 'importmap'; s.textContent = JSON.stringify(map);
+    document.currentScript.after(s);
+    document.write('<link rel="stylesheet" href="css/app.css?v=' + V + '">');
+  })();
+</script>
+</head>
+<body>
+<canvas id="stage"></canvas>
+
+<div id="opening" hidden></div>
+<div id="arrival" hidden></div>
+<div id="finale" hidden></div>
+<div id="postcard" hidden></div>
+
+<div id="top">
+  <div id="host"></div>
+  <div id="bubble"><span id="line"></span>
+    <svg id="more" viewBox="0 0 10 10" hidden><path d="M3 1.5 6.8 5 3 8.5" fill="none" stroke="#24221f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+  <button id="sound" aria-label="sound"></button>
+  <button id="stack" aria-label="new card">
+    <svg viewBox="0 0 40 40" width="40" height="40">
+      <rect x="11" y="9" width="20" height="15" rx="1.6" fill="#f7f4ee" stroke="#24221f" stroke-width="1.1" transform="rotate(-7 21 16)"/>
+      <rect x="10" y="13" width="20" height="15" rx="1.6" fill="#f7f4ee" stroke="#24221f" stroke-width="1.1" transform="rotate(4 20 20)"/>
+      <rect x="9" y="17" width="20" height="15" rx="1.6" fill="#fbfaf6" stroke="#24221f" stroke-width="1.1"/>
+    </svg>
+  </button>
+</div>
+
+<canvas id="loupe"></canvas>
+<div id="dev"></div>
+
+<script type="module">import './js/main.js';</script>
+</body>
+</html>

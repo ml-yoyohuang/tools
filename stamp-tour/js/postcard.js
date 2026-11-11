@@ -188,7 +188,7 @@ export async function exportBlob() {
 }
 async function saveImage() {
   const blob = await exportBlob(), d = new Date();
-  const name = `stamp-postcard-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.png`;
+  const name = `stamp-station-postcard-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.png`;
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 4000);
@@ -196,7 +196,7 @@ async function saveImage() {
 const canShareFiles = () => { try { return !!navigator.canShare && navigator.canShare({ files: [new File([''], 'x.png', { type: 'image/png' })] }); } catch (_) { return false; } };
 async function shareImage() {
   const blob = await exportBlob();
-  try { await navigator.share({ files: [new File([blob], 'stamp-postcard.png', { type: 'image/png' })] }); }
+  try { await navigator.share({ files: [new File([blob], 'stamp-station-postcard.png', { type: 'image/png' })] }); }
   catch (e) { if (e && e.name !== 'AbortError') saveImage(); }
 }
 

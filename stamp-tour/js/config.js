@@ -1,6 +1,10 @@
 /* =====================================================================
    CONFIG — 手感與體驗參數都在這裡
    ===================================================================== */
+/* 開發版：dev.html 會設 window.STAMP_DEV = true（站點切換器、網址 ?station= / ?art=、所有圖案組）
+   正式版（index.html 與三站的頁面）沒有這些 */
+export const DEV = typeof window !== 'undefined' && window.STAMP_DEV === true;
+
 export const CONFIG = {
   ROTATION_ENABLED: true,          // 旋轉總開關
   ANGLE_LIMIT: 30,                 // 角度上限（±度）
@@ -58,8 +62,8 @@ export const CONFIG = {
     3: { ink: '#FF48B0', line: '#DB3594', deep: '#B5124F' },
   },
 
-  ART_SET: 'classic',              // 新卡預設的圖案組：'classic'（日、海、鳥）/ 'elephant'（天空、山、大象）/ 'elephantRetro'（天山象・大正昭和外框）
-                                   // 網址加 ?art=elephant 也能指定；每張卡會記住自己的圖案組
+  ART_SET: 'elephantRetro',        // 新卡的圖案組：'classic'（日、海、鳥）/ 'elephant'（天空、山、大象）/ 'elephantRetro'（天山象・大正昭和外框）
+                                   // 正式版只用這一組；開發版網址加 ?art=elephant 也能指定；每張卡會記住自己的圖案組
 
   /* 第 0 幕：入口與領卡 */
   OPENING: {
@@ -116,7 +120,7 @@ export const CONFIG = {
     VOLUME: 0.7,                   // 總音量（0 ~ 1）；使用者可以用對話列右邊的喇叭關掉
   },
 
-  DEV_SWITCHER: true,              // 開發測試用的站點切換器（上線前關掉）
+  DEV_SWITCHER: DEV,               // 開發測試用的站點切換器（只在 dev.html 出現）
   STORAGE_KEY: 'stamp-tour:v1',
 };
 

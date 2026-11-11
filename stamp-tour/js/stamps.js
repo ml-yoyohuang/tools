@@ -6,7 +6,7 @@
      master:<造型>         站務員：face / happy / body / grid（四宮格表情）/ big（超大臉）
      geo:<花樣>            幾何花樣：venn / stripe / flags / dots / rays / check
    全部用 Canvas 畫，同步完成（存成圖片時不用等載入）。 */
-import { CONFIG } from './config.js';
+import { CONFIG, DEV } from './config.js';
 import { CARD, PR, printCv } from './print.js';
 import { ART_SETS, cloud } from './art.js';
 import { makeCanvas, hash2 } from './util.js';
@@ -39,8 +39,11 @@ const SOLO = {
 const SHARE = { art: 30, master: 35, geo: 35 };
 export function stampPool() {
   const art = [{ id: 'own', w: 3, group: '自己的圖' }];   // 印章圖案類：自己的圖 3、完整圖 2、單一主角 1
-  for (const a of Object.keys(ART_SETS)) art.push({ id: `set:${a}`, w: 2, group: '三色完整圖' });
-  for (const s of Object.keys(SOLO)) art.push({ id: `solo:${s}`, w: 1, group: '單一主角' });
+  // 正式版只有一組圖案：完整圖只抽這一組，單一主角只抽這一組裡有的（大象、雲）
+  const sets = DEV ? Object.keys(ART_SETS) : [CONFIG.ART_SET];
+  const solos = DEV ? Object.keys(SOLO) : ['elephant', 'cloud'];
+  for (const a of sets) art.push({ id: `set:${a}`, w: 2, group: '三色完整圖' });
+  for (const s of solos) art.push({ id: `solo:${s}`, w: 1, group: '單一主角' });
   const master = MASTER_LOOKS.map(m => ({ id: `master:${m}`, w: 1, group: '站務員' }));
   const geo = GEO.map(g => ({ id: `geo:${g}`, w: 1, group: '幾何花樣' }));
   const scale = (list, share) => { const t = list.reduce((s, p) => s + p.w, 0); return list.map(p => ({ ...p, w: p.w / t * share })); };
