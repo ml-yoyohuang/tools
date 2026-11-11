@@ -8,10 +8,11 @@ import { buildBase, composite } from './print.js';
 import { attendantSVG, initSpeech, registerHost } from './attendant.js';
 import { ART_SETS, setArt, stationGreet } from './art.js';
 import { store } from './storage.js';
-import { initStamping, loadImpressions, getCardRect, show, hide, enterStation, enterHub, refreshDev } from './stamping.js';
+import { initStamping, loadImpressions, getCardRect, show, hide, enterStation, enterHub, refreshDev, enterFinale, liveCardRect } from './stamping.js';
 import { runOpening } from './opening.js';
 import { playArrival } from './arrival.js';
-import { $ } from './util.js';
+import { runFinale } from './finale.js';
+import { $, wait } from './util.js';
 
 /* 防止頁面縮放、捲動、選取、長按選單 */
 for (const t of ['gesturestart', 'gesturechange', 'gestureend', 'dblclick', 'contextmenu', 'selectstart'])
@@ -46,9 +47,24 @@ async function arrive(n, before) {
   await playArrival(n, {
     route: store.route(),
     before: () => { hide(); before?.(); },
-    onReveal: () => { show(); enterStation(n, arrivalLines(n)); },
+    onReveal: () => {
+      show(); enterStation(n, arrivalLines(n));
+      if (store.stationsLeft() === 0 && !store.card.seal) finale();   // 集滿但還沒慶祝（慶祝被打斷了）
+    },
   });
   arriving = false;
+}
+
+/* 第 3 幕：集滿三站。停一下 → 熄燈、拉炮、完成章 → 回到卡片首頁 */
+let celebrating = false;
+async function finale() {
+  if (celebrating) return;
+  celebrating = true;
+  await wait(CONFIG.FINALE.PAUSE_MS);
+  enterFinale();
+  await runFinale({ getCard: liveCardRect, art: store.card.art || 'classic', onSeal: seal => store.setSeal(seal) });
+  enterHub();
+  celebrating = false;
 }
 
 async function opening(station, short) {
@@ -71,6 +87,7 @@ async function boot() {
     onReset: async () => { await store.reset(); opening(stationParam(), true); },
     onArtToggle: id => { try { localStorage.setItem(ART_PREF, id); } catch (_) {} },
     onGoStation: n => arrive(n),
+    onComplete: () => finale(),
   });
   await store.init();
   buildBase();
@@ -82,6 +99,7 @@ async function boot() {
   loadImpressions(store.impressions);
   if (station) { arrive(station); return; }
   show();
+  if (store.stationsLeft() === 0 && !store.card.seal) { enterHub(); finale(); return; }   // 集滿但慶祝被打斷了：重新慶祝
   enterHub(COPY.hub.back(store.stationsLeft()));
 }
 

@@ -1,7 +1,8 @@
 /* 卡面上的其他印刷：名字欄、日期章、路線小圓點 */
 import { CONFIG } from './config.js';
 import { CARD } from './print.js';
-import { TAU, makeCanvas, rr, hash2, vnoise } from './util.js';
+import { ART_SETS, SEAL_CHAR, SEAL_FONT } from './art.js';
+import { TAU, D2R, clamp, smooth, makeCanvas, rr, hash2, vnoise } from './util.js';
 
 /* 名字欄（卡片單位） */
 export const NAME = { x: 38, y: 372, w: 150, base: 398, size: 21 };
@@ -99,8 +100,45 @@ export function dateStampImage(iso, px, shape = 'circle') {
   return cv;
 }
 
+/* 完成章圖像：圖案組自己的外圈＋「滿」字
+   質感來自蓋的人：按得太快 → 飛白多、離手的那一側淡掉；按很久 → 墨暈開、線變粗 */
+export const SEAL_SPAN = 84;   // 圖像涵蓋的寬度（卡片單位）
+const sealCache = new Map();
+export function sealImage(art, px, hold, seed) {
+  const key = [art, px, hold, seed].join('|');
+  if (sealCache.has(key)) return sealCache.get(key);
+  const F = CONFIG.FINALE, set = ART_SETS[art] || ART_SETS.classic;
+  const under = clamp((F.SEAL_GOOD_S - hold) / (F.SEAL_GOOD_S - .05), 0, 1);
+  const over = clamp((hold - F.SEAL_BLEED_S) / F.SEAL_BLEED_RANGE_S, 0, 1);
+  const cv = makeCanvas(px, px), c = cv.getContext('2d', { willReadFrequently: true }), s = px / SEAL_SPAN;
+  c.setTransform(s, 0, 0, s, px / 2, px / 2);
+  c.fillStyle = c.strokeStyle = F.SEAL_INK; c.lineJoin = 'round';
+  if (over > 0) { c.shadowColor = F.SEAL_INK; c.shadowBlur = over * 2.4 * s; }
+  set.seal(c);
+  c.font = SEAL_FONT; c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.fillText(SEAL_CHAR, 0, 1.5);
+  if (over > 0) { c.lineWidth = over * 1.3; c.strokeText(SEAL_CHAR, 0, 1.5); }
+  // 飛白與施力
+  const img = c.getImageData(0, 0, px, px), d = img.data;
+  const ang = hash2(seed, 5, 3) * TAU, dx = Math.cos(ang), dy = Math.sin(ang);
+  const thr = .24 + under * .3 - over * .14;
+  for (let yy = 0; yy < px; yy++) for (let xx = 0; xx < px; xx++) {
+    const i = (yy * px + xx) * 4; if (!d[i + 3]) continue;
+    const n = vnoise(xx / (1.5 * s), yy / (1.5 * s), seed) * .6 + vnoise(xx / (5 * s), yy / (5 * s), seed + 1) * .4;
+    let a = smooth(thr - .05, thr + .05, n);
+    const g = ((xx / px - .5) * dx + (yy / px - .5) * dy);       // -.5 ~ .5：離按壓點越遠越淡
+    a *= 1 - under * .85 * smooth(-.25, .5, g);
+    a *= (.84 + .1 * over) + .16 * hash2(xx, yy, seed);
+    d[i + 3] *= clamp(a, 0, 1);
+  }
+  c.putImageData(img, 0, 0);
+  sealCache.set(key, cv);
+  return cv;
+}
+
 /* 在 ctx 上畫卡面印刷之外的東西（x, y = 卡片左上角，k = 卡片單位 → px）
-   opts: { name, signature, dateISO, dateShape, dateAlpha, route: [station...], hideName, nameGlow } */
+   opts: { name, signature, dateISO, dateShape, dateAlpha, route: [station...], hideName, nameGlow, seal, sealAlpha }
+   seal = { art, x, y, a, hold, seed }：完成章（卡片單位） */
 export function drawCardExtras(ctx, x, y, k, opts = {}) {
   ctx.save();
   // 名字欄
@@ -126,6 +164,14 @@ export function drawCardExtras(ctx, x, y, k, opts = {}) {
     ctx.beginPath(); ctx.arc(cx, cy, 3.4 * k, 0, TAU);
     if (st) { ctx.fillStyle = CONFIG.INKS[st].ink; ctx.fill(); }
     else { ctx.strokeStyle = 'rgba(60,52,40,.3)'; ctx.lineWidth = 1; ctx.stroke(); }
+  }
+  // 完成章
+  if (opts.seal && (opts.sealAlpha ?? 1) > 0) {
+    const S = opts.seal, size = SEAL_SPAN * k;
+    const img = sealImage(S.art, Math.ceil(size * (window.devicePixelRatio || 1)), S.hold, S.seed);
+    ctx.save(); ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = opts.sealAlpha ?? 1;
+    ctx.translate(x + S.x * k, y + S.y * k); ctx.rotate(S.a * D2R); ctx.drawImage(img, -size / 2, -size / 2, size, size);
+    ctx.restore();
   }
   // 日期章
   if (opts.dateISO && (opts.dateAlpha ?? 1) > 0) {

@@ -306,3 +306,39 @@ body.scene-open #dev button:not(.art) { display:none; }   /* 入口與簽名時�
 #arrival .route b.got { background:var(--c); box-shadow:none; }
 #arrival .route b.here { outline:calc(1.5 * var(--u)) solid var(--ink); outline-offset:calc(3 * var(--u)); }
 #arrival .band { position:absolute; left:0; right:0; bottom:0; height:calc(8 * var(--u)); background:var(--c); transform-origin:0 50%; }
+
+/* =====================================================================
+   第 3 幕：集滿三站的慶祝
+   ===================================================================== */
+#finale { position:absolute; inset:0; z-index:4; overflow:hidden; pointer-events:none; touch-action:none; }
+#finale[hidden] { display:none; }
+#finale .dim { position:absolute; inset:0; opacity:0; }
+#finale .confetti { position:absolute; inset:0; width:100%; height:100%; }
+#finale .clerk { position:absolute; translate:200vw 0; }
+#finale .clerk.cheer svg { animation:cheer .5s cubic-bezier(.3,1.6,.5,1) 2; }
+@keyframes cheer { 0%,100% { translate:0 0; } 40% { translate:0 -12px; } }
+#finale .popper { position:absolute; transform-origin:50% 94%; translate:200vw 0; }
+#finale .popper svg { width:100%; height:100%; display:block; overflow:visible; }
+/* 拉炮的繩子 */
+#finale .cord { position:absolute; inset:0; width:100%; height:100%; overflow:visible; opacity:0; transition:opacity .3s; }
+#finale .cord.in { opacity:1; }
+#finale .cord.gone { opacity:0; transition:opacity .2s; }
+#finale .cord line { stroke:#F7F4EE; stroke-width:2; stroke-linecap:round; }
+#finale .cord .loop { fill:none; stroke:#F7F4EE; stroke-width:2.6; }
+#finale .cord .hit { fill:transparent; pointer-events:auto; cursor:grab; }
+#finale .cord.held .hit { cursor:grabbing; }
+#finale .cord.in:not(.held) .ring { animation:tug 1.6s ease-in-out .4s infinite; }
+@keyframes tug { 0%,100% { translate:0 0; } 50% { translate:0 5px; } }
+/* 完成章 */
+#finale .sealer { position:absolute; left:0; top:0; opacity:0; pointer-events:none; transform-origin:50% 82%; transition:opacity .35s; touch-action:none; }
+#finale .sealer.in { opacity:1; pointer-events:auto; cursor:grab; }
+#finale .sealer.held { cursor:grabbing; }
+#finale .sealer.in:not(.held) svg { animation:breathe 1.8s ease-in-out infinite; }
+#finale .sealer svg { width:100%; height:100%; display:block; overflow:visible; }
+#finale .sealer.press .shadow { opacity:.5; }
+#finale .ghost { position:absolute; border-radius:50%; border:1.5px dashed rgba(201,48,44,.75); opacity:0; display:none; }
+#finale .ghost.on { display:block; }
+/* 慶祝時：對話列上的站務員跑去現場了，卡片堆和開發列先收起來 */
+body.finale-on #host { opacity:0; transform:scale(.6); }
+body.finale-on #bubble::before { display:none; }
+body.finale-on #stack, body.finale-on #dev { visibility:hidden; }

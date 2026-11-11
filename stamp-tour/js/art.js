@@ -104,11 +104,31 @@ function plum(c, x, y) {   // 梅鉢：五顆小圓圍成一朵
   for (const [dx, dy] of [[0, -4.2], [4, -1.3], [2.5, 3.4], [-2.5, 3.4], [-4, -1.3]]) { c.beginPath(); c.arc(x + dx, y + dy, 3, 0, TAU); c.fill(); }
 }
 
+/* 完成章（集滿三站後自己蓋的那一顆）：外圈各組不同，中間都是「滿」字；座標以章心為原點，半徑約 36 */
+function cloudSeal(c) {   // 雲朵花邊
+  c.lineWidth = 3;
+  for (let i = 0; i < 14; i++) {
+    const a = i * TAU / 14;
+    c.beginPath(); c.arc(Math.cos(a) * 28.5, Math.sin(a) * 28.5, 6.6, a - 1.75, a + 1.75); c.stroke();
+  }
+  c.lineWidth = 1.1; c.beginPath(); c.arc(0, 0, 22.5, 0, TAU); c.stroke();
+}
+export const SEAL_CHAR = '滿';
+export const SEAL_FONT = '900 25px "Noto Serif TC","Songti TC","PMingLiU","MingLiU",serif';
+
 export const ART_SETS = {
   /* 日、海、鳥：疊在一起時三色會互相重疊，蓋章順序直接改變顏色 */
   classic: {
     label: '日海鳥',
     names: { 1: '日', 2: '海', 3: '鳥' },
+    seal(c) {   // 完成章：日輪光芒
+      for (let i = 0; i < 16; i++) {
+        c.save(); c.rotate(i * TAU / 16);
+        c.beginPath(); c.moveTo(-3.4, -29.5); c.lineTo(0, -37); c.lineTo(3.4, -29.5); c.closePath(); c.fill(); c.restore();
+      }
+      c.lineWidth = 3; c.beginPath(); c.arc(0, 0, 27.5, 0, TAU); c.stroke();
+      c.lineWidth = 1.1; c.beginPath(); c.arc(0, 0, 23, 0, TAU); c.stroke();
+    },
     greet: { 1: '這一站負責太陽！暖呼呼的～', 2: '這一站負責大海，嘩啦嘩啦～', 3: '這一站有鳥！牠要帶著小船去旅行喔～' },
     shapes: {
       1(c) {   // 日：日輪＋地平帶
@@ -144,6 +164,7 @@ export const ART_SETS = {
     label: '天山象',
     names: { 1: '天空', 2: '山', 3: '大象' },
     greet: { 1: '這一站負責天空，雲朵軟綿綿～', 2: '這一站負責山！爬起來不會累的那種～', 3: '這一站有大象！體重是祕密喔～' },
+    seal: cloudSeal,
     shapes: {
       1(c) { skyClouds(c, 0); },
       2(c) { mountain(c); },
@@ -158,6 +179,13 @@ export const ART_SETS = {
     label: '天山象・昭和',
     names: { 1: '天空', 2: '山', 3: '大象' },
     greet: { 1: '這一站負責天空，雲朵軟綿綿～', 2: '這一站負責山！爬起來不會累的那種～', 3: '這一站有大象！牠剛洗完澡，小心水花～' },
+    seal(c) {   // 完成章：入隅角方框＋四邊菱形，跟外框同一套
+      c.lineWidth = 3; c.stroke(new Path2D(notched(28, 7)));
+      c.lineWidth = 1.1; c.stroke(new Path2D(notched(23.5, 5)));
+      for (const [x, y] of [[0, -33], [33, 0], [0, 33], [-33, 0]]) {
+        c.beginPath(); c.moveTo(x, y - 4); c.lineTo(x + 4, y); c.lineTo(x, y + 4); c.lineTo(x - 4, y); c.closePath(); c.fill();
+      }
+    },
     shapes: {
       1(c) {   // 天空：左邊大雲往下移，避開題帶；三條霞；四角梅鉢
         inFrame(c, () => {

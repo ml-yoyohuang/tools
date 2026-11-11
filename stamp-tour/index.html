@@ -8,10 +8,10 @@
 <script>
   /* 版本號：每次推版都要改，讓手機一定讀到新檔案（GitHub Pages 會讓瀏覽器快取 10 分鐘）
      CSS 與所有 JS 模組都會加上 ?v=版本號 */
-  window.STAMP_V = '13';
+  window.STAMP_V = '14';
   (function () {
     var V = window.STAMP_V, base = new URL('js/', location.href).href, map = { imports: {} };
-    ['main', 'config', 'copy', 'util', 'art', 'print', 'cardface', 'storage', 'attendant', 'stamping', 'opening', 'arrival']
+    ['main', 'config', 'copy', 'util', 'art', 'print', 'cardface', 'storage', 'attendant', 'stamping', 'opening', 'arrival', 'finale']
       .forEach(function (m) { map.imports[base + m + '.js'] = base + m + '.js?v=' + V; });
     var s = document.createElement('script'); s.type = 'importmap'; s.textContent = JSON.stringify(map);
     document.currentScript.after(s);
@@ -24,6 +24,7 @@
 
 <div id="opening" hidden></div>
 <div id="arrival" hidden></div>
+<div id="finale" hidden></div>
 
 <div id="top">
   <div id="host"></div>

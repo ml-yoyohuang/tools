@@ -7,14 +7,14 @@ import { CARD, printCv, inkCv, genMask, composite, simplifyPath } from './print.
 import { drawCardExtras } from './cardface.js';
 import { say } from './attendant.js';
 import { store } from './storage.js';
-import { TAU, D2R, $, clamp, lerp, smooth, easeInOut, easeOut, easeIn, hex, rgba, makeCanvas, rr, inRect } from './util.js';
+import { TAU, D2R, $, clamp, lerp, smooth, easeInOut, easeOut, easeIn, hex, rgba, makeCanvas, rr, inRect, wait } from './util.js';
 
 const RUBBER = '#b4ab9c';
 let stage, ctx, loupe, lctx, topEl, stackEl, devEl;
 let W = 0, H = 0, DPR = 1, k = 1;
 let card = {}, pad = {}, rest = {}, fc = {};
 const faceCache = {};
-let hooks = { onReset: () => {}, onStationChange: () => {}, onArtToggle: () => {}, onGoStation: n => enterStation(n) };
+let hooks = { onReset: () => {}, onStationChange: () => {}, onArtToggle: () => {}, onGoStation: n => enterStation(n), onComplete: () => {} };
 
 const app = {
   active: false,
@@ -76,6 +76,14 @@ export function enterStation(n, lines) {
   const name = stationName(n);
   say(lines || (done ? COPY.stamped : COPY.enter(n, name)));
 }
+
+/* 第 3 幕：印台和印章退場，卡片移到畫面中央（慶祝由 finale.js 接手） */
+export function enterFinale() {
+  app.phase = 'finale'; app.finT = performance.now(); app.finaleArmed = false;
+  ptrs.clear(); g.mode = null; clearTimeout(g.timer);
+}
+/* 卡片此刻在畫面上的位置 */
+export function liveCardRect() { return { x: card.x + app.outOff, y: card.y + app.hubOff + app.cam, w: card.w, h: card.h, k }; }
 
 export function enterHub(lines) {
   app.station = 0; app.phase = 'hub'; app.cam = 0;
@@ -148,6 +156,7 @@ const overCard = () => inRect(app.s.x, app.s.y, card);
 const felt = () => ({ x: pad.x + 14, y: pad.y + 22, w: pad.w - 28, h: pad.h - 36 });
 const stampOnPad = () => inRect(app.s.x, app.s.y, felt());
 const hasStamp = () => app.phase !== 'hub' && app.phase !== 'out';
+const BUSY = ['pressing', 'lifting', 'out', 'finale'];   // 這些時候不能換站、換卡
 
 function hintOnce(key, lines) { if (app.hint[key]) return; app.hint[key] = true; say(lines); }
 
@@ -161,7 +170,7 @@ function updateDev() {
     const b = document.createElement('button');
     b.textContent = n; b.className = n === app.station ? 'cur' : '';
     if (app.layers.some(L => L.station === n)) { const i = document.createElement('i'); i.style.background = CONFIG.INKS[n].ink; b.appendChild(i); }
-    b.addEventListener('click', () => { if (!app.active || ['pressing', 'lifting', 'out'].includes(app.phase)) return; hooks.onGoStation(n); });
+    b.addEventListener('click', () => { if (!app.active || BUSY.includes(app.phase)) return; hooks.onGoStation(n); });
     devEl.appendChild(b);
   }
   const labels = { arrow: '箭頭', hop: '跳動', both: '兩者', none: '無' }, order = ['arrow', 'hop', 'both', 'none'];
@@ -181,7 +190,7 @@ function updateDev() {
     const ids = Object.keys(ART_SETS), next = ids[(ids.indexOf(artId()) + 1) % ids.length];
     // 入口、簽名時還沒有卡：直接換掉等一下要發的卡的圖案組（日期章蓋下、卡發出去之後就不能換）
     if (document.body.classList.contains('scene-open')) { if (store.hasCard()) return; setArt(next); hooks.onArtToggle(next); updateDev(); return; }
-    if (!app.active || ['pressing', 'lifting', 'out'].includes(app.phase)) return;
+    if (!app.active || BUSY.includes(app.phase)) return;
     hooks.onArtToggle(next);
     app.phase = 'out'; app.outT = performance.now(); ptrs.clear(); g.mode = null;
   });
@@ -191,7 +200,7 @@ function updateDev() {
 /* 重來：卡片堆點兩下 → 舊卡滑走 → 重新領卡 */
 let armTimer = 0;
 function onStack() {
-  if (!app.active || ['pressing', 'lifting', 'out'].includes(app.phase)) return;
+  if (!app.active || BUSY.includes(app.phase)) return;
   if (performance.now() < app.armedUntil) {
     app.armedUntil = 0; stackEl.classList.remove('armed'); clearTimeout(armTimer);
     app.phase = 'out'; app.outT = performance.now();
@@ -233,6 +242,10 @@ function onDown(e) {
   if (!app.active || app.phase !== 'ready') return;
   if (ptrs.size >= 2) return;
   const now = performance.now();
+  // 最後一站蓋得淡、站務員問要不要補蓋時：點一下卡片（不是印章）就開始慶祝
+  if (app.finaleArmed && inRect(e.clientX, wy(e.clientY), card) && !hitStamp(e.clientX, wy(e.clientY)) && !hitHandle(e.clientX, wy(e.clientY))) {
+    startFinale(); return;
+  }
   try { stage.setPointerCapture(e.pointerId); } catch (_) {}
   const p = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, sx: e.clientX, sy: e.clientY, t: now, lt: now, touch: e.pointerType !== 'mouse' };
   ptrs.set(e.pointerId, p);
@@ -379,9 +392,21 @@ function afterLift() {
     app.camHold = true; delete app.hint.align;
   }
   updateDev();
+  if (left === 0 && !(store.card && store.card.seal)) {   // 三站集滿：慶祝（蓋得淡的話先問要不要補蓋）
+    const faintEnd = !L.retouch && canMore && CONFIG.RESTAMP.FAINT_HINT && (L.fx.starve > 0 || L.fx.short > 0);
+    const comment = (L.retouch ? COPY.retouch : COPY.comments)[L.comment];
+    if (faintEnd) { app.finaleArmed = true; say([COPY.comments[L.comment], ...COPY.finale.faint]); }
+    else startFinale([comment]);
+    return;
+  }
   const tail = left > 0 ? COPY.left(left) : COPY.full;
   const faint = !L.retouch && canMore && CONFIG.RESTAMP.FAINT_HINT && (L.fx.starve > 0 || L.fx.short > 0);
   say(L.retouch ? [COPY.retouch[L.comment], tail] : [COPY.comments[L.comment], faint ? COPY.faint : tail]);
+}
+
+function startFinale(lines) {
+  app.finaleArmed = false; app.phase = 'done';
+  Promise.race([lines ? say(lines) : Promise.resolve(), wait(6000)]).then(() => hooks.onComplete());
 }
 
 /* =====================================================================
@@ -415,7 +440,7 @@ function drawCard() {
   }
   ctx.restore();
   const c = store.card || {};
-  drawCardExtras(ctx, x, y, k, { name: c.name, signature: c.signature, dateISO: c.issuedAt, dateShape: c.dateShape, route: [...new Set(app.layers.map(l => l.station))] });
+  drawCardExtras(ctx, x, y, k, { name: c.name, signature: c.signature, dateISO: c.issuedAt, dateShape: c.dateShape, seal: c.seal, route: [...new Set(app.layers.map(l => l.station))] });
 }
 
 function drawPad(now) {
@@ -654,7 +679,7 @@ function frame(now) {
   if (app.phase === 'lifting' && now - app.liftT > 160 + CONFIG.LIFT_MS + 120) afterLift();
 
   // 卡片首頁：沒有印台，卡片緩緩移到畫面中央
-  const hubT = app.phase === 'hub' || (app.phase === 'out' && app.station === 0) ? Math.max(0, (H - card.h) / 2 - card.y - 10) : 0;
+  const hubT = app.phase === 'hub' || app.phase === 'finale' || (app.phase === 'out' && app.station === 0) ? Math.max(0, (H - card.h) / 2 - card.y - 10) : 0;
   app.hubOff += (hubT - app.hubOff) * (1 - Math.exp(-dtf / 380));
 
   if (app.phase === 'out') {                    // 重來：舊卡滑走，交給主程式重新領卡
@@ -668,9 +693,18 @@ function frame(now) {
   const st = now - app.shakeT;
   if (st < 220) { const t = st / 220, o = Math.sin(t * TAU * 3) * (1 - t) * 3.2; ctx.translate(o * .5, o); }
   ctx.save(); ctx.translate(0, app.cam);
-  if (!(app.phase === 'out' && app.outOff <= -(card.x + card.w))) drawCard();
-  drawPad(now);
-  drawStamp(now);
+  if (app.phase === 'finale') {                 // 慶祝：印台和印章往下退、淡出，卡片留在聚光燈下
+    const t = clamp((now - app.finT) / 520, 0, 1);
+    if (t < 1 && app.station) {                 // 從卡片首頁接續慶祝時（站號 0）沒有印台
+      ctx.save(); ctx.translate(0, easeIn(t) * 80); drawPad(now); drawStamp(now); ctx.restore();
+      ctx.globalAlpha = t; drawBackground(); ctx.globalAlpha = 1;
+    }
+    drawCard();
+  } else {
+    if (!(app.phase === 'out' && app.outOff <= -(card.x + card.w))) drawCard();
+    drawPad(now);
+    drawStamp(now);
+  }
   ctx.restore();
   drawPressure(now);
   drawGoArrow(now);

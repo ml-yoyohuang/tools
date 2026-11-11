@@ -44,6 +44,10 @@ export const store = {
     this.data = { v: 1, card: { name, signature, issuedAt, art, dateShape }, impressions: [] };
     await adapter.save(this.data);
   },
+  async setSeal(seal) {                                  // 完成章：{ art, x, y, a, hold, seed, at }
+    this.data.card.seal = seal;
+    await adapter.save(this.data);
+  },
   async addImpression(imp) {
     this.data.impressions.push(imp);
     await adapter.save(this.data);

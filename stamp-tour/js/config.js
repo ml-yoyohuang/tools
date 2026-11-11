@@ -83,6 +83,18 @@ export const CONFIG = {
     HURRY: 2.6,                    // 點一下畫面，剩下的動畫加速幾倍
   },
 
+  /* 第 3 幕：集滿三站的慶祝（燈暗 → 拉炮 → 完成章） */
+  FINALE: {
+    PAUSE_MS: 1000,                // 第三章的評語說完後，停頓多久才熄燈
+    DIM: 0.82,                     // 熄燈後四周有多暗（0 ~ 1）
+    PULL_PX: 64,                   // 拉炮的繩子要往下拉多少 px 才會炸開
+    CONFETTI: 150,                 // 紙花數量
+    SEAL_INK: '#C9302C',           // 完成章的墨色（比日期章深一點的朱紅）
+    SEAL_GOOD_S: 0.6,              // 完成章停住按多久算按穩（更短 → 飛白、一側淡掉）
+    SEAL_BLEED_S: 1.6,             // 按超過這個開始暈開
+    SEAL_BLEED_RANGE_S: 1.6,       // 再多久達到最暈
+  },
+
   DATE_INK: '#E8453A',             // 日期章的墨色
   DATE_SHAPE_BY_DAY: [             // 日期章形狀，依領卡那天是星期幾（日、一、二、三、四、五、六）
     'square', 'circle', 'oval', 'circle', 'oval', 'circle', 'square',
