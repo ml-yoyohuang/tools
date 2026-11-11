@@ -11,22 +11,26 @@ export function dragStamp({ el, home, getCard, ghost, goodS }) {
   const put = (x, y, s = 1) => { el.style.transform = `translate(${x - sw / 2}px, ${y - sh * .82}px) scale(${s})`; };
   put(home.x, home.y);
   return new Promise(res => {
-    let id = null, off = { x: 0, y: 0 }, pos = { ...home }, still = 0, vx = 0, lastP = null, raf = 0;
+    let id = null, off = { x: 0, y: 0 }, pos = { ...home }, still = 0, vx = 0, lastP = null, raf = 0, start = null, moved = false;
     const over = () => { const R = getCard(); return pos.x > R.x && pos.x < R.x + R.w && pos.y > R.y && pos.y < R.y + R.h; };
     const tick = now => {              // 停在卡片上不動 → 慢慢壓下去
       raf = requestAnimationFrame(tick);
       if (id === null) return;
-      const p = over() ? clamp((now - still) / (goodS * 1000), 0, 1) : 0;
+      const ok = moved && over();      // 要真的拖過來才算（手機上章會跳到手指上方，光是按一下可能剛好碰到卡片邊）
+      const p = ok ? clamp((now - still) / (goodS * 1000), 0, 1) : 0;
       put(pos.x, pos.y, 1 - .06 * p);
-      ghost.style.opacity = over() ? (.35 + .5 * p).toFixed(2) : '0';
+      ghost.style.opacity = ok ? (.35 + .5 * p).toFixed(2) : '0';
       el.classList.toggle('press', p > 0);
     };
     raf = requestAnimationFrame(tick);
     const place = () => { ghost.style.left = pos.x + 'px'; ghost.style.top = pos.y + 'px'; };
     place();
     const down = e => {
-      e.preventDefault(); if (id !== null) return;
+      e.preventDefault();
+      if (id !== null && e.pointerId === id) return;
+      // 上一次的手指沒收到放開（手機偶爾會漏）：不要卡住，直接換這一指接手
       id = e.pointerId; try { el.setPointerCapture(id); } catch (_) {}
+      start = { x: e.clientX, y: e.clientY }; moved = false;
       // 手指會擋住章底：觸控時章底在手指上方
       off = e.pointerType === 'mouse' ? { x: pos.x - e.clientX, y: pos.y - e.clientY } : { x: 0, y: -Math.max(58, sh * .55) };
       pos = { x: e.clientX + off.x, y: e.clientY + off.y }; place();
@@ -37,21 +41,24 @@ export function dragStamp({ el, home, getCard, ghost, goodS }) {
       if (e.pointerId !== id) return;
       const np = { x: e.clientX + off.x, y: e.clientY + off.y }, now = performance.now();
       if (Math.hypot(np.x - pos.x, np.y - pos.y) > 2.5) still = now;
+      if (!moved && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 14) moved = true;
       vx = lerp(vx, (e.clientX - lastP.x) / Math.max(8, now - lastP.t) * 1000, .3); lastP = { x: e.clientX, t: now };
       pos = np; place();
     };
     const up = e => {
       if (e.pointerId !== id) return;
       id = null; el.classList.remove('held', 'press');
-      if (!over()) {                    // 沒放在卡片上：回到原位
+      // 沒放在卡片上、只是點一下（沒拖過）、或被系統中斷：回到原位，不算蓋
+      if (!over() || !moved || e.type !== 'pointerup') {
         ghost.style.opacity = '0';
+        ghost.classList.remove('on');
         el.animate([{ transform: el.style.transform }, { transform: `translate(${home.x - sw / 2}px, ${home.y - sh * .82}px)` }], { duration: 360, easing: 'cubic-bezier(.3,.9,.3,1)' });
         pos = { ...home }; put(home.x, home.y); place();
         return;
       }
       cancelAnimationFrame(raf);
       el.removeEventListener('pointerdown', down); el.removeEventListener('pointermove', move);
-      el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
+      el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); el.removeEventListener('lostpointercapture', up);
       ghost.classList.remove('on');
       const R = getCard(), hold = (performance.now() - still) / 1000;
       res({
@@ -63,6 +70,7 @@ export function dragStamp({ el, home, getCard, ghost, goodS }) {
     };
     el.addEventListener('pointerdown', down); el.addEventListener('pointermove', move);
     el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+    el.addEventListener('lostpointercapture', up);   // 手指被別的東西搶走：當作放開（回原位）
   });
 }
 

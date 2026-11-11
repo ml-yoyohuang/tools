@@ -66,4 +66,11 @@ export function say(lines) {
   queue = lines.slice();
   return new Promise(res => { onDone = res; showLine(queue.shift()); });
 }
+/* 插話：馬上說這幾句，說完再接著把原本還沒說完的台詞說完（drop 裡的句子已經用不到了，跳過）
+   給蓋章時的即時回應用：快手的旅客才不會錯過到站時的閒聊 */
+export function interject(lines, drop = []) {
+  if (typeof lines === 'string') lines = [lines];
+  queue = [...lines.slice(1), ...queue.filter(l => !drop.includes(l))];
+  showLine(lines[0]);
+}
 export function hideBubble() { bubbleEl.classList.remove('in'); queue = []; clearTimeout(talkTimer); }

@@ -5,7 +5,7 @@ import { COPY } from './copy.js';
 import { ART_SETS, artId, setArt, shapeOf, stationName, drawGuides } from './art.js';
 import { CARD, printCv, inkCv, genMask, composite, simplifyPath } from './print.js';
 import { drawCardExtras } from './cardface.js';
-import { say } from './attendant.js';
+import { say, interject } from './attendant.js';
 import { store } from './storage.js';
 import { TAU, D2R, $, clamp, lerp, smooth, easeInOut, easeOut, easeIn, hex, rgba, makeCanvas, rr, inRect, wait } from './util.js';
 import { sfx } from './sound.js';
@@ -162,7 +162,10 @@ const stampOnPad = () => inRect(app.s.x, app.s.y, felt());
 const hasStamp = () => app.phase !== 'hub' && app.phase !== 'out';
 const BUSY = ['pressing', 'lifting', 'out', 'finale'];   // 這些時候不能換站、換卡
 
-function hintOnce(key, lines) { if (app.hint[key]) return; app.hint[key] = true; say(lines); }
+/* 蓋章時的即時回應：插話，說完再把到站時還沒說完的閒聊說完（沾墨的提醒已經用不到了，跳過） */
+const INK_HINTS = () => [COPY.arrive.ink, COPY.arrive.inkAgain, COPY.enter(0, '')[1]];
+const react = lines => interject(lines, INK_HINTS());
+function hintOnce(key, lines) { if (app.hint[key]) return; app.hint[key] = true; react(lines); }
 
 /* =====================================================================
    開發用：站點切換、提示模式
@@ -275,7 +278,7 @@ function onDown(e) {
 function decide() {
   if (g.mode !== 'pending') return;
   if (!overCard()) return;                                // 在印台或空中：等放開（點＝沾墨）或移動（拖動）
-  if (app.ink === 0) { say(COPY.dry); g.mode = 'drag'; markFast(); return; }
+  if (app.ink === 0) { react(COPY.dry); g.mode = 'drag'; markFast(); return; }
   const p = ptrs.get(g.pid);
   const l = toLocal(p.x, wy(p.y));
   g.mode = 'press'; app.phase = 'pressing';
@@ -354,13 +357,13 @@ function updateCursor(x, sy) {
    ===================================================================== */
 function dab() {
   const I = CONFIG.INK_TAPS;
-  if (app.ink >= I.MAX) { say(COPY.inkMax); app.dabT = performance.now(); return; }
+  if (app.ink >= I.MAX) { react(COPY.inkMax); app.dabT = performance.now(); return; }
   app.ink++;
   app.dabT = performance.now(); sfx('pad', { n: app.ink });
   app.dabs.push({ x: app.s.x, y: app.s.y, a: app.s.a, t: app.dabT });
-  if (app.ink === I.GOOD_MIN) { say(COPY.inkGood); app.goT = performance.now(); app.goEnd = app.goT + CONFIG.GO_HINT_MS; }
-  else if (app.ink === I.GOOD_MAX + 1) say(COPY.inkMuch);
-  else if (app.ink === I.MAX) say(COPY.inkMax);
+  if (app.ink === I.GOOD_MIN) { react(COPY.inkGood); app.goT = performance.now(); app.goEnd = app.goT + CONFIG.GO_HINT_MS; }
+  else if (app.ink === I.GOOD_MAX + 1) react(COPY.inkMuch);
+  else if (app.ink === I.MAX) react(COPY.inkMax);
 }
 
 function commit(now) {

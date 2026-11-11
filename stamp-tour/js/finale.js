@@ -76,11 +76,12 @@ export async function runFinale({ getCard, art, onSeal }) {
   placeCord(hand.x, hand.y + REST);
   cord.classList.add('in');
   setMood('happy');
-  await sayFor(COPY.finale.arrive);
+  const pulled = pullCord();                      // 繩子一出現就能拉（不用等站務員講完）
+  await Promise.race([sayFor(COPY.finale.arrive), pulled]);
   setMood('');
 
   /* ========== 3. 拉繩子 → 砰！ ========== */
-  await pullCord();
+  await pulled;
   sfx('bang'); sfx('gong'); setTimeout(() => sfx('fanfare'), 380);
   cord.classList.add('gone');
   popper.animate([
