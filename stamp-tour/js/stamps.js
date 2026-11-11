@@ -172,6 +172,30 @@ export function drawAttendant(g, mood = 'normal', body = false) {
   } else { dot(50, 58); dot(70, 58); smile(); }
   g.restore();
 }
+/* 站務員的迷你臉印（單色橡皮章）：明信片背面的署名。d = 直徑 */
+export function faceMark(c, cx, cy, d, ink, seed = 1) {
+  const n = Math.ceil(d * 2), cv = document.createElement('canvas'); cv.width = cv.height = n;
+  const g = cv.getContext('2d'), s = n / 120;
+  g.scale(s, s);
+  g.strokeStyle = g.fillStyle = ink; g.lineCap = g.lineJoin = 'round';
+  g.lineWidth = 7; g.beginPath(); g.arc(60, 60, 55, 0, Math.PI * 2); g.stroke();                 // 外框
+  g.translate(60, 64); g.scale(.82, .82); g.translate(-60, -62);
+  g.lineWidth = 6; g.stroke(FACE.head);
+  g.fill(FACE.cap); g.fill(FACE.brim);
+  g.lineWidth = 5.5;
+  g.stroke(P2('M44 61 Q50 54 56 61')); g.stroke(P2('M64 61 Q70 54 76 61'));                     // 笑瞇瞇的眼睛
+  g.fill(P2('M52 72 Q60 86 68 72 Z'));
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.globalCompositeOperation = 'destination-out';                                               // 橡皮章的斑駁
+  for (let i = 0; i < n * 1.6; i++) {
+    const x = hash2(i, seed, 51) * n, y = hash2(i, seed, 53) * n;
+    g.globalAlpha = .25 + hash2(i, seed, 57) * .6; g.beginPath(); g.arc(x, y, .4 + hash2(i, seed, 59) * n / 70, 0, Math.PI * 2); g.fill();
+  }
+  c.save(); c.globalCompositeOperation = 'multiply'; c.globalAlpha = .88;
+  c.translate(cx, cy); c.rotate((hash2(seed, 3, 61) - .5) * .35);
+  c.drawImage(cv, -d / 2, -d / 2, d, d);
+  c.restore();
+}
 function tint(g, color, x = 0, y = 0, w = 100, h = 100, a = .55) {   // 站色底，蓋一層紙色讓它淡一點
   g.fillStyle = color; g.fillRect(x, y, w, h);
   g.globalAlpha = a; g.fillStyle = PAPER; g.fillRect(x, y, w, h); g.globalAlpha = 1;

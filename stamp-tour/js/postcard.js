@@ -6,7 +6,7 @@ import { COPY } from './copy.js';
 import { CARD, PR, printCv } from './print.js';
 import { drawCardExtras, drawStroke, drawTail, NAME_FONT, PEN_INK, POSTMARK, postmarkImage } from './cardface.js';
 import { say } from './attendant.js';
-import { drawPostage, pickStamp } from './stamps.js';
+import { drawPostage, pickStamp, faceMark } from './stamps.js';
 import { store } from './storage.js';
 import { dragStamp, handStampSVG } from './dragstamp.js';
 import { $, clamp, lerp, wait, makeCanvas, rr, hash2, vnoise } from './util.js';
@@ -107,6 +107,16 @@ export function renderBack(c, x, y, k, post = {}) {
     c.fillText(COPY.comments[imp.comment] || '', u(N.x + 13), yy, u(418 - N.x - 13));
   });
 
+  // 站務員寫的話（寄回來才有）：寫在地址線上，句尾蓋臉印署名
+  const note = noteLines(post.note);
+  if (note) {
+    const x0 = u(B.DIV + 24);
+    c.fillStyle = CONFIG.POST.MARK_INK; c.font = `500 ${u(12)}px ${TYPE}`; c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+    note.forEach((t, i) => c.fillText(t, x0, u(B.ADDR[i] - 5), u(418 - B.DIV - 24)));
+    const end = Math.min(u(424), x0 + c.measureText(note[1]).width + u(15));
+    faceMark(c, end, u(B.ADDR[1] - 9), u(21), CONFIG.POST.MARK_INK, (post.postmark && post.postmark.seed) || 7);
+  }
+
   // 留言
   const msg = post.message;
   if (msg && msg.text) {
@@ -137,6 +147,19 @@ export function renderBack(c, x, y, k, post = {}) {
     c.restore();
   }
   c.restore();
+}
+
+/* 站務員的話：看三站（各自第一次蓋）的評語猜個性 */
+function noteKind() {
+  const cs = store.route().map(st => (store.impressions.find(m => m.station === st && !m.retouch) || store.impressions.find(m => m.station === st) || {}).comment);
+  if (cs.length && cs.every(v => v === 0)) return 'perfect';
+  if (cs.filter(v => v === 2).length >= 2) return 'bold';
+  return 'mixed';
+}
+function noteLines(i) {
+  if (i == null) return null;
+  const list = COPY.post.note[noteKind()];
+  return list[i % list.length];
 }
 
 /* 正反兩面並排，存成圖片 */
@@ -309,7 +332,10 @@ export async function runPostcard(getCard) {
 
   // ---------- 5. 寄回手上 ----------
   ui.mbBack.classList.add('leave'); ui.mbFront.classList.add('leave');
+  ui.post.note = Math.floor(Math.random() * 3);   // 站務員在背面寫了話（正面朝上寄回來，翻面才看得到）
+  await store.setPost({ note: ui.post.note });
   await wait(500);
+  paint();
   setFlip(false);
   ui.pc.classList.remove('posting');
   ui.pc.style.transform = '';
@@ -324,7 +350,8 @@ export async function runPostcard(getCard) {
   document.body.classList.remove('post-on');
   ui.tapFlip = true;
   ui.root.classList.add('keeping');
-  say(COPY.post.arrived);
+  const hint = COPY.post.arrivedNote[Math.floor(Math.random() * COPY.post.arrivedNote.length)];
+  say([COPY.post.arrived[0], hint, ...COPY.post.arrived.slice(1)]);
 }
 
 /* ---------------- 留言：手寫（越快越細）或打字 ---------------- */
