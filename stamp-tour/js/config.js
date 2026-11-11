@@ -108,6 +108,10 @@ export const CONFIG = {
     'square', 'circle', 'oval', 'circle', 'oval', 'circle', 'square',
   ],                               // 一三五圓形、二四橢圓形；週末義工放假，只剩方形的備用章
 
+  SOUND: {
+    VOLUME: 0.7,                   // 總音量（0 ~ 1）；使用者可以用對話列右邊的喇叭關掉
+  },
+
   DEV_SWITCHER: true,              // 開發測試用的站點切換器（上線前關掉）
   STORAGE_KEY: 'stamp-tour:v1',
 };

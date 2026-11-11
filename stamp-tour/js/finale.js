@@ -9,6 +9,7 @@ import { attendantSVG, registerHost, say, setMood } from './attendant.js';
 import { SEAL_SPAN } from './cardface.js';
 import { dragStamp, handStampSVG } from './dragstamp.js';
 import { $, TAU, clamp, lerp, wait } from './util.js';
+import { sfx, roll } from './sound.js';
 
 const INKS = ['#FFE800', '#0078BF', '#FF48B0'], PAPER = '#F7F4EE';
 const vibe = ms => { if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) { try { navigator.vibrate(ms); } catch (_) {} } };
@@ -62,13 +63,14 @@ export async function runFinale({ getCard, art, onSeal }) {
   requestAnimationFrame(loop);
 
   /* ========== 1. 醞釀：熄燈 ========== */
+  sfx('dim');
   await dim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1100, easing: 'ease-in-out', fill: 'forwards' }).finished;
   await wait(500);
 
   /* ========== 2. 站務員抱著拉炮跑進來 ========== */
   const runIn = [{ translate: `${W - clerkX + cw}px 0` }, { translate: '-8px 0', offset: .82 }, { translate: '0 0' }];   // 用 translate，transform 留給拉炮的角度
   const bob = { duration: 900, easing: 'cubic-bezier(.3,.7,.3,1)', fill: 'both' };
-  clerk.animate(runIn, bob); popper.animate(runIn, bob);
+  clerk.animate(runIn, bob); popper.animate(runIn, bob); sfx('steps');
   clerk.querySelector('svg').animate([{ translate: '0 0' }, { translate: '0 -6px' }, { translate: '0 0' }], { duration: 225, iterations: 4 });   // 跑步的小跳
   await wait(900);
   placeCord(hand.x, hand.y + REST);
@@ -79,6 +81,7 @@ export async function runFinale({ getCard, art, onSeal }) {
 
   /* ========== 3. 拉繩子 → 砰！ ========== */
   await pullCord();
+  sfx('bang'); sfx('gong'); setTimeout(() => sfx('fanfare'), 380);
   cord.classList.add('gone');
   popper.animate([
     { transform: `rotate(${ANG}deg)` }, { transform: `translate(${-axis.x * 10}px, ${-axis.y * 10}px) rotate(${ANG - 6}deg) scale(.92)`, offset: .25 },
@@ -104,6 +107,7 @@ export async function runFinale({ getCard, art, onSeal }) {
   say(COPY.finale.seal);
   const { px, py, ...seal } = await dragStamp({ el: sealer, home, getCard, ghost, goodS: F.SEAL_GOOD_S });
   onSeal({ art, ...seal });
+  sfx('thunk');
   vibe(16);
   ghost.classList.remove('on');
   sealer.classList.remove('in', 'press');
@@ -132,24 +136,24 @@ export async function runFinale({ getCard, art, onSeal }) {
   }
   function pullCord() {
     return new Promise(res => {
-      let id = null, nagged = false;
+      let id = null, nagged = false, stopRoll = () => {};
       const tilt = d => { popper.style.transform = `rotate(${ANG + clamp(d * .12, 0, 9)}deg)`; };
       tilt(0);
       ring.addEventListener('pointerdown', e => {
         e.preventDefault(); if (id !== null) return;
         id = e.pointerId; try { ring.setPointerCapture(id); } catch (_) {}
-        cord.classList.add('held');
+        cord.classList.add('held'); stopRoll(); stopRoll = roll();   // 拉著的時候，鼓聲越來越快
       });
       ring.addEventListener('pointermove', e => {
         if (e.pointerId !== id) return;
         const dx = e.clientX - hand.x, dy = Math.max(8, e.clientY - hand.y);
         const len = Math.hypot(dx, dy), d = len - REST;
         placeCord(hand.x + dx, hand.y + dy); tilt(d);
-        if (d >= PULL) { id = null; cord.classList.remove('held'); res(); }
+        if (d >= PULL) { id = null; cord.classList.remove('held'); stopRoll(); res(); }
       });
       const up = e => {
         if (e.pointerId !== id) return;
-        id = null; cord.classList.remove('held');
+        id = null; cord.classList.remove('held'); stopRoll();
         const from = { x: +line.getAttribute('x2'), y: +line.getAttribute('y2') };
         const t0 = performance.now();
         const spring = now => {        // 彈回去

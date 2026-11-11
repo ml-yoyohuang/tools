@@ -8,6 +8,7 @@ import { attendantSVG, registerHost, say, setMood } from './attendant.js';
 import { store } from './storage.js';
 import { artId } from './art.js';
 import { $, wait, clamp, lerp } from './util.js';
+import { sfx, penScratch } from './sound.js';
 
 const INK = ['#FFE800', '#0078BF', '#FF48B0', '#F7F4EE'];
 const ICON = {   // Material Design Icons
@@ -53,6 +54,7 @@ export async function runOpening({ short = false, station = 0, cardRect }) {
   root.classList.add('flags-in');
   await wait(T(320));
   root.classList.add('banner-in');
+  sfx('whoosh'); setTimeout(() => sfx('jingle'), T(700));
   await wait(T(900));
 
   // ---------- 2. 站務員出場 ----------
@@ -72,11 +74,13 @@ export async function runOpening({ short = false, station = 0, cardRect }) {
   setCardPose(cardEl, R, tuck); cardEl.style.opacity = '0';
   await wait(30);
   cardEl.style.opacity = '1';
+  sfx('slide');
   await animateCard(cardEl, R, tuck, offer, T(780), 'cubic-bezier(.2,.9,.25,1.12)');
   say(COPY.open.give);
 
   // ---------- 4. 親手收下：往上滑，或長按 ----------
   await waitTake(cardEl, R, offer);
+  sfx('take');
   say(COPY.open.taken);
   root.classList.add('booth-out');
   await animateCard(cardEl, R, cardEl._pose, { cx: R.x + R.w / 2, cy: R.y + R.h / 2, s: 1, r: 0 }, 620, 'cubic-bezier(.2,.8,.2,1)');
@@ -238,7 +242,7 @@ function signStep(root, cardEl, R, paint) {
     if (d < .35) return;
     const speed = d / Math.max(1, now - last.t);
     const w = lerp(last.w, clamp(O.PEN_MAX - speed * 2.2, O.PEN_MIN, O.PEN_MAX), .4);
-    cur.push([+u.toFixed(1), +v.toFixed(1), +w.toFixed(2)]);
+    cur.push([+u.toFixed(1), +v.toFixed(1), +w.toFixed(2)]); penScratch();
     last = { u, v, t: now, w };
     drawStroke(ic, ox, oy, k, cur, cur.length - 1);
   });
@@ -314,6 +318,7 @@ async function stampDate(el, cardEl, R, paintWith) {
   await el.animate([{ transform: tr(tx, ty - 46, 1.04, DATE.tilt) }, { transform: tr(tx, ty, .97, DATE.tilt) }],
     { duration: 140, easing: 'cubic-bezier(.6,0,.9,.4)', fill: 'forwards' }).finished;
   // 咚！
+  sfx('thunk');
   cardEl.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(2px)' }, { transform: 'translateY(-1px)' }, { transform: 'translateY(0)' }], { duration: 200 });
   if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) { try { navigator.vibrate(14); } catch (_) {} }
   paintWith(1);

@@ -8,6 +8,7 @@ import { drawCardExtras } from './cardface.js';
 import { say } from './attendant.js';
 import { store } from './storage.js';
 import { TAU, D2R, $, clamp, lerp, smooth, easeInOut, easeOut, easeIn, hex, rgba, makeCanvas, rr, inRect, wait } from './util.js';
+import { sfx } from './sound.js';
 
 const RUBBER = '#b4ab9c';
 let stage, ctx, loupe, lctx, topEl, stackEl, devEl;
@@ -196,7 +197,7 @@ function updateDev() {
     if (!app.active || BUSY.includes(app.phase)) return;
     hooks.onLeave();
     hooks.onArtToggle(next);
-    app.phase = 'out'; app.outT = performance.now(); ptrs.clear(); g.mode = null;
+    app.phase = 'out'; app.outT = performance.now(); ptrs.clear(); g.mode = null; sfx('slide');
   });
   devEl.appendChild(ab);
 }
@@ -208,7 +209,7 @@ function onStack() {
   if (performance.now() < app.armedUntil) {
     app.armedUntil = 0; stackEl.classList.remove('armed'); clearTimeout(armTimer);
     hooks.onLeave();
-    app.phase = 'out'; app.outT = performance.now();
+    app.phase = 'out'; app.outT = performance.now(); sfx('slide');
     ptrs.clear(); g.mode = null;
     return;
   }
@@ -355,7 +356,7 @@ function dab() {
   const I = CONFIG.INK_TAPS;
   if (app.ink >= I.MAX) { say(COPY.inkMax); app.dabT = performance.now(); return; }
   app.ink++;
-  app.dabT = performance.now();
+  app.dabT = performance.now(); sfx('pad', { n: app.ink });
   app.dabs.push({ x: app.s.x, y: app.s.y, a: app.s.a, t: app.dabT });
   if (app.ink === I.GOOD_MIN) { say(COPY.inkGood); app.goT = performance.now(); app.goEnd = app.goT + CONFIG.GO_HINT_MS; }
   else if (app.ink === I.GOOD_MAX + 1) say(COPY.inkMuch);
@@ -383,6 +384,7 @@ function commit(now) {
   app.ink = 0;
   app.phase = 'lifting';
   app.liftT = app.shakeT = performance.now();
+  sfx('press'); setTimeout(() => sfx('lift'), 160);
   if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) { try { navigator.vibrate(18); } catch (_) {} }
   window.__lastLayer = { e: +L.e.toFixed(2), comment: (L.retouch ? COPY.retouch : COPY.comments)[L.comment], retouch: L.retouch, hold: +L.hold.toFixed(2), taps: L.taps, fx: L.fx };
 }
@@ -397,6 +399,7 @@ function afterLift() {
     app.camHold = true; delete app.hint.align;
   }
   updateDev();
+  if (L.comment === 0) sfx('sparkle');                  // 職人級：叮叮叮
   if (left === 0 && !(store.card && store.card.seal)) {   // 三站集滿：慶祝（蓋得淡的話先問要不要補蓋）
     const faintEnd = !L.retouch && canMore && CONFIG.RESTAMP.FAINT_HINT && (L.fx.starve > 0 || L.fx.short > 0);
     const comment = (L.retouch ? COPY.retouch : COPY.comments)[L.comment];

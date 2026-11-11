@@ -7,6 +7,7 @@ import { CONFIG } from './config.js';
 import { stationName } from './art.js';
 import { hideBubble } from './attendant.js';
 import { $, hex, rgba } from './util.js';
+import { sfx } from './sound.js';
 
 const PAPER = '#F7F4EE', INK_DARK = '#24221F';
 
@@ -78,6 +79,7 @@ export async function playArrival(n, { route = [], before, onReveal } = {}) {
     await anim(sign, [{ opacity: 0 }, { opacity: 1 }], { duration: 300 }).finished;
   } else {
     // ---------- 醞釀：垂降，牌面還翻在上面 ----------
+    sfx('drop');
     await anim(sign, [
       { transform: `translateY(${lift()}px)` },
       { transform: 'translateY(7px)', offset: .74 },
@@ -87,6 +89,7 @@ export async function playArrival(n, { route = [], before, onReveal } = {}) {
     await step(A.PAUSE_MS);
 
     // ---------- 動作：越過橫桿翻下來，晃兩下停住 ----------
+    sfx('clack');
     anim(flip, [
       { transform: 'rotateX(180deg)', easing: 'cubic-bezier(.55,0,.75,.35)' },
       { transform: 'rotateX(90deg)', offset: .36, easing: 'cubic-bezier(.2,.6,.35,1)' },
@@ -98,6 +101,7 @@ export async function playArrival(n, { route = [], before, onReveal } = {}) {
     await step(A.FLIP_MS * .5);
 
     // ---------- 揭曉：站號、站名、路線 ----------
+    sfx('chime');
     anim(parts.num, [
       { opacity: 0, transform: 'scale(.4)' }, { opacity: 1, transform: 'scale(1.1)', offset: .6 }, { opacity: 1, transform: 'none' },
     ], { duration: 460, delay: 80, easing: 'cubic-bezier(.3,.9,.4,1)' });

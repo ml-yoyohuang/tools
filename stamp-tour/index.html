@@ -8,10 +8,10 @@
 <script>
   /* 版本號：每次推版都要改，讓手機一定讀到新檔案（GitHub Pages 會讓瀏覽器快取 10 分鐘）
      CSS 與所有 JS 模組都會加上 ?v=版本號 */
-  window.STAMP_V = '18';
+  window.STAMP_V = '19';
   (function () {
     var V = window.STAMP_V, base = new URL('js/', location.href).href, map = { imports: {} };
-    ['main', 'config', 'copy', 'util', 'art', 'print', 'cardface', 'storage', 'attendant', 'stamping', 'opening', 'arrival', 'finale', 'dragstamp', 'postcard', 'stamps']
+    ['main', 'config', 'copy', 'util', 'art', 'print', 'cardface', 'storage', 'attendant', 'stamping', 'opening', 'arrival', 'finale', 'dragstamp', 'postcard', 'stamps', 'sound']
       .forEach(function (m) { map.imports[base + m + '.js'] = base + m + '.js?v=' + V; });
     var s = document.createElement('script'); s.type = 'importmap'; s.textContent = JSON.stringify(map);
     document.currentScript.after(s);
@@ -32,6 +32,7 @@
   <div id="bubble"><span id="line"></span>
     <svg id="more" viewBox="0 0 10 10" hidden><path d="M3 1.5 6.8 5 3 8.5" fill="none" stroke="#24221f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </div>
+  <button id="sound" aria-label="sound"></button>
   <button id="stack" aria-label="new card">
     <svg viewBox="0 0 40 40" width="40" height="40">
       <rect x="11" y="9" width="20" height="15" rx="1.6" fill="#f7f4ee" stroke="#24221f" stroke-width="1.1" transform="rotate(-7 21 16)"/>

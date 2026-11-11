@@ -10,6 +10,7 @@ import { drawPostage, pickStamp } from './stamps.js';
 import { store } from './storage.js';
 import { dragStamp, handStampSVG } from './dragstamp.js';
 import { $, clamp, lerp, wait, makeCanvas, rr, hash2, vnoise } from './util.js';
+import { sfx, penScratch } from './sound.js';
 
 /* ---------------- 背面版面（卡片單位，440 × 420） ---------------- */
 export const BACK = {
@@ -227,7 +228,7 @@ function paint() {
     const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); fn(c, 0, 0, R.k);
   }
 }
-function setFlip(on) { ui.flipped = on; ui.flip.classList.toggle('over', on); }
+function setFlip(on) { sfx('flip'); ui.flipped = on; ui.flip.classList.toggle('over', on); }
 
 /* 卡片首頁：直接看明信片（點一下翻面、存圖、分享） */
 export function showPostcard(getCard) {
@@ -293,6 +294,7 @@ export async function runPostcard(getCard) {
   const { px, py, ...postmark } = await dragStamp({ el: ui.marker, home, getCard, ghost: ui.ghost, goodS: CONFIG.FINALE.SEAL_GOOD_S });
   postmark.at = new Date().toISOString();
   ui.post.postmark = postmark; paint();
+  sfx('thunk', { metal: true });
   await store.setPost({ postmark });
   vibe(16);
   ui.marker.classList.remove('in', 'press');
@@ -318,7 +320,7 @@ export async function runPostcard(getCard) {
     { transform: 'none' },
   ], { duration: 900, easing: 'cubic-bezier(.3,.8,.3,1)' });
   await wait(900);
-  vibe(12);
+  vibe(12); sfx('doorbell');
   document.body.classList.remove('post-on');
   ui.tapFlip = true;
   ui.root.classList.add('keeping');
@@ -372,7 +374,7 @@ function writeStep(R) {
     const [u, v] = toCard(e), now = performance.now(), d = Math.hypot(u - last.u, v - last.v);
     if (d < .35) return;
     const w = lerp(last.w, clamp(O.PEN_MAX - d / Math.max(1, now - last.t) * 2.2, O.PEN_MIN, O.PEN_MAX), .4);
-    cur.push([+u.toFixed(1), +v.toFixed(1), +w.toFixed(2)]);
+    cur.push([+u.toFixed(1), +v.toFixed(1), +w.toFixed(2)]); penScratch();
     last = { u, v, t: now, w };
     drawStroke(bctx, 0, 0, k, cur, cur.length - 1);
   });
@@ -419,7 +421,7 @@ function mailStep(R) {
   ui.pc.classList.add('posting');
   ui.pc.animate([{ transform: 'none' }, { transform: pose(c0.x, c0.y, s0, -6) }], { duration: 650, easing: 'cubic-bezier(.3,.8,.3,1)' });
   ui.pc.style.transform = pose(c0.x, c0.y, s0, -6);
-  ui.mbBack.classList.add('in'); ui.mbFront.classList.add('in');
+  ui.mbBack.classList.add('in'); ui.mbFront.classList.add('in'); sfx('slide');
   say(COPY.post.mail);
 
   // 拿在手上時縮到比投信口還窄（跟郵筒的比例才合理）；放在郵筒上半部、或投信口附近，就會自己掉進去
@@ -466,7 +468,7 @@ function mailStep(R) {
       ui.pc.style.transform = pose(top.x, top.y + R.h * s1 + 8, s1, 0); ui.pc.style.opacity = '0';
       ui.pc.classList.remove('slotting');
       vibe([10, 30, 10]);
-      ui.mbFront.classList.add('posted'); ui.mbBack.classList.add('posted');
+      ui.mbFront.classList.add('posted'); ui.mbBack.classList.add('posted'); sfx('mailbox');
       await wait(450);
       ui.pc.style.opacity = '';
       res();

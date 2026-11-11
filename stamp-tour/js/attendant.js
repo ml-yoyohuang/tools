@@ -3,6 +3,7 @@
    眼睛會眨，說話時嘴巴會動，開心時眼睛變成 ^ ^。 */
 import { CONFIG } from './config.js';
 import { $ } from './util.js';
+import { sfx } from './sound.js';
 
 /* full：含身體（櫃台用）；head：只有頭（對話列用） */
 export function attendantSVG(kind = 'full') {
@@ -47,6 +48,7 @@ export function setMood(mood) { for (const h of hosts) h.dataset.mood = mood || 
 function next() { if (queue.length) showLine(queue.shift()); }
 
 function showLine(text) {
+  sfx('blip');
   clearTimeout(talkTimer);
   lineEl.textContent = text;
   bubbleEl.classList.remove('in'); void bubbleEl.offsetWidth; bubbleEl.classList.add('in');

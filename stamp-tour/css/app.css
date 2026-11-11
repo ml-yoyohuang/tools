@@ -404,3 +404,13 @@ body.finale-on #stack, body.finale-on #dev { visibility:hidden; }
 #postcard .mailbox.near svg { filter:brightness(1.08); }
 /* 明信片儀式進行中：卡片堆和開發列先收起來 */
 body.post-on #stack, body.post-on #dev { visibility:hidden; }
+
+/* ---------------- 音效開關 ---------------- */
+#sound {
+  flex:none; width:32px; height:40px; border:0; background:none; cursor:pointer; display:grid; place-items:center;
+  color:var(--ink); opacity:.42; transition:opacity .2s; -webkit-appearance:none; appearance:none;
+}
+#sound svg { fill:currentColor; }
+#sound:hover { opacity:.8; }
+#sound.off { opacity:.28; }
+body.finale-on #sound, body.post-on #sound { opacity:.25; }
