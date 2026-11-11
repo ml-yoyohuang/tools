@@ -5,7 +5,8 @@ import { CONFIG } from './config.js';
 import { COPY } from './copy.js';
 import { CARD, PR, printCv } from './print.js';
 import { drawCardExtras, drawStroke, drawTail, NAME_FONT, PEN_INK, POSTMARK, postmarkImage } from './cardface.js';
-import { say } from './attendant.js';
+import { say, attendantSVG } from './attendant.js';
+import { ART_SETS } from './art.js';
 import { store } from './storage.js';
 import { dragStamp, handStampSVG } from './dragstamp.js';
 import { $, clamp, lerp, wait, makeCanvas, rr, hash2, vnoise } from './util.js';
@@ -70,7 +71,7 @@ export function renderBack(c, x, y, k, post = {}) {
   c.strokeStyle = 'rgba(60,52,40,.26)';
   c.beginPath(); c.moveTo(u(B.DIV), u(40)); c.lineTo(u(B.DIV), u(382)); c.stroke();
 
-  // 郵票：齒孔邊＋正面的縮圖（就是你蓋出來的那幅）
+  // 郵票：齒孔邊＋抽到的圖案
   const S = B.STAMP;
   c.save();
   c.shadowColor = 'rgba(45,35,20,.18)'; c.shadowBlur = u(2); c.shadowOffsetY = u(.6);
@@ -80,7 +81,7 @@ export function renderBack(c, x, y, k, post = {}) {
   for (let t = 4; t < S.w; t += 6) for (const yy of [S.y, S.y + S.h]) { c.beginPath(); c.arc(u(S.x + t), u(yy), u(1.8), 0, Math.PI * 2); c.fill(); }
   for (let t = 4; t < S.h; t += 6) for (const xx of [S.x, S.x + S.w]) { c.beginPath(); c.arc(u(xx), u(S.y + t), u(1.8), 0, Math.PI * 2); c.fill(); }
   const iw = S.w - 14;
-  c.drawImage(printCv, (CARD.FX - 150) * PR, (CARD.FY - 150) * PR, 300 * PR, 300 * PR, u(S.x + 7), u(S.y + 7), u(iw), u(iw));
+  drawStampArt(c, u(S.x + 7), u(S.y + 7), u(iw), post.stamp);
   c.strokeStyle = 'rgba(60,52,40,.2)'; c.strokeRect(u(S.x + 7), u(S.y + 7), u(iw), u(iw));
   [1, 2, 3].forEach((st, i) => { c.fillStyle = CONFIG.INKS[st].ink; c.beginPath(); c.arc(u(S.x + S.w / 2 + (i - 1) * 8), u(S.y + S.h - 8), u(2.2), 0, Math.PI * 2); c.fill(); });
 
@@ -147,8 +148,100 @@ export function renderBack(c, x, y, k, post = {}) {
   c.restore();
 }
 
+/* =====================================================================
+   郵票：從整個網站的圖案裡抽一張（不一定是自己玩的那一組），偶爾抽到站長
+   id：'own'（你蓋出來的這幅）| 'set:<圖案組>'（三色完整版）| 'one:<圖案組>:<站>'（單站的章）| 'master:<造型>'（站長）
+   ===================================================================== */
+const MASTER = {   // 站長郵票：造型、底色（站的墨色）
+  face:  { kind: 'head', mood: '',      bg: 1 },
+  happy: { kind: 'head', mood: 'happy', bg: 3 },
+  body:  { kind: 'full', mood: 'happy', bg: 2 },
+};
+export function stampPool() {
+  const pool = [{ id: 'own', w: 3 }];
+  for (const a of Object.keys(ART_SETS)) {
+    pool.push({ id: `set:${a}`, w: 2 });
+    for (const n of [1, 2, 3]) pool.push({ id: `one:${a}:${n}`, w: 1 });
+  }
+  for (const m of Object.keys(MASTER)) pool.push({ id: `master:${m}`, w: 1 });   // 站長比較稀有
+  return pool;
+}
+export function pickStamp() {
+  const pool = stampPool(), total = pool.reduce((t, p) => t + p.w, 0);
+  let r = Math.random() * total;
+  for (const p of pool) { r -= p.w; if (r < 0) return p.id; }
+  return 'own';
+}
+
+/* 站長的圖：把站務員的 SVG 依表情整理成一張靜態圖（不靠 CSS） */
+const masterImg = {};
+const masterReady = Promise.all(Object.entries(MASTER).map(([key, m]) => new Promise(res => {
+  let svg = attendantSVG(m.kind).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ');
+  if (m.kind === 'head') svg = svg.replace(/<g class="att-body">[\s\S]*?<\/g>/, '');
+  svg = m.mood === 'happy'
+    ? svg.replace(/<g class="att-eyes">[\s\S]*?<\/g>/, '').replace(/<path class="att-mouth-c"[^>]*\/>/, '')
+    : svg.replace(/<g class="att-happy"[\s\S]*?<\/g>/, '').replace(/<path class="att-mouth-o"[^>]*\/>/, '');
+  const img = new Image();
+  img.onload = img.onerror = () => { masterImg[key] = img; res(); if (ui) paint(); };
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+})));
+
+const stampCache = new Map();
+/* 圖案實際畫到的範圍（印面座標 ±150） */
+function shapeBox(shape) {
+  const n = 150, cv = makeCanvas(n, n), g = cv.getContext('2d', { willReadFrequently: true });
+  g.setTransform(n / 300, 0, 0, n / 300, n / 2, n / 2); g.fillStyle = '#000'; shape(g);
+  const d = g.getImageData(0, 0, n, n).data;
+  let x0 = n, y0 = n, x1 = 0, y1 = 0;
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (d[(y * n + x) * 4 + 3] > 20) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  if (x1 < x0) return { x: -150, y: -150, w: 300, h: 300 };
+  const k = 300 / n;
+  return { x: x0 * k - 150, y: y0 * k - 150, w: (x1 - x0 + 1) * k, h: (y1 - y0 + 1) * k };
+}
+function drawStampArt(c, x, y, s, id = 'own') {
+  const [type, a, n] = String(id).split(':');
+  if (type === 'own' || (type !== 'master' && !ART_SETS[a]) || (type === 'master' && !MASTER[a])) {
+    c.drawImage(printCv, (CARD.FX - 150) * PR, (CARD.FY - 150) * PR, 300 * PR, 300 * PR, x, y, s, s);
+    return;
+  }
+  const px = Math.max(48, Math.ceil(s * 2)), key = id + '|' + px;
+  let cv = stampCache.get(key);
+  if (!cv) {
+    cv = makeCanvas(px, px);
+    const g = cv.getContext('2d');
+    if (type === 'master') {
+      const M = MASTER[a], img = masterImg[a];
+      g.fillStyle = CONFIG.INKS[M.bg].ink; g.fillRect(0, 0, px, px);
+      g.globalAlpha = .55; g.fillStyle = '#FBFAF6'; g.fillRect(0, 0, px, px); g.globalAlpha = 1;
+      if (!img || !img.naturalWidth) return;            // 圖還在載入：載好後會重畫
+      const ar = M.kind === 'head' ? 92 / 104 : 120 / 150, h = px * (M.kind === 'head' ? .82 : .94), w = h * ar;
+      g.drawImage(img, (px - w) / 2, px - h - (M.kind === 'head' ? px * .06 : 0), w, h);
+    } else {
+      g.fillStyle = '#FBFAF6'; g.fillRect(0, 0, px, px);
+      const layers = type === 'one' ? [+n] : [1, 2, 3];
+      const lc = makeCanvas(px, px), l = lc.getContext('2d');
+      // 單站的章：圖案只佔印面的一部分（例如只有天空），放大置中，郵票才不會空空的
+      let zoom = 1, ox = 0, oy = 0;
+      if (type === 'one') {
+        const b = shapeBox(ART_SETS[a].shapes[+n]);
+        zoom = Math.min(2.2, 300 * .8 / Math.max(b.w, b.h)); ox = -(b.x + b.w / 2); oy = -(b.y + b.h / 2);
+      }
+      for (const st of layers) {                         // 三色疊印（相乘），跟卡片上的印法一樣
+        l.setTransform(1, 0, 0, 1, 0, 0); l.clearRect(0, 0, px, px);
+        l.setTransform(px / 300 * zoom, 0, 0, px / 300 * zoom, px / 2 + ox * px / 300 * zoom, px / 2 + oy * px / 300 * zoom);
+        l.fillStyle = CONFIG.INKS[st].ink;
+        ART_SETS[a].shapes[st](l);
+        g.globalCompositeOperation = 'multiply'; g.drawImage(lc, 0, 0); g.globalCompositeOperation = 'source-over';
+      }
+    }
+    stampCache.set(key, cv);
+  }
+  c.drawImage(cv, x, y, s, s);
+}
+
 /* 正反兩面並排，存成圖片 */
-export function exportBlob() {
+export async function exportBlob() {
+  await masterReady;
   const S = CONFIG.POST.EXPORT_SCALE, m = 34, W = CARD.W * 2 + m * 3, H = CARD.H + m * 2;
   const cv = makeCanvas(Math.round(W * S), Math.round(H * S)), c = cv.getContext('2d');
   c.scale(S, S);
@@ -159,7 +252,7 @@ export function exportBlob() {
   }
   renderFront(c, m, m, 1);
   renderBack(c, m * 2 + CARD.W, m, 1, store.card.post || {});
-  return new Promise(res => cv.toBlob(res, 'image/png'));
+  return await new Promise(res => cv.toBlob(res, 'image/png'));
 }
 async function saveImage() {
   const blob = await exportBlob(), d = new Date();
@@ -269,8 +362,9 @@ async function settle(getCard) {
 export async function runPostcard(getCard) {
   hidePostcard();
   build(getCard);
-  ui.post = {};
+  ui.post = { stamp: pickStamp() };
   paint();
+  await store.setPost({ stamp: ui.post.stamp });
   document.body.classList.add('post-on');
   let R = await settle(getCard);
 
@@ -430,39 +524,49 @@ function mailStep(R) {
   ui.mbBack.classList.add('in'); ui.mbFront.classList.add('in');
   say(COPY.post.mail);
 
+  // 拿在手上時縮到比投信口還窄（跟郵筒的比例才合理）；放在郵筒上半部、或投信口附近，就會自己掉進去
+  const sHeld = Math.min(s0, slot.w * .8 / R.w);
+  const zone = { x0: mx - 24, x1: mx + mw + 24, y0: slot.y - R.h * sHeld - CONFIG.POST.SLOT_SNAP, y1: my + mh * .55 };
   return new Promise(res => {
-    let id = null, pos = { ...c0 }, grab = { x: 0, y: 0 }, nag = false;
-    const bottom = () => ({ x: pos.x, y: pos.y + R.h * s0 / 2 });
-    const near = () => Math.hypot(bottom().x - slot.x, bottom().y - slot.y) < CONFIG.POST.SLOT_SNAP;
+    let id = null, target = { ...c0 }, pos = { ...c0 }, sc = s0, nag = false, raf = 0, done = false;
+    const near = () => pos.x > zone.x0 && pos.x < zone.x1 && pos.y > zone.y0 && pos.y < zone.y1;
+    const tick = () => {             // 卡片跟著手指，縮放與位置都柔和地跟上
+      raf = requestAnimationFrame(tick);
+      const sT = id !== null ? sHeld : s0;
+      sc = lerp(sc, sT, .4); pos = { x: lerp(pos.x, target.x, .45), y: lerp(pos.y, target.y, .45) };
+      const n = id !== null && near();
+      ui.pc.style.transform = pose(pos.x, pos.y, sc, n ? 0 : id !== null ? -3 : -6);
+      ui.mbFront.classList.toggle('near', n);
+    };
+    raf = requestAnimationFrame(tick);
     const down = e => {
-      e.preventDefault(); if (id !== null) return;
+      e.preventDefault(); if (id !== null || done) return;
       id = e.pointerId; try { ui.pc.setPointerCapture(id); } catch (_) {}
-      grab = { x: pos.x - e.clientX, y: pos.y - e.clientY };
+      target = { x: e.clientX, y: e.clientY };            // 拿起來：卡片中心移到手指下
       ui.pc.classList.add('held');
     };
-    const move = e => {
-      if (e.pointerId !== id) return;
-      pos = { x: e.clientX + grab.x, y: e.clientY + grab.y };
-      ui.pc.style.transform = pose(pos.x, pos.y, s0, near() ? 0 : -6);
-      ui.mbFront.classList.toggle('near', near());
-    };
+    const move = e => { if (e.pointerId === id) target = { x: e.clientX, y: e.clientY }; };
     const up = async e => {
       if (e.pointerId !== id) return;
-      id = null; ui.pc.classList.remove('held'); ui.mbFront.classList.remove('near');
-      if (!near()) {
-        ui.pc.animate([{ transform: ui.pc.style.transform }, { transform: pose(c0.x, c0.y, s0, -6) }], { duration: 380, easing: 'cubic-bezier(.3,.9,.3,1)' });
-        pos = { ...c0 }; ui.pc.style.transform = pose(c0.x, c0.y, s0, -6);
+      id = null; ui.mbFront.classList.remove('near');
+      pos = { ...target };
+      if (!near()) {                 // 沒放到郵筒上：回到原位
+        ui.pc.classList.remove('held');
+        target = { ...c0 };
         if (!nag) { nag = true; say(COPY.post.mailHint); }
         return;
       }
+      done = true; cancelAnimationFrame(raf);
       ui.pc.removeEventListener('pointerdown', down); ui.pc.removeEventListener('pointermove', move);
       ui.pc.removeEventListener('pointerup', up); ui.pc.removeEventListener('pointercancel', up);
-      // 對準投信口 → 滑進去
-      const s1 = slot.w * .92 / R.w, top = { x: slot.x, y: slot.y - R.h * s1 / 2 };
-      await ui.pc.animate([{ transform: ui.pc.style.transform }, { transform: pose(top.x, top.y, s1, 0) }], { duration: 260, easing: 'ease-out', fill: 'forwards' }).finished;
-      await ui.pc.animate([{ transform: pose(top.x, top.y, s1, 0) }, { transform: pose(top.x, top.y + R.h * s1 + 8, s1, 0) }], { duration: 480, easing: 'cubic-bezier(.5,0,.8,.5)', fill: 'forwards' }).finished;
+      // 對準投信口 → 滑進去（這時才躲到郵筒前片後面）
+      const s1 = slot.w * .8 / R.w, top = { x: slot.x, y: slot.y - R.h * s1 / 2 };
+      await ui.pc.animate([{ transform: ui.pc.style.transform }, { transform: pose(top.x, top.y, s1, 0) }], { duration: 240, easing: 'ease-out', fill: 'forwards' }).finished;
+      ui.pc.classList.remove('held'); ui.pc.classList.add('slotting');
+      await ui.pc.animate([{ transform: pose(top.x, top.y, s1, 0) }, { transform: pose(top.x, top.y + R.h * s1 + 8, s1, 0) }], { duration: 460, easing: 'cubic-bezier(.5,0,.8,.5)', fill: 'forwards' }).finished;
       ui.pc.getAnimations().forEach(a => a.cancel());
       ui.pc.style.transform = pose(top.x, top.y + R.h * s1 + 8, s1, 0); ui.pc.style.opacity = '0';
+      ui.pc.classList.remove('slotting');
       vibe([10, 30, 10]);
       ui.mbFront.classList.add('posted'); ui.mbBack.classList.add('posted');
       await wait(450);

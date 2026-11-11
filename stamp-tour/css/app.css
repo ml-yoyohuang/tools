@@ -352,7 +352,8 @@ body.finale-on #stack, body.finale-on #dev { visibility:hidden; }
 #postcard.keeping .pc { cursor:pointer; }
 #postcard .pc.invite { cursor:pointer; animation:invite 1.6s ease-in-out .4s infinite; }
 #postcard .pc.posting { cursor:grab; }
-#postcard .pc.held { cursor:grabbing; filter:drop-shadow(0 16px 18px rgba(40,30,10,.3)); }
+#postcard .pc.held { cursor:grabbing; z-index:4; filter:drop-shadow(0 12px 12px rgba(40,30,10,.3)); }   /* 拿著時在郵筒前面 */
+#postcard .pc.slotting { z-index:2; }                                                                         /* 滑進投信口時躲到前片後面 */
 #postcard .flip { position:absolute; inset:0; transform-style:preserve-3d; transition:transform .8s cubic-bezier(.45,.05,.25,1); }
 #postcard .flip.over { transform:rotateY(180deg); }
 #postcard .face {
