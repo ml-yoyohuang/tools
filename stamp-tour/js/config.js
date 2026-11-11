@@ -108,6 +108,10 @@ export const CONFIG = {
     'square', 'circle', 'oval', 'circle', 'oval', 'circle', 'square',
   ],                               // 一三五圓形、二四橢圓形；週末義工放假，只剩方形的備用章
 
+  CHAT: {
+    IDLE_MS: 15000,                // 在卡片首頁或某一站發呆這麼久，站務員就自己聊一句（每個畫面最多一次）
+  },
+
   SOUND: {
     VOLUME: 0.7,                   // 總音量（0 ~ 1）；使用者可以用對話列右邊的喇叭關掉
   },

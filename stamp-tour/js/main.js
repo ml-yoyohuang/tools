@@ -8,12 +8,13 @@ import { buildBase, composite } from './print.js';
 import { attendantSVG, initSpeech, registerHost } from './attendant.js';
 import { ART_SETS, setArt, stationGreet } from './art.js';
 import { store } from './storage.js';
-import { initStamping, loadImpressions, getCardRect, show, hide, enterStation, enterHub, refreshDev, enterFinale, liveCardRect, setCardHidden } from './stamping.js';
+import { initStamping, loadImpressions, getCardRect, show, hide, enterStation, enterHub, refreshDev, enterFinale, liveCardRect, setCardHidden, chatOK, chatScene } from './stamping.js';
 import { runOpening } from './opening.js';
 import { playArrival } from './arrival.js';
 import { runFinale } from './finale.js';
 import { runPostcard, showPostcard, hidePostcard } from './postcard.js';
 import { initSound, soundOn, setSound, soundState } from './sound.js';
+import { initChatter } from './chatter.js';
 import { $, wait } from './util.js';
 
 /* 音效開關（Material Design Icons：volume-high / volume-off） */
@@ -104,6 +105,8 @@ async function opening(station, short) {
 
 async function boot() {
   initSound(); soundButton();
+  const B = document.body.classList;
+  initChatter({ canChat: () => !arriving && !B.contains('scene-open') && !B.contains('finale-on') && !B.contains('post-on') && chatOK(), scene: chatScene });
   $('#host').innerHTML = attendantSVG('head');
   initSpeech();
   registerHost($('#host'));

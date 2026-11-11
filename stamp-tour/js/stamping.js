@@ -62,6 +62,9 @@ export function getCardRect() { layout(); return { ...card, k }; }
 
 export function show() { app.active = true; document.body.classList.add('scene-stamp'); }
 export const refreshDev = () => updateDev();
+/* 閒聊用：手上沒在拿印章、也沒在蓋的時候才能聊；scene 換了就重新計算發呆 */
+export const chatOK = () => app.active && ['ready', 'done', 'hub'].includes(app.phase) && ptrs.size === 0 && !g.mode;
+export const chatScene = () => `${app.active}:${app.station}:${app.phase}`;
 export function hide() { app.active = false; document.body.classList.remove('scene-stamp'); }
 
 export function enterStation(n, lines) {
