@@ -27,6 +27,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;600&display=swap" rel="stylesheet">
+  <!-- Devanagari, only the glyphs of प्रेम and ० – ९, for 十方迴向 -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@300;500&display=swap&text=%E0%A4%AA%E0%A5%8D%E0%A4%B0%E0%A5%87%E0%A4%AE%E0%A5%A6%E0%A5%A7%E0%A5%A8%E0%A5%A9%E0%A5%AA%E0%A5%AB%E0%A5%AC%E0%A5%AD%E0%A5%AE%E0%A5%AF" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script type="importmap">
     { "imports": { "three": "./vendor/three.module.min.js" } }
@@ -92,7 +94,56 @@
     <button class="g-back" id="g-back" type="button">返回</button>
     <div class="g-foot">
       <p class="g-wish" id="g-wish" aria-live="polite"></p>
-      <p class="g-count" id="g-count"></p>
+      <p class="g-count"><span id="g-count"></span><button class="g-icon g-rite" id="g-rite" type="button" aria-label="十方迴向" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.2"/><circle cx="12" cy="12" r="5.4" stroke-dasharray="1.2 2.2"/><path d="M12 1.8v3M12 19.2v3M1.8 12h3M19.2 12h3M4.8 4.8l2.1 2.1M17.1 17.1l2.1 2.1M4.8 19.2l2.1-2.1M17.1 6.9l2.1-2.1"/></svg></button><button class="g-icon g-scrolls" id="g-scrolls" type="button" aria-label="歷次迴向" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="0.6"/><path d="M14.5 6.5v9M12 6.5v11M9.5 6.5v7"/><rect class="dot" x="8.6" y="16.4" width="2.4" height="2.4"/></svg></button></p>
+    </div>
+  </section>
+
+  <section class="rite" id="rite" role="dialog" aria-modal="true" aria-labelledby="rite-title" hidden>
+    <canvas class="rite-canvas" aria-hidden="true"></canvas>
+    <div class="rite-tools">
+      <button class="rite-mute" type="button" aria-label="靜音" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z"/><path class="wave" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/><path class="cross" d="M16 9.5l5 5M21 9.5l-5 5"/></svg></button>
+      <button class="rite-leave" type="button">返回</button>
+    </div>
+
+    <div class="rite-prep">
+      <svg class="rite-mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.2"/><circle cx="12" cy="12" r="5.4" stroke-dasharray="1.2 2.2"/><path d="M12 1.8v3M12 19.2v3M1.8 12h3M19.2 12h3M4.8 4.8l2.1 2.1M17.1 17.1l2.1 2.1M4.8 19.2l2.1-2.1M17.1 6.9l2.1-2.1"/></svg>
+      <h2 id="rite-title">十方迴向</h2>
+      <p class="rite-plan"></p>
+      <div class="rite-actions">
+        <button type="button" class="primary" data-act="start">開始</button>
+        <button type="button" data-act="back">返回</button>
+      </div>
+      <p class="rite-note"></p>
+    </div>
+
+    <div class="rite-stage">
+      <p class="rite-word" lang="sa"></p>
+      <ol class="rite-ring" lang="sa" aria-hidden="true"></ol>
+      <p class="rite-line" aria-live="polite"></p>
+      <button class="rite-fish" type="button" aria-label="敲木魚" disabled><svg viewBox="0 0 96 80" aria-hidden="true"><path class="body" d="M48 12c-21 0-36 13-36 29s15 27 36 27 36-11 36-27c0-6-2-11-6-15"/><path class="body" d="M78 26c-3-4-8-7-13-9"/><path d="M24 44c8 6 40 6 48 0"/><circle cx="66" cy="31" r="2.6"/><path class="fine" d="M30 30c3-3 7-4 11-4M36 56c4 2 9 3 14 3"/></svg><span class="ripple"></span></button>
+      <p class="rite-hint">輕敲木魚</p>
+    </div>
+
+    <div class="rite-done">
+      <h2 class="rite-done-title"></h2>
+      <div class="rite-done-lines"></div>
+      <figure class="rite-scroll">
+        <img alt="百願經卷：本次迴向的所有心願，直排成一幅文字經卷">
+        <figcaption class="rite-scroll-msg" aria-live="polite"></figcaption>
+        <button type="button" class="rite-retry" hidden>再試一次</button>
+      </figure>
+      <p class="rite-privacy"></p>
+      <div class="rite-actions">
+        <button type="button" data-act="save">儲存圖片</button>
+        <button type="button" data-act="share">分享</button>
+        <button type="button" class="primary" data-act="finish">禮成</button>
+      </div>
+    </div>
+
+    <div class="rite-history">
+      <h2>歷次迴向</h2>
+      <ol></ol>
+      <div class="rite-actions"><button type="button" data-act="close">返回</button></div>
     </div>
   </section>
 

@@ -20,8 +20,8 @@ export function cnDate(iso) {
   return `${String(y).split('').map((c) => DIGITS[+c]).join('')}年${cnNumber(m)}月${cnNumber(d)}日`;
 }
 
-/** Carved vermilion seal reading 所願皆成, right column first. */
-export function makeSeal(px = 240) {
+/** Carved vermilion seal of four characters (所願皆成 by default), right column first. */
+export function makeSeal(px = 240, text = '所願皆成') {
   const c = document.createElement('canvas');
   c.width = c.height = px;
   const g = c.getContext('2d');
@@ -43,7 +43,8 @@ export function makeSeal(px = 240) {
   g.fillStyle = '#000';
   const cell = (px - pad * 2 - px * 0.16) / 2;
   const x0 = pad + px * 0.08;
-  [['所', 1, 0], ['願', 1, 1], ['皆', 0, 0], ['成', 0, 1]].forEach(([ch, col, row]) => {
+  const chars = [...text];
+  [[chars[0], 1, 0], [chars[1], 1, 1], [chars[2], 0, 0], [chars[3], 0, 1]].forEach(([ch, col, row]) => {
     g.fillText(ch, x0 + cell * (col + 0.5), x0 + cell * (row + 0.53));
   });
   // worn ink

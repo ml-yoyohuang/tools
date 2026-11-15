@@ -723,3 +723,362 @@ body.fading .veil { opacity: 1; transition-duration: 0.5s; }
   .seal { animation: none !important; opacity: 0.92; transform: rotate(-2deg); }
   .flame::before { animation: none; }
 }
+
+/* ---------- 十方迴向 ---------- */
+
+/* Hidden icons beside the gallery count: the rite (when 100 wait) and past scrolls */
+.g-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: -12px 0 -12px 0.5em;
+  padding: 0;
+  border: 0;
+  background: none;
+  vertical-align: middle;
+  color: var(--gold);
+  opacity: 0.72;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: opacity 0.4s var(--ease), color 0.4s var(--ease);
+}
+
+.g-icon + .g-icon { margin-left: 0; }
+.g-icon[hidden] { display: none; }
+.g-icon svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1; stroke-linecap: round; }
+.g-icon .dot { fill: #b5432c; stroke: none; }
+.g-icon:hover, .g-icon:focus-visible { opacity: 1; color: var(--gold-hi); }
+.g-rite svg { animation: rite-breathe 4.8s ease-in-out infinite; }
+
+@keyframes rite-breathe {
+  50% { filter: drop-shadow(0 0 3px rgba(234, 214, 164, 0.55)); }
+}
+
+.rite {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  background: #090807;
+  opacity: 0;
+  transition: opacity 0.8s var(--ease), background 0.8s var(--ease);
+  overflow: hidden;
+}
+
+.rite.open { opacity: 1; }
+.rite[hidden] { display: none; }
+.rite[data-mode="prep"] { background: rgba(9, 8, 7, 0.9); }
+
+.rite-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+/* each part of the rite is laid out always, shown by mode */
+.rite-prep,
+.rite-stage,
+.rite-done,
+.rite-history,
+.rite-tools > * {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.7s var(--ease), visibility 0s linear 0.7s;
+}
+
+.rite[data-mode="prep"] .rite-prep,
+.rite[data-mode="rite"] .rite-stage,
+.rite[data-mode="done"] .rite-done,
+.rite[data-mode="record"] .rite-done,
+.rite[data-mode="history"] .rite-history,
+.rite[data-mode="rite"] .rite-tools > *,
+.rite[data-mode="done"] .rite-mute,
+.rite.measuring .rite-done {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 1s var(--ease) 0.2s, visibility 0s;
+}
+
+.rite.measuring .rite-done { opacity: 0; visibility: hidden; transition: none; }
+
+.rite-tools {
+  position: absolute;
+  top: calc(var(--edge-y) - 15px);
+  right: calc(var(--edge-x) - 12px);
+  display: flex;
+  align-items: center;
+  z-index: 2;
+}
+
+.rite-tools button {
+  height: 44px;
+  border: 0;
+  background: none;
+  color: var(--mute);
+  cursor: pointer;
+  transition: color 0.4s var(--ease), opacity 0.7s var(--ease);
+}
+
+.rite-tools button:hover { color: var(--ivory); }
+.rite-mute { width: 44px; padding: 0; display: grid; place-items: center; }
+.rite-mute svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; }
+.rite-mute .cross { display: none; }
+.rite-mute[aria-pressed="true"] .cross { display: inline; }
+.rite-mute[aria-pressed="true"] .wave { display: none; }
+.rite-leave { padding: 0 12px 0 calc(12px + 0.4em); font-size: 12px; font-weight: 400; letter-spacing: 0.4em; }
+.rite-leave::before { content: "‹"; margin-right: 0.5em; }
+
+/* shared action row, as on the finale */
+.rite-actions {
+  display: flex;
+  width: min(360px, 100%);
+  margin: 0 auto;
+  border-top: 1px solid var(--faint);
+}
+
+.rite-actions button {
+  flex: 1;
+  height: 52px;
+  padding: 0 0 0 0.4em;
+  border: 0;
+  background: none;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.4em;
+  color: var(--mute);
+  cursor: pointer;
+  transition: color 0.4s var(--ease), opacity 0.4s var(--ease);
+}
+
+.rite-actions button + button { border-left: 1px solid var(--faint); }
+.rite-actions button:hover { color: var(--ivory); }
+.rite-actions .primary { color: var(--gold-hi); }
+.rite-actions button:disabled { opacity: 0.35; cursor: default; }
+.rite-actions [hidden] { display: none; }
+
+/* Prep */
+.rite-prep {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.rite-mark { width: 44px; height: 44px; fill: none; stroke: var(--gold-hi); stroke-width: 0.7; stroke-linecap: round; margin-bottom: 26px; opacity: 0.9; }
+.rite h2 { margin: 0; padding-left: 0.6em; font-size: 20px; font-weight: 400; letter-spacing: 0.6em; color: var(--gold-hi); }
+.rite-plan { margin: 18px 0 40px; padding-left: 0.3em; font-size: 15px; letter-spacing: 0.3em; color: var(--ivory); }
+.rite-note { margin: 18px 0 0; padding-left: 0.3em; font-size: 11px; letter-spacing: 0.3em; color: var(--mute); }
+
+/* Stage: प्रेम, the numeral ring, the wooden fish */
+.rite-stage { position: absolute; inset: 0; }
+.rite-word,
+.rite-ring li {
+  position: absolute;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  font-family: "Noto Serif Devanagari", "Devanagari Sangam MN", "Kohinoor Devanagari", "Nirmala UI", "Mangal", serif;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.rite-word {
+  font-size: var(--word, 72px);
+  font-weight: 300;
+  color: var(--gold-hi);
+  opacity: 0;
+  filter: blur(6px);
+  transition: opacity 2.8s var(--ease), filter 2.8s var(--ease), text-shadow 2s var(--ease);
+}
+
+.rite.still .rite-word { opacity: 0.95; filter: none; text-shadow: 0 0 22px rgba(255, 196, 120, 0.25); }
+.rite.lit .rite-word { text-shadow: 0 0 30px rgba(255, 196, 120, 0.5); }
+.rite.gathering .rite-word { opacity: 0; filter: blur(4px); transition-duration: 1.8s; }
+
+.rite-ring { margin: 0; padding: 0; list-style: none; }
+.rite-ring li {
+  font-size: var(--num, 22px);
+  font-weight: 300;
+  color: rgba(200, 163, 95, 0.4);
+  opacity: 0;
+  transition: opacity 1.4s var(--ease), color 0.6s var(--ease), text-shadow 0.6s var(--ease);
+}
+
+.rite.counting .rite-ring li,
+.rite.spreading .rite-ring li { opacity: 1; }
+.rite-ring li.lit { color: var(--gold-hi); text-shadow: 0 0 14px rgba(255, 190, 110, 0.65); }
+.rite.spreading .rite-ring li { text-shadow: 0 0 20px rgba(255, 196, 120, 0.8); }
+.rite.gathering .rite-ring li { opacity: 0; transition-duration: 1.4s; }
+
+.rite-fish {
+  position: absolute;
+  left: 50%;
+  width: 104px;
+  height: 88px;
+  padding: 8px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--gold-hi);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  pointer-events: none;
+  cursor: pointer;
+  transition: opacity 1.2s var(--ease);
+}
+
+.rite.fish-on .rite-fish { opacity: 0.92; pointer-events: auto; }
+.rite-fish:disabled { cursor: default; }
+.rite-fish svg { width: 100%; height: 100%; overflow: visible; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; }
+.rite-fish circle { fill: currentColor; stroke: none; }
+.rite-fish .fine { stroke-width: 0.8; opacity: 0.55; }
+.rite-fish.struck svg { animation: knock 0.34s cubic-bezier(0.3, 1.6, 0.5, 1); }
+.rite-fish .ripple { position: absolute; inset: 14px 8px; border: 1px solid rgba(234, 214, 164, 0.6); border-radius: 50%; opacity: 0; pointer-events: none; }
+.rite-fish.struck .ripple { animation: ripple 0.9s var(--ease); }
+
+@keyframes knock {
+  30% { transform: scale(0.9, 0.86) translateY(3px); }
+  65% { transform: scale(1.03, 1.05); }
+}
+
+@keyframes ripple {
+  from { opacity: 0.7; transform: scale(0.9); }
+  to { opacity: 0; transform: scale(1.7); }
+}
+
+.rite-hint {
+  position: absolute;
+  left: 50%;
+  margin: 0;
+  padding-left: 0.5em;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  letter-spacing: 0.5em;
+  color: var(--mute);
+  opacity: 0;
+  transition: opacity 1s var(--ease);
+}
+
+.rite.fish-on .rite-hint { opacity: 1; }
+.rite.fish-on .rite-hint.gone { opacity: 0; }
+
+.rite-line {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: calc(env(safe-area-inset-bottom) + 9vh);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  transition: opacity 1.2s var(--ease);
+}
+
+.rite-line span {
+  padding-left: 0.3em;
+  font-size: clamp(13px, 1.5vw, 16px);
+  letter-spacing: 0.3em;
+  color: var(--ivory);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 2s var(--ease), transform 2s var(--ease);
+}
+
+.rite-line span.in { opacity: 0.82; transform: none; }
+.rite-line:not(.on),
+.rite.gathering .rite-line { opacity: 0; }
+
+/* Done: the scroll and its lines */
+.rite-done,
+.rite-history {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: calc(var(--edge-y) + 34px) 20px calc(env(safe-area-inset-bottom) + 20px);
+  text-align: center;
+}
+
+.rite-done-lines { display: grid; gap: 4px; }
+.rite-done-lines p { margin: 0; padding-left: 0.3em; font-size: 13px; letter-spacing: 0.3em; color: var(--ivory); opacity: 0.8; }
+.rite-done-lines .rite-done-date { color: var(--mute); font-size: 12px; }
+
+.rite-scroll {
+  position: relative;
+  margin: 8px 0 2px;
+  height: min(56vh, 112vw);
+  aspect-ratio: 4 / 5;
+  max-width: 100%;
+  background: rgba(239, 231, 214, 0.04);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.5);
+}
+
+.rite-scroll img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  clip-path: inset(0 0 0 100%);
+  transition: clip-path 2.6s cubic-bezier(0.6, 0, 0.3, 1);
+}
+
+/* the wishes arrive column by column, right to left */
+.rite-scroll.ready img { clip-path: inset(0 0 0 0); }
+.rite-scroll-msg { position: absolute; inset: 0; display: grid; place-items: center; padding: 20px; font-size: 12px; letter-spacing: 0.4em; color: var(--mute); pointer-events: none; }
+.rite-scroll.making .rite-scroll-msg { animation: rite-breathe-text 2.4s ease-in-out infinite; }
+.rite-scroll.ready .rite-scroll-msg { display: none; }
+.rite-retry { position: absolute; left: 50%; bottom: 18%; transform: translateX(-50%); height: 40px; padding: 0 18px 0 calc(18px + 0.4em); border: 1px solid var(--faint); background: none; font-size: 12px; letter-spacing: 0.4em; color: var(--gold-hi); cursor: pointer; }
+.rite-retry[hidden] { display: none; }
+.rite.settle-failed .rite-scroll { display: none; }
+.rite.settle-failed [data-act="save"],
+.rite.settle-failed [data-act="share"] { display: none; }
+
+@keyframes rite-breathe-text {
+  50% { opacity: 0.4; }
+}
+
+.rite-privacy { margin: 0; padding-left: 0.3em; font-size: 11px; letter-spacing: 0.3em; color: var(--mute); }
+
+/* History */
+.rite-history ol {
+  width: min(360px, 100%);
+  max-height: 58vh;
+  margin: 14px 0 6px;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  border-top: 1px solid var(--faint);
+}
+
+.rite-history li button {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding: 16px 0 14px 0.3em;
+  border: 0;
+  border-bottom: 1px solid var(--faint);
+  background: none;
+  color: var(--ivory);
+  font-size: 14px;
+  letter-spacing: 0.3em;
+  cursor: pointer;
+  transition: color 0.4s var(--ease), background 0.4s var(--ease);
+}
+
+.rite-history li button small { font-size: 11px; color: var(--mute); }
+.rite-history li button:hover { color: var(--gold-hi); background: rgba(200, 163, 95, 0.05); }
+
+@media (max-height: 640px) {
+  .rite-scroll { height: 46vh; }
+  .rite-done { gap: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rite-word, .rite-ring li, .rite-line span { transition-duration: 0.6s !important; }
+  .rite-fish.struck svg, .rite-fish.struck .ripple, .g-rite svg { animation: none; }
+  .rite-scroll img { transition: none; clip-path: none; }
+}

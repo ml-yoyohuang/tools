@@ -2,9 +2,11 @@ import * as THREE from 'three';
 import { SPAN, turtleTriangles, buildGeometry, rasterize, samplePoints, paperTextures, colorPaperTextures, createPaperMaterial } from './turtle.js';
 import { BurnSim } from './burn.js';
 import { Pool, KINDS, Dust, GoldTurtle, pointUniforms } from './particles.js';
-import { cnDate, cnCount, makeSeal, composePoster } from './poster.js';
+import { cnDate, makeSeal, composePoster } from './poster.js';
 import { Sky, drift } from './gallery.js';
 import { SPECIAL } from './papers.js';
+import { readLedger, recordBurn, summary, roundsAvailable, tallyLine } from './ledger.js';
+import { createRite } from './rite.js';
 
 const $ = (s) => document.querySelector(s);
 const body = document.body;
@@ -701,55 +703,16 @@ function blazeAt(p, fire, dt) {
 
 /* ---------- Step 3: finale ---------- */
 
-// Every turtle burned on this device: the count, and each one's wish (oldest first).
-// Turtles burned before wishes were kept, or trimmed past MAX_WISHES, stay wordless.
-const TALLY_KEY = 'paper-turtle:burned';
-const WISHES_KEY = 'paper-turtle:wishes';
-const MAX_WISHES = 2000;
+// Every turtle burned on this device lives in the ledger (ledger.js), with each one's wish
 const tallyBtn = $('#f-tally');
 
-/** { total, wishes } or null when storage is unavailable */
-function readLedger() {
-  let total;
-  let raw;
-  try {
-    total = parseInt(localStorage.getItem(TALLY_KEY), 10) || 0;
-    raw = localStorage.getItem(WISHES_KEY);
-  } catch {
-    return null;
-  }
-  let wishes = [];
-  try {
-    const parsed = JSON.parse(raw || '[]');
-    if (Array.isArray(parsed)) wishes = parsed.filter((w) => typeof w === 'string');
-  } catch {
-    /* unreadable list: keep the count, lose the words */
-  }
-  return { total: Math.max(total, wishes.length), wishes };
-}
-
-function recordBurn(wish, n) {
-  const ledger = readLedger();
-  if (!ledger) return null;
-  const total = ledger.total + n;
-  const wishes = ledger.wishes.concat(Array(n).fill(wish)).slice(-MAX_WISHES);
-  try {
-    localStorage.setItem(WISHES_KEY, JSON.stringify(wishes));
-    localStorage.setItem(TALLY_KEY, String(total));
-  } catch {
-    return null;
-  }
-  return total;
-}
-
-const tallyText = (total) => `累計燒化 ${cnCount(total)}隻`;
-
-function tallyBurned(n) {
-  const total = recordBurn(wishEl.value.trim(), n);
-  tallyBtn.hidden = !total; // storage blocked: leave the finale as it is
-  if (!total) return;
-  tallyBtn.querySelector('span').textContent = tallyText(total);
-  tallyBtn.setAttribute('aria-label', `${tallyText(total)}，觀看已燒化的紙龜`);
+async function tallyBurned(n) {
+  const sum = await recordBurn(wishEl.value.trim(), n);
+  tallyBtn.hidden = !sum; // storage blocked: leave the finale as it is
+  if (!sum) return;
+  const text = tallyLine(sum);
+  tallyBtn.querySelector('span').textContent = text;
+  tallyBtn.setAttribute('aria-label', `${text}，觀看已燒化的紙龜`);
 }
 
 function finish(time) {
@@ -873,7 +836,6 @@ function makePoster() {
 }
 
 const fileName = () => `紙龜祈福-${dateEl.value.replaceAll('-', '')}.png`;
-const posterFile = (blob) => new File([blob], fileName(), { type: 'image/png' });
 
 function showViewer(blob) {
   if (viewerImg.src) URL.revokeObjectURL(viewerImg.src);
@@ -887,9 +849,9 @@ viewer.addEventListener('click', () => {
   setTimeout(() => (viewer.hidden = true), 400);
 });
 
-async function sharePoster(blob) {
+async function shareBlob(blob, name) {
   try {
-    await navigator.share({ files: [posterFile(blob)] });
+    await navigator.share({ files: [new File([blob], name, { type: 'image/png' })] });
     return true;
   } catch (err) {
     if (err?.name === 'AbortError') return true; // closed the sheet
@@ -897,10 +859,20 @@ async function sharePoster(blob) {
   }
 }
 
-function download(blob) {
+const sharePoster = (blob) => shareBlob(blob, fileName());
+
+/** Save an image: the share sheet on iPhone (it holds 儲存影像), else a download. */
+async function saveBlob(blob, name) {
+  if (isIOS) {
+    // Share sheet when possible; otherwise (in-app browsers) show the image to long-press
+    if (!(canShareFiles && (await shareBlob(blob, name)))) showViewer(blob);
+  } else downloadBlob(blob, name);
+}
+
+function downloadBlob(blob, name) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = fileName();
+  a.download = name;
   document.body.append(a);
   a.click();
   a.remove();
@@ -915,7 +887,7 @@ saveBtn.addEventListener('click', async () => {
       // Share sheet when possible; otherwise (in-app browsers) show the image to long-press
       if (!(canShareFiles && (await sharePoster(blob)))) showViewer(blob);
     } else {
-      download(blob);
+      downloadBlob(blob, fileName());
     }
   } finally {
     saveBtn.disabled = false;
@@ -1011,6 +983,34 @@ function transition(fn, instant) {
   };
 }
 
+/** The sky holds the turtles not yet dedicated, newest first (wordless ones are the oldest). */
+function buildSky(ledger) {
+  gallery.entries = ledger.pending.slice().reverse().slice(0, SKY_MAX);
+  gallery.sky?.dispose();
+  gallery.sky = null;
+  if (gallery.entries.length) {
+    gallery.sky = new Sky(skySample(), gallery.entries.length, SKY_BUDGET);
+    gallery.sky.uniforms.uMinPx.value = 1.3 * renderer.getPixelRatio();
+    skyGroup.add(gallery.sky.points);
+  }
+  skyGlow.position.set(0, SKY_Y, 0);
+  skyGlow.scale.setScalar(4 + (gallery.sky?.radius ?? 0) * 2.6);
+  skyGlow.material.opacity = 0;
+  skyGlow.visible = !!gallery.sky;
+  gallery.sel = -1;
+  gallery.vel = 0;
+  gallery.hinted = gallery.hinted || !gallery.sky;
+  syncGalleryFoot(ledger);
+  showWish(null);
+}
+
+/** The count line, and the two quiet icons beside it. */
+function syncGalleryFoot(ledger) {
+  gCount.textContent = tallyLine(summary(ledger));
+  $('#g-rite').hidden = roundsAvailable(ledger) < 1;
+  $('#g-scrolls').hidden = !ledger.records.length;
+}
+
 function openGallery(instant) {
   const ledger = readLedger();
   if (!ledger || !ledger.total) return false;
@@ -1018,28 +1018,37 @@ function openGallery(instant) {
     gallery.from = state.step === 'gallery' ? gallery.from : state.step;
     shownBefore = hiddenInGallery.map((o) => o.visible);
     hiddenInGallery.forEach((o) => (o.visible = false));
-    // Newest first; turtles from before wishes were kept are the oldest, and wordless
-    const wordless = ledger.total - ledger.wishes.length;
-    gallery.entries = ledger.wishes.slice().reverse().concat(Array(wordless).fill(null)).slice(0, SKY_MAX);
-    gallery.sky?.dispose();
-    gallery.sky = new Sky(skySample(), gallery.entries.length, SKY_BUDGET);
-    gallery.sky.uniforms.uMinPx.value = 1.3 * renderer.getPixelRatio();
-    skyGroup.add(gallery.sky.points);
     skyGroup.rotation.y = 0;
     skyGroup.visible = true;
-    skyGlow.position.set(0, SKY_Y, 0);
-    skyGlow.scale.setScalar(4 + gallery.sky.radius * 2.6);
-    skyGlow.material.opacity = 0;
-    skyGlow.visible = true;
-    gallery.sel = -1;
-    gallery.vel = 0;
-    gCount.textContent = tallyText(ledger.total);
-    showWish(null);
+    buildSky(ledger);
     setStep('gallery');
     Object.assign(view, goal);
   }, instant);
   return true;
 }
+
+/* ---------- 十方迴向 (rite.js) ---------- */
+
+let riteCovered = false; // while the rite fills the screen, the 3D scene needn't draw
+const rite = createRite({
+  save: saveBlob,
+  share: async (blob, name) => {
+    if (!(await shareBlob(blob, name))) showViewer(blob);
+  },
+  canShare: canShareFiles && !isIOS,
+  onCover: (on) => (riteCovered = on),
+  focusAfter: () => ($('#g-scrolls').hidden ? $('#g-back') : $('#g-scrolls')).focus(),
+  onClose: () => {
+    // the ledger may have changed (or another tab changed it): rebuild what the gallery shows
+    const ledger = readLedger();
+    if (ledger && state.step === 'gallery') {
+      buildSky(ledger);
+      frame('gallery');
+    }
+  },
+});
+$('#g-rite').addEventListener('click', () => rite.openPrep());
+$('#g-scrolls').addEventListener('click', () => rite.openHistory());
 
 function closeGallery() {
   transition(() => {
@@ -1074,7 +1083,10 @@ addEventListener('popstate', () => {
   const want = location.hash === '#gallery';
   if (want && state.step !== 'gallery') {
     if (!openGallery()) clearHash();
-  } else if (!want && state.step === 'gallery') closeGallery();
+  } else if (!want && state.step === 'gallery') {
+    rite.close(); // leaving mid-rite settles nothing
+    closeGallery();
+  }
 });
 
 let wishTimer = 0;
@@ -1163,9 +1175,10 @@ canvas.addEventListener('pointercancel', endDrag);
 
 // Keyboard: arrows step through the turtles, newest first; Escape goes back
 addEventListener('keydown', (e) => {
-  if (state.step !== 'gallery') return;
+  if (state.step !== 'gallery' || rite.isOpen()) return;
   const n = gallery.entries.length;
   if (e.key === 'Escape') leaveGallery();
+  else if (!n) return;
   else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') select((gallery.sel + 1) % n);
   else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') select(gallery.sel <= 0 ? n - 1 : gallery.sel - 1);
   else return;
@@ -1266,7 +1279,7 @@ function tick() {
   flames.update(dt, time);
   embers.update(dt, time);
 
-  renderer.render(scene, camera);
+  if (!riteCovered) renderer.render(scene, camera);
   requestAnimationFrame(tick);
 }
 
