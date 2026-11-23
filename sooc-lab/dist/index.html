@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#ebeae5" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#121211" media="(prefers-color-scheme: dark)" />
+  <title>SOOC LAB</title>
+  
+  <script type="module" crossorigin src="./assets/main-e27166a8.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/cameras-2fb892aa.js">
+  <link rel="stylesheet" href="./assets/index-8af61f5d.css">
+</head>
+<body>
+  <div class="app" id="app">
+    <main class="stage" id="stage">
+      <div class="mark">SOOC LAB</div>
+      <div class="frame" id="frame" hidden>
+        <canvas id="view"></canvas>
+        <canvas id="overlay" class="overlay" hidden></canvas>
+        <div class="divider" id="divider" hidden><span class="grip"></span></div>
+        <div class="tag" id="origTag" hidden>原圖</div>
+      </div>
+      <button class="drop" id="drop" type="button">
+        <span class="drop-ico"></span>
+        <span class="drop-title">選擇照片</span>
+        <span class="drop-sub">或拖放至此</span>
+      </button>
+      <div class="tools" id="tools" hidden></div>
+      <div class="progress" id="progress"><span></span></div>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </main>
+    <aside class="panel" id="panel"></aside>
+  </div>
+  <input type="file" id="lutFile" accept=".cube" hidden />
+  <input type="file" id="file" accept="image/jpeg,image/png,image/heic,image/heif,.heic,.heif,image/*" hidden />
+  
+</body>
+</html>
