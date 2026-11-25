@@ -148,12 +148,30 @@ export const desserts = {
       circle(top, 50, 40, 18); circle(top, 38, 48, 8); circle(top, 50, 50, 8); circle(top, 62, 48, 8);
       circle(d, 50, 18, 5); d.lineWidth = 1.2; d.beginPath(); d.moveTo(50, 13); d.quadraticCurveTo(54, 6, 58, 8); d.stroke();
     } else if (kind === 'pudding') {
-      poly(base, [[28, 88], [72, 88], [64, 38], [36, 38]]);
-      top.beginPath(); top.moveTo(36, 38); top.lineTo(64, 38); top.lineTo(65.5, 48);
-      for (let k = 0; k <= 4; k++) top.quadraticCurveTo(62 - k * 6, 56, 59 - k * 6, 48 + (k % 2) * 2);
-      top.lineTo(34.5, 48); top.closePath(); top.fill();
-      ellipse(d, 50, 90, 30, 4);
-      circle(d, 50, 32, 5);
+      // 布丁：矮的梯形，焦糖蓋在上面往下流；放在盤子上，或放在高腳布丁杯（淺而寬的杯碗、細杯腳）上
+      const pudding = (yb, h, wb, wt) => {            // yb 底部位置、h 高度、wb 底寬、wt 頂寬
+        const yt = yb - h;
+        poly(base, [[50 - wb / 2, yb], [50 + wb / 2, yb], [50 + wt / 2, yt], [50 - wt / 2, yt]]);
+        cut(base, x => roundRect(x, 50 - wt / 2 + 3, yt + 8, 2.6, h - 11, 1.3));        // 側面的反光
+        const k = (wb - wt) / 2 / h, ty = yt + 5.5;                                       // 焦糖沿著斜邊
+        poly(top, [[50 - wt / 2, yt], [50 + wt / 2, yt], [50 + wt / 2 + k * 5.5, ty], [50 - wt / 2 - k * 5.5, ty]]);
+        for (const [dx, len] of [[-wt * 0.3, 6], [wt * 0.05, 9], [wt * 0.32, 5]]) roundRect(top, 50 + dx - 2, yt + 2, 4, len, 2);
+        circle(d, 50, yt - 5, 5.5);                                                      // 櫻桃
+        d.lineWidth = 1.3; d.beginPath(); d.moveTo(50, yt - 10); d.quadraticCurveTo(53, yt - 17, 59, yt - 18); d.stroke();
+      };
+      if (r() < 0.5) {
+        ellipse(d, 50, 83, 40, 4.5);                                                     // 盤子
+        pudding(80, 24, 48, 34);
+      } else {
+        // 高腳布丁杯：ㄩ 型的杯碗（直壁、平底），布丁坐在裡面；杯腳細，底座比杯碗窄
+        pudding(67, 22, 44, 31);
+        d.save(); d.lineWidth = 3; d.lineJoin = 'round'; d.lineCap = 'round';
+        d.beginPath(); d.moveTo(21.5, 52);
+        d.arcTo(21.5, 68.5, 35, 68.5, 7); d.arcTo(78.5, 68.5, 78.5, 52, 7);   // 杯底兩個圓角
+        d.lineTo(78.5, 52); d.stroke(); d.restore();
+        d.fillRect(48.5, 70, 3, 14);
+        ellipse(d, 50, 85, 15, 3.2);
+      }
     } else {
       roundRect(base, 20, 44, 60, 40, 3);
       top.fillRect(20, 44, 60, 9); top.fillRect(20, 62, 60, 5);
