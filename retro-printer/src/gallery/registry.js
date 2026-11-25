@@ -9,6 +9,7 @@ import { MUSIC_B } from './generators/music2.js';
 import { PATTERNS } from './generators/patterns.js';
 import { NATURE } from './generators/nature.js';
 import { MISC } from './generators/misc.js';
+import { SAVORY } from './generators/savory.js';
 
 export const THEMES = {
   geometric: '幾何',
@@ -24,7 +25,8 @@ export const THEMES = {
   studio: '絹印工作室',
   life: '生活小物',
   travel: '交通與旅行',
-  season: '季節與節慶'
+  season: '季節與節慶',
+  savory: '鹹食'
 };
 
 export const GENERATORS = [
@@ -37,7 +39,8 @@ export const GENERATORS = [
   ...MUSIC_B,        // 第 6 批：★ 音樂與娛樂（下）
   ...PATTERNS,       // 第 7 批：幾何、抽象與有機、符號與圖示
   ...NATURE,         // 第 8 批：植物與自然、食物與甜點、海洋
-  ...MISC            // 第 9 批：字體、工作室、生活小物、交通與旅行、季節與節慶
+  ...MISC,           // 第 9 批：字體、工作室、生活小物、交通與旅行、季節與節慶
+  ...SAVORY          // 第 10 批：鹹食
 ];
 
 export const generatorById = id => GENERATORS.find(g => g.id === id);
